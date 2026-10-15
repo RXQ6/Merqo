@@ -18,6 +18,10 @@ const env: NodeJS.ProcessEnv = { ...process.env,
   RETAILPILOT_USER_DATA_DIR: join(runtime, 'chromium'),
 };
 delete env.ELECTRON_RUN_AS_NODE;
-const child = spawn(electron, [join(root, 'apps/electron')], { cwd: root, env, stdio: 'inherit', windowsHide: true });
+// The desktop is explicitly interactive. Do not inherit the hidden-test mode or
+// use STARTF_USESHOWWINDOW/SW_HIDE for this GUI executable on Windows.
+delete env.RETAILPILOT_SMOKE;
+delete env.RETAILPILOT_VERIFY_VISIBLE;
+const child = spawn(electron, [join(root, 'apps/electron')], { cwd: root, env, stdio: 'inherit', windowsHide: false });
 child.on('error', error => { console.error(error); process.exitCode = 1; });
 child.on('exit', code => { process.exitCode = code ?? 1; });

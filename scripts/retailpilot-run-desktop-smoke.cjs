@@ -5,9 +5,12 @@ const root = path.resolve(__dirname, '..');
 fs.mkdirSync(path.join(root, 'artifacts/m0'), { recursive: true });
 const log = fs.createWriteStream(path.join(root, 'artifacts/m0/desktop-process.log'));
 const env = { ...process.env, ELECTRON_ENABLE_LOGGING: '1' };
+const verifyVisible = process.argv.includes('--visible');
+if (verifyVisible) env.RETAILPILOT_VERIFY_VISIBLE = '1';
+else delete env.RETAILPILOT_VERIFY_VISIBLE;
 delete env.ELECTRON_RUN_AS_NODE;
 const child = spawn(path.join(root, 'node_modules/electron/dist/electron.exe'), [path.join(root, 'scripts/retailpilot-desktop-smoke.cjs')], {
-  cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
+  cwd: root, env, windowsHide: !verifyVisible, stdio: ['ignore', 'pipe', 'pipe'],
 });
 child.stdout.pipe(log, { end: false });
 child.stderr.pipe(log, { end: false });

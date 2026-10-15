@@ -40,6 +40,8 @@ bun run retail:verify-baseline
 
 桌面冒烟使用隐藏窗口与专用 `.runtime/smoke-v2` 目录，输出到 `artifacts/m0/`，自动退出。该检查只证明欢迎页、本地 API 与服务连接，不能替代模型调用和经营流程验收。
 
+验证窗口实际可见时执行 `node scripts/retailpilot-run-desktop-smoke.cjs --visible`。这会短暂显示窗口并自动退出；结果需同时满足 `visible: true` 和 `minimized: false`。正常使用运行 `bun run retail:start`，窗口会保留。
+
 ## 默认服务策略
 
 - 禁用尚未配置的更新服务、上游分享上传、Sentry 上报和隐式上游文档 MCP。

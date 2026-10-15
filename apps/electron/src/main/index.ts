@@ -231,7 +231,7 @@ app.setPath('userData', process.env.RETAILPILOT_USER_DATA_DIR || join(app.getPat
 
 // Register as default protocol client for retailpilot:// URLs
 // This must be done before app.whenReady() on some platforms
-if (process.env.RETAILPILOT_SMOKE === '1') {
+if (process.env.RETAILPILOT_SMOKE === '1' || process.env.RETAILPILOT_VERIFY_VISIBLE === '1') {
   // Startup validation must not register an OS-wide protocol handler.
 } else if (process.defaultApp) {
   // Development mode: need to pass the app path

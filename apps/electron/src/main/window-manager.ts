@@ -264,7 +264,12 @@ export class WindowManager {
 
     // Show window when first paint is ready (faster perceived startup)
     window.once('ready-to-show', () => {
-      if (process.env.RETAILPILOT_SMOKE !== '1') window.show()
+      if (process.env.RETAILPILOT_SMOKE !== '1') {
+        if (window.isMinimized()) window.restore()
+        window.show()
+        window.focus()
+        windowLog.info('Workspace window shown', { workspaceId, visible: window.isVisible(), minimized: window.isMinimized() })
+      }
     })
 
     // Open external links in default browser, but never hand known-dangerous

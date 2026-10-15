@@ -1,6 +1,6 @@
 // Local startup smoke: read renderer state through Electron's own test host.
 // No provider requests, credentials, external messages, or business writes.
-const { app } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
@@ -11,8 +11,9 @@ progress('smoke host started');
 process.env.CRAFT_CONFIG_DIR = path.join(root, '.runtime/smoke-v2/config');
 process.env.RETAILPILOT_USER_DATA_DIR = path.join(root, '.runtime/smoke-v2/chromium');
 process.env.CRAFT_DEEPLINK_SCHEME = 'retailpilot';
-process.env.RETAILPILOT_SMOKE = '1';
+process.env.RETAILPILOT_SMOKE = process.env.RETAILPILOT_VERIFY_VISIBLE === '1' ? '0' : '1';
 const issues = [];
+const verifyVisible = process.env.RETAILPILOT_VERIFY_VISIBLE === '1';
 let finished = false;
 const timer = setTimeout(() => finish({ ok: false, reason: 'startup_timeout', issues }), 60000);
 function finish(result) {
@@ -41,10 +42,13 @@ app.on('web-contents-created', (_event, contents) => {
           workspacePaths: workspaces.map(workspace => workspace.rootPath) };
       })()`);
       await new Promise(resolve => setTimeout(resolve, 1500));
+      const window = BrowserWindow.fromWebContents(contents);
+      const visible = !!window?.isVisible();
+      const minimized = !!window?.isMinimized();
       const screenshot = await contents.capturePage();
       fs.writeFileSync(path.join(out, 'desktop-smoke.png'), screenshot.toPNG());
       const isolated = result.workspacePaths.every(value => typeof value === 'string' && path.resolve(value).startsWith(path.resolve(process.env.CRAFT_CONFIG_DIR) + path.sep));
-      finish({ ok: result.apiReady && result.gitBash.found && issues.length === 0 && isolated, isolated, ...result,
+      finish({ ok: result.apiReady && result.gitBash.found && issues.length === 0 && isolated && (!verifyVisible || (visible && !minimized)), isolated, verifyVisible, visible, minimized, ...result,
         appName: app.getName(), userData: app.getPath('userData'), configDir: process.env.CRAFT_CONFIG_DIR,
         electron: process.versions.electron, node: process.versions.node, issues });
     } catch (error) { finish({ ok: false, reason: error.message, issues }); }

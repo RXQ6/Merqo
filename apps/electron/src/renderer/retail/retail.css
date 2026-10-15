@@ -114,3 +114,19 @@
 .retail-app h2{font-size:14px}
 .retail-detail h2{font-size:18px}
 .retail-app h3{font-size:13px}
+
+.retail-investigation>.retail-section-title{padding:0 0 20px}
+.retail-investigation-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px}
+.retail-investigation-list{border-right:1px solid var(--line);padding-right:16px}
+.retail-investigation-list>button{display:flex;align-items:flex-start;flex-direction:column;width:100%;margin-top:10px;text-align:left;gap:3px}
+.retail-investigation-list>button[aria-current=true]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 5%,transparent)}
+.retail-investigation-list span,.retail-investigation-list small{font-size:11px;color:var(--muted)}
+.retail-investigation-body{min-width:0;padding-bottom:24px}
+.retail-investigation-body>.retail-inline-actions{margin:16px 0}
+.retail-investigation-status{padding:12px 0;color:var(--accent)}
+.retail-investigation-body ul{list-style:disc;padding-left:20px;line-height:1.9}
+.retail-investigation-body pre{font-size:11px;line-height:1.6;overflow:auto;max-height:350px;padding:12px;background:var(--line)}
+.retail-investigation-body details{margin:12px 0;scroll-margin-top:16px}
+.retail-citations a{font-size:11px;color:var(--accent);overflow-wrap:anywhere;margin-right:6px}
+.retail-investigation-body>p{line-height:1.8}
+@media(max-width:950px){.retail-investigation-layout{grid-template-columns:minmax(0,1fr)}.retail-investigation-list{border-right:0;border-bottom:1px solid var(--line);padding:0 0 16px}}

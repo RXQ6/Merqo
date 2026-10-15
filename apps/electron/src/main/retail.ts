@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config';
 import { RetailRequestSchema } from '../../../../packages/retail-domain/src/operations';
 import type { RetailReply } from '../../../../packages/retail-domain/src/operations';
+import { executeRetailInvestigation } from './retail-investigation';
 import type { WindowManager } from './window-manager';
 
 export function registerRetailIpc(getWindowManager: () => WindowManager | null): void {
@@ -22,7 +23,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const worker = join(root, 'scripts/retailpilot-data-worker.ts');
       if (!existsSync(worker)) throw new Error('经营数据工作进程缺失，请从源码项目启动当前版本');
       active.add(event.sender.id);
-      try {
+      const workerRequest = async (payload: unknown): Promise<RetailReply> => {
         return await new Promise<RetailReply>((resolve, reject) => {
           const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
           const child = spawn(process.env.CRAFT_BUN || 'bun', [worker, join(workspace.rootPath, 'retail', 'operations.sqlite'), workspace.name], { cwd: root, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
@@ -38,8 +39,21 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
             catch { reject(new Error(errorText || '经营数据进程返回无效结果')); }
           });
           child.stdin.on('error', () => {});
-          child.stdin.end(JSON.stringify(request));
+          child.stdin.end(JSON.stringify(payload));
         });
+      };
+      try {
+        const reply = await workerRequest(request);
+        if (request.op === 'investigate' && reply.ok && reply.kind === 'investigations' && reply.created) {
+          const run = reply.data[0];
+          if (run) {
+            void executeRetailInvestigation(run, workspace.rootPath, async patch => {
+              const saved = await workerRequest({ op: 'investigation_update', id: run.id, ...patch });
+              if (!saved.ok) throw new Error(saved.error);
+            }).catch(() => { /* A failed persistence request remains recoverable by the deadline lease. */ });
+          }
+        }
+        return reply;
       } finally { active.delete(event.sender.id); }
     } catch (error) { return { ok: false, error: error instanceof Error ? error.message : '经营数据请求失败' }; }
   });

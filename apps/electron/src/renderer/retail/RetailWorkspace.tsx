@@ -4,6 +4,7 @@ import { DEMO_CSV, exportCsv, FIELDS, FIELD_LABELS } from '../../../../../packag
 import type { EvidenceRecord, Preview, RetailRequest, RetailReply, Snapshot } from '../../../../../packages/retail-domain/src/operations';
 import { PanelHeader } from '@/components/app-shell/PanelHeader';
 import { useRegisterDismissibleLayer } from '@/context/DismissibleLayerContext';
+import { InvestigationPanel } from './InvestigationPanel';
 import './retail.css';
 
 const money = (value: number | bigint | null): string => {
@@ -20,8 +21,9 @@ function download(name: string, content: string, mime = 'text/csv;charset=utf-8'
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
+  const [investigationTarget, setInvestigationTarget] = useState<EvidenceRecord | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [page, setPage] = useState<'overview' | 'anomalies' | 'data'>('overview');
+  const [page, setPage] = useState<'overview' | 'anomalies' | 'data' | 'investigations'>('overview');
   const [source, setSource] = useState<'demo' | 'csv'>('demo');
   const [shop, setShop] = useState(''); const [channel, setChannel] = useState(''); const [date, setDate] = useState('');
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
@@ -88,8 +90,10 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
       <button aria-current={page === 'overview' ? 'page' : undefined} onClick={() => { setPage('overview'); setStatus('all'); }}><LayoutDashboard size={14}/>经营总览</button>
       <button aria-current={page === 'anomalies' ? 'page' : undefined} onClick={() => { setPage('anomalies'); setStatus('all'); }}><CircleAlert size={14}/>异常中心<span className="retail-tab-count">{warning + missing}</span></button>
       <button aria-current={page === 'data' ? 'page' : undefined} onClick={() => setPage('data')}><FileSpreadsheet size={14}/>数据与导入</button>
+      <button aria-current={page === 'investigations' ? 'page' : undefined} onClick={() => { setInvestigationTarget(null); setPage('investigations'); }}>调查记录</button>
     </nav>
     <main className="retail-main">
+      {page === 'investigations' ? <InvestigationPanel target={investigationTarget} onBack={() => setPage('overview')}/> : <>
       <header className="retail-header"><div><h1>{page === 'overview' ? '商品毛利分析' : page === 'anomalies' ? '经营异常' : '经营数据'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
         <div className="retail-header-actions"><button disabled={busy} onClick={() => void request({ op: 'snapshot' })} aria-label="刷新经营数据"><RefreshCw size={17}/></button><button className="retail-primary" disabled={busy} onClick={() => { setPage('data'); fileInput.current?.click(); }}><FileSpreadsheet size={16}/>导入 CSV</button></div>
       </header>
@@ -115,12 +119,13 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
         <div className="retail-metrics" aria-label="经营指标"><div><span>商家商品收入</span><strong>{money(revenue)}</strong><small>已具备完整证据的 {known.length} / {scoped.length} 条快照</small></div><div><span>商品毛利</span><strong>{money(profit)}</strong><small>商品收入减成本，不等同净利润</small></div><div><span>毛利预警</span><strong className="retail-danger">{warning}<em>条</em></strong><small>低于 {(snapshot?.thresholdBps ?? 2000) / 100}% 演示阈值</small></div><div><span>待补证</span><strong className="retail-amber">{missing}<em>条</em></strong><small>不计入收入与毛利合计</small></div></div>
         <section className="retail-panel"><div className="retail-section-title"><div><h2>{page === 'anomalies' ? '异常快照' : '商品经营快照'}</h2><p>先核对同规格、同期间数据，再判断经营动作。</p></div><button disabled={!filtered.length} onClick={() => download('RetailPilot-经营异常与证据.csv', exportCsv(filtered))}><ArrowDownToLine size={16}/>导出当前结果</button></div>
           <div className="retail-table-toolbar"><label className="retail-search"><Search size={16}/><input aria-label="搜索商品或 SKU" placeholder="搜索商品、规格或 SKU" value={query} onChange={event => setQuery(event.target.value)}/></label><select aria-label="异常状态" value={status} onChange={event => setStatus(event.target.value)}><option value="all">全部状态</option><option value="low_margin">毛利预警</option><option value="needs_evidence">待补证</option>{page !== 'anomalies' && <option value="normal">正常</option>}</select><span>{filtered.length} 条快照</span></div>
-          <div className="retail-table-wrap"><table><thead><tr><th>商品与规格</th><th>店铺 / 日期</th><th>成交件数</th><th>商品收入 / 件</th><th>毛利率</th><th>可售 / 在途</th><th>状态</th><th>证据</th></tr></thead><tbody>{filtered.slice(offset, offset + 30).map(record => <tr key={record.id}><td><strong>{record.row.product_name}</strong><small>{record.row.sku_id} · {record.row.spec}</small></td><td>{record.row.shop_id}<small>{record.row.date}</small></td><td>{record.row.sold_qty}</td><td>{money(record.calculation.revenueMinor)}</td><td className={record.status === 'low_margin' ? 'retail-danger' : ''}>{percent(record.calculation.marginBps)}</td><td>{record.calculation.available} / {record.row.inbound_qty}</td><td><span className={`retail-badge ${record.status}`}>{labels[record.status]}</span></td><td><button className="retail-link" onClick={() => setSelected(record)} aria-label={`查看 ${record.row.sku_id} 计算与证据`}>查看<ArrowRight size={14}/></button></td></tr>)}</tbody></table></div>
+          <div className="retail-table-wrap"><table><thead><tr><th>商品与规格</th><th>店铺 / 日期</th><th>成交件数</th><th>商品收入 / 件</th><th>毛利率</th><th>可售 / 在途</th><th>状态</th><th>证据 / 调查</th></tr></thead><tbody>{filtered.slice(offset, offset + 30).map(record => <tr key={record.id}><td><strong>{record.row.product_name}</strong><small>{record.row.sku_id} · {record.row.spec}</small></td><td>{record.row.shop_id}<small>{record.row.date}</small></td><td>{record.row.sold_qty}</td><td>{money(record.calculation.revenueMinor)}</td><td className={record.status === 'low_margin' ? 'retail-danger' : ''}>{percent(record.calculation.marginBps)}</td><td>{record.calculation.available} / {record.row.inbound_qty}</td><td><span className={`retail-badge ${record.status}`}>{labels[record.status]}</span></td><td><button className="retail-link" onClick={() => setSelected(record)} aria-label={`查看 ${record.row.sku_id} 计算与证据`}>查看<ArrowRight size={14}/></button>{record.status !== 'normal' && <button disabled={busy} className="retail-link" aria-label={`开始调查 ${record.row.sku_id}`} onClick={() => { setInvestigationTarget(record); setPage('investigations'); }}>开始调查</button>}</td></tr>)}</tbody></table></div>
           {!filtered.length && <div className="retail-empty small">当前筛选下没有记录。可调整店铺、日期或搜索条件。</div>}
           {filtered.length > 30 && <div className="retail-pagination"><button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 30))}>上一页</button><span>{offset + 1}–{Math.min(offset + 30, filtered.length)}</span><button disabled={offset + 30 >= filtered.length} onClick={() => setOffset(offset + 30)}>下一页</button></div>}
-        </section><div className="retail-footnote"><ShieldCheck size={16}/><p>当前版本只做数据计算与异常识别。Agent 调查、方案生成、审批和业务执行尚未接入。静态快照不能直接作为实时改价依据。</p></div>
+        </section><div className="retail-footnote"><ShieldCheck size={16}/><p>支持数据计算、异常识别与只读毛利调查。模型调查需 API 连接；离线演示单独标注。审批与业务执行尚未接入，静态快照不能直接作为实时改价依据。</p></div>
       </>}
       <footer className="retail-footer"><span>本机 SQLite 持久化 · 规则 {snapshot?.ruleVersion ?? 'retail-margin-v1'}</span><span>{busy ? '正在处理…' : '数据查询与分析，不执行经营写入'}</span></footer>
+      </>}
     </main>
     {selected && <div className="retail-detail-backdrop" onClick={() => setSelected(null)}><section className="retail-detail" role="dialog" aria-modal="true" aria-label="毛利计算与证据" onClick={event => event.stopPropagation()} tabIndex={-1} ref={detailRef} onKeyDown={event => {
       if (event.key !== 'Tab') return;

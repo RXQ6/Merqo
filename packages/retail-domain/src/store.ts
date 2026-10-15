@@ -94,6 +94,7 @@ export class RetailStore {
     return { snapshot: this.snapshot(), notice: `已导入 ${preview.valid.length} 条，隔离 ${preview.rejected.length} 条；同业务键的新快照替换当前视图，历史版本保留`, preview };
   }
   request(request: RetailRequest): RetailReply {
+    if (request.op === 'investigate' || request.op === 'investigations') throw new Error('调查请求必须通过调查服务处理');
     if (request.op === 'preview') return { ok: true, kind: 'preview', data: previewCsv(request.csv, request.mapping) };
     if (request.op === 'snapshot') return { ok: true, kind: 'snapshot', data: this.snapshot() };
     const result = request.op === 'demo' ? this.import(DEMO_CSV, undefined, 'demo') : this.import(request.csv, request.mapping, 'csv');

@@ -12,6 +12,7 @@ process.env.CRAFT_DEEPLINK_SCHEME = 'retailpilot';
 const out = path.join(root, 'artifacts/m1'); fs.mkdirSync(out, { recursive: true });
 const phase = process.env.RETAILPILOT_M1_PHASE || 'initial';
 const checks = []; const failures = [];
+let contractServer; let contractCalls = 0;
 let finished = false;
 function finish(error) {
   if (finished) return; finished = true; clearTimeout(timeout);
@@ -19,7 +20,7 @@ function finish(error) {
   fs.writeFileSync(path.join(out, `e2e-${phase}.json`), JSON.stringify(result, null, 2));
   console.log('M1_E2E ' + JSON.stringify(result)); app.exit(error ? 1 : 0);
 }
-const timeout = setTimeout(() => finish(new Error('M1 UI test exceeded 55 seconds')), 55000);
+const timeout = setTimeout(() => finish(new Error('Retail UI test exceeded 55 seconds')), 55000);
 app.on('web-contents-created', (_event, contents) => {
   contents.setBackgroundThrottling(false);
   contents.on('preload-error', (_event, _preload, error) => failures.push(error.message));
@@ -59,6 +60,11 @@ app.on('web-contents-created', (_event, contents) => {
       await assert(`!!document.querySelector('[data-focus-zone="sidebar"]') && !document.querySelector('.retail-nav') && !!document.querySelector('[data-panel-role="workspace-tool"]')`, 'retail analysis shares native sidebar and panel chrome');
       if (phase === 'restart') {
         await assert(`document.querySelectorAll('tbody tr').length === 6`, 'demo survives application restart');
+        await click('调查记录');
+        await waitFor(`document.body.innerText.includes('方案比较（代码测算）')`, 'investigation report survives restart');
+        await assert(`document.body.innerText.includes('离线规则演示，未调用模型') && document.body.innerText.includes('20.00%')`, 'persisted offline report is labeled and retains calculations');
+        await click('返回经营总览');
+
         await js(`(() => { const select = document.querySelector('select[aria-label="数据来源"]'); select.value='csv'; select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
         await waitFor(`document.querySelectorAll('tbody tr').length === 1`, 'persisted CSV row');
         await assert(`document.body.innerText.includes('33.33%') && document.body.innerText.includes('¥90.00')`, 'corrected margin survives application restart');
@@ -92,6 +98,44 @@ app.on('web-contents-created', (_event, contents) => {
         contents.sendInputEvent({type:'keyUp', keyCode:'Escape'});
         await waitFor(`!document.querySelector('[role=dialog]') && !!document.querySelector('[data-testid="retail-workspace"]')`, 'Escape closes evidence without leaving analysis');
         checks.push('evidence participates in native dismissible layer stack');
+        await js(`document.querySelector('button[aria-label="开始调查 TEA-500"]').click()`);
+        await waitFor(`document.body.innerText.includes('未配置模型连接')`, 'missing model fails honestly');
+        checks.push('start investigation is visible and missing model is not simulated as success');
+        // Exercise the actual main-process HTTP inference adapter against a local contract server.
+        contractServer = require('node:http').createServer(async (req, res) => {
+          try {
+            let raw = ''; for await (const chunk of req) raw += chunk;
+            const request = JSON.parse(raw); contractCalls++;
+            if (request.tools || request.functions) throw new Error('Native tools must never be exposed');
+            const system = request.messages[0].content;
+            const context = JSON.parse(request.messages[1].content);
+            const toolNames = ['retail_get_data_health','retail_get_sku_context','retail_get_promotions','retail_simulate_actions'];
+            let output;
+            if (system.includes('串行只读 Reviewer')) output = {verdict:'passed', notes:['本地协议测试复核，非真实模型质量验证']};
+            else if (context.observations.length < 4) output = {tool:toolNames[context.observations.length]};
+            else output = {report:{summary:'本地协议测试报告，非真实模型生成的业务结论',observations:[{text:'单位收入70元、商品毛利10元、毛利率14.29%',evidenceIds:[context.observations[2].evidenceId]}],hypotheses:[],unknowns:['缺少实时数据'],alternatives:['成本或优惠分摊口径可能错误'],options:[{kind:'observe',rationale:'补证后再决定'},{kind:'reduce_coupon',rationale:'仅作条件测算'}]}};
+            res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(output)}}]}));
+          } catch(e) { failures.push(e.message); res.statusCode=500; res.end('{}'); }
+        });
+        await new Promise(resolve => contractServer.listen(0,'127.0.0.1',resolve));
+        const configPath = path.join(profile,'config/config.json');
+        const config = JSON.parse(fs.readFileSync(configPath,'utf8'));
+        config.llmConnections = [{slug:'m2-contract',name:'本地协议测试（非真实模型）',providerType:'pi_compat',authType:'none',createdAt:Date.now(),baseUrl:`http://127.0.0.1:${contractServer.address().port}/v1`,defaultModel:'contract-fixture',customEndpoint:{api:'openai-completions'}}];
+        config.defaultLlmConnection='m2-contract'; fs.writeFileSync(configPath,JSON.stringify(config,null,2));
+        await click('重新进行模型调查');
+        await waitFor(`document.body.innerText.includes('本地协议测试报告') && document.body.innerText.includes('只读 Reviewer 复核')`, 'model transport and bounded tool loop');
+        if (contractCalls !== 6) throw new Error('Expected 5 model decisions and one reviewer call, got '+contractCalls);
+        await capture('investigation-contract.png');
+        checks.push('real inference adapter executes six local HTTP contract calls with no native tool authority');
+        config.llmConnections=[]; delete config.defaultLlmConnection; fs.writeFileSync(configPath,JSON.stringify(config,null,2));
+        await click('运行离线规则演示');
+        await waitFor(`document.body.innerText.includes('离线规则演示，未调用模型') && document.body.innerText.includes('方案比较（代码测算）')`, 'explicit offline replay');
+        await assert(`document.querySelectorAll('table[aria-label="调查方案比较"] tbody tr').length === 2 && document.body.innerText.includes('20.00%') && document.body.innerText.includes('14.29%')`, 'two deterministic scenarios and evidence are displayed');
+        await capture('investigation-replay.png');
+        await assert(`(await window.electronAPI.retailRequest({op:'investigation_update',id:'forged',report:{}})).ok === false`, 'renderer cannot forge investigation completion');
+        checks.push('explicit offline replay remains distinct from model investigation');
+        await click('返回经营总览');
+
         await js(`Array.from(document.querySelectorAll('nav button')).find(el=>el.textContent.includes('异常中心')).click()`);
         await waitFor(`document.querySelectorAll('tbody tr').length === 4`, 'anomaly-only view');
         checks.push('anomaly center excludes the two normal rows');

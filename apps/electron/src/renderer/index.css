@@ -1,4 +1,6 @@
 @import "tailwindcss" source(none);
+
+.retail-window-drag { position: fixed; top: 0; left: 0; right: 144px; height: 48px; -webkit-app-region: drag; z-index: 40; }
 @plugin "@tailwindcss/typography";
 
 /* Tell Tailwind where to scan for utility classes */

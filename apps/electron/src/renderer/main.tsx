@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/react'
 import { captureConsoleIntegration } from '@sentry/react'
 import { Provider as JotaiProvider, useAtomValue } from 'jotai'
 import App from './App'
+import { isWindows, isWebUI } from './lib/platform'
 import { ThemeProvider } from './context/ThemeContext'
 import { windowWorkspaceIdAtom } from './atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
@@ -121,6 +122,7 @@ function Root() {
 
   return (
     <ThemeProvider activeWorkspaceId={workspaceId}>
+      {isWindows && !isWebUI && <div aria-hidden="true" className="retail-window-drag"/>}
       <App />
       <Toaster />
     </ThemeProvider>

@@ -10,6 +10,7 @@ import type { WindowManager } from './window-manager';
 
 export function registerRetailIpc(getWindowManager: () => WindowManager | null): void {
   const active = new Set<number>();
+  const readers = new Map<number, number>();
   ipcMain.handle('retail:request', async (event, input: unknown): Promise<RetailReply> => {
     try {
       // Only top-level contents belonging to a registered application window.
@@ -18,11 +19,14 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null;
       if (!workspace || workspace.remoteServer) throw new Error('请选择本机 Workspace；远程经营数据暂不支持');
       const request = RetailRequestSchema.parse(input);
-      if (active.has(event.sender.id)) throw new Error('上一个经营数据请求尚未完成，请稍后重试');
+      const readOnly = ['snapshot', 'signals', 'investigations', 'preview', 'signals_preview'].includes(request.op);
+      if ((readers.get(event.sender.id) ?? 0) >= 4) throw new Error('并发读取过多，请稍后重试');
+      if (!readOnly && active.has(event.sender.id)) throw new Error('上一个经营数据请求尚未完成，请稍后重试');
       const root = process.env.CRAFT_APP_ROOT || process.cwd();
       const worker = join(root, 'scripts/retailpilot-data-worker.ts');
       if (!existsSync(worker)) throw new Error('经营数据工作进程缺失，请从源码项目启动当前版本');
-      active.add(event.sender.id);
+      if (readOnly) readers.set(event.sender.id, (readers.get(event.sender.id) ?? 0) + 1);
+      else active.add(event.sender.id);
       const workerRequest = async (payload: unknown): Promise<RetailReply> => {
         return await new Promise<RetailReply>((resolve, reject) => {
           const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
@@ -54,7 +58,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
           }
         }
         return reply;
-      } finally { active.delete(event.sender.id); }
+      } finally { if (readOnly) { const remaining = (readers.get(event.sender.id) ?? 1) - 1; if (remaining) readers.set(event.sender.id, remaining); else readers.delete(event.sender.id); } else active.delete(event.sender.id); }
     } catch (error) { return { ok: false, error: error instanceof Error ? error.message : '经营数据请求失败' }; }
   });
 }

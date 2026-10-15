@@ -4,6 +4,8 @@ import { DEMO_CSV, exportCsv, FIELDS, FIELD_LABELS } from '../../../../../packag
 import type { EvidenceRecord, Preview, RetailRequest, RetailReply, Snapshot } from '../../../../../packages/retail-domain/src/operations';
 import { PanelHeader } from '@/components/app-shell/PanelHeader';
 import { useRegisterDismissibleLayer } from '@/context/DismissibleLayerContext';
+import { SignalsPanel } from './SignalsPanel';
+import type { SignalSnapshot } from '../../../../../packages/retail-domain/src/signals';
 import { InvestigationPanel } from './InvestigationPanel';
 import './retail.css';
 
@@ -22,8 +24,9 @@ function download(name: string, content: string, mime = 'text/csv;charset=utf-8'
 }
 export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
   const [investigationTarget, setInvestigationTarget] = useState<EvidenceRecord | null>(null);
+  const [signals, setSignals] = useState<SignalSnapshot | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [page, setPage] = useState<'overview' | 'anomalies' | 'data' | 'investigations'>('overview');
+  const [page, setPage] = useState<'overview' | 'anomalies' | 'data' | 'investigations' | 'signals'>('overview');
   const [source, setSource] = useState<'demo' | 'csv'>('demo');
   const [shop, setShop] = useState(''); const [channel, setChannel] = useState(''); const [date, setDate] = useState('');
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
@@ -45,7 +48,8 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
     try {
       const reply = await window.electronAPI.retailRequest(input);
       if (!reply.ok) throw new Error(reply.error);
-      if (reply.kind === 'snapshot') { setSnapshot(reply.data); if (reply.notice) setNotice(reply.notice); }
+      if (reply.kind === 'signals') { setSignals(reply.data); if (reply.notice) setNotice(reply.notice); if (input.op === 'signals_import' || input.op === 'signals_demo') { setSource(input.op === 'signals_import' ? 'csv' : 'demo'); setShop(''); setChannel(''); setDate(''); } }
+      if (reply.kind === 'snapshot') { setSnapshot(reply.data); if (reply.signals) setSignals(reply.signals); if (reply.notice) setNotice(reply.notice); }
       return reply;
     } catch (cause) { setError(cause instanceof Error ? cause.message : '请求失败，请重试'); return; }
     finally { pending.current = false; setBusy(false); }
@@ -61,12 +65,15 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
   const sourceRows = useMemo(() => snapshot?.records.filter(record => record.source === source) ?? [], [snapshot, source]);
   const scoped = useMemo(() => sourceRows.filter(record => (!shop || record.row.shop_id === shop) && (!channel || record.row.channel === channel) && (!date || record.row.date === date)), [sourceRows, shop, channel, date]);
   const filtered = useMemo(() => scoped.filter(record => (page !== 'anomalies' || record.status !== 'normal') && (status === 'all' || record.status === status) && (!query || `${record.row.sku_id} ${record.row.product_name} ${record.row.spec}`.toLowerCase().includes(query.toLowerCase()))), [scoped, page, status, query]);
+  const signalScope = { source, shop, channel, date, query };
+  const scopeRows = [...sourceRows.map(r => r.row), ...(signals?.records.filter(r => r.source === source).map(r => r.row) ?? [])];
+  const signalCount = signals?.records.filter(r => r.source === source && r.status !== 'normal' && (!shop || r.row.shop_id === shop) && (!channel || r.row.channel === channel) && (!date || r.row.date === date)).length ?? 0;
   const known = scoped.filter(record => record.status !== 'needs_evidence');
   const revenue = known.reduce((sum, record) => sum + BigInt(record.calculation.totalRevenueMinor ?? 0), 0n);
   const profit = known.reduce((sum, record) => sum + BigInt(record.calculation.totalProfitMinor ?? 0), 0n);
   const warning = scoped.filter(record => record.status === 'low_margin').length;
   const missing = scoped.filter(record => record.status === 'needs_evidence').length;
-  const latest = snapshot?.batches.filter(batch => batch.source === source)[0];
+  const latest = (page === 'signals' ? signals?.batches : snapshot?.batches)?.filter(batch => batch.source === source)[0];
   const loadingFirst = busy && !snapshot;
   const loadDemo = async () => { const reply = await request({ op: 'demo' }); if (reply?.ok) { setSource('demo'); setShop(''); setChannel(''); setDate(''); } };
   const openCsv = async (file: File) => {
@@ -88,25 +95,26 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
     <PanelHeader title="经营分析" actions={<button className="retail-link" onClick={onOpenAgent}><ArrowLeft size={14}/>返回会话</button>}/>
     <nav className="retail-tabs" aria-label="经营导航">
       <button aria-current={page === 'overview' ? 'page' : undefined} onClick={() => { setPage('overview'); setStatus('all'); }}><LayoutDashboard size={14}/>经营总览</button>
-      <button aria-current={page === 'anomalies' ? 'page' : undefined} onClick={() => { setPage('anomalies'); setStatus('all'); }}><CircleAlert size={14}/>异常中心<span className="retail-tab-count">{warning + missing}</span></button>
+      <button aria-current={page === 'anomalies' ? 'page' : undefined} onClick={() => { setPage('anomalies'); setStatus('all'); }}><CircleAlert size={14}/>异常中心<span className="retail-tab-count">{warning + missing + signalCount}</span></button>
       <button aria-current={page === 'data' ? 'page' : undefined} onClick={() => setPage('data')}><FileSpreadsheet size={14}/>数据与导入</button>
+      <button aria-current={page === 'signals' ? 'page' : undefined} onClick={() => { setQuery(''); setPage('signals'); }}>库存与广告</button>
       <button aria-current={page === 'investigations' ? 'page' : undefined} onClick={() => { setInvestigationTarget(null); setPage('investigations'); }}>调查记录</button>
     </nav>
     <main className="retail-main">
       {page === 'investigations' ? <InvestigationPanel target={investigationTarget} onBack={() => setPage('overview')}/> : <>
-      <header className="retail-header"><div><h1>{page === 'overview' ? '商品毛利分析' : page === 'anomalies' ? '经营异常' : '经营数据'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
-        <div className="retail-header-actions"><button disabled={busy} onClick={() => void request({ op: 'snapshot' })} aria-label="刷新经营数据"><RefreshCw size={17}/></button><button className="retail-primary" disabled={busy} onClick={() => { setPage('data'); fileInput.current?.click(); }}><FileSpreadsheet size={16}/>导入 CSV</button></div>
+      <header className="retail-header"><div><h1>{page === 'overview' ? '商品毛利分析' : page === 'anomalies' ? '经营异常' : page === 'signals' ? '库存与广告' : '经营数据'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : page === 'signals' ? '按相邻等长窗口核对销量、库存覆盖与广告回报。' : page === 'anomalies' ? '按店铺、渠道与经营日期核对三类异常及证据。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
+        <div className="retail-header-actions"><button disabled={busy} onClick={() => void request({ op: 'snapshot' })} aria-label="刷新经营数据"><RefreshCw size={17}/></button><button className="retail-primary" disabled={busy} onClick={() => { if (page === 'signals') document.querySelector<HTMLInputElement>('input[aria-label="选择库存或广告 CSV"]')?.click(); else { setPage('data'); fileInput.current?.click(); } }}><FileSpreadsheet size={16}/>{page === 'signals' ? '导入场景 CSV' : '导入毛利 CSV'}</button></div>
       </header>
       <input ref={fileInput} type="file" accept=".csv,text/csv" aria-label="选择经营 CSV 文件" className="retail-file-input" onChange={event => { const file = event.target.files?.[0]; if (file) void openCsv(file); event.target.value = ''; }}/>
       {error && <div className="retail-alert error" role="alert">{error}<button onClick={() => setError('')} aria-label="关闭错误"><X size={16}/></button></div>}
       {notice && <div className="retail-alert success" role="status">{notice}</div>}
       <div className="retail-scope"><label>数据来源<select aria-label="数据来源" value={source} onChange={event => { setSource(event.target.value as 'demo' | 'csv'); setShop(''); setChannel(''); setDate(''); }}><option value="demo">演示数据</option><option value="csv">CSV 导入数据</option></select></label>
-        <label>店铺<select aria-label="店铺" value={shop} onChange={event => setShop(event.target.value)}><option value="">全部店铺</option>{[...new Set(sourceRows.map(record => record.row.shop_id))].map(value => <option key={value}>{value}</option>)}</select></label>
-        <label>渠道<select aria-label="渠道" value={channel} onChange={event => setChannel(event.target.value)}><option value="">全部渠道</option>{[...new Set(sourceRows.map(record => record.row.channel))].map(value => <option key={value}>{value}</option>)}</select></label>
-        <label>经营日期<select aria-label="经营日期" value={date} onChange={event => setDate(event.target.value)}><option value="">全部日期</option>{[...new Set(sourceRows.map(record => record.row.date))].sort().reverse().map(value => <option key={value}>{value}</option>)}</select></label>
+        <label>店铺<select aria-label="店铺" value={shop} onChange={event => setShop(event.target.value)}><option value="">全部店铺</option>{[...new Set(scopeRows.map(row => row.shop_id))].map(value => <option key={value}>{value}</option>)}</select></label>
+        <label>渠道<select aria-label="渠道" value={channel} onChange={event => setChannel(event.target.value)}><option value="">全部渠道</option>{[...new Set(scopeRows.map(row => row.channel))].map(value => <option key={value}>{value}</option>)}</select></label>
+        <label>经营日期<select aria-label="经营日期" value={date} onChange={event => setDate(event.target.value)}><option value="">全部日期</option>{[...new Set(scopeRows.map(row => row.date))].sort().reverse().map(value => <option key={value}>{value}</option>)}</select></label>
         <span className="retail-scope-note">{source === 'demo' ? '合成快照，非实时经营数据' : '静态导入快照，非实时同步'}<small>{latest ? `最近导入 ${new Date(latest.importedAt).toLocaleString('zh-CN')}` : '尚未载入数据'}</small></span>
       </div>
-      {loadingFirst ? <div className="retail-empty" role="status">正在读取本机经营数据…</div> : page === 'data' ? <>
+      {loadingFirst ? <div className="retail-empty" role="status">正在读取本机经营数据…</div> : page === 'signals' ? <SignalsPanel snapshot={signals} request={request} busy={busy} scope={signalScope}/> : page === 'data' ? <>
         <section className="retail-import-intro"><div><h2>先确认数据口径，再开始分析</h2><p>一行代表一个店铺、渠道、SKU 在某个经营日期的快照。金额单位为“分”，净成交件数已扣除退款。商品毛利不包含广告、运费与平台佣金。</p><div className="retail-inline-actions"><button className="retail-primary" disabled={busy} onClick={() => fileInput.current?.click()}>选择 CSV 文件</button><button onClick={() => download('RetailPilot-经营快照模板.csv', '\uFEFF' + DEMO_CSV)}>下载带示例的模板</button><button disabled={busy} onClick={() => void loadDemo()}>载入演示数据</button></div></div><FileSpreadsheet size={56}/></section>
         {preview && <section className="retail-panel" aria-label="导入预览"><div className="retail-section-title"><div><h2>导入预览 · {fileName}</h2><p>总计 {preview.total} 行，有效 {preview.valid.length} 行，隔离 {preview.rejected.length} 行，其中重复 {preview.duplicateCount} 行。</p></div><button onClick={() => setPreview(null)} aria-label="关闭导入预览"><X size={18}/></button></div>
           <div className="retail-mappings">{FIELDS.map(key => <label key={key}>{FIELD_LABELS[key]}<select aria-label={`映射 ${FIELD_LABELS[key]}`} value={mapping[key] ?? ''} onChange={event => updateMapping(key, event.target.value)}><option value="">选择列</option>{preview.headers.map(header => <option key={header}>{header}</option>)}</select></label>)}</div>
@@ -124,7 +132,8 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
           {filtered.length > 30 && <div className="retail-pagination"><button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 30))}>上一页</button><span>{offset + 1}–{Math.min(offset + 30, filtered.length)}</span><button disabled={offset + 30 >= filtered.length} onClick={() => setOffset(offset + 30)}>下一页</button></div>}
         </section><div className="retail-footnote"><ShieldCheck size={16}/><p>支持数据计算、异常识别与只读毛利调查。模型调查需 API 连接；离线演示单独标注。审批与业务执行尚未接入，静态快照不能直接作为实时改价依据。</p></div>
       </>}
-      <footer className="retail-footer"><span>本机 SQLite 持久化 · 规则 {snapshot?.ruleVersion ?? 'retail-margin-v1'}</span><span>{busy ? '正在处理…' : '数据查询与分析，不执行经营写入'}</span></footer>
+      {page === 'anomalies' && <SignalsPanel compact snapshot={signals} request={request} busy={busy} scope={signalScope}/>}
+      <footer className="retail-footer"><span>本机 SQLite 持久化 · 规则 {page === 'signals' ? signals?.ruleVersion ?? 'retail-stock-roas-v1' : snapshot?.ruleVersion ?? 'retail-margin-v1'}</span><span>{busy ? '正在处理…' : '数据查询与分析，不执行经营写入'}</span></footer>
       </>}
     </main>
     {selected && <div className="retail-detail-backdrop" onClick={() => setSelected(null)}><section className="retail-detail" role="dialog" aria-modal="true" aria-label="毛利计算与证据" onClick={event => event.stopPropagation()} tabIndex={-1} ref={detailRef} onKeyDown={event => {

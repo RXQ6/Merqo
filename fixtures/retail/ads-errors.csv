@@ -1,0 +1,4 @@
+﻿date,baseline_end_date,shop_id,channel,sku_id,window_days,baseline_window_days,campaign_id,currency,attribution_window,baseline_attribution_window,spend_minor,attributed_revenue_minor,clicks,conversions,baseline_spend_minor,baseline_revenue_minor,baseline_clicks,baseline_conversions
+2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,CMP-TEA,CNY,7d_click,7d_click,100000,180000,1000,30,100000,300000,1000,50
+2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,CMP-TEA,CNY,7d_click,7d_click,100000,180000,1000,30,100000,300000,1000,50
+2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,CMP-TEA,USD,7d_click,7d_click,100000,180000,1000,30,100000,300000,1000,50

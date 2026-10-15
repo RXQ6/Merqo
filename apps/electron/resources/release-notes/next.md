@@ -12,6 +12,10 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 ## Improvements
 
+- **库存与广告规则** — 补充相邻等长窗口的销量、库存覆盖与 ROAS 分析，支持两种 CSV 模板、列映射、错误行隔离、质量报告、不可变历史和统一异常中心。归因不一致及关键缺数显示待补证；本轮不包含两场景的 Agent 调查。
+
+- **Windows 顶栏** — 移除额外的系统标题条，将原生窗口按钮融入应用顶栏，保留拖动、调整窗口和关闭能力。
+
 ## Bug Fixes
 
 ## Breaking Changes

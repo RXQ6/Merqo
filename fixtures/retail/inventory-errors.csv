@@ -1,0 +1,4 @@
+﻿date,baseline_end_date,shop_id,channel,sku_id,window_days,baseline_window_days,product_name,spec,warehouse_id,recent_sales_qty,baseline_sales_qty,on_hand,reserved,inbound_qty,inbound_eta,lead_days
+2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,桂花乌龙冷萃茶,500ml × 6瓶,WH-01,140,210,50,10,100,2026-10-20,5
+2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,桂花乌龙冷萃茶,500ml × 6瓶,WH-01,140,210,50,10,100,2026-10-20,5
+2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,桂花乌龙冷萃茶,500ml × 6瓶,WH-01,140,210,50,999,100,2026-10-20,5

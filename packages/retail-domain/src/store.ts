@@ -14,36 +14,38 @@ export class RetailStore {
   constructor(file: string, private readonly workspaceName = '当前 Workspace') {
     mkdirSync(dirname(file), { recursive: true });
     this.db = new Database(file, { create: true, strict: true });
-    this.db.exec('PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;');
-    const version = this.db.query<{ user_version: number }, []>('PRAGMA user_version').get()?.user_version ?? 0;
-    if (version > 2) { this.db.close(); throw new Error('数据库版本高于当前程序，禁止降级写入'); }
-    this.db.transaction(() => {
-      this.db.exec(`CREATE TABLE IF NOT EXISTS retail_batches (
-        id TEXT PRIMARY KEY, source TEXT NOT NULL CHECK(source IN ('demo','csv')), imported_at TEXT NOT NULL,
-        accepted INTEGER NOT NULL, rejected INTEGER NOT NULL, hash TEXT NOT NULL, errors_json TEXT NOT NULL CHECK(json_valid(errors_json)), UNIQUE(source,hash)
-      ) STRICT;
-      CREATE TABLE IF NOT EXISTS retail_records (
-        id TEXT PRIMARY KEY, source TEXT NOT NULL CHECK(source IN ('demo','csv')), row_key TEXT NOT NULL,
-        shop_id TEXT NOT NULL, channel TEXT NOT NULL, date TEXT NOT NULL, sku_id TEXT NOT NULL,
-        row_json TEXT NOT NULL CHECK(json_valid(row_json)), batch_id TEXT NOT NULL REFERENCES retail_batches(id), UNIQUE(source,row_key)
-      ) STRICT;
-      CREATE INDEX IF NOT EXISTS retail_records_scope ON retail_records(source,shop_id,channel,date,sku_id);
-      CREATE TABLE IF NOT EXISTS retail_row_history (
-        id TEXT PRIMARY KEY, batch_id TEXT NOT NULL REFERENCES retail_batches(id), row_json TEXT NOT NULL CHECK(json_valid(row_json))
-      ) STRICT;
-      CREATE TABLE IF NOT EXISTS retail_rules (
-        version TEXT PRIMARY KEY, definition_json TEXT NOT NULL CHECK(json_valid(definition_json))
-      ) STRICT;
-      CREATE TABLE IF NOT EXISTS retail_batch_rules (
-        batch_id TEXT PRIMARY KEY REFERENCES retail_batches(id), rule_version TEXT NOT NULL REFERENCES retail_rules(version)
-      ) STRICT;
-      PRAGMA user_version=2;`);
-      const definition = JSON.stringify({ threshold_bps: 2000, revenue: 'list_price-coupon-full_reduction+additional_platform_settlement', unknown_cost: 'block', unknown_subsidy: 'block', conflicting_spec: 'block' });
-      this.db.query('INSERT OR IGNORE INTO retail_rules (version,definition_json) VALUES (?,?)').run(RULE_VERSION, definition);
-      const storedRule = this.db.query<{ definition_json: string }, [string]>('SELECT definition_json FROM retail_rules WHERE version=?').get(RULE_VERSION);
-      if (storedRule?.definition_json !== definition) throw new Error('规则定义变化时必须提升规则版本');
-      this.db.query('INSERT OR IGNORE INTO retail_batch_rules (batch_id,rule_version) SELECT id,? FROM retail_batches').run(RULE_VERSION);
-    })();
+    try {
+      this.db.exec('PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;');
+      const version = this.db.query<{ user_version: number }, []>('PRAGMA user_version').get()?.user_version ?? 0;
+      if (version > 2) { throw new Error('数据库版本高于当前程序，禁止降级写入'); }
+      this.db.transaction(() => {
+        this.db.exec(`CREATE TABLE IF NOT EXISTS retail_batches (
+          id TEXT PRIMARY KEY, source TEXT NOT NULL CHECK(source IN ('demo','csv')), imported_at TEXT NOT NULL,
+          accepted INTEGER NOT NULL, rejected INTEGER NOT NULL, hash TEXT NOT NULL, errors_json TEXT NOT NULL CHECK(json_valid(errors_json)), UNIQUE(source,hash)
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS retail_records (
+          id TEXT PRIMARY KEY, source TEXT NOT NULL CHECK(source IN ('demo','csv')), row_key TEXT NOT NULL,
+          shop_id TEXT NOT NULL, channel TEXT NOT NULL, date TEXT NOT NULL, sku_id TEXT NOT NULL,
+          row_json TEXT NOT NULL CHECK(json_valid(row_json)), batch_id TEXT NOT NULL REFERENCES retail_batches(id), UNIQUE(source,row_key)
+        ) STRICT;
+        CREATE INDEX IF NOT EXISTS retail_records_scope ON retail_records(source,shop_id,channel,date,sku_id);
+        CREATE TABLE IF NOT EXISTS retail_row_history (
+          id TEXT PRIMARY KEY, batch_id TEXT NOT NULL REFERENCES retail_batches(id), row_json TEXT NOT NULL CHECK(json_valid(row_json))
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS retail_rules (
+          version TEXT PRIMARY KEY, definition_json TEXT NOT NULL CHECK(json_valid(definition_json))
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS retail_batch_rules (
+          batch_id TEXT PRIMARY KEY REFERENCES retail_batches(id), rule_version TEXT NOT NULL REFERENCES retail_rules(version)
+        ) STRICT;
+        PRAGMA user_version=2;`);
+        const definition = JSON.stringify({ threshold_bps: 2000, revenue: 'list_price-coupon-full_reduction+additional_platform_settlement', unknown_cost: 'block', unknown_subsidy: 'block', conflicting_spec: 'block' });
+        this.db.query('INSERT OR IGNORE INTO retail_rules (version,definition_json) VALUES (?,?)').run(RULE_VERSION, definition);
+        const storedRule = this.db.query<{ definition_json: string }, [string]>('SELECT definition_json FROM retail_rules WHERE version=?').get(RULE_VERSION);
+        if (storedRule?.definition_json !== definition) throw new Error('规则定义变化时必须提升规则版本');
+        this.db.query('INSERT OR IGNORE INTO retail_batch_rules (batch_id,rule_version) SELECT id,? FROM retail_batches').run(RULE_VERSION);
+      }).immediate();
+    } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
   snapshot(): Snapshot {
@@ -94,6 +96,7 @@ export class RetailStore {
     return { snapshot: this.snapshot(), notice: `已导入 ${preview.valid.length} 条，隔离 ${preview.rejected.length} 条；同业务键的新快照替换当前视图，历史版本保留`, preview };
   }
   request(request: RetailRequest): RetailReply {
+    if (request.op === 'signals' || request.op === 'signals_demo' || request.op === 'signals_preview' || request.op === 'signals_import') throw new Error('库存与广告请求应由场景服务处理');
     if (request.op === 'investigate' || request.op === 'investigations') throw new Error('调查请求必须通过调查服务处理');
     if (request.op === 'preview') return { ok: true, kind: 'preview', data: previewCsv(request.csv, request.mapping) };
     if (request.op === 'snapshot') return { ok: true, kind: 'snapshot', data: this.snapshot() };

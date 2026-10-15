@@ -239,9 +239,11 @@ export class WindowManager {
         vibrancy: 'under-window',
         visualEffectState: 'active',
       }),
-      // Windows: use native frame with Mica/Acrylic transparency (Windows 10/11)
+      // Windows: remove the separate OS title strip; keep native caption buttons in the app top bar.
       ...(isWindows && {
-        frame: true, // Keep native frame for better UX
+        frame: false,
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color: '#00000000', symbolColor: '#808080', height: 48 },
         autoHideMenuBar: true, // Menu is null on Windows, this is just for safety
         // Note: Don't use transparent:true with backgroundMaterial - it hides the window frame
         ...(windowsBackgroundMaterial && {

@@ -1,5 +1,5 @@
 // Native Electron integration test: actual renderer actions, preload, IPC, Bun and SQLite.
-const { app, nativeTheme } = require('electron');
+const { app, nativeTheme, BrowserWindow } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
@@ -45,6 +45,10 @@ app.on('web-contents-created', (_event, contents) => {
       const content = fs.readFileSync(path.join(root, 'fixtures/retail', name), 'utf8');
       return js(`(() => { const input = document.querySelector('input[type=file]'); const transfer = new DataTransfer(); transfer.items.add(new File([${JSON.stringify(content)}], ${JSON.stringify(name)}, {type:'text/csv'})); input.files=transfer.files; input.dispatchEvent(new Event('change',{bubbles:true})); })()`);
     };
+    const signalFile = name => {
+      const content = fs.readFileSync(path.join(root,'fixtures/retail',name),'utf8');
+      return js(`(() => { const input=document.querySelector('input[aria-label="选择库存或广告 CSV"]');const t=new DataTransfer();t.items.add(new File([${JSON.stringify(content)}],${JSON.stringify(name)},{type:'text/csv'}));input.files=t.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+    };
     try {
       await waitFor(`!!document.querySelector('[data-focus-zone="sidebar"]') || /Get Started|开始使用|Setup later|稍后设置/.test(document.body.innerText)`, 'native desktop or welcome');
       if (!await js(`!!document.querySelector('[data-focus-zone="sidebar"]')`)) {
@@ -54,6 +58,10 @@ app.on('web-contents-created', (_event, contents) => {
       }
       await waitFor(`!!document.querySelector('[data-focus-zone="sidebar"]')`, 'original desktop shell');
       await assert(`!document.querySelector('[data-testid="retail-workspace"]') && !document.querySelector('.retail-back-to-business')`, 'startup preserves original desktop workspace');
+      const desktopWindow = BrowserWindow.fromWebContents(contents);
+      if (Math.abs(desktopWindow.getContentBounds().height - desktopWindow.getBounds().height) > 2) throw new Error('Separate Windows title strip still occupies client height');
+      if (!desktopWindow.isMinimizable() || !desktopWindow.isMaximizable() || !desktopWindow.isClosable()) throw new Error('Native caption capabilities missing');
+      checks.push('Windows separate title strip removed while caption capabilities remain enabled');
       await capture('desktop-shell.png');
       await click('经营分析');
       await waitFor(`!!document.querySelector('[data-testid="retail-workspace"]') && !document.body.innerText.includes('正在读取本机')`, 'retail page');
@@ -68,8 +76,13 @@ app.on('web-contents-created', (_event, contents) => {
         await js(`(() => { const select = document.querySelector('select[aria-label="数据来源"]'); select.value='csv'; select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
         await waitFor(`document.querySelectorAll('tbody tr').length === 1`, 'persisted CSV row');
         await assert(`document.body.innerText.includes('33.33%') && document.body.innerText.includes('¥90.00')`, 'corrected margin survives application restart');
+        await click('库存与广告');
+        await waitFor(`document.querySelectorAll('[data-testid="signals-inventory"] tbody tr').length===1 && document.querySelectorAll('[data-testid="signals-ads"] tbody tr').length===1`, 'persisted scenario CSV rows');
+        await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('990') && document.querySelector('[data-testid="signals-ads"]').innerText.includes('4.00 / 3.00')`, 'inventory and advertising corrections survive restart');
+
       } else {
         await waitFor(`document.body.innerText.includes('从一组可核对的经营数据开始')`, 'empty state');
+        await waitFor(`!!Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()==='载入演示数据'&&!el.disabled)`, 'demo action ready');
         await click('载入演示数据');
         await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'demo rows');
         await assert(`document.body.innerText.includes('¥7,125.00') && document.body.innerText.includes('¥1,765.00')`, 'demo totals match independently calculated revenue and gross profit');
@@ -137,8 +150,8 @@ app.on('web-contents-created', (_event, contents) => {
         await click('返回经营总览');
 
         await js(`Array.from(document.querySelectorAll('nav button')).find(el=>el.textContent.includes('异常中心')).click()`);
-        await waitFor(`document.querySelectorAll('tbody tr').length === 4`, 'anomaly-only view');
-        checks.push('anomaly center excludes the two normal rows');
+        await waitFor(`document.querySelectorAll('tbody tr').length === 8`, 'three-scenario anomaly-only view');
+        checks.push('unified anomaly center excludes all four normal rows across three scenarios');
         await file('import-with-errors.csv');
         await waitFor(`document.body.innerText.includes('总计 3 行，有效 1 行，隔离 2 行')`, 'CSV preview and quarantine');
         await capture('import-preview.png');
@@ -157,6 +170,40 @@ app.on('web-contents-created', (_event, contents) => {
         checks.push('correction changes current SKU to 33.33% while retaining source separation');
         await assert(`(await window.electronAPI.retailRequest({op:'snapshot',workspace_id:'other'})).ok === false`, 'IPC rejects renderer-supplied workspace scope');
         await assert(`(await window.electronAPI.retailRequest({op:'execute_price',price:1})).ok === false`, 'IPC rejects business execution operations');
+        await click('库存与广告');
+        await click('载入库存与广告演示');
+        await waitFor(`document.querySelectorAll('[data-testid="signals-inventory"] tbody tr').length===3 && document.querySelectorAll('[data-testid="signals-ads"] tbody tr').length===3`, 'inventory and advertising demo rows');
+        await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('40 / 2.00 天') && document.querySelector('[data-testid="signals-ads"]').innerText.includes('-40.00%')`, 'inventory coverage and ROAS decline match independent arithmetic');
+        await js(`document.querySelector('summary[aria-label="查看 TEA-500 inventory 场景证据"]').click()`);
+        await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('在途不计入即时可售') && document.querySelector('[data-testid="signals-inventory"]').innerText.includes('SHA-256')`, 'scenario evidence shows rule, formula and immutable source hash');
+        await capture('inventory-advertising.png');
+        await signalFile('inventory-errors.csv');
+        await waitFor(`document.body.innerText.includes('总计 3 行，有效 1 行，隔离 2 行')`, 'inventory partial quarantine preview');
+        await click('导入 1 条场景数据');
+        await waitFor(`document.body.innerText.includes('已导入 1 条，隔离 2 条')`, 'inventory import');
+        await signalFile('inventory-errors.csv');
+        await waitFor(`!!Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()==='导入 1 条场景数据'&&!el.disabled)`, 'repeat inventory preview');
+        await click('导入 1 条场景数据');
+        await waitFor(`document.body.innerText.includes('未重复写入')`, 'inventory idempotence');
+        await signalFile('inventory-corrected.csv');
+        await waitFor(`!!Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()==='导入 1 条场景数据'&&!el.disabled)`, 'inventory correction preview');
+        await click('导入 1 条场景数据');
+        await waitFor(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('990')`, 'inventory correction');
+        await js(`(() => { const select=document.querySelector('select[aria-label="场景导入类型"]');select.value='ads';select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
+        await signalFile('ads-errors.csv');
+        await waitFor(`document.body.innerText.includes('总计 3 行，有效 1 行，隔离 2 行')`, 'advertising quarantine preview');
+        await click('导入 1 条场景数据');
+        await waitFor(`document.querySelector('[data-testid="signals-ads"]').innerText.includes('-40.00%')`, 'advertising import');
+        await signalFile('ads-corrected.csv');
+        await waitFor(`!!Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()==='导入 1 条场景数据'&&!el.disabled)`, 'advertising correction preview');
+        await click('导入 1 条场景数据');
+        await waitFor(`document.querySelector('[data-testid="signals-ads"]').innerText.includes('4.00 / 3.00')`, 'advertising correction');
+        await js(`(() => { const select=document.querySelector('select[aria-label="数据来源"]');select.value='demo';select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
+        await js(`Array.from(document.querySelectorAll('nav button')).find(el=>el.textContent.includes('异常中心')).click()`);
+        await waitFor(`document.querySelectorAll('tbody tr').length===8`, 'unified center contains four margin plus four stock/advertising anomalies');
+        checks.push('two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center');
+        await assert(`(await Promise.all([window.electronAPI.retailRequest({op:'snapshot'}),window.electronAPI.retailRequest({op:'signals'})])).every(r=>r.ok)`, 'concurrent read refreshes do not block page remounts');
+
       }
       if (failures.length) throw new Error(failures.join('\n'));
       finish();

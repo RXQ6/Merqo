@@ -2,6 +2,8 @@
 
 > 本文记录 M1 阶段交付。后续只读调查切片的范围与验证见 [M2-verification.md](M2-verification.md)。
 
+> 后续库存、广告数据与规则补齐见 [M1-three-scenarios.md](M1-three-scenarios.md)，验证见 [M1-signals-verification.md](M1-signals-verification.md)。
+
 2026-10-15，范围为促销毛利场景的数据与规则闭环。
 
 ## 已实现

@@ -8,10 +8,12 @@ export class InvestigationStore {
   private readonly db: Database;
   constructor(file: string) {
     this.db = new Database(file, { create: true, strict: true });
-    this.db.exec(`PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL;
-      CREATE TABLE IF NOT EXISTS investigations(id TEXT PRIMARY KEY, record_id TEXT NOT NULL, mode TEXT NOT NULL CHECK(mode IN ('model','replay')), state TEXT NOT NULL, updated_at TEXT NOT NULL, deadline_at TEXT NOT NULL, json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
-      CREATE UNIQUE INDEX IF NOT EXISTS investigations_active ON investigations(record_id,mode) WHERE state='running';
-      CREATE INDEX IF NOT EXISTS investigations_recent ON investigations(updated_at DESC);`);
+    try {
+      this.db.exec(`PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL;
+        CREATE TABLE IF NOT EXISTS investigations(id TEXT PRIMARY KEY, record_id TEXT NOT NULL, mode TEXT NOT NULL CHECK(mode IN ('model','replay')), state TEXT NOT NULL, updated_at TEXT NOT NULL, deadline_at TEXT NOT NULL, json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
+        CREATE UNIQUE INDEX IF NOT EXISTS investigations_active ON investigations(record_id,mode) WHERE state='running';
+        CREATE INDEX IF NOT EXISTS investigations_recent ON investigations(updated_at DESC);`);
+    } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
   private recover(): void {

@@ -23,7 +23,7 @@ Sentry.init({
   release: app.getVersion(),
   // Enabled whenever the ingest URL is available — works in both production (baked via CI)
   // and development (injected via .env / 1Password). Filter by environment in Sentry dashboard.
-  enabled: !!process.env.SENTRY_ELECTRON_INGEST_URL,
+  enabled: false, // RetailPilot M0: no telemetry backend configured
 
   // Scrub sensitive data before sending to Sentry.
   // Removes authorization headers, API keys/tokens, and credential-like values.
@@ -203,9 +203,9 @@ registerPiModelResolver((piAuthProvider) =>
   piAuthProvider ? getPiModelsForAuthProvider(piAuthProvider) : getAllPiModels()
 )
 
-// Custom URL scheme for deeplinks (e.g., craftagents://auth-complete)
-// Supports multi-instance dev: CRAFT_DEEPLINK_SCHEME env var (craftagents1, craftagents2, etc.)
-const DEEPLINK_SCHEME = process.env.CRAFT_DEEPLINK_SCHEME || 'craftagents'
+// Custom URL scheme for deeplinks (e.g., retailpilot://auth-complete)
+// Supports multi-instance dev: CRAFT_DEEPLINK_SCHEME env var (retailpilot1, retailpilot2, etc.)
+const DEEPLINK_SCHEME = process.env.CRAFT_DEEPLINK_SCHEME || 'retailpilot'
 
 let windowManager: WindowManager | null = null
 let sessionManager: SessionManager | null = null
@@ -225,12 +225,15 @@ let messagingHandle: MessagingBootstrapHandle | null = null
 let pendingDeepLink: string | null = null
 
 // Set app name early (before app.whenReady) to ensure correct macOS menu bar title
-// Supports multi-instance dev: CRAFT_APP_NAME env var (e.g., "Craft Agents [1]")
-app.setName(process.env.CRAFT_APP_NAME || 'Craft Agents')
+// Supports multi-instance dev: CRAFT_APP_NAME env var (e.g., "RetailPilot [1]")
+app.setName(process.env.RETAILPILOT_APP_NAME || 'RetailPilot')
+app.setPath('userData', process.env.RETAILPILOT_USER_DATA_DIR || join(app.getPath('appData'), 'RetailPilot'))
 
-// Register as default protocol client for craftagents:// URLs
+// Register as default protocol client for retailpilot:// URLs
 // This must be done before app.whenReady() on some platforms
-if (process.defaultApp) {
+if (process.env.RETAILPILOT_SMOKE === '1') {
+  // Startup validation must not register an OS-wide protocol handler.
+} else if (process.defaultApp) {
   // Development mode: need to pass the app path
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient(DEEPLINK_SCHEME, process.execPath, [process.argv[1]])
@@ -409,10 +412,10 @@ app.whenReady().then(async () => {
   // Ensure default permissions file exists (copies bundled default.json on first run)
   ensureDefaultPermissions()
 
-  // Seed tool icons to ~/.craft-agent/tool-icons/ (copies bundled SVGs on first run)
+  // Seed tool icons to ~/.retailpilot/tool-icons/ (copies bundled SVGs on first run)
   ensureToolIcons()
 
-  // Seed preset themes to ~/.craft-agent/themes/ (copies bundled theme JSONs on first run)
+  // Seed preset themes to ~/.retailpilot/themes/ (copies bundled theme JSONs on first run)
   ensurePresetThemes()
 
   // Register thumbnail:// protocol handler (scheme was registered earlier, before app.whenReady)
@@ -666,13 +669,13 @@ app.whenReady().then(async () => {
             sessionManager: sm,
             credentialManager: getCredentialManager(),
             getMessagingDir: (wsId: string) =>
-              join(homedir(), '.craft-agent', 'workspaces', wsId, 'messaging'),
+              join(homedir(), '.retailpilot', 'workspaces', wsId, 'messaging'),
             getLegacyMessagingDir: (wsId: string) => {
               const ws = getWorkspaces().find((w) => w.id === wsId)
               return ws ? join(ws.rootPath, 'messaging') : undefined
             },
             // Route messaging diagnostics through the dedicated messaging log
-            // at ~/.craft-agent/logs/messaging-gateway.log.
+            // at ~/.retailpilot/logs/messaging-gateway.log.
             logger: messagingGatewayLog,
             // WhatsApp worker runs under Electron's embedded Node via
             // ELECTRON_RUN_AS_NODE (WhatsAppAdapter defaults nodeBin to
@@ -1127,7 +1130,7 @@ app.whenReady().then(async () => {
         type: 'error',
         title: 'Update failed',
         message: 'The update could not be installed.',
-        detail: 'Craft Agents will restart now. The update will be retried on the next launch.',
+        detail: 'RetailPilot will restart now. The update will be retried on the next launch.',
       })
       app.relaunch()
       app.exit(0)

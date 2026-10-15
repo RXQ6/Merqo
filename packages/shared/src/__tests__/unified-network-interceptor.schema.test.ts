@@ -123,7 +123,7 @@ describe('sanitizeEmptyTextCacheControl', () => {
 });
 
 describe('upgradePromptCacheTtl', () => {
-  const configFile = join(homedir(), '.craft-agent', 'config.json');
+  const configFile = join(homedir(), '.retailpilot', 'config.json');
   let originalConfig: string | null = null;
 
   beforeEach(() => {
@@ -146,7 +146,7 @@ describe('upgradePromptCacheTtl', () => {
   });
 
   function enableExtendedCache() {
-    const dir = join(homedir(), '.craft-agent');
+    const dir = join(homedir(), '.retailpilot');
     mkdirSync(dir, { recursive: true });
     const existing = originalConfig ? JSON.parse(originalConfig) : {};
     writeFileSync(configFile, JSON.stringify({ ...existing, extendedPromptCache: true }));
@@ -154,7 +154,7 @@ describe('upgradePromptCacheTtl', () => {
   }
 
   function disableExtendedCache() {
-    const dir = join(homedir(), '.craft-agent');
+    const dir = join(homedir(), '.retailpilot');
     mkdirSync(dir, { recursive: true });
     const existing = originalConfig ? JSON.parse(originalConfig) : {};
     writeFileSync(configFile, JSON.stringify({ ...existing, extendedPromptCache: false }));

@@ -72,3 +72,9 @@ credentials.enc
 # act (local GitHub Actions runner)
 .secrets
 .actrc
+
+# RetailPilot local state and validation artifacts
+.retailpilot/
+.runtime/
+artifacts/
+artifacts-m0-*.log

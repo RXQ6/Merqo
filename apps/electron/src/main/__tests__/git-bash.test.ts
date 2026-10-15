@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
-import { mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
-import { join } from 'path'
-import { isGitBashExecutablePath, isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
+import { delimiter, join } from 'path'
+import { findGitBashFromPath, isGitBashExecutablePath, isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
 
 let tempDir: string
 
@@ -15,6 +15,22 @@ afterEach(() => {
 })
 
 describe('git-bash helpers', () => {
+  it('finds a custom install even when a WSL bash directory occurs first', async () => {
+    const wsl = join(tempDir, 'System32')
+    const cmd = join(tempDir, 'CustomGit', 'cmd')
+    const bin = join(tempDir, 'CustomGit', 'bin')
+    for (const dir of [wsl, cmd, bin]) mkdirSync(dir, { recursive: true })
+    writeFileSync(join(wsl, 'bash.exe'), 'wsl placeholder')
+    writeFileSync(join(cmd, 'git.exe'), 'git placeholder')
+    writeFileSync(join(bin, 'bash.exe'), 'bash placeholder')
+    expect(await findGitBashFromPath([wsl, `"${cmd}"`].join(delimiter))).toBe(join(bin, 'bash.exe'))
+  })
+
+  it('does not treat an unrelated bash.exe as a Git install', async () => {
+    writeFileSync(join(tempDir, 'bash.exe'), 'not Git')
+    expect(await findGitBashFromPath(tempDir)).toBeNull()
+  })
+
   it('recognizes bash.exe paths with different separators', () => {
     expect(isGitBashExecutablePath('C:\\Program Files\\Git\\bin\\bash.exe')).toBe(true)
     expect(isGitBashExecutablePath('/tmp/git/bin/bash.exe')).toBe(true)

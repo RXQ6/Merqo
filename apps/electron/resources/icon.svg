@@ -1,12 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <title>favicon</title>
-    <defs>
-        <path d="M0,0 L24,0 L24,24 L0,24 L0,0 Z" id="path-1"></path>
-    </defs>
-    <g id="favicon" stroke="none" fill="none" xlink:href="#path-1" fill-rule="evenodd" stroke-width="1">
-        <g id="Group" transform="translate(3.4502, 3)" fill="#9570BE">
-            <path d="M3.17890888,3.6 L3.17890888,0 L16,0 L16,3.6 L3.17890888,3.6 Z M9.642,7.2 L9.64218223,10.8 L0,10.8 L0,3.6 L16,3.6 L16,7.2 L9.642,7.2 Z M3.17890888,18 L3.178,14.4 L0,14.4 L0,10.8 L16,10.8 L16,18 L3.17890888,18 Z" id="Combined-Shape" fill-rule="nonzero"></path>
-        </g>
-    </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="56" fill="#123a36"/><path d="M40 212V104h36v108zm68 0v-64h36v64zm68 0V68h36v144z" fill="#b9f681"/><path d="m48 72 76 30 76-62m-44 0h44v44" fill="none" stroke="#b9f681" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>

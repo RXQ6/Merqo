@@ -4,6 +4,8 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 ## Features
 
+- **RetailPilot M0 foundation** — Independent desktop identity and local data, disabled unconfigured upstream sharing and updates, and initial retail domain contracts. Business investigation and execution follow in later milestones.
+
 ## Improvements
 
 ## Bug Fixes

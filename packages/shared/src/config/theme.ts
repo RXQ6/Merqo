@@ -5,8 +5,8 @@
  * Light mode is default, with optional dark mode overrides.
  *
  * Storage locations:
- * - App override:   ~/.craft-agent/theme.json
- * - Preset themes:  ~/.craft-agent/themes/*.json
+ * - App override:   ~/.retailpilot/theme.json
+ * - Preset themes:  ~/.retailpilot/themes/*.json
  */
 
 /**

@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, rmSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { shouldAllowToolInMode, extractBashWriteTarget } from '../../agent/mode-manager.ts';
+import { setPowerShellValidatorRoot } from '../powershell-validator.ts';
 
 describe('mode-manager path containment for plans/data exceptions', () => {
   let base: string;
@@ -12,6 +13,7 @@ describe('mode-manager path containment for plans/data exceptions', () => {
   let siblingData: string;
 
   beforeEach(() => {
+    setPowerShellValidatorRoot(join(import.meta.dir, '..'));
     base = mkdtempSync(join(tmpdir(), 'craft-mode-boundary-test-'));
     plansDir = join(base, 'plans');
     dataDir = join(base, 'data');

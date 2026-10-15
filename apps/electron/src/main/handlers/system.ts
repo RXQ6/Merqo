@@ -5,7 +5,7 @@ import { execSync } from 'child_process'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getGitBashPath, setGitBashPath, clearGitBashPath } from '@craft-agent/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
-import { isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
+import { findGitBashFromPath, isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
 import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
@@ -151,6 +151,13 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
       }
     }
 
+    const gitFromPath = await findGitBashFromPath()
+    if (gitFromPath) {
+      process.env.CLAUDE_CODE_GIT_BASH_PATH = gitFromPath
+      setGitBashPath(gitFromPath)
+      return { found: true, path: gitFromPath, platform }
+    }
+
     try {
       const result = execSync('where bash', {
         encoding: 'utf-8',
@@ -202,7 +209,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
     deps.platform.logger.info('[renderer]', ...args)
   })
 
-  // Shell operations - open URL in external browser (or handle craftagents:// internally)
+  // Shell operations - open URL in external browser (or handle retailpilot:// internally)
   server.handle(RPC_CHANNELS.shell.OPEN_URL, async (ctx, url: string) => {
     deps.platform.logger.info('[OPEN_URL] Received request:', url)
     try {
@@ -211,7 +218,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
         throw new Error(formatBlockedUrlError(classification))
       }
 
-      // Handle craftagents:// URLs internally via deep link handler (GUI only)
+      // Handle retailpilot:// URLs internally via deep link handler (GUI only)
       if (classification.kind === 'internal-deeplink') {
         if (!windowManager) return
         deps.platform.logger.info('[OPEN_URL] Handling as deep link')

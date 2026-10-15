@@ -157,7 +157,7 @@ function mapBrowserToolErrorCode(code: string): string | null {
  * planning heuristics, config watching, usage tracking).
  */
 export class PiAgent extends BaseAgent {
-  protected backendName = 'Craft Agents Backend';
+  protected backendName = 'RetailPilot Backend';
 
   // ============================================================
   // Subprocess State
@@ -2034,7 +2034,7 @@ export class PiAgent extends BaseAgent {
         this.config.workspace.rootPath,
         this.config.session?.workingDirectory,
         this.config.systemPromptPreset,
-        'Craft Agents Backend', // backendName
+        'RetailPilot Backend', // backendName
         getCoAuthorPreference(), // respect user's includeCoAuthoredBy preference (#576)
         projectContext ?? undefined,
       );

@@ -8,6 +8,11 @@ import type {
   MessagingLogger,
 } from '@craft-agent/messaging-gateway'
 
+// Keep diagnostics with the selected RetailPilot profile, also in Bun tests.
+log.transports.file.resolvePathFn = () => join(
+  process.env.CRAFT_CONFIG_DIR || join(homedir(), '.retailpilot'), 'logs', 'main.log',
+)
+
 /**
  * Resolve debug mode deterministically across runtimes.
  *
@@ -81,7 +86,7 @@ export const searchLog = log.scope('search')
  * Kept outside the Electron-managed logs folder so messaging issues can be
  * inspected independently at a stable path across debug and production builds.
  */
-export const messagingGatewayLogPath = join(homedir(), '.craft-agent', 'logs', 'messaging-gateway.log')
+export const messagingGatewayLogPath = join(process.env.CRAFT_CONFIG_DIR || join(homedir(), '.retailpilot'), 'logs', 'messaging-gateway.log')
 const messagingGatewayBackupPath = `${messagingGatewayLogPath}.1`
 const MESSAGING_LOG_MAX_BYTES = 5 * 1024 * 1024 // 5MB
 
@@ -210,7 +215,7 @@ export const messagingGatewayLog: MessagingLogger = new StructuredMessagingGatew
  * dedicated, always-on rotating log records the update lifecycle at a stable
  * path regardless of debug mode, mirroring the messaging-gateway log above.
  */
-export const autoUpdateLogPath = join(homedir(), '.craft-agent', 'logs', 'auto-update.log')
+export const autoUpdateLogPath = join(homedir(), '.retailpilot', 'logs', 'auto-update.log')
 const autoUpdateBackupPath = `${autoUpdateLogPath}.1`
 const AUTO_UPDATE_LOG_MAX_BYTES = 2 * 1024 * 1024 // 2MB
 

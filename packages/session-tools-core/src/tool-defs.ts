@@ -491,7 +491,7 @@ IMPORTANT: never move a task into a closed status (such as "done" or "cancelled"
 Archiving removes a session from the active list and unread counts — it does NOT delete it (pass archived=false to restore). Use it to tidy up finished or superseded sessions.
 Requires an explicit sessionId and cannot target your own session. Use list_sessions / get_session_info to find the target session's ID.`,
 
-  create_task: `Create a Craft Agents Task on the kanban board — writes tasks/<slug>/task.yaml and creates its orchestrator session. CREATION ONLY: the task lands in "todo" and is NOT run; starting it is the user's (or an automation's) decision.
+  create_task: `Create a RetailPilot Task on the kanban board — writes tasks/<slug>/task.yaml and creates its orchestrator session. CREATION ONLY: the task lands in "todo" and is NOT run; starting it is the user's (or an automation's) decision.
 
 Provide title + description (the description becomes the task goal and the initial node prompt). Optional: acceptanceCriteria (verification rubric), sources / skills (workspace slugs), llmConnection + model, workingDirectory, projectId. When projectId is omitted, the task inherits the invoking session's project.
 

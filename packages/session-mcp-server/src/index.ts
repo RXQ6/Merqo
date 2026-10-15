@@ -283,6 +283,8 @@ let docsTools: Tool[] = [];
  * Falls back gracefully if the server is unreachable (tools will just be empty).
  */
 async function connectDocsUpstream(): Promise<void> {
+  return; // RetailPilot: upstream documentation proxy disabled
+
   try {
     const client = new Client(
       { name: 'craft-agent-session-proxy', version: '1.0.0' },

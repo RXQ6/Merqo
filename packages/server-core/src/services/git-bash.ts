@@ -1,4 +1,25 @@
 import { stat } from 'fs/promises'
+import { delimiter, join, resolve } from 'path'
+
+/** Locate a nonstandard Git for Windows install from PATH, without executing it. */
+export async function findGitBashFromPath(pathValue = process.env.PATH || ''): Promise<string | null> {
+  for (const part of pathValue.split(delimiter)) {
+    const directory = part.trim().replace(/^"|"$/g, '')
+    if (!directory) continue
+    try {
+      if (!(await stat(join(directory, 'git.exe'))).isFile()) continue
+    } catch { continue }
+    const candidates = [
+      resolve(directory, '..', 'bin', 'bash.exe'),
+      resolve(directory, '..', 'usr', 'bin', 'bash.exe'),
+      resolve(directory, '..', '..', 'usr', 'bin', 'bash.exe'),
+    ]
+    for (const candidate of candidates) {
+      if (await isUsableGitBashPath(candidate)) return candidate
+    }
+  }
+  return null
+}
 
 /**
  * Basic file-name validation for Git Bash executable paths.

@@ -1,3 +1,4 @@
+const RETAILPILOT_SHARING_ENABLED = false
 import type { EventSink, RpcServer } from '@craft-agent/server-core/transport'
 import { CLIENT_BROWSER_INVOKE } from '@craft-agent/server-core/transport'
 import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@craft-agent/server-core/handlers'
@@ -561,7 +562,7 @@ async function getBrowserToolIconDataUrl(): Promise<string | undefined> {
   try {
     const iconCandidates = [
       join(getToolIconsDir(), BROWSER_TOOL_ICON_FILENAME),
-      // Dev fallback (before sync to ~/.craft-agent/tool-icons)
+      // Dev fallback (before sync to ~/.retailpilot/tool-icons)
       join(process.cwd(), 'apps', 'electron', 'resources', 'tool-icons', BROWSER_TOOL_ICON_FILENAME),
       // Packaged fallback (app resources)
       join(process.resourcesPath, 'tool-icons', BROWSER_TOOL_ICON_FILENAME),
@@ -695,7 +696,7 @@ async function resolveToolDisplayMeta(
 
   // CLI tool icon resolution for Bash commands
   // Parses the command string to detect known tools (git, npm, docker, etc.)
-  // and resolves their brand icon from ~/.craft-agent/tool-icons/
+  // and resolves their brand icon from ~/.retailpilot/tool-icons/
   if (toolName === 'Bash' && toolInput?.command) {
     try {
       const toolIconsDir = getToolIconsDir()
@@ -4866,6 +4867,7 @@ export class SessionManager implements ISessionManager {
    * Uploads session data and returns shareable URL
    */
   async shareToViewer(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
+    if (!RETAILPILOT_SHARING_ENABLED) return { success: false, error: 'RetailPilot 外部分享服务尚未配置' }
     const managed = this.sessions.get(sessionId)
     if (!managed) {
       return { success: false, error: 'Session not found' }
@@ -4927,6 +4929,7 @@ export class SessionManager implements ISessionManager {
    * Re-uploads session data to the same URL
    */
   async updateShare(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
+    if (!RETAILPILOT_SHARING_ENABLED) return { success: false, error: 'RetailPilot 外部分享服务尚未配置' }
     const managed = this.sessions.get(sessionId)
     if (!managed) {
       return { success: false, error: 'Session not found' }
@@ -4978,6 +4981,7 @@ export class SessionManager implements ISessionManager {
    * Deletes from viewer and clears local shared state
    */
   async revokeShare(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
+    if (!RETAILPILOT_SHARING_ENABLED) return { success: false, error: 'RetailPilot 外部分享服务尚未配置' }
     const managed = this.sessions.get(sessionId)
     if (!managed) {
       return { success: false, error: 'Session not found' }
@@ -5688,8 +5692,8 @@ export class SessionManager implements ISessionManager {
       await new Promise(resolve => setTimeout(resolve, 100))
     }
 
-    // Revoke share if session was shared (prevent orphaned viewer copies)
-    if (managed.sharedId) {
+    // Revoke only through a future configured RetailPilot service.
+    if (RETAILPILOT_SHARING_ENABLED && managed.sharedId) {
       try {
         const { VIEWER_URL } = await import('@craft-agent/shared/branding')
         const response = await fetch(

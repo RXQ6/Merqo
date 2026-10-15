@@ -105,7 +105,7 @@ export function registerWorkspaceGuiHandlers(server: RpcServer, deps: HandlerDep
   // Open a session in a new window
   server.handle(RPC_CHANNELS.window.OPEN_SESSION_IN_NEW_WINDOW, async (_ctx, workspaceId: string, sessionId: string) => {
     if (!windowManager) return
-    const deepLink = `craftagents://allSessions/session/${sessionId}`
+    const deepLink = `retailpilot://allSessions/session/${sessionId}`
     windowManager.createWindow({
       workspaceId,
       focused: true,

@@ -261,6 +261,7 @@ export function prepareSlackOAuth(options: PrepareSlackOAuthOptions): PreparedOA
     );
   }
 
+  if (!options.callbackUrl) throw new Error('RetailPilot Slack OAuth requires an explicit HTTPS callbackUrl; no upstream relay is configured.');
   const userScopes = getSlackScopes(options);
   const state = generateState();
 
@@ -329,92 +330,6 @@ export async function exchangeSlackOAuth(params: OAuthExchangeParams): Promise<O
  *   userScopes: ['chat:write', 'users:read']
  * });
  */
-export async function startSlackOAuth(options: SlackOAuthOptions = {}): Promise<SlackOAuthResult> {
-  try {
-    // Verify OAuth credentials are configured
-    if (!isSlackOAuthConfigured()) {
-      return {
-        success: false,
-        error:
-          'Slack OAuth not configured. Set SLACK_OAUTH_CLIENT_ID and SLACK_OAUTH_CLIENT_SECRET environment variables.',
-      };
-    }
-
-    // Get user scopes for this request
-    const userScopes = getSlackScopes(options);
-
-    // Generate state for CSRF protection
-    const state = generateState();
-
-    // Start local HTTP callback server with deeplink for returning to chat session
-    const appType = options.appType || 'electron';
-    const deeplinkUrl = buildOAuthDeeplinkUrl(options.sessionContext);
-    const callbackServer = await createCallbackServer({ appType, deeplinkUrl });
-
-    // Extract port from local callback URL
-    const localUrl = new URL(callbackServer.url);
-    const port = localUrl.port;
-
-    // Use Cloudflare Worker relay for Slack OAuth (Slack requires HTTPS)
-    // The relay redirects: https://agents.craft.do/auth/slack/callback → http://localhost:{port}/callback
-    const redirectUri = `https://agents.craft.do/auth/slack/callback?port=${port}`;
-
-    // Build authorization URL
-    // Use user_scope (not scope) to get a user token instead of bot token
-    const authUrl = new URL(SLACK_AUTH_URL);
-    authUrl.searchParams.set('client_id', SLACK_CLIENT_ID);
-    authUrl.searchParams.set('redirect_uri', redirectUri);
-    authUrl.searchParams.set('state', state);
-    // user_scope = authenticate as user, scope = install bot
-    authUrl.searchParams.set('user_scope', userScopes.join(','));
-
-    // Open browser for authorization
-    await openUrl(authUrl.toString());
-
-    // Wait for callback
-    const callback = await callbackServer.promise;
-
-    // Verify state
-    if (callback.query.state !== state) {
-      return {
-        success: false,
-        error: 'OAuth state mismatch - possible CSRF attack',
-      };
-    }
-
-    // Check for error
-    if (callback.query.error) {
-      return {
-        success: false,
-        error: callback.query.error_description || callback.query.error,
-      };
-    }
-
-    // Get authorization code
-    const code = callback.query.code;
-    if (!code) {
-      return {
-        success: false,
-        error: 'No authorization code received',
-      };
-    }
-
-    // Exchange code for tokens
-    const tokens = await exchangeCodeForTokens(code, redirectUri);
-
-    return {
-      success: true,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresAt: tokens.expiresIn ? Date.now() + tokens.expiresIn * 1000 : undefined,
-      teamId: tokens.teamId,
-      teamName: tokens.teamName,
-      userId: tokens.userId,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during Slack OAuth',
-    };
-  }
+export async function startSlackOAuth(_options: SlackOAuthOptions = {}): Promise<SlackOAuthResult> {
+  return { success: false, error: 'RetailPilot Slack relay is not configured. Use an explicit HTTPS callback flow.' };
 }

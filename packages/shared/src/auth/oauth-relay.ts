@@ -77,13 +77,5 @@ export function wrapPreparedOAuthFlowForRelay(
   prepared: PreparedOAuthFlow,
   returnTo: string,
 ): PreparedOAuthFlow {
-  const authUrl = new URL(prepared.authUrl);
-  authUrl.searchParams.set('redirect_uri', OAUTH_RELAY_CALLBACK_URL);
-  authUrl.searchParams.set('state', encodeOAuthRelayState(returnTo, prepared.state));
-
-  return {
-    ...prepared,
-    authUrl: authUrl.toString(),
-    redirectUri: OAUTH_RELAY_CALLBACK_URL,
-  };
+  throw new Error('RetailPilot OAuth relay is not configured; use a direct callback or API key.');
 }

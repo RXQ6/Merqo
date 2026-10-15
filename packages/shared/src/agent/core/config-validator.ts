@@ -31,22 +31,22 @@ const CONFIG_FILE_PATTERNS: { pattern: RegExp; type: ConfigFileType }[] = [
  */
 const CRAFT_AGENT_CONFIG_PATTERNS = [
   // Main config
-  /\.craft-agent\/config\.json$/,
+  /\.retailpilot\/config\.json$/,
   // Preferences
-  /\.craft-agent\/preferences\.json$/,
+  /\.retailpilot\/preferences\.json$/,
   // Source configs
-  /\.craft-agent\/workspaces\/[^/]+\/sources\/[^/]+\/config\.json$/,
+  /\.retailpilot\/workspaces\/[^/]+\/sources\/[^/]+\/config\.json$/,
   // Permissions
-  /\.craft-agent\/workspaces\/[^/]+\/permissions\.json$/,
-  /\.craft-agent\/permissions\/[^/]+\.json$/,
+  /\.retailpilot\/workspaces\/[^/]+\/permissions\.json$/,
+  /\.retailpilot\/permissions\/[^/]+\.json$/,
   // Theme
-  /\.craft-agent\/workspaces\/[^/]+\/theme\.json$/,
+  /\.retailpilot\/workspaces\/[^/]+\/theme\.json$/,
   // Statuses
-  /\.craft-agent\/workspaces\/[^/]+\/statuses\/config\.json$/,
+  /\.retailpilot\/workspaces\/[^/]+\/statuses\/config\.json$/,
   // Labels
-  /\.craft-agent\/workspaces\/[^/]+\/labels\.json$/,
+  /\.retailpilot\/workspaces\/[^/]+\/labels\.json$/,
   // Tool icons
-  /\.craft-agent\/tool-icons\/tool-icons\.json$/,
+  /\.retailpilot\/tool-icons\/tool-icons\.json$/,
 ];
 
 /**

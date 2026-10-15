@@ -1,5 +1,5 @@
 // Native Electron integration test: actual renderer actions, preload, IPC, Bun and SQLite.
-const { app } = require('electron');
+const { app, nativeTheme } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
@@ -45,7 +45,18 @@ app.on('web-contents-created', (_event, contents) => {
       return js(`(() => { const input = document.querySelector('input[type=file]'); const transfer = new DataTransfer(); transfer.items.add(new File([${JSON.stringify(content)}], ${JSON.stringify(name)}, {type:'text/csv'})); input.files=transfer.files; input.dispatchEvent(new Event('change',{bubbles:true})); })()`);
     };
     try {
+      await waitFor(`!!document.querySelector('[data-focus-zone="sidebar"]') || /Get Started|开始使用|Setup later|稍后设置/.test(document.body.innerText)`, 'native desktop or welcome');
+      if (!await js(`!!document.querySelector('[data-focus-zone="sidebar"]')`)) {
+        await js(`Array.from(document.querySelectorAll('button')).find(el => /^(Get Started|开始使用)$/.test(el.textContent.trim()))?.click()`);
+        await waitFor(`/Setup later|稍后设置/.test(document.body.innerText)`, 'defer model setup');
+        await js(`Array.from(document.querySelectorAll('button')).find(el => /^(Setup later|稍后设置)$/.test(el.textContent.trim())).click()`);
+      }
+      await waitFor(`!!document.querySelector('[data-focus-zone="sidebar"]')`, 'original desktop shell');
+      await assert(`!document.querySelector('[data-testid="retail-workspace"]') && !document.querySelector('.retail-back-to-business')`, 'startup preserves original desktop workspace');
+      await capture('desktop-shell.png');
+      await click('经营分析');
       await waitFor(`!!document.querySelector('[data-testid="retail-workspace"]') && !document.body.innerText.includes('正在读取本机')`, 'retail page');
+      await assert(`!!document.querySelector('[data-focus-zone="sidebar"]') && !document.querySelector('.retail-nav') && !!document.querySelector('[data-panel-role="workspace-tool"]')`, 'retail analysis shares native sidebar and panel chrome');
       if (phase === 'restart') {
         await assert(`document.querySelectorAll('tbody tr').length === 6`, 'demo survives application restart');
         await js(`(() => { const select = document.querySelector('select[aria-label="数据来源"]'); select.value='csv'; select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
@@ -57,11 +68,30 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'demo rows');
         await assert(`document.body.innerText.includes('¥7,125.00') && document.body.innerText.includes('¥1,765.00')`, 'demo totals match independently calculated revenue and gross profit');
         await capture('overview.png');
+        nativeTheme.themeSource = 'dark';
+        await waitFor(`document.documentElement.classList.contains('dark')`, 'desktop dark theme');
+        await assert(`getComputedStyle(document.querySelector('.retail-app')).backgroundColor === getComputedStyle(document.documentElement).getPropertyValue('--background').trim() || getComputedStyle(document.querySelector('.retail-app')).getPropertyValue('--paper').trim() === getComputedStyle(document.documentElement).getPropertyValue('--background').trim()`, 'retail content inherits desktop background token');
+        await capture('overview-dark.png');
+        nativeTheme.themeSource = 'light';
+        await waitFor(`document.documentElement.classList.contains('light')`, 'desktop light theme');
+        await click('返回会话');
+        await waitFor(`!document.querySelector('[data-testid="retail-workspace"]')`, 'return to original sessions');
+        await click('经营分析');
+        await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'reopen retail preserves data');
+        checks.push('native desktop and retail navigation round trip retains persisted data');
+        await js(`Array.from(document.querySelectorAll('[data-focus-zone="sidebar"] button')).find(el => /^(所有会话|All Sessions)/.test(el.textContent.trim())).click()`);
+        await waitFor(`!document.querySelector('[data-testid="retail-workspace"]')`, 'native sidebar leaves analysis even when session route is unchanged');
+        await click('经营分析');
+        await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'native sidebar reopens analysis');
+        checks.push('original sidebar navigation remains usable');
         await js(`document.querySelector('button[aria-label="查看 TEA-500 计算与证据"]').click()`);
         await waitFor(`!!document.querySelector('[role=dialog]')`, 'evidence drawer');
         await assert(`document.querySelector('[role=dialog]').innerText.includes('14.29%') && document.querySelector('[role=dialog]').innerText.includes('¥70.00') && document.querySelector('[role=dialog]').innerText.includes('快照 SHA-256')`, 'evidence drawer shows formula, margin and source hash');
         await capture('evidence.png');
-        await js(`document.querySelector('button[aria-label="关闭证据详情"]').click()`);
+        contents.sendInputEvent({type:'keyDown', keyCode:'Escape'});
+        contents.sendInputEvent({type:'keyUp', keyCode:'Escape'});
+        await waitFor(`!document.querySelector('[role=dialog]') && !!document.querySelector('[data-testid="retail-workspace"]')`, 'Escape closes evidence without leaving analysis');
+        checks.push('evidence participates in native dismissible layer stack');
         await js(`Array.from(document.querySelectorAll('nav button')).find(el=>el.textContent.includes('异常中心')).click()`);
         await waitFor(`document.querySelectorAll('tbody tr').length === 4`, 'anomaly-only view');
         checks.push('anomaly center excludes the two normal rows');

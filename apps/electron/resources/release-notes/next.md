@@ -13,3 +13,5 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 ## Bug Fixes
 
 ## Breaking Changes
+
+- **Restore desktop workspace** — Keep the original desktop shell as the startup experience. Open retail analysis from its sidebar, with shared themes and panel styling instead of a separate dashboard shell.

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDownToLine, ArrowLeft, ArrowRight, Boxes, CircleAlert, FileSpreadsheet, LayoutDashboard, RefreshCw, Search, ShieldCheck, X } from 'lucide-react';
 import { DEMO_CSV, exportCsv, FIELDS, FIELD_LABELS } from '../../../../../packages/retail-domain/src/operations';
 import type { EvidenceRecord, Preview, RetailRequest, RetailReply, Snapshot } from '../../../../../packages/retail-domain/src/operations';
+import { PanelHeader } from '@/components/app-shell/PanelHeader';
+import { useRegisterDismissibleLayer } from '@/context/DismissibleLayerContext';
 import './retail.css';
 
 const money = (value: number | bigint | null): string => {
@@ -24,6 +26,10 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
   const [shop, setShop] = useState(''); const [channel, setChannel] = useState(''); const [date, setDate] = useState('');
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
   const [selected, setSelected] = useState<EvidenceRecord | null>(null);
+  useRegisterDismissibleLayer(useMemo(() => selected ? {
+    id: 'retail-evidence', type: 'modal' as const, priority: 100,
+    close: () => setSelected(null),
+  } : null, [selected]));
   const detailRef = useRef<HTMLElement>(null);
   const [busy, setBusy] = useState(false); const pending = useRef(false);
   const [error, setError] = useState(''); const [notice, setNotice] = useState('');
@@ -43,12 +49,7 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
     finally { pending.current = false; setBusy(false); }
   }, []);
   useEffect(() => { void request({ op: 'snapshot' }); }, [request]);
-  useEffect(() => window.electronAPI.onCloseRequested(() => window.electronAPI.confirmCloseWindow()), []);
   useEffect(() => { setOffset(0); }, [query, source, shop, channel, date, status, page]);
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setSelected(null); };
-    window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey);
-  }, []);
   useEffect(() => {
     if (!selected) return;
     const previous = document.activeElement;
@@ -82,18 +83,14 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
   };
   const updateMapping = (key: string, value: string) => { setMapping(current => ({ ...current, [key]: value })); setPreview(current => current ? { ...current, valid: [] } : null); };
   return <div className="retail-app" data-testid="retail-workspace">
-    <aside className="retail-nav">
-      <div className="retail-brand"><span className="retail-mark"><span/><span/><span/></span><span>RetailPilot<small>经营决策工作台</small></span></div>
-      <div className="retail-workspace-name">{snapshot?.workspaceName ?? '本机经营空间'}</div>
-      <nav aria-label="经营导航">
-        <button aria-current={page === 'overview' ? 'page' : undefined} onClick={() => { setPage('overview'); setStatus('all'); }}><LayoutDashboard size={18}/>经营总览</button>
-        <button aria-current={page === 'anomalies' ? 'page' : undefined} onClick={() => { setPage('anomalies'); setStatus('all'); }}><CircleAlert size={18}/>异常中心<span className="retail-nav-count">{warning + missing}</span></button>
-        <button aria-current={page === 'data' ? 'page' : undefined} onClick={() => setPage('data')}><FileSpreadsheet size={18}/>数据与导入</button>
-      </nav>
-      <div className="retail-nav-bottom"><p>商品毛利分析</p><span>确定性规则 · 证据可追溯</span><button onClick={onOpenAgent}>通用 Agent 工作台<ArrowRight size={15}/></button></div>
-    </aside>
+    <PanelHeader title="经营分析" actions={<button className="retail-link" onClick={onOpenAgent}><ArrowLeft size={14}/>返回会话</button>}/>
+    <nav className="retail-tabs" aria-label="经营导航">
+      <button aria-current={page === 'overview' ? 'page' : undefined} onClick={() => { setPage('overview'); setStatus('all'); }}><LayoutDashboard size={14}/>经营总览</button>
+      <button aria-current={page === 'anomalies' ? 'page' : undefined} onClick={() => { setPage('anomalies'); setStatus('all'); }}><CircleAlert size={14}/>异常中心<span className="retail-tab-count">{warning + missing}</span></button>
+      <button aria-current={page === 'data' ? 'page' : undefined} onClick={() => setPage('data')}><FileSpreadsheet size={14}/>数据与导入</button>
+    </nav>
     <main className="retail-main">
-      <header className="retail-header"><div><span className="retail-breadcrumb">经营 / {page === 'overview' ? '总览' : page === 'anomalies' ? '异常' : '数据'}</span><h1>{page === 'overview' ? '看清促销后的每一分毛利' : page === 'anomalies' ? '需要关注的经营异常' : '把经营数据接进来'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
+      <header className="retail-header"><div><h1>{page === 'overview' ? '商品毛利分析' : page === 'anomalies' ? '经营异常' : '经营数据'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
         <div className="retail-header-actions"><button disabled={busy} onClick={() => void request({ op: 'snapshot' })} aria-label="刷新经营数据"><RefreshCw size={17}/></button><button className="retail-primary" disabled={busy} onClick={() => { setPage('data'); fileInput.current?.click(); }}><FileSpreadsheet size={16}/>导入 CSV</button></div>
       </header>
       <input ref={fileInput} type="file" accept=".csv,text/csv" aria-label="选择经营 CSV 文件" className="retail-file-input" onChange={event => { const file = event.target.files?.[0]; if (file) void openCsv(file); event.target.value = ''; }}/>

@@ -28,7 +28,7 @@ node node_modules/electron/install.js
 
 `retail:start` 使用项目目录内 `.runtime/config` 与 `.runtime/chromium`，不复用原 Craft 配置或凭据。直接启动 Electron 的默认配置目录为用户目录下 `.retailpilot`，Chromium 数据目录为系统 AppData 中的 `RetailPilot`。`CRAFT_CONFIG_DIR` 保留为兼容环境变量，可覆盖配置路径；内部 `@craft-agent/*` 包名和版本暂时保留，避免破坏基座协议与依赖。
 
-首次启动直接进入经营工作台，点击“载入演示数据”。“通用 Agent 工作台”入口保留模型连接配置；M1 经营计算不调用模型，也不读取或迁移用户原有模型凭据。
+启动后使用原有桌面工作台。首次模型连接页选择“稍后设置”即可进入；从原侧栏“经营分析”打开经营总览，再点击“载入演示数据”。经营分析沿用桌面主题与面板，点击“返回会话”或其他侧栏入口可切回原工作台。M1 经营计算不调用模型，不需要模型凭据。
 
 ## 验证
 

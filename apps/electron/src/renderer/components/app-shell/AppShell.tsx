@@ -5,6 +5,7 @@ import { useAtomValue, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
+  ChartNoAxesCombined,
   Settings,
   ChevronRight,
   ChevronDown,
@@ -78,6 +79,8 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar } from "./LeftSidebar"
+import { RetailWorkspace } from "@/retail/RetailWorkspace"
+import { useRegisterDismissibleLayer } from "@/context/DismissibleLayerContext"
 import { useSession } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -592,6 +595,13 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
+  const [retailOpen, setRetailOpen] = React.useState(false)
+  useRegisterDismissibleLayer(React.useMemo(() => retailOpen ? {
+    id: 'retail-workspace', type: 'custom' as const, priority: 1,
+    close: () => setRetailOpen(false),
+  } : null, [retailOpen]))
+  // Native navigation (including shortcuts and deep links) leaves the workspace tool.
+  React.useEffect(() => { setRetailOpen(false) }, [navState, activeWorkspaceId])
 
   const store = useStore()
   const panelStack = useAtomValue(panelStackAtom)
@@ -2018,6 +2028,7 @@ function AppShellContent({
 
   // Create a new chat and select it
   const handleNewChat = useCallback((newPanel: boolean = false) => {
+    setRetailOpen(false)
     if (!activeWorkspace) return
 
     // Exit search mode and switch to All Sessions
@@ -2093,6 +2104,7 @@ function AppShellContent({
 
   const unifiedSidebarItems = React.useMemo((): SidebarItem[] => {
     const result: SidebarItem[] = []
+    result.push({ id: 'nav:retail', type: 'nav', action: () => setRetailOpen(true) })
 
     // 1. Sessions section: All Sessions (expandable) with status items, Flagged, Archived as children
     result.push({ id: 'nav:allSessions', type: 'nav', action: handleAllSessionsClick })
@@ -2122,7 +2134,9 @@ function AppShellContent({
     result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
     result.push({ id: 'nav:whats-new', type: 'nav', action: handleWhatsNewClick })
 
-    return result
+    return result.map(item => item.id === 'nav:retail' ? item : {
+      ...item, action: () => { setRetailOpen(false); item.action?.() },
+    })
   }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, viewConfigs, handleViewClick, handleSourcesClick, handleSkillsClick, handleAutomationsClick, handleSettingsClick, handleWhatsNewClick])
 
   // Toggle folder expanded state
@@ -2377,12 +2391,14 @@ function AppShellContent({
         }}
       >
         <PanelStackContainer
+          contentOverride={retailOpen ? <RetailWorkspace key={activeWorkspaceId} onOpenAgent={() => setRetailOpen(false)}/> : undefined}
           sidebarSlot={
             <div
               ref={sidebarRef}
               style={{ width: sidebarWidth }}
               className="h-full font-sans relative"
               data-focus-zone="sidebar"
+              onClickCapture={() => setRetailOpen(false)}
               tabIndex={sidebarFocused ? 0 : -1}
               onKeyDown={handleSidebarKeyDown}
             >
@@ -2425,6 +2441,12 @@ function AppShellContent({
                   getItemProps={getSidebarItemProps}
                   focusedItemId={focusedSidebarItemId}
                   links={[
+                    {
+                      id: 'nav:retail', title: '经营分析', icon: ChartNoAxesCombined,
+                      variant: retailOpen ? 'default' : 'ghost',
+                      onClick: () => setRetailOpen(true),
+                    },
+                    { id: 'separator:retail', type: 'separator' },
                     // --- Sessions Section ---
                     // All Sessions: expandable with status children (sortable) + Flagged & Archived as trailing items
                     {
@@ -2432,7 +2454,7 @@ function AppShellContent({
                       title: t("sidebar.allSessions"),
                       label: String(workspaceSessionMetas.length),
                       icon: Inbox,
-                      variant: sessionFilter?.kind === 'allSessions' ? "default" : "ghost",
+                      variant: !retailOpen && sessionFilter?.kind === 'allSessions' ? "default" : "ghost",
                       onClick: handleAllSessionsClick,
                       expandable: true,
                       expanded: isExpanded('nav:allSessions'),
@@ -3624,7 +3646,7 @@ function AppShellContent({
         )}
 
         {/* Session List Resize Handle (absolute, hidden in focused mode and board view) */}
-        {!effectiveSidebarAndNavigatorHidden && !isBoardView && (
+        {!retailOpen && !effectiveSidebarAndNavigatorHidden && !isBoardView && (
         <div
           ref={sessionListHandleRef}
           onMouseDown={(e) => { e.preventDefault(); setIsResizing('session-list') }}

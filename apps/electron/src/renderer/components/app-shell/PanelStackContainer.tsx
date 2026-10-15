@@ -47,6 +47,8 @@ const PANEL_SPRING = { type: 'spring' as const, stiffness: 600, damping: 49 }
 const COMPACT_PANEL_TOP_GAP = 8
 
 interface PanelStackContainerProps {
+  /** Workspace tools share the desktop chrome without replacing session routes. */
+  contentOverride?: React.ReactNode
   sidebarSlot: React.ReactNode
   sidebarWidth: number
   navigatorSlot: React.ReactNode
@@ -59,6 +61,7 @@ interface PanelStackContainerProps {
 }
 
 export function PanelStackContainer({
+  contentOverride,
   sidebarSlot,
   sidebarWidth,
   navigatorSlot,
@@ -111,6 +114,20 @@ export function PanelStackContainer({
   }, [contentPanels.length, isCompact])
 
   const transition = (isResizing || isCompact) ? { duration: 0 } : PANEL_SPRING
+
+  if (contentOverride) {
+    return (
+      <div className="flex-1 min-w-0 flex relative z-panel" style={{ gap: PANEL_GAP }}>
+        {hasSidebar && !isCompact && (
+          <div data-panel-role="sidebar" className="h-full shrink-0" style={{ width: sidebarWidth }}>{sidebarSlot}</div>
+        )}
+        <div data-panel-role="workspace-tool" className="flex-1 min-w-0 h-full overflow-hidden bg-background shadow-middle"
+          style={{ borderRadius: RADIUS_INNER }}>
+          {contentOverride}
+        </div>
+      </div>
+    )
+  }
 
   // === COMPACT BRANCH ===
   // Single-panel layout with iOS-style slide between navigator and detail.

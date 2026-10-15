@@ -224,6 +224,7 @@ import type {
 } from '@craft-agent/shared/protocol'
 
 export interface ElectronAPI {
+  retailRequest(request: import('../../../../packages/retail-domain/src/operations').RetailRequest): Promise<import('../../../../packages/retail-domain/src/operations').RetailReply>
   // Session management
   getSessions(): Promise<Session[]>
   getUnreadSummary(): Promise<UnreadSummary>

@@ -1,0 +1,7 @@
+﻿date,shop_id,channel,sku_id,product_name,spec,currency,list_price_minor,coupon_minor,full_reduction_minor,subsidy_minor,subsidy_funder,cost_minor,sold_qty,on_hand,reserved,inbound_qty
+2026-10-14,demo-nanfeng,线上商城,TEA-500,桂花乌龙冷萃茶,500ml × 6瓶,CNY,10000,2000,1000,0,platform,6000,40,120,10,60
+2026-10-14,demo-nanfeng,线上商城,COFFEE-12,醇香挂耳咖啡,12袋礼盒,CNY,10000,2000,0,1000,platform,6000,30,80,5,0
+2026-10-14,demo-nanfeng,线上商城,SNACK-300,每日坚果分享装,300g,CNY,5000,500,0,0,platform,,20,45,0,30
+2026-10-14,demo-nanfeng,线上商城,OAT-1000,原味燕麦奶,1L × 3盒,CNY,6000,1000,500,500,unknown,3500,25,30,4,0
+2026-10-14,demo-nanfeng,线上商城,HONEY-250,山花蜂蜜,250g,CNY,8000,500,0,0,platform,4000,15,50,0,0
+2026-10-14,demo-nanfeng,线上商城,RICE-2,五常鲜米,2kg,CNY,4000,1000,500,0,platform,2800,20,60,10,100

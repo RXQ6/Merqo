@@ -1,0 +1,11 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { DEMO_CSV } from '../packages/retail-domain/src/operations.ts';
+const dir = join(import.meta.dir, '../fixtures/retail'); mkdirSync(dir, { recursive: true });
+const [header, first] = DEMO_CSV.split('\r\n');
+if (!header || !first) throw new Error('Missing fixture');
+const imported = first.replace('demo-nanfeng', '验收导入店');
+writeFileSync(join(dir, 'demo-operations.csv'), '\uFEFF' + DEMO_CSV);
+writeFileSync(join(dir, 'import-with-errors.csv'), '\uFEFF' + [header, imported, imported, imported.replace(',CNY,', ',USD,')].join('\r\n'));
+writeFileSync(join(dir, 'corrected-margin.csv'), '\uFEFF' + [header, imported.replace(',10000,2000,1000,', ',10000,500,500,')].join('\r\n'));
+console.log('Wrote demo, rejected-row and corrected-margin CSV fixtures');

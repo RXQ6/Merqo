@@ -4,6 +4,8 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 ## Features
 
+- **RetailPilot 促销毛利工作台** — 默认经营入口、演示快照、CSV 映射预览与错误行隔离、确定性毛利预警、证据详情和导出，支持 SQLite 批次历史、重复导入与重启恢复。Agent 调查、业务审批与执行尚未接入。
+
 - **RetailPilot M0 foundation** — Independent desktop identity and local data, disabled unconfigured upstream sharing and updates, and initial retail domain contracts. Business investigation and execution follow in later milestones.
 
 ## Improvements

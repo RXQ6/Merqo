@@ -2,7 +2,9 @@
 
 将电商与零售经营数据组织成可追溯、可审批的决策流程。
 
-**当前交付：M0 工程基线。** 已有独立桌面身份、配置隔离、初版领域契约和 SQLite 兼容性探针。经营总览、数据导入、Agent 调查、业务审批与执行尚未实现。当前界面仍是完成品牌替换的通用 Agent 工作台。
+**当前交付：M1 促销毛利场景。** 默认进入经营工作台，支持演示数据、CSV 字段映射与导入、毛利计算、异常中心、证据详情、导出和 SQLite 持久化。不需要模型凭据即可验收。Agent 调查、方案生成、业务审批和执行尚未实现；通用 Agent 保留为单独入口。
+
+先按 `docs/M1-acceptance.md` 验收。演示数据应有 6 条快照、2 条毛利预警、2 条待补证，完整证据部分的商品收入 ¥7,125.00、商品毛利 ¥1,765.00。
 
 ## 在 Windows 启动
 
@@ -26,7 +28,7 @@ node node_modules/electron/install.js
 
 `retail:start` 使用项目目录内 `.runtime/config` 与 `.runtime/chromium`，不复用原 Craft 配置或凭据。直接启动 Electron 的默认配置目录为用户目录下 `.retailpilot`，Chromium 数据目录为系统 AppData 中的 `RetailPilot`。`CRAFT_CONFIG_DIR` 保留为兼容环境变量，可覆盖配置路径；内部 `@craft-agent/*` 包名和版本暂时保留，避免破坏基座协议与依赖。
 
-首次启动可选择“稍后设置”。实际模型调用需要自己配置有效连接，本阶段未导入用户已有凭据，也未验证真实模型请求。
+首次启动直接进入经营工作台，点击“载入演示数据”。“通用 Agent 工作台”入口保留模型连接配置；M1 经营计算不调用模型，也不读取或迁移用户原有模型凭据。
 
 ## 验证
 
@@ -34,6 +36,7 @@ node node_modules/electron/install.js
 bun run retail:check
 bun run typecheck:all
 node scripts/retailpilot-persistence-host.cjs
+node scripts/retailpilot-m1-e2e.cjs
 node scripts/retailpilot-run-desktop-smoke.cjs
 bun run retail:verify-baseline
 ```
@@ -53,6 +56,8 @@ bun run retail:verify-baseline
 ## 文档与来源
 
 - `docs/domain-contracts.md`：数据与持久化边界。
+- `docs/M1-acceptance.md`：手工与自动验收步骤、样例和预期结果。
+- `docs/M1-design.md`：场景架构、计算口径和范围边界。
 - `docs/M0-acceptance.md`：实际验证、已知限制与下一阶段入口。
 - `docs/baseline/upstream-manifest.json`：1,877 个原始文件的 SHA-256。
 - `docs/upstream-README.md`：原项目说明。

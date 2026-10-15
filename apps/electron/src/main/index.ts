@@ -119,6 +119,7 @@ import { initNotificationService, initBadgeIcon, initInstanceBadge, updateBadgeC
 import { checkForUpdatesOnLaunch, setAutoUpdateEventSink, isUpdating, setBeforeUpdateQuitHook, setBeforeUpdateInstallHook, setInstallQuitFailedHook } from './auto-update'
 import type { EventSink } from '@craft-agent/server-core/transport'
 import { validateGitBashPath, checkVCRedistInstalled } from '@craft-agent/server-core/services'
+import { registerRetailIpc } from './retail'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -208,6 +209,7 @@ registerPiModelResolver((piAuthProvider) =>
 const DEEPLINK_SCHEME = process.env.CRAFT_DEEPLINK_SCHEME || 'retailpilot'
 
 let windowManager: WindowManager | null = null
+registerRetailIpc(() => windowManager)
 let sessionManager: SessionManager | null = null
 let browserPaneManager: BrowserPaneManager | null = null
 let oauthFlowStore: OAuthFlowStore | null = null

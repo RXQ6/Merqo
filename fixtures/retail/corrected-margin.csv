@@ -1,0 +1,2 @@
+﻿date,shop_id,channel,sku_id,product_name,spec,currency,list_price_minor,coupon_minor,full_reduction_minor,subsidy_minor,subsidy_funder,cost_minor,sold_qty,on_hand,reserved,inbound_qty
+2026-10-14,验收导入店,线上商城,TEA-500,桂花乌龙冷萃茶,500ml × 6瓶,CNY,10000,500,500,0,platform,6000,40,120,10,60

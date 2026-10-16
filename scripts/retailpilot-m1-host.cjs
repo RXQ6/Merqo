@@ -20,7 +20,7 @@ function finish(error) {
   fs.writeFileSync(path.join(out, `e2e-${phase}.json`), JSON.stringify(result, null, 2));
   console.log('M1_E2E ' + JSON.stringify(result)); app.exit(error ? 1 : 0);
 }
-const timeout = setTimeout(() => finish(new Error('Retail UI test exceeded 120 seconds')), 120000);
+const timeout = setTimeout(() => finish(new Error('Retail UI test exceeded 180 seconds')), 180000);
 app.on('web-contents-created', (_event, contents) => {
   contents.setBackgroundThrottling(false);
   contents.on('preload-error', (_event, _preload, error) => failures.push(error.message));
@@ -72,7 +72,7 @@ app.on('web-contents-created', (_event, contents) => {
         await assert(`document.querySelectorAll('tbody tr').length === 6`, 'demo survives application restart');
         await click('调查记录');
         await waitFor(`document.body.innerText.includes('方案比较（代码测算）')`, 'investigation report survives restart');
-        await assert(`document.body.innerText.includes('离线规则演示，未调用模型') && document.querySelectorAll('.retail-investigation-list button').length>=7`, 'all three scenario histories survive restart');
+        await js(`Array.from(document.querySelectorAll('.retail-investigation-list button')).find(b=>b.innerText.includes('离线演示')).click()`);await waitFor(`document.body.innerText.includes('离线规则演示，未调用模型')`, 'offline report selected after restart');await assert(`document.body.innerText.includes('离线规则演示，未调用模型') && document.querySelectorAll('.retail-investigation-list button').length>=7`, 'all three scenario histories survive restart');
         await js(`Array.from(document.querySelectorAll('.retail-investigation-list button')).find(el=>el.innerText.includes('促销毛利调查') && el.innerText.includes('离线演示')).click()`);
         await assert(`document.body.innerText.includes('20.00%')`, 'legacy margin report retains calculations');
         await click('返回经营总览');
@@ -84,12 +84,13 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`document.querySelectorAll('[data-testid="signals-inventory"] tbody tr').length===1 && document.querySelectorAll('[data-testid="signals-ads"] tbody tr').length===1`, 'persisted scenario CSV rows');
         await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('990') && document.querySelector('[data-testid="signals-ads"]').innerText.includes('4.00 / 3.00')`, 'inventory and advertising corrections survive restart');
 
-        await click('决策草稿');await waitFor(`document.body.innerText.includes('v2 已驳回')`, 'decision version and rejection persist across restart');await click('查看版本记录');await waitFor(`document.querySelector('[aria-label="决策版本记录"]')?.innerText.includes('已被新版本替代')`, 'decision request history persists across restart');checks.push('versioned draft and superseded approval request survive restart');
+        await click('决策草稿');await waitFor(`!!Array.from(document.querySelectorAll('[aria-label="决策草稿列表"] button')).find(b=>b.textContent.includes('v2'))`, 'margin draft list');await js(`Array.from(document.querySelectorAll('[aria-label="决策草稿列表"] button')).find(b=>b.textContent.includes('v2')).click()`);await waitFor(`document.body.innerText.includes('v2 已驳回')`, 'decision version and rejection persist across restart');await click('查看版本记录');await waitFor(`document.querySelector('[aria-label="决策版本记录"]')?.innerText.includes('已被新版本替代')`, 'decision request history persists across restart');checks.push('versioned draft and superseded approval request survive restart');
         await click('审批中心');await waitFor(`!!document.querySelector('select[aria-label="审批状态筛选"]')`, 'approval inbox after restart');
         await js(`(()=>{const select=document.querySelector('select[aria-label="审批状态筛选"]');select.value='all';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
-        await waitFor(`document.querySelector('[aria-label="审批结论"]')?.innerText.includes('还需核对成本口径')`, 'approval resolution and reason survive restart');
+        await waitFor(`!!Array.from(document.querySelectorAll('[aria-label="审批申请列表"] button')).find(b=>b.textContent.includes('v2'))`, 'rejected approval list');await js(`Array.from(document.querySelectorAll('[aria-label="审批申请列表"] button')).find(b=>b.textContent.includes('v2')).click()`);await waitFor(`document.querySelector('[aria-label="审批结论"]')?.innerText.includes('还需核对成本口径')`, 'approval resolution and reason survive restart');
         await assert(`document.querySelector('[data-testid="retail-approvals"]').innerText.includes('已被新版本替代')&&!Array.from(document.querySelectorAll('button')).some(b=>b.textContent.trim()==='批准模拟方案')`, 'superseded approval is visible and rejected decision cannot be approved again');
 
+        await click('执行记录');await waitFor(`!!document.querySelector('[aria-label="模拟执行回执"]')`, 'simulation receipt persists after restart');await js(`Array.from(document.querySelectorAll('[aria-label="模拟执行列表"] button')).find(b=>b.innerText.includes('调整模拟商家券')).click()`);await waitFor(`document.querySelector('table[aria-label="模拟执行实际值"]')?.innerText.includes('¥15.00')`, 'margin receipt selected');await assert(`document.querySelector('table[aria-label="模拟执行实际值"]').innerText.includes('¥15.00')&&document.querySelector('[aria-label="执行回读核对"]').innerText.includes('回读核对一致')&&!Array.from(document.querySelectorAll('button')).some(b=>b.textContent.trim()==='执行到模拟账本')`, 'successful simulation and reconciliation survive restart without another execution');
       } else {
         await waitFor(`document.body.innerText.includes('从一组可核对的经营数据开始')`, 'empty state');
         await waitFor(`!!Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()==='载入演示数据'&&!el.disabled)`, 'demo action ready');
@@ -173,7 +174,15 @@ app.on('web-contents-created', (_event, contents) => {
         await js(`(()=>{const input=document.querySelector('textarea[aria-label="审批理由"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,'已核对演示数据与条件约束');input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
         await click('批准模拟方案');await waitFor(`!!document.querySelector('[aria-label="审批结论"]')&&document.querySelector('[data-testid="retail-approvals"]').innerText.includes('模拟已批准')`, 'approved decision recorded');
         await assert(`(async()=>{const a=(await window.electronAPI.retailRequest({op:'approvals'})).data[0];const forged=await window.electronAPI.retailRequest({op:'approval_resolve',requestId:a.id,expectedVersion:a.decision.version,expectedActionHash:a.decision.actionHash,choice:'approve',reason:'伪造身份',actor:'admin'});const again=await window.electronAPI.retailRequest({op:'approval_resolve',requestId:a.id,expectedVersion:a.decision.version,expectedActionHash:a.decision.actionHash,choice:'approve',reason:'已核对演示数据与条件约束'});return !forged.ok&&again.ok&&again.data[0].resolution.id===a.resolution.id&&a.resolution.actor.id==='local-simulation-approver';})()`, 'approval actor comes from server, forged identity rejects and retries remain idempotent');
-        await capture('approval-approved.png');await click('返回决策草稿');await waitFor(`!!document.querySelector('textarea[aria-label="决策备注"]')`, 'return approved draft');
+        await capture('approval-approved.png');
+        await click('查看模拟执行');await waitFor(`!!document.querySelector('table[aria-label="模拟执行预期值"]')`, 'simulation execution detail');
+        await assert(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='执行到模拟账本').disabled`, 'explicit local simulation confirmation is required');
+        await js(`document.querySelector('input[aria-label="确认仅写本地模拟账本"]').click()`);await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='执行到模拟账本'&&!b.disabled)`, 'confirmed simulation execution');await click('执行到模拟账本');
+        await waitFor(`!!document.querySelector('[aria-label="模拟执行回执"]')&&document.querySelector('[aria-label="执行回读核对"]')?.innerText.includes('回读核对一致')`, 'atomic local simulation receipt and reconciliation');
+        await capture('simulation-executed.png');
+        await assert(`(async()=>{const e=(await window.electronAPI.retailRequest({op:'executions'})).data[0];const forged=await window.electronAPI.retailRequest({op:'simulation_execute',id:e.job.id,expectedVersion:1,expectedActionHash:e.job.actionHash,actor:'admin'});const repeated=await window.electronAPI.retailRequest({op:'simulation_execute',id:e.job.id,expectedVersion:1,expectedActionHash:e.job.actionHash});const next=repeated.data[0];const source=await window.electronAPI.retailRequest({op:'snapshot'});return !forged.ok&&repeated.ok&&next.receipt.id===e.receipt.id&&next.attempts.length===1&&next.current.version===1&&next.current.values.couponMinor===1500&&source.data.records.find(r=>r.source==='demo'&&r.row.sku_id==='TEA-500').row.coupon_minor===2000;})()`, 'execution is server-scoped, idempotent and isolated from source snapshots');
+        await click('重新回读核对');await waitFor(`document.querySelector('[data-testid="retail-executions"] [role="status"]')?.innerText.includes('回读核对一致')`, 'manual reconciliation');
+        await click('返回审批中心');await waitFor(`!!document.querySelector('[data-testid="retail-approvals"]')`, 'return approval');await click('返回决策草稿');await waitFor(`!!document.querySelector('textarea[aria-label="决策备注"]')`, 'return approved draft');
 
         await js(`(()=>{const input=document.querySelector('textarea[aria-label="决策备注"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,'回归修订v2');input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
         await click('保存新版本'); await waitFor(`document.querySelector('[data-testid="retail-decisions"]').innerText.includes('v2 草稿')`, 'new decision revision');
@@ -184,12 +193,12 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`!!document.querySelector('textarea[aria-label="审批理由"]')`, 'revised approval details');
         await js(`(()=>{const input=document.querySelector('textarea[aria-label="审批理由"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,'还需核对成本口径');input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
         await click('驳回方案');await waitFor(`document.querySelector('[aria-label="审批结论"]')?.innerText.includes('还需核对成本口径')`, 'rejection reason persists');
-        await capture('approval-rejected.png');checks.push('approve, supersede old approval, reject revision and preserve audit without business execution');
+        await capture('approval-rejected.png');checks.push('approve, execute isolated simulation, supersede old approval, reject revision and preserve history without real business writes');
         await click('返回决策草稿');await waitFor(`document.querySelector('[data-testid="retail-decisions"]')?.innerText.includes('已驳回')`, 'rejected decision status');
 
         await click('调查记录');await waitFor(`!!document.querySelector('[data-testid="retail-investigation"]')&&document.body.innerText.includes('本地协议测试报告')`, 'return to investigated report');
         await click('导出报告与证据 JSON');const revisionExportDeadline=Date.now()+10000;while(downloads.length<3&&Date.now()<revisionExportDeadline)await new Promise(r=>setTimeout(r,100));
-        const revisionExport=JSON.parse(fs.readFileSync(downloads[2].target,'utf8'));if(revisionExport.decisions.length!==2||revisionExport.decisions[1].request.status!=='superseded'||revisionExport.decisions[1].approvalResolution?.decision!=='approved'||revisionExport.decisions[0].approvalResolution?.decision!=='rejected')throw new Error('Export lacks decision version history');checks.push('report export includes exact run decision history and superseded request');
+        const revisionExport=JSON.parse(fs.readFileSync(downloads[2].target,'utf8'));if(revisionExport.decisions.length!==2||revisionExport.decisions[1].request.status!=='superseded'||revisionExport.decisions[1].approvalResolution?.decision!=='approved'||revisionExport.decisions[0].approvalResolution?.decision!=='rejected'||revisionExport.executions?.[0]?.status!=='succeeded')throw new Error('Export lacks decision version history');checks.push('report export includes decision history, superseded request and execution receipt');
 
 
 
@@ -215,7 +224,7 @@ app.on('web-contents-created', (_event, contents) => {
         if (contractCalls!==18) throw new Error('Expected 18 HTTP calls for three scenarios, got '+contractCalls);
         await assert(`(await window.electronAPI.retailRequest({op:'investigations'})).data.filter(r=>r.report).every(r=>r.trace.filter(t=>t.stage==='investigate').every(t=>t.transport==='mcp_stdio'))`, 'all three scenarios and offline replay consume actual MCP evidence');
         checks.push('inventory and ads model contracts, readonly Reviewer and explicit offline plans passed');
-        config.llmConnections=[]; delete config.defaultLlmConnection; fs.writeFileSync(configPath,JSON.stringify(config,null,2));
+
         await click('经营总览');
 
         await js(`Array.from(document.querySelectorAll('nav button')).find(el=>el.textContent.includes('异常中心')).click()`);
@@ -272,6 +281,18 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`document.querySelectorAll('tbody tr').length===8`, 'unified center contains four margin plus four stock/advertising anomalies');
         checks.push('two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center');
         await assert(`(await Promise.all([window.electronAPI.retailRequest({op:'snapshot'}),window.electronAPI.retailRequest({op:'signals'})])).every(r=>r.ok)`, 'concurrent read refreshes do not block page remounts');
+        for(const kind of ['ads','inventory']) {
+          await click('库存与广告');
+          if(kind==='inventory'){await click('载入补货执行演示');await waitFor(`document.body.innerText.includes('已载入1天交期')`, 'feasible built-in replenishment demo');}
+          await js(`document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]').click()`);
+          await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('本地协议测试报告')&&document.querySelector('.retail-investigation-body')?.innerText.includes('只读 Reviewer 复核')`, kind+' approved-execution model report');
+          await click('生成决策草稿');await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='保存草稿'&&!b.disabled)`, kind+' draft ready');await click('保存草稿');
+          await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='提交模拟审批'&&!b.disabled)`, kind+' feasible draft');await click('提交模拟审批');await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='查看审批')`, kind+' request saved');await click('查看审批');
+          await waitFor(`!!document.querySelector('textarea[aria-label="审批理由"]')`, kind+' approval ready');await js(`(()=>{const input=document.querySelector('textarea[aria-label="审批理由"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,'核对三场景本地模拟执行');input.dispatchEvent(new Event('input',{bubbles:true}));})()`);await click('批准模拟方案');
+          await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='查看模拟执行')`, kind+' approved');await click('查看模拟执行');await waitFor(`!!document.querySelector('input[aria-label="确认仅写本地模拟账本"]')`, kind+' executable');await js(`document.querySelector('input[aria-label="确认仅写本地模拟账本"]').click()`);await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='执行到模拟账本'&&!b.disabled)`,kind+' confirmed');await click('执行到模拟账本');await waitFor(`!!document.querySelector('[aria-label="模拟执行回执"]')&&document.querySelector('[aria-label="执行回读核对"]')?.innerText.includes('回读核对一致')`,kind+' successful receipt');await capture('simulation-'+kind+'.png');
+        }
+        await assert(`(async()=>{const jobs=(await window.electronAPI.retailRequest({op:'executions'})).data;const stock=jobs.find(e=>e.job.scenario==='inventory');const ads=jobs.find(e=>e.job.scenario==='ads');const rows=(await window.electronAPI.retailRequest({op:'signals'})).data.records;return jobs.filter(e=>e.status==='succeeded').length===3&&stock.current.values.pendingPurchaseQuantity===20&&ads.current.values.budgetMinor===90000&&rows.find(r=>r.source==='demo'&&r.kind==='inventory'&&r.row.sku_id==='TEA-500').metrics.available===40;})()`, 'all three UI workflows execute only isolated simulation and inventory is not received as sellable stock');
+        config.llmConnections=[];delete config.defaultLlmConnection;fs.writeFileSync(configPath,JSON.stringify(config,null,2));
 
       }
       if (failures.length) throw new Error(failures.join('\n'));

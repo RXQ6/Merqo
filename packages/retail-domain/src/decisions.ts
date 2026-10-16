@@ -1,4 +1,6 @@
 import { Database } from 'bun:sqlite';
+import { SimulationLedger, installSimulationSchema, requireExecutor } from './simulation';
+import type { ExecutionView, SimulationExecutor } from './simulation';
 import { createHash, randomUUID } from 'node:crypto';
 import type { ApprovalStatus, ApprovalResolution, ApprovalInvalidation, ApprovalView, ApprovalAudit, SimulationApprover } from './approval-types';
 import { simulate, isSignalInvestigation } from './investigations';
@@ -34,8 +36,8 @@ export class DecisionStore {
       this.db.query('ATTACH DATABASE ? AS signals_scope').run(file + '.signals.sqlite');
       this.db.exec('CREATE TABLE IF NOT EXISTS decision_schema(version INTEGER PRIMARY KEY) STRICT');
       const schemaVersion = this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0;
-      if (schemaVersion > 2) throw new Error('决策数据库版本高于当前程序');
-      if (schemaVersion === 1) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v1-' + randomUUID() + '.sqlite');
+      if (schemaVersion > 3) throw new Error('决策数据库版本高于当前程序');
+      if (schemaVersion === 1 || schemaVersion === 2) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
       this.db.transaction(() => { this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS decision_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
         CREATE TABLE IF NOT EXISTS decision_requests(id TEXT PRIMARY KEY,decision_id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),UNIQUE(decision_id,version)) STRICT;
@@ -45,7 +47,8 @@ export class DecisionStore {
       this.db.exec(`CREATE TABLE IF NOT EXISTS approval_resolutions(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS approval_invalidations(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE INDEX IF NOT EXISTS approval_requests_recent ON decision_requests(json_extract(json,'$.requestedAt'));`);
-      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(2)'); }).immediate();
+      installSimulationSchema(this.db);
+      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(3)'); }).immediate();
     } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
@@ -93,6 +96,10 @@ export class DecisionStore {
     try { blockers=this.blockers(d); } catch { blockers=['原调查证据无法校验，请重新调查']; }
     if(request.decisionId!==d.id||request.decisionVersion!==d.version||request.actionHash!==d.actionHash||request.policyVersion!==d.policyVersion||request.expiresAt!==d.expiresAt) blockers.push('申请与决策版本、摘要或有效期绑定不一致');
     if(resolution&&(resolution.actionHash!==request.actionHash||resolution.decisionVersion!==request.decisionVersion||resolution.decisionId!==d.id||resolution.policyVersion!==d.policyVersion||resolution.evidenceHash!==d.evidenceHash||resolution.reportHash!==d.reportHash||resolution.expiresAt!==d.expiresAt)) blockers.push('审批结论与当前申请绑定不一致');
+    if(resolution?.decision==='approved') {
+      const jobRow=this.db.query<{id:string},[string]>('SELECT id FROM simulation_jobs WHERE request_id=?').get(request.id);
+      if(jobRow){const ledger=new SimulationLedger(this.db,this.workspaceId);const view=ledger.view(jobRow.id);if(!view.receipt){const conflict=ledger.targetConflict(view.job);if(conflict)blockers.push(conflict);}}
+    }
     let cause: ApprovalInvalidation['status'] | null=null;
     if(latest.version!==d.version) {cause='superseded';blockers.unshift('决策已保存新版本，旧申请与批准已失效');}
     else if(!Number.isFinite(Date.parse(request.expiresAt))||Date.now()>=Date.parse(request.expiresAt)) {cause='expired';blockers.unshift('申请有效期已过，需要保存新版本并重新提交');}
@@ -137,11 +144,45 @@ export class DecisionStore {
       if(view.status!=='pending'||view.blockers.length)return {error:'不能处理审批：'+(view.blockers.join('；')||view.status),view};
       const d=view.decision;const resolution:ApprovalResolution={id:randomUUID(),requestId,decisionId:d.id,decisionVersion:d.version,actionHash:d.actionHash,policyVersion:d.policyVersion,evidenceHash:d.evidenceHash,reportHash:d.reportHash,expiresAt:d.expiresAt,decision:choice==='approve'?'approved':'rejected',reason,resolvedAt:new Date().toISOString(),actor};
       this.db.query('INSERT INTO approval_resolutions VALUES(?,?)').run(requestId,JSON.stringify(resolution));
+      if(resolution.decision==='approved')new SimulationLedger(this.db,this.workspaceId).queue(d,resolution);
       this.db.query('INSERT INTO decision_events(decision_id,version,event,at,actor) VALUES(?,?,?,?,?)').run(d.id,d.version,choice==='approve'?'approval_approved':'approval_rejected',resolution.resolvedAt,actor.id);
       return {error:null,view:this.approvalView(request)};
     }).immediate();
     // Keep invalidation/audit writes even when processing is refused.
     if(outcome.error)throw new Error(outcome.error);return outcome.view;
+  }
+  executions(): ExecutionView[] {
+    return this.db.transaction(()=>{
+      const ledger=new SimulationLedger(this.db,this.workspaceId);
+      for(const row of this.db.query<JsonRow,[]>("SELECT json FROM decision_requests WHERE id IN (SELECT request_id FROM approval_resolutions) AND id NOT IN (SELECT request_id FROM simulation_jobs)").all()) {
+        const approval=this.approvalView(JSON.parse(row.json) as ApprovalRequest);
+        if(approval.status==='approved'&&approval.resolution)ledger.queue(approval.decision,approval.resolution,true);
+      }
+      return ledger.list().map(view=>{
+        const row=this.db.query<JsonRow,[string]>('SELECT json FROM decision_requests WHERE id=?').get(view.job.requestId);
+        if(!row)return {...view,blockers:['原审批申请不存在']};
+        const approval=this.approvalView(JSON.parse(row.json) as ApprovalRequest);
+        return {...view,blockers:view.receipt?[]:approval.status==='approved'?approval.blockers:[...approval.blockers,'当前审批状态：'+approval.status]};
+      });
+    }).immediate();
+  }
+  executeSimulation(id:string,expectedVersion:number,expectedActionHash:string,actor:SimulationExecutor|null):ExecutionView {
+    requireExecutor(actor);
+    return this.db.transaction(()=>{
+      const ledger=new SimulationLedger(this.db,this.workspaceId);const job=ledger.job(id);
+      if(job.decisionVersion!==expectedVersion||job.actionHash!==expectedActionHash)throw new Error('执行版本或动作摘要不匹配，请刷新执行项');
+      const row=this.db.query<JsonRow,[string]>('SELECT json FROM decision_requests WHERE id=?').get(job.requestId);if(!row)throw new Error('执行申请不存在');
+      const approval=this.approvalView(JSON.parse(row.json) as ApprovalRequest);const d=approval.decision;const resolution=approval.resolution;
+      if(!resolution||resolution.id!==job.resolutionId||resolution.decision!=='approved'||job.decisionId!==d.id||job.evidenceHash!==d.evidenceHash||job.reportHash!==d.reportHash||job.policyVersion!==d.policyVersion||job.expiresAt!==d.expiresAt||job.actionHash!==d.actionHash)throw new Error('执行项与原批准绑定不一致');
+      ledger.assertBinding(job,d,resolution);
+      // A stored success is historical proof, never a new grant; retry does not write again.
+      if(ledger.view(id).receipt)return ledger.view(id);
+      if(approval.status!=='approved'||approval.blockers.length)return ledger.fail(id,'执行前校验失败：'+(approval.blockers.join('；')||approval.status),actor);
+      return ledger.execute(id,actor);
+    }).immediate();
+  }
+  reconcileExecution(id:string,actor:SimulationExecutor|null):ExecutionView {
+    requireExecutor(actor);return this.db.transaction(()=>new SimulationLedger(this.db,this.workspaceId).reconcile(id,actor)).immediate();
   }
   private save(d: DecisionDraft, event: string): void {
     this.db.query('INSERT INTO decisions VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,json=excluded.json').run(d.id, d.investigationId, d.version, JSON.stringify(d));

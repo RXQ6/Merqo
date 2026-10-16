@@ -1,9 +1,10 @@
 import type { AnyInvestigation } from './investigations';
+import type { ExecutionView } from './simulation';
 import type { DecisionDraft } from './decisions';
 const escape = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/([\\`*_{}\[\]()#!|])/g, '\\$1').replace(/\r?\n/g, ' ');
-export function exportInvestigation(run: AnyInvestigation, format: 'json' | 'md', decisions: DecisionDraft[] = []): { filename: string; mime: string; content: string } {
+export function exportInvestigation(run: AnyInvestigation, format: 'json' | 'md', decisions: DecisionDraft[] = [], executions: ExecutionView[] = []): { filename: string; mime: string; content: string } {
   const evidenceIndex = run.trace.filter(t => t.stage === 'investigate').map(t => ({ id: t.evidenceId, tool: t.tool, transport: t.transport ?? 'legacy_in_process', at: t.at }));
-  const bundle = { schemaVersion: 1, exportedAt: new Date().toISOString(), runId: run.id, scenario: run.scenario ?? 'margin', source: run.evidence.source, mode: run.mode, warning: '历史证据与模型观点，不构成批准或经营执行授权。', evidenceIndex, investigation: run, decisions };
+  const bundle = { schemaVersion: 1, exportedAt: new Date().toISOString(), runId: run.id, scenario: run.scenario ?? 'margin', source: run.evidence.source, mode: run.mode, warning: '历史证据与模型观点，不构成批准或经营执行授权。', evidenceIndex, investigation: run, decisions, executions };
   const filename = `merqo-investigation-${run.id}.${format}`;
   if (format === 'json') return { filename, mime: 'application/json', content: JSON.stringify(bundle, null, 2) };
   const report = run.report;

@@ -6,7 +6,7 @@ import { RetailStore } from '../packages/retail-domain/src/store.ts';
 import { RetailRequestSchema } from '../packages/retail-domain/src/operations.ts';
 import { InvestigationStore } from '../packages/retail-domain/src/investigation-store.ts';
 import { SignalStore } from '../packages/retail-domain/src/signal-store.ts';
-import { previewSignals } from '../packages/retail-domain/src/signals.ts';
+import { previewSignals, INVENTORY_EXECUTION_DEMO } from '../packages/retail-domain/src/signals.ts';
 import type { InvestigationReport, Trace } from '../packages/retail-domain/src/investigations.ts';
 import { z } from 'zod';
 // Concurrent readers may initialize a new SQLite WAL/schema at the same time.
@@ -38,25 +38,34 @@ try {
     console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [investigations.update(id, { ...(event ? { event } : {}), ...(report ? { report } : {}), ...(error ? { error } : {}), ...(model ? { model } : {}) })] }));
   } else {
     const request = RetailRequestSchema.parse(input);
-    if (request.op === 'signals' || request.op === 'signals_demo' || request.op === 'signals_preview' || request.op === 'signals_import') {
+    if (request.op === 'signals' || request.op === 'signals_demo' || request.op === 'signals_replenishment_demo' || request.op === 'signals_preview' || request.op === 'signals_import') {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
       if (request.op === 'signals_preview') console.log(JSON.stringify({ ok: true, kind: 'signals_preview', data: previewSignals(request.kind, request.csv, request.mapping) }));
       else if (request.op === 'signals_import') { const result = signals.import(request.kind, request.csv, request.mapping, 'csv'); console.log(JSON.stringify({ ok: true, kind: 'signals', data: result.data, notice: result.notice })); }
+      else if(request.op==='signals_replenishment_demo'){const result=signals.import('inventory',INVENTORY_EXECUTION_DEMO,undefined,'demo');console.log(JSON.stringify({ok:true,kind:'signals',data:result.data,notice:'已载入1天交期的合成补货流程演示；原5天样例可重新载入。'}));}
       else console.log(JSON.stringify({ ok: true, kind: 'signals', data: request.op === 'signals_demo' ? signals.demo() : signals.snapshot() }));
     }
-    else if (request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op.startsWith('decision_')) {
+    else if (request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile' || request.op.startsWith('decision_')) {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
       let evidence: import('../packages/retail-domain/src/decisions').DraftEvidence[] | undefined;
       const current = () => evidence ??= [...store!.snapshot().records, ...signals!.snapshot().records];
       const workspaceId = process.argv[4] || 'local-' + createHash('sha256').update(resolve(file)).digest('hex').slice(0, 24);
       decisions = openStore(() => new DecisionStore(file, workspaceId, current));
-      if (request.op === 'approvals' || request.op === 'approval_resolve') {
+      if (request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile') {
+        let selectedId: string | undefined;
+        const actor = process.argv[5] === 'local-simulation-executor' ? {id:'local-simulation-executor',role:'executor',environment:'simulation'} as const : null;
+        if(request.op==='simulation_execute')selectedId=decisions.executeSimulation(request.id,request.expectedVersion,request.expectedActionHash,actor).job.id;
+        if(request.op==='execution_reconcile')selectedId=decisions.reconcileExecution(request.id,actor).job.id;
+        console.log(JSON.stringify({ok:true,kind:'executions',data:decisions.executions(),...(selectedId?{selectedId}:{})}));
+      } else if (request.op === 'approvals' || request.op === 'approval_resolve') {
         let selectedId: string | undefined;
         if (request.op === 'approval_resolve') selectedId = decisions.resolveApproval(request.requestId, request.expectedVersion, request.expectedActionHash, request.choice, request.reason, process.argv[5] === 'local-simulation-approver' ? {id:'local-simulation-approver',role:'approver',environment:'simulation'} : null).id;
         console.log(JSON.stringify({ok:true,kind:'approvals',data:decisions.approvals(),...(selectedId?{selectedId}:{})}));
       } else if (request.op === 'investigation_export') {
         const run = investigations.get(request.id);
-        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, decisions.forInvestigation(run.id).flatMap(d => decisions!.history(d.id))) }));
+        const drafts=decisions.forInvestigation(run.id).flatMap(d=>decisions!.history(d.id));
+        const ids=new Set(drafts.map(d=>d.id));
+        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, drafts, decisions.executions().filter(e=>ids.has(e.job.decisionId))) }));
       } else {
         let selectedId: string | undefined; let history;
         if (request.op === 'decision_create') selectedId = decisions.create(request.investigationId, request.kind, request.note).id;

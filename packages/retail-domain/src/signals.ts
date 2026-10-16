@@ -103,6 +103,7 @@ export const INVENTORY_DEMO = csv(INVENTORY_FIELDS, [
   { ...shared, sku_id: 'COFFEE-12', product_name: '醇香挂耳咖啡', spec: '12袋礼盒', warehouse_id: 'WH-01', recent_sales_qty: 70, baseline_sales_qty: 70, on_hand: 310, reserved: 10, inbound_qty: 0, inbound_eta: null, lead_days: 3 },
   { ...shared, sku_id: 'OAT-1000', product_name: '原味燕麦奶', spec: '1000ml', warehouse_id: 'WH-01', recent_sales_qty: null, baseline_sales_qty: 100, on_hand: 40, reserved: 5, inbound_qty: 60, inbound_eta: null, lead_days: 4 },
 ]);
+export const INVENTORY_EXECUTION_DEMO = INVENTORY_DEMO.replace(',2026-10-20,5', ',2026-10-20,1');
 export const ADS_DEMO = csv(ADS_FIELDS, [
   { ...shared, sku_id: 'TEA-500', campaign_id: 'CMP-TEA', currency: 'CNY', attribution_window: '7d_click', baseline_attribution_window: '7d_click', spend_minor: 100000, attributed_revenue_minor: 180000, clicks: 1000, conversions: 30, baseline_spend_minor: 100000, baseline_revenue_minor: 300000, baseline_clicks: 1000, baseline_conversions: 50 },
   { ...shared, sku_id: 'COFFEE-12', campaign_id: 'CMP-COFFEE', currency: 'CNY', attribution_window: '7d_click', baseline_attribution_window: '7d_click', spend_minor: 100000, attributed_revenue_minor: 320000, clicks: 1000, conversions: 60, baseline_spend_minor: 100000, baseline_revenue_minor: 300000, baseline_clicks: 1000, baseline_conversions: 50 },

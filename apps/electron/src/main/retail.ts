@@ -19,7 +19,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null;
       if (!workspace || workspace.remoteServer) throw new Error('请选择本机 Workspace；远程经营数据暂不支持');
       const request = RetailRequestSchema.parse(input);
-      const readOnly = ['snapshot', 'signals', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals'].includes(request.op);
+      const readOnly = ['snapshot', 'signals', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions'].includes(request.op);
       if ((readers.get(event.sender.id) ?? 0) >= 4) throw new Error('并发读取过多，请稍后重试');
       if (!readOnly && active.has(event.sender.id)) throw new Error('上一个经营数据请求尚未完成，请稍后重试');
       const root = process.env.CRAFT_APP_ROOT || process.cwd();
@@ -30,9 +30,9 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workerRequest = async (payload: unknown): Promise<RetailReply> => {
         return await new Promise<RetailReply>((resolve, reject) => {
           const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
-          const child = spawn(process.env.CRAFT_BUN || 'bun', [worker, join(workspace.rootPath, 'retail', 'operations.sqlite'), workspace.name, workspaceId!, request.op === 'approval_resolve' ? 'local-simulation-approver' : 'local-analyst'], { cwd: root, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+          const child = spawn(process.env.CRAFT_BUN || 'bun', [worker, join(workspace.rootPath, 'retail', 'operations.sqlite'), workspace.name, workspaceId!, request.op === 'approval_resolve' ? 'local-simulation-approver' : request.op === 'simulation_execute' || request.op === 'execution_reconcile' ? 'local-simulation-executor' : 'local-analyst'], { cwd: root, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
           let output = '', errorText = '', settled = false;
-          const timer = setTimeout(() => { settled = true; child.kill(); reject(new Error('经营数据请求超时，请稍后重新读取导入记录确认结果')); }, 30000);
+          const timer = setTimeout(() => { settled = true; child.kill(); reject(new Error('经营数据请求超时，结果待确认；请刷新对应记录核对结果，不要连续重试')); }, 30000);
           child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8');
           child.stdout.on('data', (chunk: string) => { output += chunk; if (output.length > 32_000_000) { child.kill(); } });
           child.stderr.on('data', (chunk: string) => { if (errorText.length < 2000) errorText += chunk; });

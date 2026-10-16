@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-16",
+  "scope": "M3 single-action local simulation execution; no real platform writes or compensation",
+  "domain": {
+    "passed": 105,
+    "failed": 0,
+    "assertions": 453,
+    "typecheck": "passed"
+  },
+  "transport": {
+    "passed": 2,
+    "assertions": 1244
+  },
+  "fullTypecheck": "passed",
+  "build": "passed with inherited chunk-size warnings",
+  "mcpChecks": 6,
+  "native": [
+    {
+      "ok": true,
+      "phase": "initial",
+      "checks": [
+        "startup preserves original desktop workspace",
+        "Windows separate title strip removed while caption capabilities remain enabled",
+        "retail analysis shares native sidebar and panel chrome",
+        "demo totals match independently calculated revenue and gross profit",
+        "retail content inherits desktop background token",
+        "native desktop and retail navigation round trip retains persisted data",
+        "original sidebar navigation remains usable",
+        "evidence drawer shows formula, margin and source hash",
+        "evidence participates in native dismissible layer stack",
+        "start investigation is visible and missing model is not simulated as success",
+        "real inference adapter executes six local HTTP contract calls with no native tool authority",
+        "desktop investigation uses four actual MCP stdio tool calls",
+        "JSON and Markdown download through native desktop and retain frozen evidence index",
+        "duplicate simulated approval requests are idempotent",
+        "approval requires an explicit reason",
+        "approval actor comes from server, forged identity rejects and retries remain idempotent",
+        "explicit local simulation confirmation is required",
+        "execution is server-scoped, idempotent and isolated from source snapshots",
+        "decision draft, exact-version simulation submission, revision and superseded request work in desktop",
+        "approve, execute isolated simulation, supersede old approval, reject revision and preserve history without real business writes",
+        "report export includes decision history, superseded request and execution receipt",
+        "two deterministic scenarios and evidence are displayed",
+        "renderer cannot forge investigation completion",
+        "explicit offline replay remains distinct from model investigation",
+        "inventory model conditional plans",
+        "inventory plan does not erase pre-arrival gap",
+        "ads model conditional plans",
+        "ads budget scales revenue at unchanged ROAS",
+        "all three scenarios and offline replay consume actual MCP evidence",
+        "inventory and ads model contracts, readonly Reviewer and explicit offline plans passed",
+        "unified anomaly center excludes all four normal rows across three scenarios",
+        "repeat file is idempotent",
+        "correction changes current SKU to 33.33% while retaining source separation",
+        "IPC rejects renderer-supplied workspace scope",
+        "IPC rejects business execution operations",
+        "inventory coverage and ROAS decline match independent arithmetic",
+        "scenario evidence shows rule, formula and immutable source hash",
+        "two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center",
+        "concurrent read refreshes do not block page remounts",
+        "all three UI workflows execute only isolated simulation and inventory is not received as sellable stock"
+      ],
+      "error": null,
+      "failures": []
+    },
+    {
+      "ok": true,
+      "phase": "restart",
+      "checks": [
+        "startup preserves original desktop workspace",
+        "Windows separate title strip removed while caption capabilities remain enabled",
+        "retail analysis shares native sidebar and panel chrome",
+        "demo survives application restart",
+        "all three scenario histories survive restart",
+        "legacy margin report retains calculations",
+        "corrected margin survives application restart",
+        "inventory and advertising corrections survive restart",
+        "versioned draft and superseded approval request survive restart",
+        "superseded approval is visible and rejected decision cannot be approved again",
+        "successful simulation and reconciliation survive restart without another execution"
+      ],
+      "error": null,
+      "failures": []
+    }
+  ],
+  "queryPlans": [
+    {
+      "sql": "SELECT id FROM simulation_jobs ORDER BY json_extract(json,'$.createdAt') DESC,rowid DESC LIMIT 100",
+      "plan": [
+        {
+          "id": 5,
+          "parent": 0,
+          "notused": 223,
+          "detail": "SCAN simulation_jobs USING INDEX simulation_jobs_recent"
+        }
+      ]
+    },
+    {
+      "sql": "SELECT json FROM simulation_receipts WHERE job_id=?",
+      "plan": [
+        {
+          "id": 3,
+          "parent": 0,
+          "notused": 39,
+          "detail": "SEARCH simulation_receipts USING INDEX sqlite_autoindex_simulation_receipts_1 (job_id=?)"
+        }
+      ]
+    },
+    {
+      "sql": "SELECT id,json FROM simulation_attempts WHERE job_id=? ORDER BY id DESC LIMIT 50",
+      "plan": [
+        {
+          "id": 5,
+          "parent": 0,
+          "notused": 62,
+          "detail": "SEARCH simulation_attempts USING INDEX simulation_attempts_job (job_id=?)"
+        }
+      ]
+    },
+    {
+      "sql": "SELECT id,json FROM simulation_reconciliations WHERE job_id=? ORDER BY id DESC LIMIT 1",
+      "plan": [
+        {
+          "id": 5,
+          "parent": 0,
+          "notused": 62,
+          "detail": "SEARCH simulation_reconciliations USING INDEX simulation_checks_job (job_id=?)"
+        }
+      ]
+    }
+  ],
+  "evaluationBoundary": "Isolated native desktop with local HTTP contract responses; no new live-model quality evaluation",
+  "remaining": [
+    "compensation and renewed approval",
+    "external unknown-outcome handling",
+    "multi-action partial success",
+    "production independent identity and platform adapters",
+    "operating outcome review, Case and packaging"
+  ]
+}

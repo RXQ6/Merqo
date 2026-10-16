@@ -1,6 +1,6 @@
 export const draftStateLabels = { draft:'草稿',pending_approval:'模拟待审批',approved:'模拟已批准',rejected:'已驳回',superseded:'已被新版本替代',expired:'已过期',invalidated:'证据或规则失效' };
-const labels:Record<string,string>={couponMinor:'商家券 / 件',revenueMinor:'商品收入 / 件',marginBps:'毛利率',available:'即时可售',coverageDays:'覆盖天数',proposedQuantity:'补货草稿量',leadDays:'常规交期天数',spendMinor:'模拟花费条件值',hypotheticalRevenueMinor:'归因成交额条件值',roas:'效率不变 ROAS'};
+const labels:Record<string,string>={budgetMinor:'模拟预算',pendingPurchaseQuantity:'待受理补货请求量',couponMinor:'商家券 / 件',revenueMinor:'商品收入 / 件',marginBps:'毛利率',available:'即时可售',coverageDays:'覆盖天数',proposedQuantity:'补货草稿量',leadDays:'常规交期天数',spendMinor:'模拟花费条件值',hypotheticalRevenueMinor:'归因成交额条件值',roas:'效率不变 ROAS'};
 const value=(key:string,n:number|null|undefined)=>n===undefined?'不适用':n===null?'待补证':/Minor$/.test(key)?`¥${(n/100).toFixed(2)}`:key==='marginBps'?`${(n/100).toFixed(2)}%`:Number.isInteger(n)?String(n):n.toFixed(2);
-export function DecisionValues({before,after,label='决策前后值'}:{before:Record<string,number|null>;after:Record<string,number|null>;label?:string}) {
- return <div className="retail-table-wrap"><table aria-label={label}><thead><tr><th>指标</th><th>原值</th><th>方案条件值</th></tr></thead><tbody>{[...new Set([...Object.keys(before),...Object.keys(after)])].map(key=><tr key={key}><td>{labels[key]??key}</td><td>{value(key,before[key])}</td><td>{value(key,after[key])}</td></tr>)}</tbody></table></div>;
+export function DecisionValues({before,after,label='决策前后值',afterTitle='方案条件值'}:{before:Record<string,number|null>;after:Record<string,number|null>;label?:string;afterTitle?:string}) {
+ return <div className="retail-table-wrap"><table aria-label={label}><thead><tr><th>指标</th><th>原值</th><th>{afterTitle}</th></tr></thead><tbody>{[...new Set([...Object.keys(before),...Object.keys(after)])].map(key=><tr key={key}><td>{labels[key]??key}</td><td>{value(key,before[key])}</td><td>{value(key,after[key])}</td></tr>)}</tbody></table></div>;
 }

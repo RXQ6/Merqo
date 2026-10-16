@@ -102,6 +102,7 @@ export class RetailStore {
     if (request.op === 'investigate' || request.op === 'investigations') throw new Error('调查请求必须通过调查服务处理');
     if (request.op === 'preview') return { ok: true, kind: 'preview', data: previewCsv(request.csv, request.mapping) };
     if (request.op === 'snapshot') return { ok: true, kind: 'snapshot', data: this.snapshot() };
+    if (request.op !== 'demo' && request.op !== 'import') throw new Error('请求必须由调查或决策服务处理');
     const result = request.op === 'demo' ? this.import(DEMO_CSV, undefined, 'demo') : this.import(request.csv, request.mapping, 'csv');
     return { ok: true, kind: 'snapshot', data: result.snapshot, notice: result.notice };
   }

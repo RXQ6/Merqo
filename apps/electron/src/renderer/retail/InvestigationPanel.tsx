@@ -10,9 +10,11 @@ const detail = (e: Evidence) => 'spec' in e.row ? e.row.spec : 'campaign_id' in 
 const names = {margin:'促销毛利调查',inventory:'缺货风险调查',ads:'广告回报调查'};
 const states = { running: '调查中', completed: '分析完成', needs_evidence: '待补证 / 待复核', failed: '调查失败' };
 const amount = (n: number | null) => n === null ? '待补证' : `¥${(n / 100).toFixed(2)}`;
-export function InvestigationPanel({ target, onBack }: { target: Evidence | null; onBack: () => void }) {
+export function InvestigationPanel({ target, onBack, onDraft }: { target: Evidence | null; onBack: () => void; onDraft: (run: AnyInvestigation) => void }) {
   const [runs, setRuns] = useState<AnyInvestigation[]>([]);
   const [selectedId, setSelectedId] = useState('');
+  const [exporting,setExporting]=useState(false); const [exportError,setExportError]=useState('');
+  const exportReport=async(format:'json'|'md')=>{if(!selected||exporting)return;setExporting(true);setExportError('');try{const reply=await window.electronAPI.retailRequest({op:'investigation_export',id:selected.id,format});if(!reply.ok)throw new Error(reply.error);if(reply.kind!=='export')throw new Error('报告导出类型不符');const url=URL.createObjectURL(new Blob([reply.content],{type:reply.mime}));const a=document.createElement('a');a.href=url;a.download=reply.filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){setExportError(e instanceof Error?e.message:'导出失败');}finally{setExporting(false);}};
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const alive = useRef(true); const pending = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false }; }, []);
@@ -48,6 +50,7 @@ export function InvestigationPanel({ target, onBack }: { target: Evidence | null
   const citation = (id: string) => <a key={id} href={`#investigation-evidence-${selected?.trace.findIndex(t => t.evidenceId === id)}`} title={id}>[{id.split(':').at(-1)}]</a>;
   return <section data-testid="retail-investigation" className="retail-investigation">
     <div className="retail-section-title"><div><h2>{names[scenario]}</h2><p>只读调查 → 证据归纳 → 条件测算 → 复核。当前不提供审批或改价。</p></div><button onClick={onBack}>返回经营总览</button></div>
+    {exportError && <div className="retail-alert error" role="alert">{exportError}</div>}
     {error && <div className="retail-alert error" role="alert">{error}<button disabled={busy} onClick={() => void call({ op: 'investigations' })}>重新读取调查</button></div>}
     <div className="retail-investigation-layout">
       <aside className="retail-investigation-list" aria-label="调查记录"><div className="retail-inline-actions"><strong>最近调查</strong><button disabled={busy} onClick={() => void call({ op: 'investigations' })}>刷新</button></div>
@@ -60,7 +63,7 @@ export function InvestigationPanel({ target, onBack }: { target: Evidence | null
         {selected && <><p role="status" className="retail-investigation-status">{states[selected.state]} · {selected.mode === 'replay' ? '离线规则演示，未调用模型' : selected.model ?? (selected.state === 'running' ? '正在检查模型连接' : '未建立模型连接')}{selected.state === 'running' ? ' · 最长 5 分钟，最多 12 次决策与 1 次复核' : ''}</p>
           {selected.error && <div className="retail-alert error" role="alert">{selected.error}</div>}
           <p className="retail-muted">证据来自创建调查时的冻结快照。历史分析不代表当前实时状态；模型观点仍需人工核验。</p>
-          {report && <><h3>调查摘要</h3><p>{report.summary}</p>
+          <div className="retail-inline-actions"><button disabled={exporting} onClick={()=>void exportReport('md')}>导出 Markdown</button><button disabled={exporting} onClick={()=>void exportReport('json')}>导出报告与证据 JSON</button>{report&&<button className="retail-primary" onClick={()=>onDraft(selected)}>生成决策草稿</button>}</div>{report && <><h3>调查摘要</h3><p>{report.summary}</p>
             <h3>观察与证据</h3><ul>{report.observations.map((o, i) => <li key={i}>{o.text} <span className="retail-citations">{o.evidenceIds.map(citation)}</span></li>)}</ul>
             <h3>原因假设（尚未证实）</h3>{report.hypotheses.length ? <ul>{report.hypotheses.map((o, i) => <li key={i}>{o.text} <span className="retail-citations">{o.evidenceIds.map(citation)}</span></li>)}</ul> : <p>暂无可支持的原因假设。</p>}
             <h3>替代解释</h3><ul>{report.alternatives.map((o, i) => <li key={i}>{o}</li>)}</ul>
@@ -70,7 +73,7 @@ export function InvestigationPanel({ target, onBack }: { target: Evidence | null
             <h3>{report.reviewer.mode === 'model' ? '只读 Reviewer 复核' : '离线规则复核'}</h3><p>{({ passed: '分析复核通过，不构成执行授权', needs_evidence: '需要补证', rejected: '复核驳回' })[report.reviewer.verdict]}</p><ul>{report.reviewer.notes.map((v, i) => <li key={i}>{v}</li>)}</ul>
           </>}
           <h3>调查过程与原始证据</h3>{!selected.trace.length && <p className="retail-muted">{selected.state === 'running' ? '正在连接模型，工具返回后会显示在这里。' : '尚未产生工具证据。'}</p>}
-          {selected.trace.map((event, i) => <details key={i} id={`investigation-evidence-${i}`}><summary>{event.stage === 'review' ? '复核' : event.stage === 'contract' ? '格式纠正（未执行请求）' : '只读查询'} · {event.tool} · {new Date(event.at).toLocaleTimeString('zh-CN')}</summary><p className="retail-muted">证据 ID：{event.evidenceId}</p><pre>{JSON.stringify(event.data, null, 2)}</pre></details>)}
+          {selected.trace.map((event, i) => <details key={i} id={`investigation-evidence-${i}`}><summary>{event.stage === 'review' ? '复核' : event.stage === 'contract' ? '格式纠正（未执行请求）' : '只读查询'} · {event.tool}{event.transport === 'mcp_stdio' ? ' · MCP只读查询' : ''} · {new Date(event.at).toLocaleTimeString('zh-CN')}</summary><p className="retail-muted">证据 ID：{event.evidenceId}</p><pre>{JSON.stringify(event.data, null, 2)}</pre></details>)}
           <details><summary>冻结快照与来源摘要</summary><pre>{JSON.stringify(selected.evidence, null, 2)}</pre></details>
         </>}
       </article>

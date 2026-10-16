@@ -6,6 +6,8 @@ import { PanelHeader } from '@/components/app-shell/PanelHeader';
 import { useRegisterDismissibleLayer } from '@/context/DismissibleLayerContext';
 import { SignalsPanel } from './SignalsPanel';
 import type { SignalSnapshot, SignalRecord } from '../../../../../packages/retail-domain/src/signals';
+import { DecisionsPanel } from './DecisionsPanel';
+import type { AnyInvestigation } from '../../../../../packages/retail-domain/src/investigations';
 import { InvestigationPanel } from './InvestigationPanel';
 import './retail.css';
 
@@ -23,10 +25,11 @@ function download(name: string, content: string, mime = 'text/csv;charset=utf-8'
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
+  const [decisionTarget,setDecisionTarget] = useState<AnyInvestigation | null>(null);
   const [investigationTarget, setInvestigationTarget] = useState<EvidenceRecord | SignalRecord | null>(null);
   const [signals, setSignals] = useState<SignalSnapshot | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [page, setPage] = useState<'overview' | 'anomalies' | 'data' | 'investigations' | 'signals'>('overview');
+  const [page, setPage] = useState<'overview' | 'anomalies' | 'data' | 'investigations' | 'signals' | 'decisions'>('overview');
   const [source, setSource] = useState<'demo' | 'csv'>('demo');
   const [shop, setShop] = useState(''); const [channel, setChannel] = useState(''); const [date, setDate] = useState('');
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
@@ -99,9 +102,10 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
       <button aria-current={page === 'data' ? 'page' : undefined} onClick={() => setPage('data')}><FileSpreadsheet size={14}/>数据与导入</button>
       <button aria-current={page === 'signals' ? 'page' : undefined} onClick={() => { setQuery(''); setPage('signals'); }}>库存与广告</button>
       <button aria-current={page === 'investigations' ? 'page' : undefined} onClick={() => { setInvestigationTarget(null); setPage('investigations'); }}>调查记录</button>
+      <button aria-current={page === 'decisions' ? 'page' : undefined} onClick={() => { setDecisionTarget(null); setPage('decisions'); }}>决策草稿</button>
     </nav>
     <main className="retail-main">
-      {page === 'investigations' ? <InvestigationPanel target={investigationTarget} onBack={() => setPage('overview')}/> : <>
+      {page === 'decisions' ? <DecisionsPanel target={decisionTarget} onBack={() => setPage('overview')}/> : page === 'investigations' ? <InvestigationPanel target={investigationTarget} onBack={() => setPage('overview')} onDraft={run => { setDecisionTarget(run); setPage('decisions'); }}/> : <>
       <header className="retail-header"><div><h1>{page === 'overview' ? '商品毛利分析' : page === 'anomalies' ? '经营异常' : page === 'signals' ? '库存与广告' : '经营数据'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : page === 'signals' ? '按相邻等长窗口核对销量、库存覆盖与广告回报。' : page === 'anomalies' ? '按店铺、渠道与经营日期核对三类异常及证据。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
         <div className="retail-header-actions"><button disabled={busy} onClick={() => void request({ op: 'snapshot' })} aria-label="刷新经营数据"><RefreshCw size={17}/></button><button className="retail-primary" disabled={busy} onClick={() => { if (page === 'signals') document.querySelector<HTMLInputElement>('input[aria-label="选择库存或广告 CSV"]')?.click(); else { setPage('data'); fileInput.current?.click(); } }}><FileSpreadsheet size={16}/>{page === 'signals' ? '导入场景 CSV' : '导入毛利 CSV'}</button></div>
       </header>

@@ -2,7 +2,7 @@
 
 **An AI-powered desktop workspace for retail analytics, risk detection, and evidence-backed operational investigations.**
 
-Merqo brings promotion margins, stockout risks, and advertising ROAS into one desktop workspace. Business metrics and anomaly rules are calculated by deterministic code; a bounded, read-only investigation workflow adds evidence-linked explanations and scenario comparisons for all three scenarios.
+Merqo brings promotion margins, stockout risks, and advertising ROAS into one desktop workspace. Business metrics and anomaly rules are calculated by deterministic code; a bounded, read-only investigation workflow adds evidence-linked explanations and scenario comparisons for all three scenarios. Reports can be exported with their evidence, and selected plans become versioned local decision drafts.
 
 Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, Bun, and SQLite**.
 
@@ -17,6 +17,7 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 | Promotion margins | Merchant discounts and subsidy treatment, unit revenue and gross profit, margin alerts, missing-evidence checks |
 | Sales and stockout risk | Adjacent-window sales comparisons, available inventory, coverage days, lead-time buffer and expected inbound arrival checks |
 | Advertising performance | Comparable-window ROAS, relative changes, click conversion rates and attribution consistency checks |
+| Decision drafts | Deterministic before/after values, immutable revisions, action/evidence hashes, expiration checks and a local simulation approval-request inbox |
 | Data and evidence | CSV mapping and preview, validation, quarantined rows, duplicate protection, versioned rules, source hashes and quality reports |
 | Three-scenario investigations | Read-only tool loop, cited observations and hypotheses, alternative explanations, two deterministic scenarios, sequential Reviewer and persistent history |
 
@@ -98,6 +99,16 @@ Runs are limited to five minutes, twelve model decisions and one Reviewer round 
 
 ![Evidence-linked investigation — offline rules demo](docs/images/investigation.png)
 
+## Decision drafts
+
+From a completed investigation, select **生成决策草稿**. Choose one of its computed plans, add a note and save. The **决策草稿** tab shows before/after values, scope, evidence, constraints, version history and submission blockers. Parameter values come from domain code; the browser cannot submit arbitrary prices or quantities.
+
+**提交模拟审批** creates a pending request bound to the exact version, action hash, evidence and expiry. It does not approve or execute anything. Changes create a new version and supersede the previous request. Only fresh synthetic/demo evidence with a model Reviewer pass and feasible constraints can enter this local simulation inbox. Offline reports, evidence gaps, replaced snapshots, expired drafts and imported CSV business data are blocked. The local actor is explicitly a single-user demonstration identity.
+
+Export **Markdown** or **报告与证据 JSON** from an investigation, including failed runs with partial evidence. Files include the run ID, source, evidence index, frozen snapshot, trace, report and up to 30 associated decision revisions. See [acceptance steps](docs/M2-close-acceptance.md).
+
+![Decision draft in the original desktop shell — isolated protocol test](docs/images/decision-draft.png)
+
 ## CSV examples
 
 Download templates in the application or use [fixtures/retail](fixtures/retail):
@@ -126,7 +137,9 @@ Electron main process
 
 The retail investigation loop exposes scoped read-only data tools. It does not expose shell commands, arbitrary file access, arbitrary SQL or business execution. The inherited general Agent workspace is a separate capability surface and does not constitute retail business authorization.
 
-Standalone MCP: `bun scripts/merqo-retail-mcp.ts --workspace <absolute-workspace> --scenario margin|inventory|ads --record <id>`. Each process freezes one existing record, exposes four strict read-only tools and serves its versioned Skill. The desktop currently calls the same domain functions directly; MCP transport integration into its investigation loop remains pending. See [setup and acceptance](docs/M2-investigation.md).
+The desktop investigation now calls the dedicated MCP server over stdio and loads its Skill resource. Every tool result is checked against the frozen investigation scope, including evidence hash, date, SKU, warehouse or campaign.
+
+Standalone MCP: `bun scripts/merqo-retail-mcp.ts --workspace <absolute-workspace> --scenario margin|inventory|ads --record <id>`. Each process freezes one existing record, exposes four strict read-only tools and serves its versioned Skill. Desktop launches use `--run <investigation-id>` so later imports cannot replace the original evidence. Legacy investigation history remains labeled with its original transport. See [setup and acceptance](docs/M2-investigation.md).
 
 Key paths:
 
@@ -153,14 +166,14 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 63 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 77 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
-Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. A live DeepSeek V4 Flash smoke evaluation completed all three synthetic scenarios with cited reports and Reviewer passes. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
+Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
 
 ## Status and roadmap
 
-- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, standalone read-only MCP and versioned Skills.
-- **Next:** close remaining M2 integration gaps and add M3 approval contracts and simulated execution. Historical Case retrieval and desktop-to-MCP transport integration remain pending.
+- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export and versioned decision drafts.
+- **Next:** M3 approval resolution, trusted authorization and simulated execution. Historical Case retrieval, pause/resume and AgentBackend reuse remain pending.
 - **Later:** decision approval, authorized simulated execution, reconciliation, review workflows and Windows packaging.
 
 No real ERP or advertising platform integration, business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
@@ -171,6 +184,8 @@ No real ERP or advertising platform integration, business writes, production mul
 - [Three-scenario verification record](docs/M1-signals-verification.md)
 - [Three-scenario investigation setup and acceptance](docs/M2-investigation.md)
 - [Investigation verification record](docs/M2-verification.md)
+- [MCP, exports and decision draft acceptance](docs/M2-close-acceptance.md)
+- [Decision draft design](docs/M2-close-decision-design.md)
 - [Domain contracts](docs/domain-contracts.md)
 - [Original upstream README](docs/upstream-README.md)
 

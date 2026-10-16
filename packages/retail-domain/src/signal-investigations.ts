@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ReportSchema, parseJson, decisionContract, contractFeedback, InvestigationContractError, runReadonlyReview } from './investigations';
-import type { DraftReport, InvestigationReport, ModelPort, Scenario, SignalInvestigation, Trace } from './investigations';
+import type { DraftReport, InvestigationReport, ModelPort, Scenario, SignalInvestigation, Trace, ReadonlyToolPort } from './investigations';
 import type { AdsRow, InventoryRow, SignalRecord } from './signals';
 
 export const SIGNAL_TOOLS = {
@@ -59,10 +59,10 @@ export function readSignalTool(record: SignalRecord, tool: string): unknown {
   if (tool === 'retail_simulate_actions') return simulateSignal(record);
   return { row: record.row, metrics: record.metrics };
 }
-export async function runSignalInvestigation(run: SignalInvestigation, model: ModelPort | null, emit: (event: Trace) => Promise<void>, skill = signalSkill(run.scenario)): Promise<InvestigationReport> {
+export async function runSignalInvestigation(run: SignalInvestigation, model: ModelPort | null, emit: (event: Trace) => Promise<void>, skill = signalSkill(run.scenario), toolPort?: ReadonlyToolPort): Promise<InvestigationReport> {
   const names = SIGNAL_TOOLS[run.scenario]; const trace: Trace[] = []; const seen = new Set<string>();
   const check = () => { if (Date.now() >= Date.parse(run.deadlineAt)) throw new Error('调查超过 5 分钟预算'); };
-  const query = async (tool: string) => { const t: Trace = { at: new Date().toISOString(), stage: 'investigate', tool, evidenceId: `${run.recordId}:${tool}`, data: readSignalTool(run.evidence, tool) }; trace.push(t); seen.add(tool); await emit(t); };
+  const query = async (tool: string) => { const t: Trace = { at: new Date().toISOString(), stage: 'investigate', tool, evidenceId: `${run.recordId}:${tool}`, data: toolPort ? await toolPort(tool) : readSignalTool(run.evidence, tool), ...(toolPort ? { transport: 'mcp_stdio' as const } : {}) }; trace.push(t); seen.add(tool); await emit(t); };
   const option = run.scenario === 'inventory' ? 'replenish_draft' : 'reduce_budget';
   let draft: DraftReport | undefined;
   if (run.mode === 'replay') {

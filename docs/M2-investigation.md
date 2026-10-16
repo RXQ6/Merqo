@@ -10,7 +10,7 @@
 4. 没有模型时，明确点击“运行离线规则演示”。状态和复核必须显示未调用模型。
 5. 分别选择 TEA-500 的三种场景，核对下面的代码测算。逐条展开事实、假设、替代解释、待补证和原始工具证据，点击引用定位到证据。
 6. 对库存 / 广告 OAT-1000 待补证记录运行离线演示。补货草稿量 / 调整后花费须显示“待补证”，约束未通过；模型复核不能解除缺字段阻断。
-7. 在“调查记录”切换三个场景，退出再启动，历史报告及创建时冻结的证据必须保留。导入修正不会改写历史调查。
+7. 在“调查记录”切换三个场景，退出再启动，历史报告及创建时冻结的证据必须保留。导入修正不会改写历史调查。新调查的四个工具过程应显示“MCP只读查询”。
 
 | TEA-500 场景 | 应见结果 |
 | --- | --- |
@@ -33,7 +33,7 @@ bun scripts/merqo-retail-mcp.ts --workspace "D:\实际Workspace目录" --scenari
 - 使用标准 MCP stdio。stdout 只输出协议消息；工具参数严格为空对象。客户端可读取 `merqo://skills/{scenario}` Markdown 资源。
 - 数据库只读打开，不创建或迁移表。选定证据在启动时冻结，后续导入不改变该进程看到的内容。
 - 返回证据ID、来源摘要、规则与批次、业务日期、读取时间、范围及 partial 标志。不提供写工具。
-- 当前桌面调查直接调用相同领域工具函数，尚未通过 MCP 传输层调用独立 Server；不能将独立协议交付说成桌面 MCP 集成已完成。
+- 桌面调查已通过标准 MCP stdio 调用固定服务，并从MCP资源加载Skill。启动参数为服务端确定的Workspace与run ID；服务只读加载该调查冻结证据。主进程验证范围、证据摘要、批次与规则，失败不降级到进程内工具。旧调查历史保留原transport标识。
 
 ## Skill 与执行边界
 
@@ -45,6 +45,6 @@ bun scripts/merqo-retail-mcp.ts --workspace "D:\实际Workspace目录" --scenari
 
 ## 后续 PRD 项
 
-历史 Case 检索与动作结果复盘尚未实现；现有调查历史不等于 Case Memory。独立证据文件导出、暂停续查、通用 AgentBackend 复用及桌面 MCP 传输集成仍有差距。M3 的审批、业务授权、模拟执行、回读对账、补偿与生产权限，以及 M5 的48+业务评测样例和安装包，均未完成。真实模型的小样本验收不能替代完整评测门禁。
+历史 Case 检索与动作结果复盘尚未实现；现有调查历史不等于 Case Memory。报告与完整证据已能导出为Markdown/JSON。暂停续查及通用AgentBackend复用仍有差距。版本化决策草稿与模拟待审批申请已交付，验收见[M2-close-acceptance.md](M2-close-acceptance.md)。M3 的审批处理、业务授权、模拟执行、回读对账、补偿与生产权限，以及 M5 的48+业务评测样例和安装包，均未完成。真实模型的小样本验收不能替代完整评测门禁。
 
 自动检查：`bun run retail:check`、`bun run retail:check:mcp`、`bun run typecheck:all`、`node scripts/retailpilot-m1-e2e.cjs`。真实模型验收需显式执行 `bun scripts/merqo-model-check.ts --live`，使用现有连接额度，仅发送合成演示数据。

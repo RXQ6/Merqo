@@ -5,6 +5,8 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { strict as assert } from 'node:assert';
+import { InvestigationStore } from '../packages/retail-domain/src/investigation-store';
+import { connectRetailMcp } from '../apps/electron/src/main/retail-mcp';
 import { SignalStore } from '../packages/retail-domain/src/signal-store';
 import { RetailStore } from '../packages/retail-domain/src/store';
 import { DEMO_CSV } from '../packages/retail-domain/src/operations';
@@ -12,10 +14,12 @@ import { ADS_DEMO } from '../packages/retail-domain/src/signals';
 const workspace = mkdtempSync(join(tmpdir(), 'merqo-mcp-')); mkdirSync(join(workspace, 'retail'));
 const margin = new RetailStore(join(workspace, 'retail/operations.sqlite')); margin.import(DEMO_CSV, undefined, 'demo');
 const signals = new SignalStore(join(workspace, 'retail/operations.sqlite.signals.sqlite')); signals.demo();
+const investigations = new InvestigationStore(join(workspace, 'retail/operations.sqlite.investigations.sqlite'));
 const checks: string[] = [];
 try {
   for (const scenario of ['margin', 'inventory', 'ads'] as const) {
     const record = scenario === 'margin' ? margin.snapshot().records.find(r => r.row.sku_id === 'TEA-500')! : signals.snapshot().records.find(r => r.kind === scenario && r.row.sku_id === 'TEA-500')!;
+    const run = scenario === 'margin' ? investigations.create(margin.snapshot().records.find(r=>r.id===record.id)!, 'replay').run : investigations.createSignal(signals.snapshot().records.find(r=>r.id===record.id)!, 'replay').run;
     const client = new Client({ name: 'merqo-protocol-check', version: '1.0.0' });
     const transport = new StdioClientTransport({ command: process.execPath, args: ['scripts/merqo-retail-mcp.ts', '--workspace', workspace, '--scenario', scenario, '--record', record.id], cwd: resolve('.'), stderr: 'pipe' });
     try {
@@ -36,7 +40,10 @@ try {
       assert.deepEqual(payload(before), payload(after));
       checks.push(`${scenario}: real stdio tools, scope denial, Skill resource and frozen evidence passed`);
     } finally { await client.close(); }
+    const desktop = await connectRetailMcp(run, workspace);
+    try { const result = await desktop.tool('retail_get_data_health'); assert(JSON.stringify(result).includes('hash')); assert(desktop.skill.includes(`merqo-${scenario}`)); await assert.rejects(desktop.tool('execute_purchase')); checks.push(`${scenario}: desktop MCP adapter validates frozen run scope after correction`); } finally { await desktop.close(); }
+    investigations.update(run.id,{error:'protocol test complete'});
   }
   mkdirSync('artifacts/m2', { recursive: true }); writeFileSync('artifacts/m2/mcp-check.json', JSON.stringify({ ok: true, checks }, null, 2));
   console.log(checks.join('\n'));
-} finally { signals.close(); margin.close(); rmSync(workspace, { recursive: true, force: true }); }
+} finally { investigations.close(); signals.close(); margin.close(); rmSync(workspace, { recursive: true, force: true }); }

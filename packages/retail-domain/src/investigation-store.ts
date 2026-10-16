@@ -8,8 +8,9 @@ import type { Investigation, AnyInvestigation, SignalInvestigation, Investigatio
 interface Stored { json: string }
 export class InvestigationStore {
   private readonly db: Database;
-  constructor(file: string) {
-    this.db = new Database(file, { create: true, strict: true });
+  constructor(file: string, private readonly readOnly = false) {
+    this.db = new Database(file, readOnly ? { readonly: true, strict: true } : { create: true, strict: true });
+    if (readOnly) { this.db.exec('PRAGMA busy_timeout=5000'); return; }
     try {
       this.db.exec(`PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL;
         CREATE TABLE IF NOT EXISTS investigations(id TEXT PRIMARY KEY, record_id TEXT NOT NULL, mode TEXT NOT NULL CHECK(mode IN ('model','replay')), state TEXT NOT NULL, updated_at TEXT NOT NULL, deadline_at TEXT NOT NULL, json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
@@ -17,8 +18,10 @@ export class InvestigationStore {
         CREATE INDEX IF NOT EXISTS investigations_recent ON investigations(updated_at DESC);`);
     } catch (error) { this.db.close(); throw error; }
   }
+  get(id: string): AnyInvestigation { const row = this.db.query<Stored, [string]>('SELECT json FROM investigations WHERE id=?').get(id); if (!row) throw new Error('调查不存在'); return JSON.parse(row.json) as AnyInvestigation; }
   close(): void { this.db.close(); }
   private recover(): void {
+    if (this.readOnly) throw new Error('只读调查连接不允许恢复写入');
     const expired = this.db.query<Stored, [string]>("SELECT json FROM investigations WHERE state='running' AND deadline_at<=?").all(new Date().toISOString());
     for (const item of expired) {
       const run = JSON.parse(item.json) as AnyInvestigation;
@@ -44,6 +47,7 @@ export class InvestigationStore {
     return this.createAny(evidence, evidence.kind, mode, retry) as { run: SignalInvestigation; created: boolean };
   }
   private createAny(evidence: EvidenceRecord | SignalRecord, scenario: 'margin' | 'inventory' | 'ads', mode: Investigation['mode'], retry: boolean): { run: AnyInvestigation; created: boolean } {
+    if (this.readOnly) throw new Error('只读调查连接不允许写入');
     return this.db.transaction(() => {
       this.recover();
       const existing = this.db.query<Stored, [string, string]>('SELECT json FROM investigations WHERE record_id=? AND mode=? ORDER BY updated_at DESC,id DESC LIMIT 1').get(evidence.id, mode);
@@ -61,6 +65,7 @@ export class InvestigationStore {
     }).immediate();
   }
   update(id: string, patch: { event?: Trace; report?: InvestigationReport; error?: string; model?: string }): AnyInvestigation {
+    if (this.readOnly) throw new Error('只读调查连接不允许写入');
     return this.db.transaction(() => {
       this.recover();
       const stored = this.db.query<Stored, [string]>('SELECT json FROM investigations WHERE id=?').get(id);

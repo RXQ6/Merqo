@@ -1,11 +1,9 @@
-import { getBundledAssetsDir } from '@craft-agent/shared/utils';
+import { connectRetailMcp } from './retail-mcp';
 import { getDefaultLlmConnection, getLlmConnection } from '@craft-agent/shared/config';
 import { getCredentialManager } from '@craft-agent/shared/credentials';
 import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces';
 import { z } from 'zod';
 import { getModels, getProviders } from '@earendil-works/pi-ai/compat';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { runSignalInvestigation } from '../../../../packages/retail-domain/src/signal-investigations';
 import { runInvestigation, isSignalInvestigation } from '../../../../packages/retail-domain/src/investigations';
 import type { AnyInvestigation, InvestigationReport, ModelPort, Trace } from '../../../../packages/retail-domain/src/investigations';
@@ -57,12 +55,11 @@ export async function executeRetailInvestigation(run: AnyInvestigation, workspac
   try {
     let model: ModelPort | null = null;
     if (run.mode === 'model') { const adapter = await createInvestigationModel(workspacePath, run.deadlineAt); model = adapter.model; await save({ model: adapter.name }); }
-    const scenario = isSignalInvestigation(run) ? run.scenario : 'margin';
-    const skillsRoot = process.env.CRAFT_IS_PACKAGED === '1' ? getBundledAssetsDir('retail-skills') : join(process.env.CRAFT_APP_ROOT || process.cwd(), 'packages/retail-domain/skills');
-    if (!skillsRoot) throw new Error('应用缺少调查 Skill 资源，请重新构建');
-    const skill = readFileSync(join(skillsRoot, scenario, 'SKILL.md'), 'utf8');
-    const report = isSignalInvestigation(run) ? await runSignalInvestigation(run, model, event => save({ event }), skill) : await runInvestigation(run, model, event => save({ event }), skill);
-    await save({ report });
+    const mcp = await connectRetailMcp(run, workspacePath);
+    try {
+      const report = isSignalInvestigation(run) ? await runSignalInvestigation(run, model, event => save({ event }), mcp.skill, mcp.tool) : await runInvestigation(run, model, event => save({ event }), mcp.skill, mcp.tool);
+      await save({ report });
+    } finally { await mcp.close(); }
   } catch (error) {
     // Never persist raw provider responses or credential-bearing URLs.
     const message = error instanceof z.ZodError ? '模型输出不符合调查契约，已拒绝报告，可重新调查' : error instanceof SyntaxError ? '模型未返回有效 JSON，已保留中间过程，可重新调查' : error instanceof Error ? error.message : '调查失败，可重新调查';

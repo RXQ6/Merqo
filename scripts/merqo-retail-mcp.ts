@@ -3,19 +3,20 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { readFileSync } from 'node:fs';
 import { resolve, isAbsolute } from 'node:path';
 import { z } from 'zod';
-import { loadReadonlyScope, scopedToolNames, callReadonlyTool } from '../packages/retail-domain/src/readonly-tools';
+import { loadReadonlyScope, loadReadonlyRunScope, scopedToolNames, callReadonlyTool } from '../packages/retail-domain/src/readonly-tools';
 
 const options: Record<string, string> = {};
 for (let index = 2; index < process.argv.length; index += 2) {
   const flag = process.argv[index]; const value = process.argv[index + 1];
-  if (!flag || !['--workspace', '--scenario', '--record'].includes(flag) || !value || options[flag]) throw new Error('用法：bun scripts/merqo-retail-mcp.ts --workspace <本机Workspace绝对路径> --scenario margin|inventory|ads --record <记录ID>');
+  if (!flag || !['--workspace', '--scenario', '--record', '--run'].includes(flag) || !value || options[flag]) throw new Error('用法：bun scripts/merqo-retail-mcp.ts --workspace <本机Workspace绝对路径> --scenario margin|inventory|ads --record <记录ID>');
   options[flag] = value;
 }
-const scenario = z.enum(['margin', 'inventory', 'ads']).parse(options['--scenario']);
-const record = z.string().min(1).max(64).parse(options['--record']);
+const runId = options['--run'] ? z.string().uuid().parse(options['--run']) : null;
+if (runId && (options['--scenario'] || options['--record'])) throw new Error('run 与 scenario/record 不能同时指定');
 const workspace = z.string().min(1).parse(options['--workspace']);
 if (!isAbsolute(workspace)) throw new Error('必须提供绝对 Workspace 路径');
-const scope = loadReadonlyScope(resolve(workspace), scenario, record);
+const scope = runId ? loadReadonlyRunScope(resolve(workspace), runId) : loadReadonlyScope(resolve(workspace), z.enum(['margin', 'inventory', 'ads']).parse(options['--scenario']), z.string().min(1).max(64).parse(options['--record']));
+const scenario = scope.scenario;
 const skill = readFileSync(new URL(`../packages/retail-domain/skills/${scenario}/SKILL.md`, import.meta.url), 'utf8');
 const server = new McpServer({ name: 'merqo-retail-readonly', version: '1.0.0' });
 for (const name of scopedToolNames(scope)) {

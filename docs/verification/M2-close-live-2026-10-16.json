@@ -1,0 +1,433 @@
+{
+  "evaluatedAt": "2026-10-16T04:02:47.077Z",
+  "syntheticOnly": true,
+  "scope": "Three synthetic cases; actual stdio MCP and existing configured DeepSeek connection. Not a complete business evaluation.",
+  "results": [
+    {
+      "scenario": "margin",
+      "state": "needs_evidence",
+      "modelCalls": 6,
+      "elapsedMs": 11317,
+      "transport": "mcp_stdio",
+      "evidenceIds": [
+        "e52ca24223635358fdf11b09:retail_get_data_health",
+        "e52ca24223635358fdf11b09:retail_get_sku_context",
+        "e52ca24223635358fdf11b09:retail_get_promotions",
+        "e52ca24223635358fdf11b09:retail_simulate_actions"
+      ],
+      "report": {
+        "summary": "TEA-500 在 demo-nanfeng 线上商城 2026-10-14 快照：售价10000分、商家券2000分、满减1000分，单件毛利1000分、毛利率1429bps，低于演示20%阈值；快照不完整，仅支持条件测算。",
+        "observations": [
+          {
+            "text": "数据健康检查显示 issues 为空，但 partial=true，为静态日快照，缺逐单优惠分摊、实时库存与历史对照，不可直接执行。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_data_health"
+            ]
+          },
+          {
+            "text": "SKU 上下文：成本6000分、售价对应收入7000分、已售40件，单件毛利1000分，毛利率1429bps，可售110件、在途60件。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_sku_context"
+            ]
+          },
+          {
+            "text": "促销明细：价10000分、商家券2000分、满减1000分、平台补贴0分，计算后收入7000分、毛利1000分、毛利率1429bps。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions"
+            ]
+          },
+          {
+            "text": "条件测算：保持现状 passed=false（未达20%演示毛利阈值）；商家券减至1500分时毛利1500分、毛利率2000bps、passed=true。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          }
+        ],
+        "hypotheses": [
+          {
+            "text": "商家券可能是毛利率低于演示阈值的主要可调因素，但快照缺少逐单分摊，无法确认券的实际核销与归因。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions",
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          }
+        ],
+        "unknowns": [
+          "逐单优惠分摊与真实核销率",
+          "需求弹性及降价/减券后的销量变化",
+          "同期历史对照与活动基线",
+          "库存周转与在途60件的到货时点",
+          "平台补贴未来是否延续",
+          "是否存在未记录的渠道费用或履约成本",
+          "仅有静态日快照，缺少实时状态、逐单优惠分摊及需求弹性证据"
+        ],
+        "alternatives": [
+          "毛利偏低可能来自定价与成本结构本身，而非仅商家券",
+          "满减1000分或平台补贴规则变化也可能影响结果",
+          "已售40件可能受季节或流量波动影响，与促销强度无直接因果",
+          "快照导入延迟或口径差异可能造成金额偏差"
+        ],
+        "options": [
+          {
+            "kind": "observe",
+            "rationale": "先补齐逐单分摊、历史对照与库存数据再判断；当前 partial 快照不足以支持经营动作。"
+          },
+          {
+            "kind": "reduce_coupon",
+            "rationale": "仅作条件测算：商家券2000分降至1500分时毛利率达2000bps；未测算弹性与销量，不代表可实际改优惠。"
+          }
+        ],
+        "scenarios": [
+          {
+            "kind": "observe",
+            "title": "不调整，补证并继续观察",
+            "rationale": "先补齐逐单分摊、历史对照与库存数据再判断；当前 partial 快照不足以支持经营动作。",
+            "couponMinor": 2000,
+            "revenueMinor": 7000,
+            "profitMinor": 1000,
+            "marginBps": 1429,
+            "passed": false,
+            "constraints": [
+              "未达到 20% 演示毛利阈值"
+            ],
+            "assumptions": [
+              "售价、成本、满减及补贴保持不变",
+              "未测算需求弹性和优惠变更后的销量",
+              "仅历史快照分析，执行前须重新核对时效与业务权限"
+            ]
+          },
+          {
+            "kind": "reduce_coupon",
+            "title": "减少商家券（条件测算）",
+            "rationale": "仅作条件测算：商家券2000分降至1500分时毛利率达2000bps；未测算弹性与销量，不代表可实际改优惠。",
+            "couponMinor": 1500,
+            "revenueMinor": 7500,
+            "profitMinor": 1500,
+            "marginBps": 2000,
+            "passed": true,
+            "constraints": [],
+            "assumptions": [
+              "售价、成本、满减及补贴保持不变",
+              "未测算需求弹性和优惠变更后的销量",
+              "仅历史快照分析，执行前须重新核对时效与业务权限"
+            ]
+          }
+        ],
+        "reviewer": {
+          "verdict": "needs_evidence",
+          "notes": [
+            "观察与假设基本分离：observations 只陈述证据返回的字段值，hypotheses 使用“可能/无法确认”并标注证据，未将推断写成事实。",
+            "引用与结论一致性总体成立：毛利率1429bps、毛利1000分、售价收入7000分均由三条证据的 calculation 直接支持；条件测算 reduce_coupon 的1500分/1500分/2000bps/passed=true 与 simulate_actions 返回值一致。",
+            "口径核对正确：draft 明确区分“售价10000分”与“收入7000分”，未把售价当作收入，未把毛利误称为净利润，也未承诺收益；passed 被限定为演示毛利阈值，非利润承诺。",
+            "措辞已按要求弱化：hypotheses 用“可能”，测算标题与 rationale 标注“条件测算”“不代表可实际改优惠”，未形成执行指令或收益承诺。",
+            "仍有需注意的表述：summary 中“低于演示20%阈值”宜确认“演示阈值”属于规则参数而非业务硬性目标，避免被读作标准结论。",
+            "partial=true 与 issues 为空并存，说明 issues 为空仅代表当前校验项无异常，不代表数据完整；draft 已在多处提示不可直接执行，处理得当。",
+            "unknowns 与 alternatives 覆盖了逐单分摊、核销率、弹性、库存到货、补贴与渠道费用等关键缺口，支撑 needs_evidence 而非 rejected。",
+            "若后续要给出可执行建议，需补充逐单优惠分摊与真实核销、历史基线、弹性测算；当前 reduce_coupon 场景应继续标注为条件测算。",
+            "draft 未包含净利润或承诺收益表述，符合静态数据不得进入执行的要求；结论层级应保持为观察与条件测算，不升级为经营动作。",
+            "仅完成历史快照分析；未接入审批与业务执行"
+          ],
+          "mode": "model"
+        }
+      }
+    },
+    {
+      "scenario": "inventory",
+      "state": "completed",
+      "modelCalls": 6,
+      "elapsedMs": 12654,
+      "transport": "mcp_stdio",
+      "evidenceIds": [
+        "9382e4ceb21d9f53235960dc:retail_get_data_health",
+        "9382e4ceb21d9f53235960dc:retail_get_sku_context",
+        "9382e4ceb21d9f53235960dc:retail_get_inventory",
+        "9382e4ceb21d9f53235960dc:retail_simulate_actions"
+      ],
+      "report": {
+        "summary": "TEA-500在WH-01即时可售40瓶，覆盖2天，低于5天常规交期；观察窗销量140，高于对照窗210的下降33.33%，出现覆盖不足、销量下滑和到货晚于覆盖期三项标记。在途100瓶ETA 2026-10-20，不可计入即时可售。两个条件方案已通过工具测算，均未创建采购单或执行动作。",
+        "observations": [
+          {
+            "text": "即时可售=40瓶（现存50−占用10），覆盖2天，日均销量20瓶；三项标记：覆盖不足补货交期加2天缓冲、相邻等长窗口销量下降至少20%、预计到货晚于当前销量下库存覆盖期。",
+            "evidenceIds": [
+              "9382e4ceb21d9f53235960dc:retail_get_inventory",
+              "9382e4ceb21d9f53235960dc:retail_get_data_health"
+            ]
+          },
+          {
+            "text": "观察窗销量140对比对照窗210，salesChangeBps为-3333，即下降约33.33%；工具未提供归因。",
+            "evidenceIds": [
+              "9382e4ceb21d9f53235960dc:retail_get_sku_context"
+            ]
+          },
+          {
+            "text": "在途100瓶ETA为2026-10-20，晚于按当前日均销量计算的2天覆盖期；在途不计入即时可售。",
+            "evidenceIds": [
+              "9382e4ceb21d9f53235960dc:retail_get_inventory",
+              "9382e4ceb21d9f53235960dc:retail_get_data_health"
+            ]
+          },
+          {
+            "text": "条件测算：观察方案可用40瓶、日均20、覆盖2天、交期5天、及时在途0、目标7天；补货草稿测算目标库存140、建议量100，但常规交期超过当前覆盖期，不能消除到货前缺口，故passed=false。",
+            "evidenceIds": [
+              "9382e4ceb21d9f53235960dc:retail_simulate_actions"
+            ]
+          }
+        ],
+        "hypotheses": [
+          {
+            "text": "假设：销量下滑可能与库存覆盖不足并存，但工具明确销量下降不能直接归因为缺货，需进一步核验。",
+            "evidenceIds": [
+              "9382e4ceb21d9f53235960dc:retail_get_data_health",
+              "9382e4ceb21d9f53235960dc:retail_get_inventory"
+            ]
+          },
+          {
+            "text": "假设：若在途100瓶不能按期到货，缺口将由2天覆盖期与5天交期共同放大，需核查加急或调拨可行性。",
+            "evidenceIds": [
+              "9382e4ceb21d9f53235960dc:retail_simulate_actions"
+            ]
+          }
+        ],
+        "unknowns": [
+          "销量下降33.33%的具体原因（流量、价格、竞争、促销或数据口径）",
+          "在途100瓶实际到货ETA与供应商履约能力",
+          "常规交期、供应商容量、最小起订量和资金约束",
+          "是否存在可用的加急或仓间调拨渠道",
+          "是否存在缺货期间的替代品或替代渠道影响",
+          "静态快照不代表实时状态，缺少真实业务权限与执行前校验"
+        ],
+        "alternatives": [
+          "销量下降由需求端变化导致，而非库存覆盖不足",
+          "数据为静态窗口快照，销量变化可能受口径或采集时间差异影响",
+          "在途到货可能早于ETA，实际缺口小于测算结果"
+        ],
+        "options": [
+          {
+            "kind": "observe",
+            "rationale": "不新增补货，核验销量与在途：保持即时可售40瓶、覆盖2天、交期5天基准，人工核实在途到货与销量变化真因，作为后续条件测算前提。"
+          },
+          {
+            "kind": "replenish_draft",
+            "rationale": "补货草稿量条件测算：目标7天、目标库存140瓶、建议量100瓶，但常规交期超过覆盖期，不能消除到货前缺口，须先核查加急或调拨；未创建采购单。"
+          }
+        ],
+        "scenarios": [
+          {
+            "couponMinor": null,
+            "revenueMinor": null,
+            "profitMinor": null,
+            "marginBps": null,
+            "kind": "observe",
+            "title": "不新增补货，核验销量与在途",
+            "rationale": "不新增补货，核验销量与在途：保持即时可售40瓶、覆盖2天、交期5天基准，人工核实在途到货与销量变化真因，作为后续条件测算前提。",
+            "values": {
+              "available": 40,
+              "dailySales": 20,
+              "coverageDays": 2,
+              "leadDays": 5,
+              "timelyInbound": 0,
+              "targetDays": 7,
+              "targetStock": 140,
+              "proposedQuantity": 0
+            },
+            "passed": true,
+            "constraints": [],
+            "assumptions": [
+              "观察窗日均销量保持不变，未建立需求预测模型",
+              "仅将预计在现有库存覆盖期内到货的在途用于条件测算，仍须人工核验",
+              "常规交期、供应商容量、最小起订量和资金约束须另行核验；未创建采购单"
+            ]
+          },
+          {
+            "couponMinor": null,
+            "revenueMinor": null,
+            "profitMinor": null,
+            "marginBps": null,
+            "kind": "replenish_draft",
+            "title": "补货草稿量（条件测算）",
+            "rationale": "补货草稿量条件测算：目标7天、目标库存140瓶、建议量100瓶，但常规交期超过覆盖期，不能消除到货前缺口，须先核查加急或调拨；未创建采购单。",
+            "values": {
+              "available": 40,
+              "dailySales": 20,
+              "coverageDays": 2,
+              "leadDays": 5,
+              "timelyInbound": 0,
+              "targetDays": 7,
+              "targetStock": 140,
+              "proposedQuantity": 100
+            },
+            "passed": false,
+            "constraints": [
+              "常规交期超过当前覆盖期，不能消除到货前缺口；需核查加急或调拨"
+            ],
+            "assumptions": [
+              "观察窗日均销量保持不变，未建立需求预测模型",
+              "仅将预计在现有库存覆盖期内到货的在途用于条件测算，仍须人工核验",
+              "常规交期、供应商容量、最小起订量和资金约束须另行核验；未创建采购单"
+            ]
+          }
+        ],
+        "reviewer": {
+          "verdict": "passed",
+          "notes": [
+            "引用一致性：各项结论均有对应证据。即时可售40瓶、覆盖2天、日均20瓶、三项标记均可由retail_get_inventory的metrics（available=40、coverageDays=2、salesChangeBps=-3333、flags）与retail_get_data_health说明支持；日均20瓶=观察窗销量140÷7天，与证据吻合。",
+            "在途处理正确：inbound_qty=100、eta=2026-10-20晚于按日均20瓶计算的2天覆盖期，草稿与两个scenario均将在途排除在即时可售之外（timelyInbound=0），符合“仅将预计在库存覆盖期内到货的在途用于条件测算”的口径，未误作可售。",
+            "销量因果未被捏造：salesChangeBps=-3333仅表述为“下降约33.33%”，并明确“工具未提供归因”，hypotheses中销量下滑与缺货并存也标注为假设且须进一步核验，未将库存覆盖不足判定为销量下降原因，符合“销量下降不能直接归因为缺货”的证据说明。",
+            "未出现禁止的承诺：草稿与options均未承诺降低预算或提高ROAS，roas字段为null，也无任何折扣、优惠券或盈利承诺，符合只读条件测算定位。",
+            "条件方案与可执行动作已区分：两个scenario标题分别为“不新增补货，核验销量与在途”与“补货草稿量（条件测算）”，assumptions与rationale均声明“未创建采购单或执行动作”，passed=false的方案明确列出“常规交期超过当前覆盖期，不能消除到货前缺口”的约束，未将历史条件方案表述为已执行动作。",
+            "数据口径限制已在证据中标注：静态窗口快照、非实时监控、阈值为版本化演示规则、销量口径一致，alternatives与unknowns也覆盖了口径差异、在途实际ETA、加急/调拨可行性及资金约束等未知项，结论范围为“条件测算”而非确定性承诺。",
+            "复核通过仅代表分析报告完成，不授予补货或预算写权限"
+          ],
+          "mode": "model"
+        }
+      }
+    },
+    {
+      "scenario": "ads",
+      "state": "needs_evidence",
+      "modelCalls": 6,
+      "elapsedMs": 11857,
+      "transport": "mcp_stdio",
+      "evidenceIds": [
+        "aa49a077da876174de1add1f:retail_get_data_health",
+        "aa49a077da876174de1add1f:retail_get_sku_context",
+        "aa49a077da876174de1add1f:retail_get_campaigns",
+        "aa49a077da876174de1add1f:retail_simulate_actions"
+      ],
+      "report": {
+        "summary": "冻结窗口对比显示：CMP-TEA 同口径7d_click ROAS由3.0降至1.8（-4000bps），点击转化率由500bps降至300bps，广告花费与点击量均未变，成交额与转化数下降。数据健康检查无issues，但快照partial且缺库存、自然流量和完整费用证据。方案仅作效率不变演示，未修改Campaign。",
+        "observations": [
+          {
+            "text": "同口径7d_click下ROAS=1.8（180000/100000），基线ROAS=3.0（300000/100000），roasChangeBps=-4000，触发“同口径ROAS相对下降至少20%”标记。",
+            "evidenceIds": [
+              "aa49a077da876174de1add1f:retail_get_campaigns"
+            ]
+          },
+          {
+            "text": "花费100000与点击1000两窗相同，但成交额由300000降至180000、转化数由50降至30，点击转化率由500bps降至300bps。",
+            "evidenceIds": [
+              "aa49a077da876174de1add1f:retail_get_campaigns"
+            ]
+          },
+          {
+            "text": "数据健康：issues为空，快照partial=true；规则版本retail-stock-roas-v1，观察窗与对照窗均为Asia/Shanghai日口径。",
+            "evidenceIds": [
+              "aa49a077da876174de1add1f:retail_get_data_health"
+            ]
+          },
+          {
+            "text": "条件测算：维持100000时演示成交额180000、ROAS1.8；降至90000时演示成交额162000、ROAS1.8，均在“归因效率不变”假设下按花费等比缩放，非预测。",
+            "evidenceIds": [
+              "aa49a077da876174de1add1f:retail_simulate_actions"
+            ]
+          }
+        ],
+        "hypotheses": [
+          {
+            "text": "转化率下降可能由落地页、商品页或渠道流量结构变化导致，而非预算本身。",
+            "evidenceIds": [
+              "aa49a077da876174de1add1f:retail_get_campaigns"
+            ]
+          },
+          {
+            "text": "缺口可能来自归因口径或账单不完整（快照partial），部分成交未被归因。",
+            "evidenceIds": [
+              "aa49a077da876174de1add1f:retail_get_data_health"
+            ]
+          }
+        ],
+        "unknowns": [
+          "商品毛利与净利润",
+          "实时库存与覆盖天数",
+          "自然流量与自然转化",
+          "平台预算上下限",
+          "完整归因账单与漏损",
+          "竞品或价格变动",
+          "促销与优惠券叠加影响",
+          "静态快照不代表实时状态，缺少真实业务权限与执行前校验"
+        ],
+        "alternatives": [
+          "落地页或商品页体验变化影响转化",
+          "季节性或需求波动",
+          "归因窗口或数据管道差异导致成交额漏记",
+          "渠道流量质量下降（无效点击占比上升）",
+          "库存不足导致可售受限"
+        ],
+        "options": [
+          {
+            "kind": "observe",
+            "rationale": "不调整预算，先核验归因口径与经营数据：补商品毛利、实时库存、自然流量与完整归因账单，再决定是否干预。"
+          },
+          {
+            "kind": "reduce_budget",
+            "rationale": "条件测算：预算降低10%至90000，在效率不变假设下演示成交额162000、ROAS1.8。降预算不保证提升ROAS，仅作效率不变演示，执行前须补证。"
+          }
+        ],
+        "scenarios": [
+          {
+            "couponMinor": null,
+            "revenueMinor": null,
+            "profitMinor": null,
+            "marginBps": null,
+            "kind": "observe",
+            "title": "不调整预算，核验归因与经营数据",
+            "rationale": "不调整预算，先核验归因口径与经营数据：补商品毛利、实时库存、自然流量与完整归因账单，再决定是否干预。",
+            "values": {
+              "currentSpendMinor": 100000,
+              "proposedSpendMinor": 100000,
+              "hypotheticalRevenueMinor": 180000,
+              "roas": 1.8,
+              "baselineRoas": 3
+            },
+            "passed": true,
+            "constraints": [],
+            "assumptions": [
+              "归因效率保持不变，按花费同比例缩放成交额；这不是预测结果",
+              "减少花费不保证提升ROAS，未测算销量、自然流量、利润或长期影响",
+              "缺商品毛利、实时库存、平台预算上下限和完整归因账单，实际调整前必须补证；未修改Campaign"
+            ]
+          },
+          {
+            "couponMinor": null,
+            "revenueMinor": null,
+            "profitMinor": null,
+            "marginBps": null,
+            "kind": "reduce_budget",
+            "title": "预算降低 10%（条件测算）",
+            "rationale": "条件测算：预算降低10%至90000，在效率不变假设下演示成交额162000、ROAS1.8。降预算不保证提升ROAS，仅作效率不变演示，执行前须补证。",
+            "values": {
+              "currentSpendMinor": 100000,
+              "proposedSpendMinor": 90000,
+              "hypotheticalRevenueMinor": 162000,
+              "roas": 1.8,
+              "baselineRoas": 3
+            },
+            "passed": true,
+            "constraints": [],
+            "assumptions": [
+              "归因效率保持不变，按花费同比例缩放成交额；这不是预测结果",
+              "减少花费不保证提升ROAS，未测算销量、自然流量、利润或长期影响",
+              "缺商品毛利、实时库存、平台预算上下限和完整归因账单，实际调整前必须补证；未修改Campaign"
+            ]
+          }
+        ],
+        "reviewer": {
+          "verdict": "needs_evidence",
+          "notes": [
+            "引用核对通过：观察项与场景中的数字（ROAS 1.8、基线 3.0、roasChangeBps -4000、花费 100000、点击 1000、成交额 180000 对 300000、转化数 30 对 50、点击转化率 300bps 对 500bps）均可在 retail_get_campaigns 与 retail_simulate_actions 证据中复现。",
+            "因果表述合规：草稿将转化率下降归因为落地页、商品页或渠道流量结构的可能因素（hypotheses），未将 ROAS/转化下降归因于预算本身，也未宣称销量变化由某单一动作导致，无销量因果捏造。",
+            "未把在途当可售：unknowns 明确列出实时库存与覆盖天数缺失，alternatives 提到库存不足导致可售受限，健康检查亦提示缺库存证据，未见将在途库存当作可售的表述。",
+            "未承诺降预算提高 ROAS：reduce_budget 场景明确写明“降预算不保证提升ROAS，仅作效率不变演示”，assumptions 亦声明减少花费不保证提升ROAS、未测算销量/自然流量/利润/长期影响，与证据注记一致。",
+            "历史条件方案与可执行动作未混淆：两个场景假设均标注为条件测算/非预测，且声明“未修改Campaign”，options 中标为演示性质，符合“待补证再干预”的定位。",
+            "数据健康引用一致：evidence 显示 issues 为空、partial=true、ruleVersion 为 retail-stock-roas-v1，草稿转述准确，且据此将结论限定为效率演示而非经营结论。",
+            "但关键证据缺口未闭环：商品毛利、实时库存与覆盖天数、自然流量与自然转化、平台预算上下限、完整归因账单与漏损均缺失，尚不足以支撑任何预算调整动作，故只能给 needs_evidence 而非 passed。",
+            "建议补证顺序：先核验归因口径与账单完整性（排查成交流失/漏记），再补商品毛利与实时库存，最后才评估是否出现渠道流量质量或落地页体验变化，据此决定是否干预。",
+            "若后续以预算调整为可执行动作，须先确认平台预算上下限与目标（毛利/利润而非 ROAS），并注明本演示未测算自然流量挤出与长期效率变化，避免将同比例缩放的演示值误读为可承诺结果。",
+            "复核通过仅代表分析报告完成，不授予补货或预算写权限"
+          ],
+          "mode": "model"
+        }
+      }
+    }
+  ]
+}

@@ -1,3 +1,7 @@
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+import { DecisionStore } from '../packages/retail-domain/src/decisions';
+import { exportInvestigation } from '../packages/retail-domain/src/investigation-export';
 import { RetailStore } from '../packages/retail-domain/src/store.ts';
 import { RetailRequestSchema } from '../packages/retail-domain/src/operations.ts';
 import { InvestigationStore } from '../packages/retail-domain/src/investigation-store.ts';
@@ -22,6 +26,7 @@ if (!file) throw new Error('Missing trusted database path');
 let store: RetailStore | undefined;
 let investigations: InvestigationStore | undefined;
 let signals: SignalStore | undefined;
+let decisions: DecisionStore | undefined;
 try {
   const input: unknown = JSON.parse(await Bun.stdin.text());
   store = openStore(() => new RetailStore(file, process.argv[3] || '当前 Workspace'));
@@ -38,6 +43,24 @@ try {
       if (request.op === 'signals_preview') console.log(JSON.stringify({ ok: true, kind: 'signals_preview', data: previewSignals(request.kind, request.csv, request.mapping) }));
       else if (request.op === 'signals_import') { const result = signals.import(request.kind, request.csv, request.mapping, 'csv'); console.log(JSON.stringify({ ok: true, kind: 'signals', data: result.data, notice: result.notice })); }
       else console.log(JSON.stringify({ ok: true, kind: 'signals', data: request.op === 'signals_demo' ? signals.demo() : signals.snapshot() }));
+    }
+    else if (request.op === 'investigation_export' || request.op === 'decisions' || request.op.startsWith('decision_')) {
+      signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
+      let evidence: import('../packages/retail-domain/src/decisions').DraftEvidence[] | undefined;
+      const current = () => evidence ??= [...store!.snapshot().records, ...signals!.snapshot().records];
+      const workspaceId = process.argv[4] || 'local-' + createHash('sha256').update(resolve(file)).digest('hex').slice(0, 24);
+      decisions = openStore(() => new DecisionStore(file, workspaceId, current));
+      if (request.op === 'investigation_export') {
+        const run = investigations.get(request.id);
+        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, decisions.forInvestigation(run.id).flatMap(d => decisions!.history(d.id))) }));
+      } else {
+        let selectedId: string | undefined; let history;
+        if (request.op === 'decision_create') selectedId = decisions.create(request.investigationId, request.kind, request.note).id;
+        else if (request.op === 'decision_revise') selectedId = decisions.revise(request.id, request.expectedVersion, request.kind, request.note).id;
+        else if (request.op === 'decision_submit') selectedId = decisions.submit(request.id, request.expectedVersion).id;
+        else if (request.op === 'decision_history') { selectedId = request.id; history = decisions.history(request.id); }
+        console.log(JSON.stringify({ ok: true, kind: 'decisions', data: decisions.list(), ...(selectedId ? { selectedId } : {}), ...(history ? { history } : {}) }));
+      }
     }
     else if (request.op === 'investigations') console.log(JSON.stringify({ ok: true, kind: 'investigations', data: investigations.listAll(request.recordId) }));
     else if (request.op === 'investigate') {
@@ -64,4 +87,4 @@ try {
 } catch (error) {
   console.log(JSON.stringify({ ok: false, error: error instanceof Error ? error.message : '经营数据处理失败' }));
   process.exitCode = 1;
-} finally { signals?.close(); investigations?.close(); store?.close(); }
+} finally { decisions?.close(); signals?.close(); investigations?.close(); store?.close(); }

@@ -39,7 +39,7 @@ bun scripts/merqo-retail-mcp.ts --workspace "D:\实际Workspace目录" --scenari
 
 `packages/retail-domain/skills/{margin,inventory,ads}/SKILL.md` 是可复用、版本化的调查指令，桌面运行时实际读取它们。`bun run retail:skills` 从核心契约重新生成；构建时复制为应用资源。可单独交给支持 Markdown Skills 的客户端加载，未自动安装到通用 Agent 的 Skills 列表。
 
-主进程复用安全凭据存储，直接推理请求不暴露通用 Agent 工具。单次请求最多90秒；调查总计5分钟、最多12次决策和一次 Reviewer、每工作空间最多两项活动调查。最多两次格式纠正计入12次预算；格式错误请求不执行，保留纠正事件。无效引用、缺工具或错误方案类型仍被拒绝。
+主进程复用安全凭据存储，直接推理请求不暴露通用 Agent 工具。单次请求最多90秒；调查总计5分钟、最多12次决策和一轮 Reviewer（格式错误最多额外纠正一次）、每工作空间最多两项活动调查。最多两次格式纠正计入12次预算；格式错误请求不执行，保留纠正事件。无效引用、缺工具或错误方案类型仍被拒绝。Reviewer根对象只允许verdict与字符串数组notes；纠正失败会显示阶段和字段，不接受无效复核。
 
 调查账本位于 `operations.sqlite.investigations.sqlite`。冻结快照与报告保存在 SQLite。旧毛利记录无需迁移；终态不接受迟到结果。退出中的调查在原期限到期后失败，支持显式重试，未实现自动续跑。
 

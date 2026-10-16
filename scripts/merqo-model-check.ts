@@ -19,6 +19,7 @@ const results: Array<{ scenario: 'margin' | 'inventory' | 'ads'; state: AnyInves
 try {
   data.import(DEMO_CSV, undefined, 'demo'); signals.demo();
   for (const scenario of ['margin', 'inventory', 'ads'] as const) {
+    const selected = process.argv.indexOf('--scenario'); if (selected >= 0 && process.argv[selected + 1] !== scenario) continue;
     const run = scenario === 'margin' ? runs.create(data.snapshot().records.find(r => r.row.sku_id === 'TEA-500')!, 'model').run : runs.createSignal(signals.snapshot().records.find(r => r.kind === scenario && r.row.sku_id === 'TEA-500')!, 'model').run;
     const start = Date.now(); let modelCalls = 0; console.log(`Starting synthetic ${scenario} model evaluation`);
     try {

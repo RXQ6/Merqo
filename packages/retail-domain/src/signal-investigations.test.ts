@@ -75,3 +75,25 @@ test('contract corrections are bounded, counted, and never execute malformed sco
   expect(report.reviewer.verdict).toBe('passed'); expect(events.filter(t => t === 'output_contract')).toHaveLength(1); expect(events.filter(t => t === 'retail_get_inventory')).toHaveLength(1);
   let calls = 0; await expect(runSignalInvestigation(run, async () => { calls++; return 'invalid JSON'; }, async () => {})).rejects.toThrow(); expect(calls).toBe(3);
 });
+
+test('Reviewer format failure gets one scoped correction without rerunning investigation or accepting invalid verdict', async () => {
+  const run = create('ads', 'model'); const good = fixture(run); let reviews = 0; const tools: string[] = [];
+  const report = await runSignalInvestigation(run, async (system, prompt) => {
+    if (system.includes('串行只读 Reviewer') && reviews++ === 0) return '{"verdict":"passed","notes":[{"text":"wrong shape"}]}';
+    return good(system, prompt);
+  }, async event => { tools.push(event.tool); });
+  expect(reviews).toBe(2); expect(report.reviewer.verdict).toBe('passed'); expect(tools.filter(t => t === 'review_output_contract')).toHaveLength(1); expect(tools.filter(t => t === 'retail_get_campaigns')).toHaveLength(1);
+});
+test('repeated malformed review remains failed and explains the field instead of accepting a report', async () => {
+  const run = create('ads', 'model'); const good = fixture(run); let reviews = 0;
+  await expect(runSignalInvestigation(run, async (system, prompt) => {
+    if (system.includes('串行只读 Reviewer')) { reviews++; return '{"verdict":"passed","notes":[{"secret_field":"untrusted-value"}]}'; }
+    return good(system, prompt);
+  }, async () => {})).rejects.toThrow('Reviewer复核输出格式校验失败（notes.[0]');
+  expect(reviews).toBe(2);
+});
+test('missing evidence never upgrades a rejected Reviewer verdict', async () => {
+  const run = create('ads', 'model', 'OAT-1000');
+  const report = await runSignalInvestigation(run, fixture(run, undefined, 'rejected'), async () => {});
+  expect(report.reviewer.verdict).toBe('rejected'); expect(report.scenarios.every(s => !s.passed)).toBe(true);
+});

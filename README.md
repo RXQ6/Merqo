@@ -94,7 +94,7 @@ The investigation workflow queries four scoped, read-only tools, separates obser
 - Model failures produce a visible failure state. They never automatically become offline results.
 - **运行离线规则演示** explicitly runs a fixed-rule demonstration and labels the report accordingly.
 
-Runs are limited to five minutes, twelve model decisions and one Reviewer call, with at most two active investigations per workspace. Intermediate evidence and reports persist. Interrupted runs become retryable failures after their original deadline; automatic model resumption is not implemented.
+Runs are limited to five minutes, twelve model decisions and one Reviewer round (at most two requests including a format correction), with at most two active investigations per workspace. Intermediate evidence and reports persist. Interrupted runs become retryable failures after their original deadline; automatic model resumption is not implemented.
 
 ![Evidence-linked investigation — offline rules demo](docs/images/investigation.png)
 
@@ -153,7 +153,7 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 60 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 63 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
 Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. A live DeepSeek V4 Flash smoke evaluation completed all three synthetic scenarios with cited reports and Reviewer passes. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
 

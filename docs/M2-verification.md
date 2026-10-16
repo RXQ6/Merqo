@@ -6,7 +6,7 @@
 
 | 检查 | 实际结果 / 本机证据 |
 | --- | --- |
-| 领域计算、导入、SQLite、调查及边界 | 60项通过、0失败；领域类型通过，`artifacts/m2-domain-check.log` |
+| 领域计算、导入、SQLite、调查及边界 | 63项通过、0失败；领域类型通过，`artifacts/m2-domain-check.log` |
 | MCP 实际 stdio | 三场景各四个工具、只读声明、空参契约、跨范围与执行请求拒绝、Skill资源、启动证据冻结通过；`artifacts/m2/mcp-check.json` |
 | 全项目类型 | 通过；最终主进程修改另经 Electron 类型复检，`artifacts/m2-all-types.log`、`artifacts/m2-final-electron-types.log` |
 | 传输契约 | 2项通过，`artifacts/m2-transport.log` |
@@ -37,3 +37,13 @@
 尚未交付历史Case检索、领域AgentBackend复用、桌面通过MCP传输调用独立Server、独立证据文件导出、暂停续查、自动续跑。审批、模拟写入、对账与补偿属于后续M3；48+业务样例、完整真实模型评测门禁和安装包属于后续M5。不能把本轮写成整个PRD已完成。
 
 操作路径及MCP启动方法见 [三场景调查验收](M2-investigation.md)。
+
+## 桌面格式失败修复（2026-10-16）
+
+实际桌面广告调查成功查询四类证据后出现格式校验失败。原错误没有保存具体字段，无法从历史记录断言是报告还是Reviewer字段失败；同案例复现中观察到模型把 hypotheses 输出为字符串数组，触发报告契约纠正。
+
+修复：在报告生成阶段传入由Zod生成的完整JSON Schema，明确区分引用对象数组与普通字符串数组；三场景共用严格Reviewer契约，格式失败最多纠正一次。没有放宽字段校验，没有把校验失败自动变成通过，也未重跑已完成的数据工具。再次失败时显示出错阶段和字段路径，不输出原始模型内容或未知字段名。缺证也不能覆盖Reviewer的rejected结论。
+
+新增三项回归涵盖Reviewer错误数组形状后纠正、再次错误后保留失败并给出字段提示、缺证不得上调驳回结论。63项领域检查、Electron类型检查、主进程构建、原生桌面首次/重启流程通过。修复后真实模型三场景均生成引用报告，Reviewer均为needs_evidence；这是正常的业务补证状态，不是格式失败。旧的小样本passed结果只代表当次结果，不作为稳定性保证。
+
+随后正常关闭旧窗口，使用实际工作空间中的同一条TEA-500合成广告记录，经过可见桌面React、preload、IPC、主进程与真实DeepSeek连接重试。新调查 `a228375b-7b9a-49a5-884f-268359e80c59` 状态completed、Reviewer passed，四个工具证据及复核记录完整；未使用离线演示。已检查页面截图，窗口保留在新报告；旧失败记录未修改。本机证据：`artifacts/m2/visible-ads-result.json`、`artifacts/m2/visible-ads.png`。

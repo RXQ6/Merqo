@@ -2,10 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnyInvestigation, Scenario } from '../../../../../packages/retail-domain/src/investigations';
 import type { DecisionDraft } from '../../../../../packages/retail-domain/src/decisions';
 import type { RetailRequest } from '../../../../../packages/retail-domain/src/operations';
-const states = { draft: '草稿', pending_approval: '模拟待审批', superseded: '已被新版本替代', expired: '已过期' };
-const labels: Record<string,string> = { couponMinor:'商家券 / 件', revenueMinor:'商品收入 / 件', marginBps:'毛利率', available:'即时可售', coverageDays:'覆盖天数', proposedQuantity:'补货草稿量', leadDays:'常规交期天数', spendMinor:'模拟花费条件值', hypotheticalRevenueMinor:'归因成交额条件值', roas:'效率不变 ROAS' };
-const value = (key: string, number: number | null | undefined) => number === undefined ? '不适用' : number === null ? '待补证' : /Minor$/.test(key) ? `¥${(number/100).toFixed(2)}` : key==='marginBps' ? `${(number/100).toFixed(2)}%` : Number.isInteger(number) ? String(number) : number.toFixed(2);
-export function DecisionsPanel({ target, onBack }: { target: AnyInvestigation | null; onBack: () => void }) {
+import { DecisionValues, draftStateLabels as states } from './DecisionValues';
+export function DecisionsPanel({ target, onBack, onApproval }: { target: AnyInvestigation | null; onBack: () => void; onApproval: (id:string) => void }) {
   const [items,setItems]=useState<DecisionDraft[]>([]); const [focus,setFocus]=useState(target?'new':'');
   const [history,setHistory]=useState<DecisionDraft[]>([]); const [kind,setKind]=useState<Scenario['kind']>('observe'); const [note,setNote]=useState('');
   const [busy,setBusy]=useState(false); const [error,setError]=useState(''); const [notice,setNotice]=useState('');
@@ -15,7 +13,7 @@ export function DecisionsPanel({ target, onBack }: { target: AnyInvestigation | 
     if(pending.current)return;pending.current=true;setBusy(true);setError('');setNotice('');
     try { const reply=await window.electronAPI.retailRequest(request); if(!reply.ok)throw new Error(reply.error);if(reply.kind!=='decisions')throw new Error('决策服务返回类型不符');if(!alive.current)return;
       setItems(reply.data); if(reply.selectedId)setFocus(reply.selectedId); if(reply.history)setHistory(reply.history);
-      if(request.op==='decision_submit')setNotice('已提交模拟审批；本轮尚未提供批准、驳回或业务执行。');
+      if(request.op==='decision_submit')setNotice('已提交模拟审批，可到审批中心处理；当前不执行业务动作。');
       if(request.op==='decision_create'||request.op==='decision_revise')setNotice('草稿已保存，旧版本及申请保留在版本记录中。');
     }catch(e){if(alive.current)setError(e instanceof Error?e.message:'决策操作失败');}finally{pending.current=false;if(alive.current)setBusy(false);}
   },[]);
@@ -40,11 +38,11 @@ export function DecisionsPanel({ target, onBack }: { target: AnyInvestigation | 
         <div className="retail-inline-actions"><button className="retail-primary" disabled={busy||!options.length} onClick={save}>{selected?'保存新版本':'保存草稿'}</button>{selected&&<><button disabled={busy||dirty||selected.state!=='draft'||!!selected.submissionBlockers.length} onClick={()=>void call({op:'decision_submit',id:selected.id,expectedVersion:selected.version})}>提交模拟审批</button><button disabled={busy} onClick={()=>void call({op:'decision_history',id:selected.id})}>查看版本记录</button></>}</div>
       </>}
       {dirty&&<p role="status" className="retail-muted">有未保存修改，请先保存新版本再提交。</p>}
-      {selected&&<><h3>已保存版本的前后值</h3><p className="retail-muted">表单修改须先保存新版本。广告花费条件值参考历史花费，不是平台当前预算。</p><div className="retail-table-wrap"><table aria-label="决策前后值"><thead><tr><th>指标</th><th>原值</th><th>方案条件值</th></tr></thead><tbody>{[...new Set([...Object.keys(selected.before),...Object.keys(selected.after)])].map(key=><tr key={key}><td>{labels[key]??key}</td><td>{value(key,selected.before[key])}</td><td>{value(key,selected.after[key])}</td></tr>)}</tbody></table></div>
+      {selected&&<><h3>已保存版本的前后值</h3><p className="retail-muted">表单修改须先保存新版本。广告花费条件值参考历史花费，不是平台当前预算。</p><DecisionValues before={selected.before} after={selected.after}/>
         <h3>影响范围与有效期</h3><p>仅 {selected.scope.shop} / {selected.scope.channel} / {selected.scope.sku}{selected.scope.campaign?` / ${selected.scope.campaign}`:''}{selected.scope.warehouse?` / ${selected.scope.warehouse}`:''}。{selected.environment==='simulation'?'只允许本地模拟审批。':'仅保存分析草稿，尚不能进入真实业务审批。'}</p><p>当前版本有效至 {new Date(selected.expiresAt).toLocaleString('zh-CN')}；提交时由服务重新检查。</p>
         <h3>假设与约束</h3><ul>{[...selected.selected.assumptions,...selected.selected.constraints].map((s,i)=><li key={i}>{s}</li>)}</ul>
         <h3>提交检查</h3>{selected.submissionBlockers.length?<ul className="retail-reasons">{selected.submissionBlockers.map((s,i)=><li key={i}>{s}</li>)}</ul>:<p>当前模拟提交检查通过；提交瞬间会再次校验版本、快照和时效。</p>}
-        {selected.request&&<p role="status">申请 {selected.request.id} · 绑定 v{selected.request.decisionVersion} · {states[selected.state]}。审批处理与执行尚未接入。</p>}
+        {selected.request&&<p role="status">申请 {selected.request.id} · 绑定 v{selected.request.decisionVersion} · {states[selected.state]}。当前不执行业务动作。<button className="retail-link" onClick={()=>onApproval(selected.request!.id)}>查看审批</button></p>}
         <details><summary>版本绑定与证据索引</summary><p>来源：{selected.scope.source}；调查：{selected.investigationId}；规则：{selected.ruleVersion}；策略：{selected.policyVersion}</p><p>动作摘要：{selected.actionHash}</p><p>证据摘要：{selected.evidenceHash}</p><ul>{selected.evidenceIds.map(id=><li key={id}>{id}</li>)}</ul></details>
         {!!history.length&&<section aria-label="决策版本记录"><h3>版本记录</h3>{history.map(d=><details key={d.version}><summary>v{d.version} · {states[d.state]} · {new Date(d.updatedAt).toLocaleString('zh-CN')}</summary><p>{d.selected.title}；备注：{d.note||'未填写'}</p><p>动作摘要：{d.actionHash}</p>{d.request&&<p>该版本申请：{d.request.id}（{d.request.status}）</p>}<pre>{JSON.stringify({before:d.before,after:d.after},null,2)}</pre></details>)}</section>}
       </>}

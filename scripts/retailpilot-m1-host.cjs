@@ -84,7 +84,12 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`document.querySelectorAll('[data-testid="signals-inventory"] tbody tr').length===1 && document.querySelectorAll('[data-testid="signals-ads"] tbody tr').length===1`, 'persisted scenario CSV rows');
         await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('990') && document.querySelector('[data-testid="signals-ads"]').innerText.includes('4.00 / 3.00')`, 'inventory and advertising corrections survive restart');
 
-        await click('决策草稿');await waitFor(`document.body.innerText.includes('v2 草稿')`, 'decision version persists across restart');await click('查看版本记录');await waitFor(`document.querySelector('[aria-label="决策版本记录"]')?.innerText.includes('已被新版本替代')`, 'decision request history persists across restart');checks.push('versioned draft and superseded approval request survive restart');
+        await click('决策草稿');await waitFor(`document.body.innerText.includes('v2 已驳回')`, 'decision version and rejection persist across restart');await click('查看版本记录');await waitFor(`document.querySelector('[aria-label="决策版本记录"]')?.innerText.includes('已被新版本替代')`, 'decision request history persists across restart');checks.push('versioned draft and superseded approval request survive restart');
+        await click('审批中心');await waitFor(`!!document.querySelector('select[aria-label="审批状态筛选"]')`, 'approval inbox after restart');
+        await js(`(()=>{const select=document.querySelector('select[aria-label="审批状态筛选"]');select.value='all';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+        await waitFor(`document.querySelector('[aria-label="审批结论"]')?.innerText.includes('还需核对成本口径')`, 'approval resolution and reason survive restart');
+        await assert(`document.querySelector('[data-testid="retail-approvals"]').innerText.includes('已被新版本替代')&&!Array.from(document.querySelectorAll('button')).some(b=>b.textContent.trim()==='批准模拟方案')`, 'superseded approval is visible and rejected decision cannot be approved again');
+
       } else {
         await waitFor(`document.body.innerText.includes('从一组可核对的经营数据开始')`, 'empty state');
         await waitFor(`!!Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()==='载入演示数据'&&!el.disabled)`, 'demo action ready');
@@ -163,14 +168,28 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='提交模拟审批'&&!b.disabled)`, 'simulation request ready');
         await click('提交模拟审批'); await waitFor(`document.querySelector('[data-testid="retail-decisions"]').innerText.includes('模拟待审批')`, 'pending simulation approval');
         await assert(`(async()=>{const d=(await window.electronAPI.retailRequest({op:'decisions'})).data[0];const again=await window.electronAPI.retailRequest({op:'decision_submit',id:d.id,expectedVersion:d.version});return again.ok&&again.data[0].request.id===d.request.id;})()`, 'duplicate simulated approval requests are idempotent');
+        await click('查看审批');await waitFor(`!!document.querySelector('table[aria-label="审批前后值"]')`, 'approval details');
+        await assert(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='批准模拟方案').disabled`, 'approval requires an explicit reason');
+        await js(`(()=>{const input=document.querySelector('textarea[aria-label="审批理由"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,'已核对演示数据与条件约束');input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+        await click('批准模拟方案');await waitFor(`!!document.querySelector('[aria-label="审批结论"]')&&document.querySelector('[data-testid="retail-approvals"]').innerText.includes('模拟已批准')`, 'approved decision recorded');
+        await assert(`(async()=>{const a=(await window.electronAPI.retailRequest({op:'approvals'})).data[0];const forged=await window.electronAPI.retailRequest({op:'approval_resolve',requestId:a.id,expectedVersion:a.decision.version,expectedActionHash:a.decision.actionHash,choice:'approve',reason:'伪造身份',actor:'admin'});const again=await window.electronAPI.retailRequest({op:'approval_resolve',requestId:a.id,expectedVersion:a.decision.version,expectedActionHash:a.decision.actionHash,choice:'approve',reason:'已核对演示数据与条件约束'});return !forged.ok&&again.ok&&again.data[0].resolution.id===a.resolution.id&&a.resolution.actor.id==='local-simulation-approver';})()`, 'approval actor comes from server, forged identity rejects and retries remain idempotent');
+        await capture('approval-approved.png');await click('返回决策草稿');await waitFor(`!!document.querySelector('textarea[aria-label="决策备注"]')`, 'return approved draft');
+
         await js(`(()=>{const input=document.querySelector('textarea[aria-label="决策备注"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,'回归修订v2');input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
         await click('保存新版本'); await waitFor(`document.querySelector('[data-testid="retail-decisions"]').innerText.includes('v2 草稿')`, 'new decision revision');
         await click('查看版本记录');await waitFor(`!!document.querySelector('[aria-label="决策版本记录"]') && document.querySelector('[aria-label="决策版本记录"]').innerText.includes('已被新版本替代')`, 'old request superseded');
         await capture('decision-draft.png');
         checks.push('decision draft, exact-version simulation submission, revision and superseded request work in desktop');
+        await click('提交模拟审批');await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='查看审批')`, 'revision submitted');await click('查看审批');
+        await waitFor(`!!document.querySelector('textarea[aria-label="审批理由"]')`, 'revised approval details');
+        await js(`(()=>{const input=document.querySelector('textarea[aria-label="审批理由"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,'还需核对成本口径');input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+        await click('驳回方案');await waitFor(`document.querySelector('[aria-label="审批结论"]')?.innerText.includes('还需核对成本口径')`, 'rejection reason persists');
+        await capture('approval-rejected.png');checks.push('approve, supersede old approval, reject revision and preserve audit without business execution');
+        await click('返回决策草稿');await waitFor(`document.querySelector('[data-testid="retail-decisions"]')?.innerText.includes('已驳回')`, 'rejected decision status');
+
         await click('调查记录');await waitFor(`!!document.querySelector('[data-testid="retail-investigation"]')&&document.body.innerText.includes('本地协议测试报告')`, 'return to investigated report');
         await click('导出报告与证据 JSON');const revisionExportDeadline=Date.now()+10000;while(downloads.length<3&&Date.now()<revisionExportDeadline)await new Promise(r=>setTimeout(r,100));
-        const revisionExport=JSON.parse(fs.readFileSync(downloads[2].target,'utf8'));if(revisionExport.decisions.length!==2||revisionExport.decisions[1].request.status!=='superseded')throw new Error('Export lacks decision version history');checks.push('report export includes exact run decision history and superseded request');
+        const revisionExport=JSON.parse(fs.readFileSync(downloads[2].target,'utf8'));if(revisionExport.decisions.length!==2||revisionExport.decisions[1].request.status!=='superseded'||revisionExport.decisions[1].approvalResolution?.decision!=='approved'||revisionExport.decisions[0].approvalResolution?.decision!=='rejected')throw new Error('Export lacks decision version history');checks.push('report export includes exact run decision history and superseded request');
 
 
 

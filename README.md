@@ -17,7 +17,7 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 | Promotion margins | Merchant discounts and subsidy treatment, unit revenue and gross profit, margin alerts, missing-evidence checks |
 | Sales and stockout risk | Adjacent-window sales comparisons, available inventory, coverage days, lead-time buffer and expected inbound arrival checks |
 | Advertising performance | Comparable-window ROAS, relative changes, click conversion rates and attribution consistency checks |
-| Decision drafts | Deterministic before/after values, immutable revisions, action/evidence hashes, expiration checks and a local simulation approval-request inbox |
+| Decision drafts | Deterministic before/after values, immutable revisions, action/evidence hashes, expiration checks, simulation approval/rejection and persistent audit history |
 | Data and evidence | CSV mapping and preview, validation, quarantined rows, duplicate protection, versioned rules, source hashes and quality reports |
 | Three-scenario investigations | Read-only tool loop, cited observations and hypotheses, alternative explanations, two deterministic scenarios, sequential Reviewer and persistent history |
 
@@ -109,6 +109,12 @@ Export **Markdown** or **报告与证据 JSON** from an investigation, including
 
 ![Decision draft in the original desktop shell — isolated protocol test](docs/images/decision-draft.png)
 
+## Simulation approvals
+
+Open **审批中心** or select **查看审批** on a submitted draft. Review the exact version, before/after values and evidence, then enter a reason to approve or reject. Revisions supersede older requests; expiry or changed evidence invalidates them without erasing the original conclusion. Processing rechecks all gates in a transaction, and conclusions persist across restarts. This is a single-user local role demonstration; approval does not execute an action. See [approval acceptance](docs/M3-approval-acceptance.md).
+
+![Approval center — isolated protocol test](docs/images/approval-center.png)
+
 ## CSV examples
 
 Download templates in the application or use [fixtures/retail](fixtures/retail):
@@ -166,15 +172,15 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 77 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 89 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
 Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
 
 ## Status and roadmap
 
-- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export and versioned decision drafts.
-- **Next:** M3 approval resolution, trusted authorization and simulated execution. Historical Case retrieval, pause/resume and AgentBackend reuse remain pending.
-- **Later:** decision approval, authorized simulated execution, reconciliation, review workflows and Windows packaging.
+- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit.
+- **Next:** M3 local simulated execution, idempotent receipts and reconciliation. Production multi-user authorization remains pending. Historical Case retrieval, pause/resume and AgentBackend reuse remain pending.
+- **Later:** operational review workflows, production authorization/integrations and Windows packaging.
 
 No real ERP or advertising platform integration, business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
 
@@ -186,6 +192,9 @@ No real ERP or advertising platform integration, business writes, production mul
 - [Investigation verification record](docs/M2-verification.md)
 - [MCP, exports and decision draft acceptance](docs/M2-close-acceptance.md)
 - [Decision draft design](docs/M2-close-decision-design.md)
+- [Simulation approval acceptance](docs/M3-approval-acceptance.md)
+- [Approval design](docs/M3-approval-design.md)
+- [Approval verification](docs/M3-approval-verification.md)
 - [Domain contracts](docs/domain-contracts.md)
 - [Original upstream README](docs/upstream-README.md)
 

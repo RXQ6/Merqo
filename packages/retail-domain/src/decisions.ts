@@ -1,5 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
+import type { ApprovalStatus, ApprovalResolution, ApprovalInvalidation, ApprovalView, ApprovalAudit, SimulationApprover } from './approval-types';
 import { simulate, isSignalInvestigation } from './investigations';
 import { simulateSignal } from './signal-investigations';
 import type { AnyInvestigation, Scenario } from './investigations';
@@ -7,22 +8,22 @@ import type { EvidenceRecord } from './operations';
 import type { SignalRecord } from './signals';
 export type DraftEvidence = EvidenceRecord | SignalRecord;
 export const DECISION_POLICY = 'merqo-simulation-draft-v1';
-export interface ApprovalRequest { id: string; decisionId: string; decisionVersion: number; actionHash: string; policyVersion: string; requestedAt: string; expiresAt: string; requestedBy: 'local-analyst'; status: 'pending' | 'superseded' | 'expired' }
+export interface ApprovalRequest { id: string; decisionId: string; decisionVersion: number; actionHash: string; policyVersion: string; requestedAt: string; expiresAt: string; requestedBy: 'local-analyst'; status: ApprovalStatus }
 export interface DecisionDraft {
   id: string; version: number; workspaceId: string; investigationId: string; scenario: 'margin' | 'inventory' | 'ads';
-  state: 'draft' | 'pending_approval' | 'superseded' | 'expired'; environment: 'simulation' | 'analysis_only';
+  state: 'draft' | 'pending_approval' | 'superseded' | 'expired' | 'approved' | 'rejected' | 'invalidated'; environment: 'simulation' | 'analysis_only';
   selectedKind: Scenario['kind']; selected: Scenario; alternatives: Scenario[];
   scope: { shop: string; channel: string; sku: string; date: string; source: 'demo' | 'csv'; warehouse: string | null; campaign: string | null };
   before: Record<string, number | null>; after: Record<string, number | null>;
   note: string; evidenceIds: string[]; evidenceHash: string; recordId: string; ruleVersion: string; reportHash: string;
   policyVersion: string; actionHash: string; createdAt: string; updatedAt: string; expiresAt: string;
-  submissionBlockers: string[]; request: ApprovalRequest | null;
+  submissionBlockers: string[]; request: ApprovalRequest | null; approvalResolution?: ApprovalResolution | null; approvalInvalidation?: ApprovalInvalidation | null;
 }
 interface JsonRow { json: string }
 const digest = (value: unknown): string => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const hashOf = (e: DraftEvidence): string => 'hash' in e ? e.hash : e.snapshotHash;
 function actionHash(draft: DecisionDraft): string { return digest({ id: draft.id, version: draft.version, workspace: draft.workspaceId, investigation: draft.investigationId, scope: draft.scope, kind: draft.selectedKind, before: draft.before, after: draft.after, selected: draft.selected, evidence: draft.evidenceHash, record: draft.recordId, report: draft.reportHash, policy: draft.policyVersion, expiresAt: draft.expiresAt, rule: draft.ruleVersion, note: draft.note }); }
-/** Local single-user simulation inbox only. No approver identity, approval resolution or business execution. */
+/** Local single-user simulated decisions and approvals. No independent identity assurance or business execution. */
 export class DecisionStore {
   private readonly db: Database;
   constructor(file: string, private readonly workspaceId: string, private readonly current: () => DraftEvidence[]) {
@@ -32,14 +33,19 @@ export class DecisionStore {
       this.db.query('ATTACH DATABASE ? AS business_scope').run(file);
       this.db.query('ATTACH DATABASE ? AS signals_scope').run(file + '.signals.sqlite');
       this.db.exec('CREATE TABLE IF NOT EXISTS decision_schema(version INTEGER PRIMARY KEY) STRICT');
-      if ((this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0) > 1) throw new Error('决策数据库版本高于当前程序');
-      this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
+      const schemaVersion = this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0;
+      if (schemaVersion > 2) throw new Error('决策数据库版本高于当前程序');
+      if (schemaVersion === 1) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v1-' + randomUUID() + '.sqlite');
+      this.db.transaction(() => { this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS decision_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
         CREATE TABLE IF NOT EXISTS decision_requests(id TEXT PRIMARY KEY,decision_id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),UNIQUE(decision_id,version)) STRICT;
         CREATE TABLE IF NOT EXISTS decision_events(id INTEGER PRIMARY KEY,decision_id TEXT NOT NULL,version INTEGER NOT NULL,event TEXT NOT NULL,at TEXT NOT NULL,actor TEXT NOT NULL) STRICT;
         CREATE INDEX IF NOT EXISTS decisions_recent ON decisions(json_extract(json,'$.updatedAt'));
         CREATE INDEX IF NOT EXISTS decision_events_run ON decision_events(decision_id,version,id);`);
-      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(1)');
+      this.db.exec(`CREATE TABLE IF NOT EXISTS approval_resolutions(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
+        CREATE TABLE IF NOT EXISTS approval_invalidations(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
+        CREATE INDEX IF NOT EXISTS approval_requests_recent ON decision_requests(json_extract(json,'$.requestedAt'));`);
+      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(2)'); }).immediate();
     } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
@@ -73,16 +79,70 @@ export class DecisionStore {
     } catch { reasons.push('调查方案与当前测算不一致，请重新调查'); }
     return [...new Set(reasons)];
   }
-  private view(d: DecisionDraft): DecisionDraft {
-    const latest = this.raw(d.id); const stored = this.db.query<JsonRow, [string, number]>('SELECT json FROM decision_requests WHERE decision_id=? AND version=?').get(d.id, d.version);
-    const request = stored ? JSON.parse(stored.json) as ApprovalRequest : null;
-    const expired = Date.now() >= Date.parse(d.expiresAt);
-    if (request) request.status = latest.version !== d.version ? 'superseded' : expired ? 'expired' : 'pending';
-    return { ...d, state: latest.version !== d.version ? 'superseded' : expired ? 'expired' : request ? 'pending_approval' : 'draft', request, submissionBlockers: this.blockers(d) };
+  private requestFor(d: DecisionDraft): ApprovalRequest | null {
+    const row=this.db.query<JsonRow,[string,number]>('SELECT json FROM decision_requests WHERE decision_id=? AND version=?').get(d.id,d.version);
+    return row ? JSON.parse(row.json) as ApprovalRequest : null;
   }
-  list(): DecisionDraft[] { return this.db.query<JsonRow, []>("SELECT json FROM decisions ORDER BY json_extract(json,'$.updatedAt') DESC,rowid DESC LIMIT 50").all().map(r => this.view(JSON.parse(r.json) as DecisionDraft)); }
-  forInvestigation(runId: string): DecisionDraft[] { const row = this.db.query<JsonRow, [string]>('SELECT json FROM decisions WHERE run_id=?').get(runId); return row ? [this.view(JSON.parse(row.json) as DecisionDraft)] : []; }
-  history(id: string): DecisionDraft[] { this.raw(id); return this.db.query<JsonRow, [string]>('SELECT json FROM decision_versions WHERE id=? ORDER BY version DESC LIMIT 30').all(id).map(r => this.view(JSON.parse(r.json) as DecisionDraft)); }
+  private projection(d: DecisionDraft, request: ApprovalRequest): { status: ApprovalStatus; resolution: ApprovalResolution | null; invalidation: ApprovalInvalidation | null; blockers: string[] } {
+    const latest=this.raw(d.id);
+    const resolved=this.db.query<JsonRow,[string]>('SELECT json FROM approval_resolutions WHERE request_id=?').get(request.id);
+    const resolution=resolved ? JSON.parse(resolved.json) as ApprovalResolution : null;
+    const invalid=this.db.query<JsonRow,[string]>('SELECT json FROM approval_invalidations WHERE request_id=?').get(request.id);
+    let invalidation=invalid ? JSON.parse(invalid.json) as ApprovalInvalidation : null;
+    let blockers: string[];
+    try { blockers=this.blockers(d); } catch { blockers=['原调查证据无法校验，请重新调查']; }
+    if(request.decisionId!==d.id||request.decisionVersion!==d.version||request.actionHash!==d.actionHash||request.policyVersion!==d.policyVersion||request.expiresAt!==d.expiresAt) blockers.push('申请与决策版本、摘要或有效期绑定不一致');
+    if(resolution&&(resolution.actionHash!==request.actionHash||resolution.decisionVersion!==request.decisionVersion||resolution.decisionId!==d.id||resolution.policyVersion!==d.policyVersion||resolution.evidenceHash!==d.evidenceHash||resolution.reportHash!==d.reportHash||resolution.expiresAt!==d.expiresAt)) blockers.push('审批结论与当前申请绑定不一致');
+    let cause: ApprovalInvalidation['status'] | null=null;
+    if(latest.version!==d.version) {cause='superseded';blockers.unshift('决策已保存新版本，旧申请与批准已失效');}
+    else if(!Number.isFinite(Date.parse(request.expiresAt))||Date.now()>=Date.parse(request.expiresAt)) {cause='expired';blockers.unshift('申请有效期已过，需要保存新版本并重新提交');}
+    else if(blockers.length) cause='invalidated';
+    if(cause&&!invalidation) {
+      invalidation={requestId:request.id,status:cause,reasons:[...new Set(blockers)],at:new Date().toISOString()};
+      this.db.query('INSERT INTO approval_invalidations VALUES(?,?)').run(request.id,JSON.stringify(invalidation));
+      this.db.query('INSERT INTO decision_events(decision_id,version,event,at,actor) VALUES(?,?,?,?,?)').run(d.id,d.version,'approval_invalidated',invalidation.at,'system-policy');
+    }
+    if(invalidation) blockers=[...new Set([...invalidation.reasons,...blockers])];
+    return {status:latest.version!==d.version?'superseded':invalidation?.status??resolution?.decision??'pending',resolution,invalidation,blockers};
+  }
+  private view(d: DecisionDraft): DecisionDraft {
+    const request=this.requestFor(d);
+    if(request) {const p=this.projection(d,request);return {...d,state:p.status==='pending'?'pending_approval':p.status,request:{...request,status:p.status},submissionBlockers:p.blockers,approvalResolution:p.resolution,approvalInvalidation:p.invalidation};}
+    const latest=this.raw(d.id);return {...d,state:latest.version!==d.version?'superseded':Date.now()>=Date.parse(d.expiresAt)?'expired':'draft',request:null,submissionBlockers:this.blockers(d)};
+  }
+  list(): DecisionDraft[] { return this.db.transaction(()=>this.db.query<JsonRow, []>("SELECT json FROM decisions ORDER BY json_extract(json,'$.updatedAt') DESC,rowid DESC LIMIT 50").all().map(r => this.view(JSON.parse(r.json) as DecisionDraft))).immediate(); }
+  forInvestigation(runId: string): DecisionDraft[] { return this.db.transaction(()=>{const row = this.db.query<JsonRow, [string]>('SELECT json FROM decisions WHERE run_id=?').get(runId); return row ? [this.view(JSON.parse(row.json) as DecisionDraft)] : [];}).immediate(); }
+  history(id: string): DecisionDraft[] { return this.db.transaction(()=>{this.raw(id); return this.db.query<JsonRow, [string]>('SELECT json FROM decision_versions WHERE id=? ORDER BY version DESC LIMIT 30').all(id).map(r => this.view(JSON.parse(r.json) as DecisionDraft));}).immediate(); }
+  private approvalView(request: ApprovalRequest): ApprovalView {
+    this.raw(request.decisionId);
+    const row=this.db.query<JsonRow,[string,number]>('SELECT json FROM decision_versions WHERE id=? AND version=?').get(request.decisionId,request.decisionVersion);
+    if(!row) throw new Error('申请对应的决策版本不存在');
+    const d=JSON.parse(row.json) as DecisionDraft;if(d.workspaceId!==this.workspaceId)throw new Error('申请不属于当前工作空间');
+    const p=this.projection(d,request);
+    const audit=this.db.query<ApprovalAudit,[string,number]>('SELECT id,event,at,actor FROM decision_events WHERE decision_id=? AND version=? ORDER BY id LIMIT 100').all(d.id,d.version).map(e=>({...e,...(e.event==='approval_invalidated'?{reason:p.invalidation?.reasons.join('；')??''}:e.event==='approval_approved'||e.event==='approval_rejected'?{reason:p.resolution?.reason??''}:{})}));
+    let evidence: ApprovalView['evidence']=null;try{const run=this.run(d.investigationId);evidence={observedAt:run.evidence.row.date,importedAt:run.evidence.importedAt,source:run.evidence.source,reviewer:run.report?.reviewer.verdict??'unknown',mode:run.mode};}catch{/* invalidation is already persisted */}
+    return {evidence,id:request.id,status:p.status,decision:{...d,state:p.status==='pending'?'pending_approval':p.status,request:{...request,status:p.status},submissionBlockers:p.blockers,approvalResolution:p.resolution,approvalInvalidation:p.invalidation},resolution:p.resolution,invalidation:p.invalidation,blockers:p.blockers,audit};
+  }
+  approvals(): ApprovalView[] { return this.db.transaction(()=>this.db.query<JsonRow,[]>("SELECT json FROM decision_requests ORDER BY json_extract(json,'$.requestedAt') DESC,rowid DESC LIMIT 100").all().map(r=>this.approvalView(JSON.parse(r.json) as ApprovalRequest))).immediate(); }
+  resolveApproval(requestId:string,expectedVersion:number,expectedActionHash:string,choice:'approve'|'reject',reason:string,actor:SimulationApprover|null): ApprovalView {
+    if(actor?.id!=='local-simulation-approver'||actor.role!=='approver'||actor.environment!=='simulation')throw new Error('缺少服务端模拟审批角色');
+    if(choice!=='approve'&&choice!=='reject')throw new Error('未知审批选择');
+    reason=reason.trim();if(!reason||reason.length>2000)throw new Error('请填写1至2000字的审批理由');
+    const outcome=this.db.transaction(()=>{
+      const row=this.db.query<JsonRow,[string]>('SELECT json FROM decision_requests WHERE id=?').get(requestId);if(!row)throw new Error('审批申请不存在');
+      const request=JSON.parse(row.json) as ApprovalRequest;if(request.id!==requestId)throw new Error('申请标识绑定不一致');
+      const view=this.approvalView(request);
+      if(request.decisionVersion!==expectedVersion||request.actionHash!==expectedActionHash)return {error:'审批版本或参数摘要已变化，请刷新申请',view};
+      if(view.resolution) {if(view.resolution.decision===(choice==='approve'?'approved':'rejected')&&view.resolution.reason===reason)return {error:null,view};return {error:'该申请已有审批结论，不能覆盖，请保存新版本再提交',view};}
+      if(view.status!=='pending'||view.blockers.length)return {error:'不能处理审批：'+(view.blockers.join('；')||view.status),view};
+      const d=view.decision;const resolution:ApprovalResolution={id:randomUUID(),requestId,decisionId:d.id,decisionVersion:d.version,actionHash:d.actionHash,policyVersion:d.policyVersion,evidenceHash:d.evidenceHash,reportHash:d.reportHash,expiresAt:d.expiresAt,decision:choice==='approve'?'approved':'rejected',reason,resolvedAt:new Date().toISOString(),actor};
+      this.db.query('INSERT INTO approval_resolutions VALUES(?,?)').run(requestId,JSON.stringify(resolution));
+      this.db.query('INSERT INTO decision_events(decision_id,version,event,at,actor) VALUES(?,?,?,?,?)').run(d.id,d.version,choice==='approve'?'approval_approved':'approval_rejected',resolution.resolvedAt,actor.id);
+      return {error:null,view:this.approvalView(request)};
+    }).immediate();
+    // Keep invalidation/audit writes even when processing is refused.
+    if(outcome.error)throw new Error(outcome.error);return outcome.view;
+  }
   private save(d: DecisionDraft, event: string): void {
     this.db.query('INSERT INTO decisions VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,json=excluded.json').run(d.id, d.investigationId, d.version, JSON.stringify(d));
     this.db.query('INSERT INTO decision_versions VALUES(?,?,?)').run(d.id, d.version, JSON.stringify(d));
@@ -92,7 +152,7 @@ export class DecisionStore {
     return this.db.transaction(() => { const existing = this.db.query<{id:string}, [string]>('SELECT id FROM decisions WHERE run_id=?').get(runId); if (existing) return this.view(this.raw(existing.id)); const d = this.make(this.run(runId), kind, note); this.save(d, 'created'); return this.view(d); }).immediate();
   }
   revise(id: string, expectedVersion: number, kind: Scenario['kind'], note: string): DecisionDraft {
-    return this.db.transaction(() => { const old = this.raw(id); if (old.version !== expectedVersion) throw new Error('版本冲突：草稿已更新，请刷新后重试'); const d = this.make(this.run(old.investigationId), kind, note, old); this.save(d, 'revised'); return this.view(d); }).immediate();
+    return this.db.transaction(() => { const old = this.raw(id); if (old.version !== expectedVersion) throw new Error('版本冲突：草稿已更新，请刷新后重试'); const d = this.make(this.run(old.investigationId), kind, note, old); this.save(d, 'revised'); const oldRequest=this.requestFor(old);if(oldRequest)this.projection(old,oldRequest); return this.view(d); }).immediate();
   }
   submit(id: string, expectedVersion: number): DecisionDraft {
     // IMMEDIATE locks all three attached databases while source evidence and approval request are checked/written.

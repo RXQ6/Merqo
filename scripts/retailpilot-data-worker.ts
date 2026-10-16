@@ -44,13 +44,17 @@ try {
       else if (request.op === 'signals_import') { const result = signals.import(request.kind, request.csv, request.mapping, 'csv'); console.log(JSON.stringify({ ok: true, kind: 'signals', data: result.data, notice: result.notice })); }
       else console.log(JSON.stringify({ ok: true, kind: 'signals', data: request.op === 'signals_demo' ? signals.demo() : signals.snapshot() }));
     }
-    else if (request.op === 'investigation_export' || request.op === 'decisions' || request.op.startsWith('decision_')) {
+    else if (request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op.startsWith('decision_')) {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
       let evidence: import('../packages/retail-domain/src/decisions').DraftEvidence[] | undefined;
       const current = () => evidence ??= [...store!.snapshot().records, ...signals!.snapshot().records];
       const workspaceId = process.argv[4] || 'local-' + createHash('sha256').update(resolve(file)).digest('hex').slice(0, 24);
       decisions = openStore(() => new DecisionStore(file, workspaceId, current));
-      if (request.op === 'investigation_export') {
+      if (request.op === 'approvals' || request.op === 'approval_resolve') {
+        let selectedId: string | undefined;
+        if (request.op === 'approval_resolve') selectedId = decisions.resolveApproval(request.requestId, request.expectedVersion, request.expectedActionHash, request.choice, request.reason, process.argv[5] === 'local-simulation-approver' ? {id:'local-simulation-approver',role:'approver',environment:'simulation'} : null).id;
+        console.log(JSON.stringify({ok:true,kind:'approvals',data:decisions.approvals(),...(selectedId?{selectedId}:{})}));
+      } else if (request.op === 'investigation_export') {
         const run = investigations.get(request.id);
         console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, decisions.forInvestigation(run.id).flatMap(d => decisions!.history(d.id))) }));
       } else {

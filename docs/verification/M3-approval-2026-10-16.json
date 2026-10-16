@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-16",
+  "scope": "M3 local simulation approval handling; no executor",
+  "domain": {
+    "passed": 89,
+    "failed": 0,
+    "assertions": 348
+  },
+  "transport": {
+    "passed": 2,
+    "assertions": 1244
+  },
+  "typecheck": "passed",
+  "build": "passed",
+  "mcpChecks": 6,
+  "native": [
+    {
+      "ok": true,
+      "phase": "initial",
+      "checks": [
+        "startup preserves original desktop workspace",
+        "Windows separate title strip removed while caption capabilities remain enabled",
+        "retail analysis shares native sidebar and panel chrome",
+        "demo totals match independently calculated revenue and gross profit",
+        "retail content inherits desktop background token",
+        "native desktop and retail navigation round trip retains persisted data",
+        "original sidebar navigation remains usable",
+        "evidence drawer shows formula, margin and source hash",
+        "evidence participates in native dismissible layer stack",
+        "start investigation is visible and missing model is not simulated as success",
+        "real inference adapter executes six local HTTP contract calls with no native tool authority",
+        "desktop investigation uses four actual MCP stdio tool calls",
+        "JSON and Markdown download through native desktop and retain frozen evidence index",
+        "duplicate simulated approval requests are idempotent",
+        "approval requires an explicit reason",
+        "approval actor comes from server, forged identity rejects and retries remain idempotent",
+        "decision draft, exact-version simulation submission, revision and superseded request work in desktop",
+        "approve, supersede old approval, reject revision and preserve audit without business execution",
+        "report export includes exact run decision history and superseded request",
+        "two deterministic scenarios and evidence are displayed",
+        "renderer cannot forge investigation completion",
+        "explicit offline replay remains distinct from model investigation",
+        "inventory model conditional plans",
+        "inventory plan does not erase pre-arrival gap",
+        "ads model conditional plans",
+        "ads budget scales revenue at unchanged ROAS",
+        "all three scenarios and offline replay consume actual MCP evidence",
+        "inventory and ads model contracts, readonly Reviewer and explicit offline plans passed",
+        "unified anomaly center excludes all four normal rows across three scenarios",
+        "repeat file is idempotent",
+        "correction changes current SKU to 33.33% while retaining source separation",
+        "IPC rejects renderer-supplied workspace scope",
+        "IPC rejects business execution operations",
+        "inventory coverage and ROAS decline match independent arithmetic",
+        "scenario evidence shows rule, formula and immutable source hash",
+        "two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center",
+        "concurrent read refreshes do not block page remounts"
+      ],
+      "error": null,
+      "failures": []
+    },
+    {
+      "ok": true,
+      "phase": "restart",
+      "checks": [
+        "startup preserves original desktop workspace",
+        "Windows separate title strip removed while caption capabilities remain enabled",
+        "retail analysis shares native sidebar and panel chrome",
+        "demo survives application restart",
+        "all three scenario histories survive restart",
+        "legacy margin report retains calculations",
+        "corrected margin survives application restart",
+        "inventory and advertising corrections survive restart",
+        "versioned draft and superseded approval request survive restart",
+        "superseded approval is visible and rejected decision cannot be approved again"
+      ],
+      "error": null,
+      "failures": []
+    }
+  ],
+  "modelEvaluation": "Local HTTP contract fixture only; no new live reasoning evaluation",
+  "authorization": "Single-user local simulation role, not production independent approver"
+}

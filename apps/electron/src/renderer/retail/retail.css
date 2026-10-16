@@ -143,3 +143,8 @@
 .retail-draft-field{display:flex;flex-direction:column;gap:8px;margin:16px 0;font-size:12px;color:var(--muted)}
 .retail-draft-field textarea{font:inherit;color:var(--foreground);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:10px;resize:vertical;min-height:80px}
 .retail-draft-field textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.retail-approval-filters{margin:16px 0 24px}.retail-approval-filters label{display:flex;align-items:center;gap:10px;font-size:12px}
+.retail-approval-comment{white-space:pre-wrap;overflow-wrap:anywhere}
+.retail-approval-audit{list-style:none;padding:0!important;border-left:1px solid var(--line)}
+.retail-approval-audit li{padding:0 16px 16px;font-size:12px}.retail-approval-audit span{display:block;color:var(--muted);font-size:11px}

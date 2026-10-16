@@ -1,5 +1,7 @@
 # MCP 集成、导出与决策草稿验收
 
+> 后续进度：M3 已交付本地模拟审批处理、版本失效与审计，见 [审批验收](M3-approval-acceptance.md)。本文保留当时阶段的设计与验证边界；执行器仍未接入。
+
 ## 启动
 
 在项目根目录执行 `bun run retail:build`、`bun run retail:start`。旧窗口使用已加载的旧代码，须退出后启动新版。当前仍显示RetailPilot名称；原桌面布局与主题沿用。

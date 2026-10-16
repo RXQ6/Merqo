@@ -1,7 +1,7 @@
-import { beforeEach, afterEach, test, expect } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { beforeEach, afterEach, test, expect, spyOn } from 'bun:test';
+import { mkdtempSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { Database } from 'bun:sqlite';
 import { RetailStore } from './store';
 import { SignalStore } from './signal-store';
@@ -12,6 +12,7 @@ import { runSignalInvestigation } from './signal-investigations';
 import { exportInvestigation } from './investigation-export';
 import { DEMO_CSV, RetailRequestSchema } from './operations';
 import { ADS_DEMO } from './signals';
+import type { SimulationApprover } from './approval-types';
 import type { AnyInvestigation, ModelPort, Scenario } from './investigations';
 let dir: string; let file: string; let data: RetailStore; let signals: SignalStore; let runs: InvestigationStore; let decisions: DecisionStore;
 const current=()=>[...data.snapshot().records,...signals.snapshot().records];
@@ -80,7 +81,7 @@ test('JSON and Markdown exports retain all evidence and contain untrusted text s
 });
 
 test('future decision schema refuses downgrade before creating new business tables',()=>{
- const db=new Database(file+'.investigations.sqlite');db.exec('DELETE FROM decision_schema;INSERT INTO decision_schema VALUES(2)');
+ const db=new Database(file+'.investigations.sqlite');db.exec('DELETE FROM decision_schema;INSERT INTO decision_schema VALUES(3)');
  expect(()=>new DecisionStore(file,'test-workspace',current)).toThrow('版本高于');db.close();
 });
 
@@ -89,3 +90,70 @@ test('calculation changes require a new reviewed investigation rather than only 
  const db=new Database(file+'.investigations.sqlite');db.query('UPDATE investigations SET json=? WHERE id=?').run(JSON.stringify(run),run.id);db.close();
  expect(()=>decisions.revise(d.id,1,'reduce_coupon','new parameters')).toThrow('测算规则');expect(()=>decisions.submit(d.id,1)).toThrow('不能提交');expect(decisions.list()[0]?.submissionBlockers.join('')).toContain('重新调查');
 });
+
+const approver:SimulationApprover={id:'local-simulation-approver',role:'approver',environment:'simulation'};
+async function pendingApproval(){const run=await complete();const d=decisions.create(run.id,'reduce_coupon','审批用例');return decisions.submit(d.id,1);}
+test('approved exact-version resolution and audit survive restart and never change source business values',async()=>{
+ const d=await pendingApproval();const before=data.snapshot();const r=d.request!;
+ const approved=decisions.resolveApproval(r.id,1,r.actionHash,'approve','演示约束已核对',approver);
+ expect(approved.status).toBe('approved');expect(approved.resolution?.actor).toEqual(approver);expect(approved.resolution?.evidenceHash).toBe(d.evidenceHash);expect(approved.audit.at(-1)?.event).toBe('approval_approved');
+ const repeated=decisions.resolveApproval(r.id,1,r.actionHash,'approve','演示约束已核对',approver);expect(repeated.resolution?.id).toBe(approved.resolution?.id);expect(repeated.audit.filter(e=>e.event==='approval_approved')).toHaveLength(1);
+ decisions.close();decisions=new DecisionStore(file,'test-workspace',current);expect(decisions.approvals()[0]?.status).toBe('approved');expect(decisions.list()[0]?.state).toBe('approved');expect(data.snapshot()).toEqual(before);
+});
+test('rejection requires reason, is immutable, and cannot be overwritten by another connection',async()=>{
+ const d=await pendingApproval();const r=d.request!;expect(()=>decisions.resolveApproval(r.id,1,r.actionHash,'reject',' ',approver)).toThrow('理由');
+ const other=new DecisionStore(file,'test-workspace',current);try{const rejected=other.resolveApproval(r.id,1,r.actionHash,'reject','补齐逐单分摊后再评估',approver);expect(rejected.status).toBe('rejected');expect(()=>decisions.resolveApproval(r.id,1,r.actionHash,'approve','换个结论',approver)).toThrow('不能覆盖');expect(()=>decisions.resolveApproval(r.id,1,r.actionHash,'reject','换个理由',approver)).toThrow('不能覆盖');}finally{other.close();}
+ expect(decisions.approvals()[0]?.resolution?.reason).toBe('补齐逐单分摊后再评估');
+});
+test('new revision supersedes an already approved request and preserves its original conclusion',async()=>{
+ const d=await pendingApproval();const r=d.request!;decisions.resolveApproval(r.id,1,r.actionHash,'approve','旧版本',approver);decisions.revise(d.id,1,'reduce_coupon','新版本');
+ const old=decisions.approvals()[0]!;expect(old.status).toBe('superseded');expect(old.resolution?.decision).toBe('approved');expect(old.invalidation?.status).toBe('superseded');expect(()=>decisions.resolveApproval(r.id,1,r.actionHash,'reject','旧页',approver)).toThrow('不能覆盖');expect(decisions.history(d.id)[1]?.request?.status).toBe('superseded');
+});
+test('evidence changes invalidate pending request and persist even when attempted approval returns an error',async()=>{
+ const d=await pendingApproval();const r=d.request!;data.import(DEMO_CSV.replace('10000,2000,1000','10000,1500,1000'),undefined,'demo');
+ expect(()=>decisions.resolveApproval(r.id,1,r.actionHash,'approve','旧页面',approver)).toThrow('不能处理');
+ decisions.close();decisions=new DecisionStore(file,'test-workspace',current);expect(decisions.approvals()[0]?.status).toBe('invalidated');expect(decisions.approvals()[0]?.resolution).toBeNull();expect(decisions.approvals()[0]?.audit.at(-1)?.actor).toBe('system-policy');
+});
+test('invalidated approval cannot resurrect when evidence callback later reports original values again',async()=>{
+ const d=await pendingApproval();const r=d.request!;decisions.resolveApproval(r.id,1,r.actionHash,'approve','原证据',approver);const saved=current();
+ const stale=new DecisionStore(file,'test-workspace',()=>[]);try{expect(stale.approvals()[0]?.status).toBe('invalidated');}finally{stale.close();}
+ const restored=new DecisionStore(file,'test-workspace',()=>saved);try{const a=restored.approvals()[0]!;expect(a.status).toBe('invalidated');expect(a.resolution?.decision).toBe('approved');expect(a.audit.filter(e=>e.event==='approval_invalidated')).toHaveLength(1);}finally{restored.close();}
+});
+test('expired application latches expiry and never creates a resolution',async()=>{
+ const d=await pendingApproval();const r=d.request!;const db=new Database(file+'.investigations.sqlite');db.query('UPDATE decision_requests SET json=? WHERE id=?').run(JSON.stringify({...r,expiresAt:'2000-01-01T00:00:00Z'}),r.id);
+ expect(()=>decisions.resolveApproval(r.id,1,r.actionHash,'approve','过期申请',approver)).toThrow('有效期');expect(decisions.approvals()[0]?.status).toBe('expired');expect(decisions.approvals()[0]?.resolution).toBeNull();
+ db.query('UPDATE decision_requests SET json=? WHERE id=?').run(JSON.stringify(r),r.id);expect(decisions.approvals()[0]?.status).toBe('expired');db.close();
+});
+test('stale expected version or hash, missing server role and forged renderer identity reject',async()=>{
+ const d=await pendingApproval();const r=d.request!;expect(()=>decisions.resolveApproval(r.id,2,r.actionHash,'approve','stale',approver)).toThrow('版本');expect(()=>decisions.resolveApproval(r.id,1,'a'.repeat(64),'approve','stale',approver)).toThrow('摘要');expect(()=>decisions.resolveApproval(r.id,1,r.actionHash,'approve','no actor',null)).toThrow('服务端');
+ const request={op:'approval_resolve',requestId:r.id,expectedVersion:1,expectedActionHash:r.actionHash,choice:'approve',reason:'ok'};
+ expect(RetailRequestSchema.safeParse(request).success).toBe(true);for(const extra of [{actor:'admin'},{role:'approver'},{workspaceId:'other'},{approvedAt:'2026-01-01'},{after:{couponMinor:0}}])expect(RetailRequestSchema.safeParse({...request,...extra}).success).toBe(false);
+ const other=new DecisionStore(file,'other-workspace',current);try{expect(()=>other.resolveApproval(r.id,1,r.actionHash,'approve','cross scope',approver)).toThrow('工作空间');}finally{other.close();}
+});
+test('report changes invalidate an existing approval and retain the original report digest',async()=>{
+ const d=await pendingApproval();const r=d.request!;const approved=decisions.resolveApproval(r.id,1,r.actionHash,'approve','核对',approver);const run=runs.get(d.investigationId);if(!run.report)throw new Error('fixture');run.report.reviewer.verdict='rejected';const db=new Database(file+'.investigations.sqlite');db.query('UPDATE investigations SET json=? WHERE id=?').run(JSON.stringify(run),run.id);db.close();
+ const invalid=decisions.approvals()[0]!;expect(invalid.status).toBe('invalidated');expect(invalid.resolution?.reportHash).toBe(approved.resolution?.reportHash);
+});
+test('v1 migration creates a readable consistent backup and retains existing pending requests',async()=>{
+ const d=await pendingApproval();const r=d.request!;decisions.close();const db=new Database(file+'.investigations.sqlite');db.exec('DROP TABLE approval_resolutions;DROP TABLE approval_invalidations;DELETE FROM decision_schema;INSERT INTO decision_schema VALUES(1)');db.close();
+ decisions=new DecisionStore(file,'test-workspace',current);expect(decisions.approvals()[0]?.id).toBe(r.id);const backups=readdirSync(dir).filter(f=>f.includes('.backup-v1-'));expect(backups).toHaveLength(1);
+ const backup=new Database(join(dir,backups[0]!),{readonly:true});expect(backup.query('PRAGMA integrity_check').get()).toEqual({integrity_check:'ok'});expect(backup.query('SELECT max(version) AS version FROM decision_schema').get()).toEqual({version:1});expect(backup.query('SELECT id FROM decision_requests WHERE id=?').get(r.id)).toEqual({id:r.id});backup.close();
+});
+
+test('approved authorization expires at the exact deadline and remains expired after clock restoration',async()=>{
+ const d=await pendingApproval();const r=d.request!;decisions.resolveApproval(r.id,1,r.actionHash,'approve','时效检查',approver);const clock=spyOn(Date,'now');
+ try{clock.mockReturnValue(Date.parse(r.expiresAt)-1);expect(decisions.approvals()[0]?.status).toBe('approved');clock.mockReturnValue(Date.parse(r.expiresAt));expect(decisions.approvals()[0]?.status).toBe('expired');}finally{clock.mockRestore();}
+ const a=decisions.approvals()[0]!;expect(a.status).toBe('expired');expect(a.resolution?.decision).toBe('approved');expect(a.audit.filter(e=>e.event==='approval_invalidated')).toHaveLength(1);
+});
+test('pending old version cannot be approved from a stale open page after revision',async()=>{
+ const d=await pendingApproval();const r=d.request!;decisions.revise(d.id,1,'reduce_coupon','新参数版本');expect(()=>decisions.resolveApproval(r.id,1,r.actionHash,'approve','旧窗口',approver)).toThrow('旧申请');expect(decisions.approvals()[0]?.resolution).toBeNull();
+});
+
+test('two independent worker processes racing approval and rejection produce one durable conclusion',async()=>{
+ const d=await pendingApproval();const r=d.request!;
+ const execute=async(choice:'approve'|'reject')=>{const payload={op:'approval_resolve',requestId:r.id,expectedVersion:1,expectedActionHash:r.actionHash,choice,reason:choice==='approve'?'并发批准':'并发驳回'};
+  const child=Bun.spawn([Bun.which('bun')||'bun',resolve(import.meta.dir,'../../../scripts/retailpilot-data-worker.ts'),file,'Test','test-workspace','local-simulation-approver'],{stdin:new Blob([JSON.stringify(payload)]),stdout:'pipe',stderr:'pipe'});
+  const [output,errors,code]=await Promise.all([new Response(child.stdout).text(),new Response(child.stderr).text(),child.exited]);if(!output)throw new Error(errors||String(code));return JSON.parse(output) as {ok:boolean};};
+ const replies=await Promise.all([execute('approve'),execute('reject')]);expect(replies.filter(r=>r.ok)).toHaveLength(1);
+ const a=decisions.approvals()[0]!;expect(['approved','rejected']).toContain(a.status);expect(a.audit.filter(e=>e.event==='approval_approved'||e.event==='approval_rejected')).toHaveLength(1);
+},15000);

@@ -1,5 +1,7 @@
 # M3 单动作模拟补偿验证
 
+后续执行批次、待确认恢复与部分成功切片见[M3批次验收](M3-batches-acceptance.md)及[验证记录](M3-batches-verification.md)；下文保留本轮单动作补偿的历史范围和结果。
+
 日期：2026-10-16。对应[补偿设计](M3-compensation-design.md)与[验收步骤](M3-compensation-acceptance.md)。本轮交付新补偿申请、再审批、模拟恢复及回读，不宣称完整M3或PRD已完成。
 
 | 验证 | 结果 |

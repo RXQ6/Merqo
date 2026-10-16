@@ -133,6 +133,16 @@ Restoration must still pass current business constraints. The default margin exa
 
 ![Compensation with renewed approval — isolated protocol test](docs/images/compensation.png)
 
+## Execution batches and uncertain outcomes
+
+Open **执行记录 → 执行批次** to group 2–10 independently approved simulation actions in the same workspace, shop and channel. Each item retains its own approval, version and action hash. Successes remain committed when another independent item fails; **仅重试该失败项** retries only that item after rechecking its approval and evidence.
+
+A persisted execution intent and expiring lease make interruptions visible as **结果待确认**. Continue and retry are blocked until **查询确认结果** checks the local atomic ledger and fences the old worker. Recovery confirms a matching receipt, a recorded failure, or local non-execution; it does not execute an action. Unverifiable outcomes stay blocked. This proof applies only to the local simulation ledger, not external platforms. Successful actions still require separately approved compensation to restore them.
+
+See [batch acceptance](docs/M3-batches-acceptance.md) and [design](docs/M3-batches-design.md). This groups existing independent approvals; model-generated multi-action proposals and umbrella approvals are not implemented.
+
+![Execution batch — isolated protocol test](docs/images/execution-batches.png)
+
 ## CSV examples
 
 Download templates in the application or use [fixtures/retail](fixtures/retail):
@@ -190,14 +200,14 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 121 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 132 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
 Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
 
 ## Status and roadmap
 
-- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation.
-- **Next:** remaining M3 fault contracts for multi-action partial success and external unknown outcomes; then operational outcome reviews and scoped Case memory. Production multi-user authorization remains pending. Historical Case retrieval, pause/resume and AgentBackend reuse remain pending.
+- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation, independent execution batches, durable uncertain outcomes and per-item recovery/retry.
+- **Next:** operational outcome reviews and scoped Case memory. Real external outcome queries, model-generated multi-action plans, production multi-user authorization, historical Case retrieval, pause/resume and AgentBackend reuse remain pending.
 - **Later:** operational review workflows, production authorization/integrations and Windows packaging.
 
 No real ERP or advertising platform integration, real business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
@@ -219,6 +229,9 @@ No real ERP or advertising platform integration, real business writes, productio
 - [Compensation acceptance](docs/M3-compensation-acceptance.md)
 - [Compensation design](docs/M3-compensation-design.md)
 - [Compensation verification](docs/M3-compensation-verification.md)
+- [Execution batch acceptance](docs/M3-batches-acceptance.md)
+- [Execution batch design](docs/M3-batches-design.md)
+- [Execution batch verification](docs/M3-batches-verification.md)
 - [Domain contracts](docs/domain-contracts.md)
 - [Original upstream README](docs/upstream-README.md)
 

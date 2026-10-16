@@ -8,6 +8,7 @@ import { SignalsPanel } from './SignalsPanel';
 import type { SignalSnapshot, SignalRecord } from '../../../../../packages/retail-domain/src/signals';
 import type { ExecutionView } from '../../../../../packages/retail-domain/src/simulation';
 import { CompensationsPanel } from './CompensationsPanel';
+import { ExecutionBatchesPanel } from './ExecutionBatchesPanel';
 import { ExecutionsPanel } from './ExecutionsPanel';
 import { ApprovalsPanel } from './ApprovalsPanel';
 import { DecisionsPanel } from './DecisionsPanel';
@@ -36,7 +37,7 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
   const [investigationTarget, setInvestigationTarget] = useState<EvidenceRecord | SignalRecord | null>(null);
   const [signals, setSignals] = useState<SignalSnapshot | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [page, setPage] = useState<'overview' | 'anomalies' | 'data' | 'investigations' | 'signals' | 'decisions' | 'approvals' | 'executions' | 'compensations'>('overview');
+  const [page, setPage] = useState<'overview' | 'anomalies' | 'data' | 'investigations' | 'signals' | 'decisions' | 'approvals' | 'executions' | 'compensations' | 'batches'>('overview');
   const [source, setSource] = useState<'demo' | 'csv'>('demo');
   const [shop, setShop] = useState(''); const [channel, setChannel] = useState(''); const [date, setDate] = useState('');
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
@@ -111,11 +112,11 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
       <button aria-current={page === 'investigations' ? 'page' : undefined} onClick={() => { setInvestigationTarget(null); setPage('investigations'); }}>调查记录</button>
       <button aria-current={page === 'decisions' ? 'page' : undefined} onClick={() => { setDecisionTarget(null); setPage('decisions'); }}>决策草稿</button>
       <button aria-current={page === 'approvals' ? 'page' : undefined} onClick={() => { setApprovalRequestId(null); setPage('approvals'); }}>审批中心</button>
-      <button aria-current={page === 'executions' ? 'page' : undefined} onClick={() => { setExecutionRequestId(null); setPage('executions'); }}>执行记录</button>
+      <button aria-current={page === 'executions' || page === 'batches' ? 'page' : undefined} onClick={() => { setExecutionRequestId(null); setPage('executions'); }}>执行记录</button>
       <button aria-current={page === 'compensations' ? 'page' : undefined} onClick={() => { setCompensationTarget(null); setPage('compensations'); }}>补偿记录</button>
     </nav>
     <main className="retail-main">
-      {page === 'compensations' ? <CompensationsPanel target={compensationTarget} onBack={()=>setPage('executions')}/> : page === 'executions' ? <ExecutionsPanel onCompensation={item=>{setCompensationTarget(item);setPage('compensations');}} initialRequestId={executionRequestId} onBack={() => setPage('approvals')}/> : page === 'approvals' ? <ApprovalsPanel onExecution={id => { setExecutionRequestId(id); setPage('executions'); }} initialRequestId={approvalRequestId} onBack={() => { setDecisionTarget(null); setPage('decisions'); }}/> : page === 'decisions' ? <DecisionsPanel target={decisionTarget} onBack={() => setPage('overview')} onApproval={id => { setApprovalRequestId(id); setPage('approvals'); }}/> : page === 'investigations' ? <InvestigationPanel target={investigationTarget} onBack={() => setPage('overview')} onDraft={run => { setDecisionTarget(run); setPage('decisions'); }}/> : <>
+      {page === 'batches' ? <ExecutionBatchesPanel onBack={()=>setPage('executions')}/> : page === 'compensations' ? <CompensationsPanel target={compensationTarget} onBack={()=>setPage('executions')}/> : page === 'executions' ? <ExecutionsPanel onBatches={()=>setPage('batches')} onCompensation={item=>{setCompensationTarget(item);setPage('compensations');}} initialRequestId={executionRequestId} onBack={() => setPage('approvals')}/> : page === 'approvals' ? <ApprovalsPanel onExecution={id => { setExecutionRequestId(id); setPage('executions'); }} initialRequestId={approvalRequestId} onBack={() => { setDecisionTarget(null); setPage('decisions'); }}/> : page === 'decisions' ? <DecisionsPanel target={decisionTarget} onBack={() => setPage('overview')} onApproval={id => { setApprovalRequestId(id); setPage('approvals'); }}/> : page === 'investigations' ? <InvestigationPanel target={investigationTarget} onBack={() => setPage('overview')} onDraft={run => { setDecisionTarget(run); setPage('decisions'); }}/> : <>
       <header className="retail-header"><div><h1>{page === 'overview' ? '商品毛利分析' : page === 'anomalies' ? '经营异常' : page === 'signals' ? '库存与广告' : '经营数据'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : page === 'signals' ? '按相邻等长窗口核对销量、库存覆盖与广告回报。' : page === 'anomalies' ? '按店铺、渠道与经营日期核对三类异常及证据。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
         <div className="retail-header-actions"><button disabled={busy} onClick={() => void request({ op: 'snapshot' })} aria-label="刷新经营数据"><RefreshCw size={17}/></button><button className="retail-primary" disabled={busy} onClick={() => { if (page === 'signals') document.querySelector<HTMLInputElement>('input[aria-label="选择库存或广告 CSV"]')?.click(); else { setPage('data'); fileInput.current?.click(); } }}><FileSpreadsheet size={16}/>{page === 'signals' ? '导入场景 CSV' : '导入毛利 CSV'}</button></div>
       </header>

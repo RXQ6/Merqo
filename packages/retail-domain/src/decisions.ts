@@ -1,3 +1,5 @@
+import { ExecutionBatchLedger, installBatchSchema } from './execution-batches';
+import type { BatchView, BatchLease } from './execution-batches';
 import { CompensationLedger, installCompensationSchema } from './compensation';
 import type { CompensationView } from './compensation';
 import { Database } from 'bun:sqlite';
@@ -38,8 +40,8 @@ export class DecisionStore {
       this.db.query('ATTACH DATABASE ? AS signals_scope').run(file + '.signals.sqlite');
       this.db.exec('CREATE TABLE IF NOT EXISTS decision_schema(version INTEGER PRIMARY KEY) STRICT');
       const schemaVersion = this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0;
-      if (schemaVersion > 4) throw new Error('决策数据库版本高于当前程序');
-      if (schemaVersion >= 1 && schemaVersion <= 3) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
+      if (schemaVersion > 5) throw new Error('决策数据库版本高于当前程序');
+      if (schemaVersion >= 1 && schemaVersion <= 4) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
       this.db.transaction(() => { this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS decision_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
         CREATE TABLE IF NOT EXISTS decision_requests(id TEXT PRIMARY KEY,decision_id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),UNIQUE(decision_id,version)) STRICT;
@@ -49,8 +51,8 @@ export class DecisionStore {
       this.db.exec(`CREATE TABLE IF NOT EXISTS approval_resolutions(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS approval_invalidations(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE INDEX IF NOT EXISTS approval_requests_recent ON decision_requests(json_extract(json,'$.requestedAt'));`);
-      installSimulationSchema(this.db);installCompensationSchema(this.db);
-      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(4)'); }).immediate();
+      installSimulationSchema(this.db);installCompensationSchema(this.db);installBatchSchema(this.db);
+      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(5)'); }).immediate();
     } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
@@ -164,14 +166,15 @@ export class DecisionStore {
         const row=this.db.query<JsonRow,[string]>('SELECT json FROM decision_requests WHERE id=?').get(view.job.requestId);
         if(!row)return {...view,blockers:['原审批申请不存在']};
         const approval=this.approvalView(JSON.parse(row.json) as ApprovalRequest);
-        return {...view,blockers:view.receipt?[]:approval.status==='approved'?approval.blockers:[...approval.blockers,'当前审批状态：'+approval.status]};
+        return {...view,batchId:new ExecutionBatchLedger(this.db,this.workspaceId).owner(view.job.id),blockers:view.receipt?[]:approval.status==='approved'?approval.blockers:[...approval.blockers,'当前审批状态：'+approval.status]};
       });
     }).immediate();
   }
-  executeSimulation(id:string,expectedVersion:number,expectedActionHash:string,actor:SimulationExecutor|null):ExecutionView {
+  executeSimulation(id:string,expectedVersion:number,expectedActionHash:string,actor:SimulationExecutor|null,lease?:BatchLease):ExecutionView {
     requireExecutor(actor);
     return this.db.transaction(()=>{
       const ledger=new SimulationLedger(this.db,this.workspaceId);const job=ledger.job(id);
+      const batches=new ExecutionBatchLedger(this.db,this.workspaceId);const owner=batches.owner(id);if(owner){if(lease){if(lease.jobId!==id||lease.batchId!==owner)throw new Error('执行项与批次租约不匹配');batches.guard(lease);}else if(!ledger.view(id).receipt)throw new Error('动作已纳入执行批次，请从批次处理');}else if(lease)throw new Error('动作不属于该批次');
       if(job.decisionVersion!==expectedVersion||job.actionHash!==expectedActionHash)throw new Error('执行版本或动作摘要不匹配，请刷新执行项');
       const row=this.db.query<JsonRow,[string]>('SELECT json FROM decision_requests WHERE id=?').get(job.requestId);if(!row)throw new Error('执行申请不存在');
       const approval=this.approvalView(JSON.parse(row.json) as ApprovalRequest);const d=approval.decision;const resolution=approval.resolution;
@@ -185,6 +188,23 @@ export class DecisionStore {
   }
   reconcileExecution(id:string,actor:SimulationExecutor|null):ExecutionView {
     requireExecutor(actor);return this.db.transaction(()=>new SimulationLedger(this.db,this.workspaceId).reconcile(id,actor)).immediate();
+  }
+  private decorateBatch(view:BatchView):BatchView {
+    return {...view,items:view.items.map(item=>{const row=this.db.query<JsonRow,[string]>('SELECT json FROM decision_requests WHERE id=?').get(item.job.requestId);if(!row)return{...item,blockers:['原审批申请不存在']};const approval=this.approvalView(JSON.parse(row.json) as ApprovalRequest);return{...item,blockers:item.receipt?[]:approval.status==='approved'?approval.blockers:[...approval.blockers,'当前审批状态：'+approval.status]};})};
+  }
+  executionBatches():BatchView[]{return this.db.transaction(()=>new ExecutionBatchLedger(this.db,this.workspaceId).list().map(v=>this.decorateBatch(v))).immediate();}
+  executionBatch(id:string):BatchView{return this.db.transaction(()=>this.decorateBatch(new ExecutionBatchLedger(this.db,this.workspaceId).view(id))).immediate();}
+  createExecutionBatch(jobIds:string[],reason:string):BatchView{
+    return this.db.transaction(()=>{const available=this.executions();const selected=jobIds.map(id=>{const item=available.find(v=>v.job.id===id);if(!item)throw new Error('批次动作不在当前可选列表中，请刷新');return item;});return new ExecutionBatchLedger(this.db,this.workspaceId).create(selected,reason);}).immediate();
+  }
+  claimBatchItem(id:string,jobId:string,mode:'ready'|'failed',actor:SimulationExecutor|null):BatchLease{return this.db.transaction(()=>new ExecutionBatchLedger(this.db,this.workspaceId).claim(id,jobId,mode,actor)).immediate();}
+  settleBatchItem(lease:BatchLease,actor:SimulationExecutor|null):BatchView{return this.db.transaction(()=>new ExecutionBatchLedger(this.db,this.workspaceId).settle(lease,actor)).immediate();}
+  recoverExecutionBatch(id:string,actor:SimulationExecutor|null):BatchView{return this.db.transaction(()=>new ExecutionBatchLedger(this.db,this.workspaceId).recover(id,actor)).immediate();}
+  runExecutionBatch(id:string,actor:SimulationExecutor|null,retryJobId?:string):BatchView{
+    requireExecutor(actor);const before=this.executionBatch(id);if(before.items.some(v=>v.dispatch.status==='running'||v.dispatch.status==='unknown'))throw new Error('批次仍有执行中或待确认项，先查询确认');
+    const candidates=retryJobId?before.items.filter(v=>v.item.jobId===retryJobId&&v.dispatch.status==='failed'):before.items.filter(v=>v.dispatch.status==='ready');if(retryJobId&&candidates.length!==1)throw new Error('只能单独重试已确认失败项，不能重放成功或待确认项');
+    for(const item of candidates){const lease=this.claimBatchItem(id,item.item.jobId,retryJobId?'failed':'ready',actor);try{this.executeSimulation(item.item.jobId,item.item.version,item.item.actionHash,actor,lease);}catch{/* Query the durable ledger; exceptions are never assumed to mean not executed. */}const settled=this.settleBatchItem(lease,actor);if(settled.items.some(v=>v.dispatch.status==='unknown'))break;}
+    return this.executionBatch(id);
   }
   compensations():CompensationView[]{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).list()).immediate();}
   createCompensation(jobId:string,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).create(jobId,reason)).immediate();}

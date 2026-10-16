@@ -1,5 +1,7 @@
 # M3 补偿申请、再审批与模拟恢复验收
 
+后续执行批次、待确认恢复与部分成功切片见[M3批次验收](M3-batches-acceptance.md)及[验证记录](M3-batches-verification.md)；下文保留本轮单动作补偿的历史范围和结果。
+
 ## 启动
 
 退出旧 RetailPilot 窗口，执行：

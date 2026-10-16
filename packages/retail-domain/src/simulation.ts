@@ -14,7 +14,7 @@ export interface ExecutionJob {
 export interface ExecutionAttempt { id: number; jobId: string; at: string; status: 'failed' | 'succeeded'; reason: string; actor: SimulationExecutor }
 export interface ExecutionReceipt { id: string; jobId: string; requestId: string; resolutionId: string; actionHash: string; evidenceHash: string; reportHash: string; decisionVersion: number; localRequestId: string; at: string; actor: SimulationExecutor; before: SimulationState; after: SimulationState }
 export interface Reconciliation { id: number; jobId: string; at: string; matched: boolean; differences: string[]; actual: SimulationState | null; receiptId: string; actor: SimulationExecutor }
-export interface ExecutionView { blockers: string[]; job: ExecutionJob; status: 'ready' | 'failed' | 'succeeded'; attempts: ExecutionAttempt[]; receipt: ExecutionReceipt | null; reconciliation: Reconciliation | null; current: SimulationState | null }
+export interface ExecutionView { batchId?:string|null; blockers: string[]; job: ExecutionJob; status: 'ready' | 'failed' | 'succeeded'; attempts: ExecutionAttempt[]; receipt: ExecutionReceipt | null; reconciliation: Reconciliation | null; current: SimulationState | null }
 interface JsonRow { json: string }
 const hash = (x: unknown): string => createHash('sha256').update(JSON.stringify(x)).digest('hex');
 export function installSimulationSchema(db: Database): void {
@@ -91,7 +91,7 @@ export class SimulationLedger {
       const receipt: ExecutionReceipt={id:randomUUID(),jobId:id,requestId:job.requestId,resolutionId:job.resolutionId,actionHash:job.actionHash,evidenceHash:job.evidenceHash,reportHash:job.reportHash,decisionVersion:job.decisionVersion,localRequestId:'sim-'+id,at:after.updatedAt,actor,before,after};
       this.db.query('INSERT INTO simulation_receipts VALUES(?,?)').run(id,JSON.stringify(receipt));
       this.attempt(id,'succeeded','本地模拟状态和成功回执已原子提交',actor);
-      this.reconcile(id,actor);
+      const checked=this.reconcile(id,actor);if(!checked.reconciliation?.matched)throw new Error('模拟执行回读不一致，副作用已回滚');
       this.db.exec('RELEASE simulation_effect');
     } catch(error) {
       this.db.exec('ROLLBACK TO simulation_effect; RELEASE simulation_effect');

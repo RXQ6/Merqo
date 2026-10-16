@@ -8,8 +8,9 @@ const hash = (s: string): string => createHash('sha256').update(s).digest('hex')
 interface Stored { id: string; kind: SignalKind; source: 'demo' | 'csv'; json: string; imported_at: string; batch_id: string; hash: string }
 export class SignalStore {
   private readonly db: Database;
-  constructor(file: string) {
-    mkdirSync(dirname(file), { recursive: true }); this.db = new Database(file, { create: true, strict: true });
+  constructor(file: string, private readonly readOnly = false) {
+    if (!readOnly) mkdirSync(dirname(file), { recursive: true }); this.db = new Database(file, readOnly ? { readonly: true, strict: true } : { create: true, strict: true });
+    if (readOnly) { this.db.exec('PRAGMA busy_timeout=5000'); return; }
     try {
       this.db.exec(`PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;
         CREATE TABLE IF NOT EXISTS signal_batches(id TEXT PRIMARY KEY,kind TEXT NOT NULL,source TEXT NOT NULL,imported_at TEXT NOT NULL,hash TEXT NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),UNIQUE(kind,source,hash)) STRICT;
@@ -38,6 +39,7 @@ export class SignalStore {
     return { records, batches: this.db.query<{ json: string }, []>('SELECT json FROM signal_batches ORDER BY imported_at DESC,id DESC LIMIT 50').all().map(r => JSON.parse(r.json) as SignalBatch), ruleVersion: SIGNAL_RULE };
   }
   import(kind: SignalKind, csv: string, mapping: Record<string, string> | undefined, source: 'demo' | 'csv'): { data: SignalSnapshot; notice: string; preview: SignalPreview } {
+    if (this.readOnly) throw new Error('只读数据连接不允许导入');
     const preview = previewSignals(kind, csv, mapping);
     if (!preview.valid.length) throw new Error('没有有效行，请修正映射和数据');
     const digest = hash(JSON.stringify({ csv, mapping: preview.mapping, rule: SIGNAL_RULE })); const id = `${kind}-${source}-${digest.slice(0, 24)}`;

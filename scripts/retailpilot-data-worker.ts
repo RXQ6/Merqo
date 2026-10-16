@@ -39,12 +39,21 @@ try {
       else if (request.op === 'signals_import') { const result = signals.import(request.kind, request.csv, request.mapping, 'csv'); console.log(JSON.stringify({ ok: true, kind: 'signals', data: result.data, notice: result.notice })); }
       else console.log(JSON.stringify({ ok: true, kind: 'signals', data: request.op === 'signals_demo' ? signals.demo() : signals.snapshot() }));
     }
-    else if (request.op === 'investigations') console.log(JSON.stringify({ ok: true, kind: 'investigations', data: investigations.list(request.recordId) }));
+    else if (request.op === 'investigations') console.log(JSON.stringify({ ok: true, kind: 'investigations', data: investigations.listAll(request.recordId) }));
     else if (request.op === 'investigate') {
-      const evidence = store.snapshot().records.find(r => r.id === request.recordId);
-      if (!evidence) throw new Error('快照不存在或已被新版替换，请刷新后重新选择');
-      if (evidence.status === 'normal') throw new Error('请选择毛利预警或待补证记录');
-      const result = investigations.create(evidence, request.mode, request.retry);
+      let result;
+      if (request.scenario === 'inventory' || request.scenario === 'ads') {
+        signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
+        const evidence = signals.snapshot().records.find(r => r.id === request.recordId && r.kind === request.scenario);
+        if (!evidence) throw new Error('场景快照不存在或已被新版替换，请刷新后重新选择');
+        if (evidence.status === 'normal') throw new Error('请选择经营预警或待补证记录');
+        result = investigations.createSignal(evidence, request.mode, request.retry);
+      } else {
+        const evidence = store.snapshot().records.find(r => r.id === request.recordId);
+        if (!evidence) throw new Error('快照不存在或已被新版替换，请刷新后重新选择');
+        if (evidence.status === 'normal') throw new Error('请选择毛利预警或待补证记录');
+        result = investigations.create(evidence, request.mode, request.retry);
+      }
       console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [result.run], created: result.created }));
     } else {
       const reply = store.request(request);

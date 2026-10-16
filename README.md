@@ -2,7 +2,7 @@
 
 **An AI-powered desktop workspace for retail analytics, risk detection, and evidence-backed operational investigations.**
 
-Merqo brings promotion margins, stockout risks, and advertising ROAS into one desktop workspace. Business metrics and anomaly rules are calculated by deterministic code; a bounded, read-only investigation workflow adds evidence-linked explanations and scenario comparisons for promotion margin anomalies.
+Merqo brings promotion margins, stockout risks, and advertising ROAS into one desktop workspace. Business metrics and anomaly rules are calculated by deterministic code; a bounded, read-only investigation workflow adds evidence-linked explanations and scenario comparisons for all three scenarios.
 
 Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, Bun, and SQLite**.
 
@@ -18,9 +18,9 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 | Sales and stockout risk | Adjacent-window sales comparisons, available inventory, coverage days, lead-time buffer and expected inbound arrival checks |
 | Advertising performance | Comparable-window ROAS, relative changes, click conversion rates and attribution consistency checks |
 | Data and evidence | CSV mapping and preview, validation, quarantined rows, duplicate protection, versioned rules, source hashes and quality reports |
-| Promotion investigations | Read-only tool loop, cited observations and hypotheses, alternative explanations, two deterministic scenarios, sequential Reviewer and persistent history |
+| Three-scenario investigations | Read-only tool loop, cited observations and hypotheses, alternative explanations, two deterministic scenarios, sequential Reviewer and persistent history |
 
-All three analytical scenarios work with synthetic data or imported CSVs **without model credentials**. Promotion investigations support a configured API model or an explicitly labeled offline rules demonstration.
+All three analytical scenarios work with synthetic data or imported CSVs **without model credentials**. All three investigations support a configured API model or an explicitly labeled offline rules demonstration.
 
 ### Data handling
 
@@ -83,7 +83,7 @@ The sample 20% thresholds and two-day inventory buffer are **versioned demonstra
 
 ## Investigations
 
-Select **开始调查** next to a promotion margin alert, such as TEA-500.
+Select **开始调查** next to a margin, inventory or advertising alert, such as TEA-500.
 
 The investigation workflow queries four scoped, read-only tools, separates observations from hypotheses, links claims to evidence, compares two scenarios and runs a sequential Reviewer. Calculations, evidence-reference checks, missing-data blocks and persistence are controlled by code.
 
@@ -126,6 +126,8 @@ Electron main process
 
 The retail investigation loop exposes scoped read-only data tools. It does not expose shell commands, arbitrary file access, arbitrary SQL or business execution. The inherited general Agent workspace is a separate capability surface and does not constitute retail business authorization.
 
+Standalone MCP: `bun scripts/merqo-retail-mcp.ts --workspace <absolute-workspace> --scenario margin|inventory|ads --record <id>`. Each process freezes one existing record, exposes four strict read-only tools and serves its versioned Skill. The desktop currently calls the same domain functions directly; MCP transport integration into its investigation loop remains pending. See [setup and acceptance](docs/M2-investigation.md).
+
 Key paths:
 
 ```text
@@ -145,19 +147,20 @@ Run after building:
 
 ```powershell
 bun run retail:check
+bun run retail:check:mcp
 bun run typecheck:all
 bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 49 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 60 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
-Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Real-model business-quality evaluation has not been completed.
+Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. A live DeepSeek V4 Flash smoke evaluation completed all three synthetic scenarios with cited reports and Reviewer passes. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
 
 ## Status and roadmap
 
-- **Available:** three analytical data/rule workflows and the first promotion margin investigation slice.
-- **Next:** inventory and advertising Agent investigations, standalone read-only MCP delivery, and real-model evaluation.
+- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, standalone read-only MCP and versioned Skills.
+- **Next:** close remaining M2 integration gaps and add M3 approval contracts and simulated execution. Historical Case retrieval and desktop-to-MCP transport integration remain pending.
 - **Later:** decision approval, authorized simulated execution, reconciliation, review workflows and Windows packaging.
 
 No real ERP or advertising platform integration, business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
@@ -166,7 +169,7 @@ No real ERP or advertising platform integration, business writes, production mul
 
 - [Three-scenario acceptance and data contracts](docs/M1-three-scenarios.md)
 - [Three-scenario verification record](docs/M1-signals-verification.md)
-- [Promotion investigation setup and acceptance](docs/M2-investigation.md)
+- [Three-scenario investigation setup and acceptance](docs/M2-investigation.md)
 - [Investigation verification record](docs/M2-verification.md)
 - [Domain contracts](docs/domain-contracts.md)
 - [Original upstream README](docs/upstream-README.md)

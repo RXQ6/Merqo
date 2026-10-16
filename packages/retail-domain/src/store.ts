@@ -11,9 +11,10 @@ interface StoredRow { id: string; row_json: string; batch_id: string; source: 'd
 interface StoredBatch { id: string; source: 'demo' | 'csv'; imported_at: string; accepted: number; rejected: number; hash: string; errors_json: string; rule_version: string }
 export class RetailStore {
   private readonly db: Database;
-  constructor(file: string, private readonly workspaceName = '当前 Workspace') {
-    mkdirSync(dirname(file), { recursive: true });
-    this.db = new Database(file, { create: true, strict: true });
+  constructor(file: string, private readonly workspaceName = '当前 Workspace', private readonly readOnly = false) {
+    if (!readOnly) mkdirSync(dirname(file), { recursive: true });
+    this.db = new Database(file, readOnly ? { readonly: true, strict: true } : { create: true, strict: true });
+    if (readOnly) { this.db.exec('PRAGMA busy_timeout=5000'); return; }
     try {
       this.db.exec('PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;');
       const version = this.db.query<{ user_version: number }, []>('PRAGMA user_version').get()?.user_version ?? 0;
@@ -70,6 +71,7 @@ export class RetailStore {
     return { workspaceName: this.workspaceName, records, batches, dbVersion: 2, ruleVersion: RULE_VERSION, thresholdBps: 2000 };
   }
   import(csv: string, mapping: Record<string, string> | undefined, source: 'demo' | 'csv'): { snapshot: Snapshot; notice: string; preview: Preview } {
+    if (this.readOnly) throw new Error('只读数据连接不允许导入');
     const preview = previewCsv(csv, mapping);
     if (!preview.valid.length) throw new Error('没有可导入的有效数据，请检查字段映射和错误行');
     const digest = hash(JSON.stringify({ csv, mapping: preview.mapping }));

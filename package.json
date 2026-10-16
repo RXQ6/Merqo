@@ -102,6 +102,9 @@
     "retail:build": "bun run electron:build",
     "retail:start": "bun run scripts/retailpilot-launch.ts",
     "retail:check": "bun test packages/retail-domain/src && bun run --cwd packages/retail-domain typecheck",
+    "retail:mcp": "bun scripts/merqo-retail-mcp.ts",
+    "retail:skills": "bun scripts/merqo-write-skills.ts",
+    "retail:check:mcp": "bun scripts/merqo-mcp-check.ts",
     "retail:verify-baseline": "node scripts/retailpilot-verify-baseline.cjs"
   },
   "devDependencies": {

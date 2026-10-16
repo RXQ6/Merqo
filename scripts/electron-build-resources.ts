@@ -17,3 +17,6 @@ if (existsSync(srcDir)) {
 } else {
   console.log("⚠️ No resources directory found");
 }
+
+// Versioned retail Skills are runtime resources, including packaged desktop builds.
+cpSync(join(ROOT_DIR, "packages/retail-domain/skills"), join(destDir, "retail-skills"), { recursive: true, force: true });

@@ -1,0 +1,9 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { SKILL } from '../packages/retail-domain/src/investigations';
+import { signalSkill } from '../packages/retail-domain/src/signal-investigations';
+for (const scenario of ['margin', 'inventory', 'ads'] as const) {
+  const folder = new URL(`../packages/retail-domain/skills/${scenario}/`, import.meta.url);
+  mkdirSync(folder, { recursive: true });
+  const title = { margin: '促销毛利', inventory: '缺货风险', ads: '广告回报' }[scenario];
+  writeFileSync(new URL('SKILL.md', folder), `---\nname: merqo-${scenario}\ndescription: ${JSON.stringify(`基于冻结证据的${title}只读调查；比较条件方案，禁止经营执行。`)}\nversion: 1.0.0\n---\n\n# Merqo ${title}调查\n\n${scenario === 'margin' ? SKILL : signalSkill(scenario)}\n\n## 交付边界\n\n- 报告必须分别列出观察、假设、替代解释、未知项和两个方案。\n- Reviewer 通过不等于业务批准；不能生成已执行的采购单、改价或预算变更。\n- 超过时限、缺少关键数据、证据ID不存在或方案类型不符时，停止并保留过程。\n- 离线规则演示必须明确标注未调用模型。\n`, 'utf8');
+}

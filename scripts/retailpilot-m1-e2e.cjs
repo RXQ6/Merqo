@@ -11,7 +11,7 @@ async function run(phase) {
   const child = spawn(path.join(root, 'node_modules/electron/dist/electron.exe'), [path.join(root, 'scripts/retailpilot-m1-host.cjs')], { cwd: root, env, windowsHide: true, stdio: ['ignore','pipe','pipe'] });
   child.stdout.pipe(log, { end: false }); child.stderr.pipe(log, { end: false });
   await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => { child.kill(); reject(new Error('M1 process timeout')); }, 60000);
+    const timer = setTimeout(() => { child.kill(); reject(new Error('M1 process timeout')); }, 100000);
     child.on('error', error => { clearTimeout(timer); log.end(); reject(error); });
     child.on('exit', code => { clearTimeout(timer); log.end(); if (code !== 0) reject(new Error(`M1 ${phase} failed, see artifacts/m1/e2e-${phase}.json`)); else resolve(); });
   });

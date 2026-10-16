@@ -9,8 +9,8 @@ function download(name: string, value: unknown, csv = false) {
   const url = URL.createObjectURL(new Blob([csv ? '\uFEFF' + String(value) : JSON.stringify(value, null, 2)], { type: csv ? 'text/csv;charset=utf-8' : 'application/json' }));
   const link = document.createElement('a'); link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export function SignalsPanel({ snapshot, request, busy, scope, compact = false }: {
-  snapshot: SignalSnapshot | null; request: (r: RetailRequest) => Promise<RetailReply | undefined>; busy: boolean;
+export function SignalsPanel({ snapshot, request, busy, scope, onInvestigate, compact = false }: {
+  onInvestigate: (record: SignalRecord) => void; snapshot: SignalSnapshot | null; request: (r: RetailRequest) => Promise<RetailReply | undefined>; busy: boolean;
   scope: { source: 'demo' | 'csv'; shop: string; channel: string; date: string; query: string }; compact?: boolean;
 }) {
   const [kind, setKind] = useState<SignalKind>('inventory'); const [preview, setPreview] = useState<SignalPreview | null>(null);
@@ -29,7 +29,7 @@ export function SignalsPanel({ snapshot, request, busy, scope, compact = false }
     return <section className="retail-panel" key={k} data-testid={`signals-${k}`}><div className="retail-section-title"><div><h2>{k === 'inventory' ? '销量与缺货风险' : '广告回报下降'}</h2><p>{k === 'inventory' ? '观察净销量、即时可售、补货交期与预计到货；在途不计入即时可售。' : '相邻等长窗口、相同归因口径比较 ROAS；归因成交额不代表利润。'}</p></div><span>{records.length} 条快照</span></div>
       {!records.length ? <p className="retail-muted">当前范围没有记录。可载入演示数据或切换数据来源。</p> : <div className="retail-table-wrap"><table><thead><tr><th>业务实体 / 窗口</th><th>{k === 'inventory' ? '可售 / 覆盖天数' : '当前 / 对照 ROAS'}</th><th>{k === 'inventory' ? '销量变化' : 'ROAS 相对变化'}</th><th>状态与线索</th><th>证据</th></tr></thead><tbody>{records.slice(0, 100).map(r => <tr key={r.id}><td><strong>{r.row.sku_id}</strong><small>{r.row.shop_id} / {r.row.channel}</small><small>{k === 'inventory' ? (r.row as InventoryRow).warehouse_id : (r.row as AdsRow).campaign_id}</small><small>{r.row.date} / {r.row.window_days ?? '?'} 天；对照 {r.row.baseline_end_date} / {r.row.baseline_window_days ?? '?'} 天</small></td>
         <td>{k === 'inventory' ? `${r.metrics.available ?? '待补证'} / ${ratio(r.metrics.coverageDays)} 天` : `${ratio(r.metrics.roas)} / ${ratio(r.metrics.baselineRoas)}`}</td><td>{change(k === 'inventory' ? r.metrics.salesChangeBps : r.metrics.roasChangeBps)}</td>
-        <td><span className={`retail-badge ${r.status === 'warning' ? 'low_margin' : r.status}`}>{labels[r.status]}</span><small className="retail-signal-reasons">{r.metrics.issues.length ? r.metrics.issues.join('；') : r.metrics.flags.join('；') || '未触发演示规则'}</small></td><td><SignalEvidence record={r}/></td></tr>)}</tbody></table></div>}
+        <td><span className={`retail-badge ${r.status === 'warning' ? 'low_margin' : r.status}`}>{labels[r.status]}</span><small className="retail-signal-reasons">{r.metrics.issues.length ? r.metrics.issues.join('；') : r.metrics.flags.join('；') || '未触发演示规则'}</small></td><td><SignalEvidence record={r}/>{r.status !== 'normal' && <button disabled={busy} className="retail-link" aria-label={`开始调查 ${r.row.sku_id} ${r.kind}`} onClick={() => onInvestigate(r)}>开始调查</button>}</td></tr>)}</tbody></table></div>}
       {records.length > 100 && <p className="retail-muted">显示前 100 条，请用 SKU、店铺或日期缩小范围；“导出当前证据”包含全部筛选结果。</p>}
     </section>;
   };

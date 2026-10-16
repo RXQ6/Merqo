@@ -5,7 +5,7 @@ import type { EvidenceRecord, Preview, RetailRequest, RetailReply, Snapshot } fr
 import { PanelHeader } from '@/components/app-shell/PanelHeader';
 import { useRegisterDismissibleLayer } from '@/context/DismissibleLayerContext';
 import { SignalsPanel } from './SignalsPanel';
-import type { SignalSnapshot } from '../../../../../packages/retail-domain/src/signals';
+import type { SignalSnapshot, SignalRecord } from '../../../../../packages/retail-domain/src/signals';
 import { InvestigationPanel } from './InvestigationPanel';
 import './retail.css';
 
@@ -23,7 +23,7 @@ function download(name: string, content: string, mime = 'text/csv;charset=utf-8'
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
-  const [investigationTarget, setInvestigationTarget] = useState<EvidenceRecord | null>(null);
+  const [investigationTarget, setInvestigationTarget] = useState<EvidenceRecord | SignalRecord | null>(null);
   const [signals, setSignals] = useState<SignalSnapshot | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [page, setPage] = useState<'overview' | 'anomalies' | 'data' | 'investigations' | 'signals'>('overview');
@@ -114,7 +114,7 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
         <label>经营日期<select aria-label="经营日期" value={date} onChange={event => setDate(event.target.value)}><option value="">全部日期</option>{[...new Set(scopeRows.map(row => row.date))].sort().reverse().map(value => <option key={value}>{value}</option>)}</select></label>
         <span className="retail-scope-note">{source === 'demo' ? '合成快照，非实时经营数据' : '静态导入快照，非实时同步'}<small>{latest ? `最近导入 ${new Date(latest.importedAt).toLocaleString('zh-CN')}` : '尚未载入数据'}</small></span>
       </div>
-      {loadingFirst ? <div className="retail-empty" role="status">正在读取本机经营数据…</div> : page === 'signals' ? <SignalsPanel snapshot={signals} request={request} busy={busy} scope={signalScope}/> : page === 'data' ? <>
+      {loadingFirst ? <div className="retail-empty" role="status">正在读取本机经营数据…</div> : page === 'signals' ? <SignalsPanel onInvestigate={record => { setInvestigationTarget(record); setPage('investigations'); }} snapshot={signals} request={request} busy={busy} scope={signalScope}/> : page === 'data' ? <>
         <section className="retail-import-intro"><div><h2>先确认数据口径，再开始分析</h2><p>一行代表一个店铺、渠道、SKU 在某个经营日期的快照。金额单位为“分”，净成交件数已扣除退款。商品毛利不包含广告、运费与平台佣金。</p><div className="retail-inline-actions"><button className="retail-primary" disabled={busy} onClick={() => fileInput.current?.click()}>选择 CSV 文件</button><button onClick={() => download('RetailPilot-经营快照模板.csv', '\uFEFF' + DEMO_CSV)}>下载带示例的模板</button><button disabled={busy} onClick={() => void loadDemo()}>载入演示数据</button></div></div><FileSpreadsheet size={56}/></section>
         {preview && <section className="retail-panel" aria-label="导入预览"><div className="retail-section-title"><div><h2>导入预览 · {fileName}</h2><p>总计 {preview.total} 行，有效 {preview.valid.length} 行，隔离 {preview.rejected.length} 行，其中重复 {preview.duplicateCount} 行。</p></div><button onClick={() => setPreview(null)} aria-label="关闭导入预览"><X size={18}/></button></div>
           <div className="retail-mappings">{FIELDS.map(key => <label key={key}>{FIELD_LABELS[key]}<select aria-label={`映射 ${FIELD_LABELS[key]}`} value={mapping[key] ?? ''} onChange={event => updateMapping(key, event.target.value)}><option value="">选择列</option>{preview.headers.map(header => <option key={header}>{header}</option>)}</select></label>)}</div>
@@ -132,7 +132,7 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
           {filtered.length > 30 && <div className="retail-pagination"><button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 30))}>上一页</button><span>{offset + 1}–{Math.min(offset + 30, filtered.length)}</span><button disabled={offset + 30 >= filtered.length} onClick={() => setOffset(offset + 30)}>下一页</button></div>}
         </section><div className="retail-footnote"><ShieldCheck size={16}/><p>支持数据计算、异常识别与只读毛利调查。模型调查需 API 连接；离线演示单独标注。审批与业务执行尚未接入，静态快照不能直接作为实时改价依据。</p></div>
       </>}
-      {page === 'anomalies' && <SignalsPanel compact snapshot={signals} request={request} busy={busy} scope={signalScope}/>}
+      {page === 'anomalies' && <SignalsPanel compact onInvestigate={record => { setInvestigationTarget(record); setPage('investigations'); }} snapshot={signals} request={request} busy={busy} scope={signalScope}/>}
       <footer className="retail-footer"><span>本机 SQLite 持久化 · 规则 {page === 'signals' ? signals?.ruleVersion ?? 'retail-stock-roas-v1' : snapshot?.ruleVersion ?? 'retail-margin-v1'}</span><span>{busy ? '正在处理…' : '数据查询与分析，不执行经营写入'}</span></footer>
       </>}
     </main>

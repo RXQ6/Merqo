@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Investigation } from './investigations';
+import type { AnyInvestigation } from './investigations';
 import type { SignalPreview, SignalSnapshot } from './signals';
 
 export const RULE_VERSION = 'retail-margin-v1';
@@ -30,7 +30,7 @@ export const RetailRequestSchema = z.discriminatedUnion('op', [
   z.strictObject({ op: z.literal('signals_preview'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema.optional() }),
   z.strictObject({ op: z.literal('signals_import'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema }),
   z.strictObject({ op: z.literal('investigations'), recordId: z.string().max(64).optional() }),
-  z.strictObject({ op: z.literal('investigate'), recordId: z.string().min(1).max(64), mode: z.enum(['model', 'replay']), retry: z.boolean().optional() }),
+  z.strictObject({ op: z.literal('investigate'), recordId: z.string().min(1).max(64), mode: z.enum(['model', 'replay']), scenario: z.enum(['margin', 'inventory', 'ads']).optional(), retry: z.boolean().optional() }),
   z.strictObject({ op: z.literal('snapshot') }),
   z.strictObject({ op: z.literal('demo') }),
   z.strictObject({ op: z.literal('preview'), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema.optional() }),
@@ -109,7 +109,7 @@ export function calculate(row: RetailRow, specConflict = false): Calculation {
 export interface EvidenceRecord { id: string; batchId: string; source: 'demo' | 'csv'; importedAt: string; snapshotHash: string; ruleVersion: string; row: RetailRow; calculation: Calculation; status: 'normal' | 'low_margin' | 'needs_evidence'; reasons: string[]; thresholdBps: number }
 export interface BatchSummary { id: string; source: 'demo' | 'csv'; importedAt: string; accepted: number; rejected: number; hash: string; errors: RejectedRow[]; ruleVersion: string }
 export interface Snapshot { workspaceName: string; records: EvidenceRecord[]; batches: BatchSummary[]; dbVersion: number; ruleVersion: string; thresholdBps: number }
-export type RetailReply = { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: Investigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
+export type RetailReply = { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: AnyInvestigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
 
 const demoRows: RetailRow[] = [
   { date: '2026-10-14', shop_id: 'demo-nanfeng', channel: '线上商城', sku_id: 'TEA-500', product_name: '桂花乌龙冷萃茶', spec: '500ml × 6瓶', currency: 'CNY', list_price_minor: 10000, coupon_minor: 2000, full_reduction_minor: 1000, subsidy_minor: 0, subsidy_funder: 'platform', cost_minor: 6000, sold_qty: 40, on_hand: 120, reserved: 10, inbound_qty: 60 },

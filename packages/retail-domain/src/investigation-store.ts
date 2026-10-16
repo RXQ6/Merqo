@@ -1,7 +1,9 @@
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
+import type { SignalRecord } from './signals';
+import { isSignalInvestigation } from './investigations';
 import type { EvidenceRecord } from './operations';
-import type { Investigation, InvestigationReport, Trace } from './investigations';
+import type { Investigation, AnyInvestigation, SignalInvestigation, InvestigationReport, Trace } from './investigations';
 
 interface Stored { json: string }
 export class InvestigationStore {
@@ -19,43 +21,51 @@ export class InvestigationStore {
   private recover(): void {
     const expired = this.db.query<Stored, [string]>("SELECT json FROM investigations WHERE state='running' AND deadline_at<=?").all(new Date().toISOString());
     for (const item of expired) {
-      const run = JSON.parse(item.json) as Investigation;
+      const run = JSON.parse(item.json) as AnyInvestigation;
       run.state = 'failed'; run.error = '调查超时或应用已退出；已保留证据和中间过程，可重新调查'; run.updatedAt = new Date().toISOString();
       this.write(run);
     }
   }
-  private write(run: Investigation): void {
+  private write(run: AnyInvestigation): void {
     this.db.query('UPDATE investigations SET state=?,updated_at=?,json=? WHERE id=?').run(run.state, run.updatedAt, JSON.stringify(run), run.id);
   }
-  list(recordId?: string): Investigation[] {
+  list(recordId?: string): Investigation[] { return this.listAll(recordId).filter((r): r is Investigation => !isSignalInvestigation(r)); }
+  listAll(recordId?: string): AnyInvestigation[] {
     this.db.transaction(() => this.recover()).immediate();
     const rows = recordId
       ? this.db.query<Stored, [string]>('SELECT json FROM investigations WHERE record_id=? ORDER BY updated_at DESC,id DESC LIMIT 30').all(recordId)
       : this.db.query<Stored, []>('SELECT json FROM investigations ORDER BY updated_at DESC,id DESC LIMIT 50').all();
-    return rows.map(r => JSON.parse(r.json) as Investigation);
+    return rows.map(r => JSON.parse(r.json) as AnyInvestigation);
   }
   create(evidence: EvidenceRecord, mode: Investigation['mode'], retry = false): { run: Investigation; created: boolean } {
+    return this.createAny(evidence, 'margin', mode, retry) as { run: Investigation; created: boolean };
+  }
+  createSignal(evidence: SignalRecord, mode: Investigation['mode'], retry = false): { run: SignalInvestigation; created: boolean } {
+    return this.createAny(evidence, evidence.kind, mode, retry) as { run: SignalInvestigation; created: boolean };
+  }
+  private createAny(evidence: EvidenceRecord | SignalRecord, scenario: 'margin' | 'inventory' | 'ads', mode: Investigation['mode'], retry: boolean): { run: AnyInvestigation; created: boolean } {
     return this.db.transaction(() => {
       this.recover();
       const existing = this.db.query<Stored, [string, string]>('SELECT json FROM investigations WHERE record_id=? AND mode=? ORDER BY updated_at DESC,id DESC LIMIT 1').get(evidence.id, mode);
       if (existing) {
-        const run = JSON.parse(existing.json) as Investigation;
+        const run = JSON.parse(existing.json) as AnyInvestigation;
         if (run.state === 'running' || !retry) return { run, created: false };
       }
       const active = this.db.query<{ n: number }, []>("SELECT count(*) AS n FROM investigations WHERE state='running'").get()?.n ?? 0;
       if (active >= 2) throw new Error('当前经营空间已有两项调查进行中，请等待完成或超时后重试');
       const now = new Date().toISOString();
-      const run: Investigation = { id: randomUUID(), recordId: evidence.id, mode, state: 'running', createdAt: now, updatedAt: now, deadlineAt: new Date(Date.now() + 300000).toISOString(), evidence, trace: [], report: null, error: null, model: null };
+      const base = { id: randomUUID(), recordId: evidence.id, mode, state: 'running', createdAt: now, updatedAt: now, deadlineAt: new Date(Date.now() + 300000).toISOString(), evidence, trace: [], report: null, error: null, model: null };
+      const run: AnyInvestigation = scenario === 'margin' ? { ...base, state: 'running', evidence: evidence as EvidenceRecord } : { ...base, state: 'running', scenario, evidence: evidence as SignalRecord };
       this.db.query('INSERT INTO investigations(id,record_id,mode,state,updated_at,deadline_at,json) VALUES (?,?,?,?,?,?,?)').run(run.id, evidence.id, mode, run.state, now, run.deadlineAt, JSON.stringify(run));
       return { run, created: true };
     }).immediate();
   }
-  update(id: string, patch: { event?: Trace; report?: InvestigationReport; error?: string; model?: string }): Investigation {
+  update(id: string, patch: { event?: Trace; report?: InvestigationReport; error?: string; model?: string }): AnyInvestigation {
     return this.db.transaction(() => {
       this.recover();
       const stored = this.db.query<Stored, [string]>('SELECT json FROM investigations WHERE id=?').get(id);
       if (!stored) throw new Error('调查不存在');
-      const run = JSON.parse(stored.json) as Investigation;
+      const run = JSON.parse(stored.json) as AnyInvestigation;
       if (run.state !== 'running') return run;
       if (patch.event && run.trace.length < 32) run.trace.push(patch.event);
       if (patch.model) run.model = patch.model;

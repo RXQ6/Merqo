@@ -1,26 +1,33 @@
+import { getBundledAssetsDir } from '@craft-agent/shared/utils';
 import { getDefaultLlmConnection, getLlmConnection } from '@craft-agent/shared/config';
 import { getCredentialManager } from '@craft-agent/shared/credentials';
 import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces';
 import { z } from 'zod';
-import { runInvestigation } from '../../../../packages/retail-domain/src/investigations';
-import type { Investigation, InvestigationReport, ModelPort, Trace } from '../../../../packages/retail-domain/src/investigations';
+import { getModels, getProviders } from '@earendil-works/pi-ai/compat';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { runSignalInvestigation } from '../../../../packages/retail-domain/src/signal-investigations';
+import { runInvestigation, isSignalInvestigation } from '../../../../packages/retail-domain/src/investigations';
+import type { AnyInvestigation, InvestigationReport, ModelPort, Trace } from '../../../../packages/retail-domain/src/investigations';
 
 type Save = (patch: { event?: Trace; report?: InvestigationReport; error?: string; model?: string }) => Promise<void>;
 const AnthropicResponse = z.object({ content: z.array(z.object({ type: z.string(), text: z.string().optional() })) });
 const ChatResponse = z.object({ choices: z.array(z.object({ message: z.object({ content: z.string().nullable() }) })) });
 
 /** Direct inference requests expose no native SDK tools, filesystem, shell or MCP registry. */
-async function createModel(workspacePath: string, deadline: string): Promise<{ model: ModelPort; name: string }> {
+export async function createInvestigationModel(workspacePath: string, deadline: string): Promise<{ model: ModelPort; name: string }> {
   const slug = loadWorkspaceConfig(workspacePath)?.defaults?.defaultLlmConnection || getDefaultLlmConnection();
   const connection = slug ? getLlmConnection(slug) : null;
   if (!connection) throw new Error('未配置模型连接。请在设置中添加 API 模型并设为默认，或明确选择离线演示。');
   if (!['api_key', 'api_key_with_endpoint', 'bearer_token', 'none'].includes(connection.authType)) throw new Error('本轮调查支持 API Key 或本地兼容模型；当前订阅/OAuth/云身份连接暂不支持，请另配 API 连接。');
-  const protocol = connection.providerType === 'anthropic' ? 'anthropic-messages' : connection.customEndpoint?.api ?? (connection.piAuthProvider === 'openai' ? 'openai-completions' : null);
+  const provider = getProviders().find(p => p === connection.piAuthProvider);
+  const providerModel = provider ? getModels(provider).find(m => m.id === connection.defaultModel?.replace(/^pi\//, '')) ?? getModels(provider)[0] : undefined;
+  const protocol = connection.providerType === 'anthropic' ? 'anthropic-messages' : connection.customEndpoint?.api ?? providerModel?.api ?? null;
   if (protocol !== 'anthropic-messages' && protocol !== 'openai-completions') throw new Error('请配置 Anthropic Messages 或 OpenAI Chat Completions 兼容连接作为默认模型');
   if (!connection.defaultModel) throw new Error('模型连接尚未选择默认模型');
   const key = connection.authType === 'none' ? null : await getCredentialManager().getLlmApiKey(connection.slug);
   if (!key && connection.authType !== 'none') throw new Error('当前模型连接缺少凭据，请在设置中重新保存');
-  const base = (connection.baseUrl || (protocol === 'anthropic-messages' ? 'https://api.anthropic.com' : 'https://api.openai.com/v1')).replace(/\/$/, '');
+  const base = (connection.baseUrl || providerModel?.baseUrl || (protocol === 'anthropic-messages' ? 'https://api.anthropic.com' : 'https://api.openai.com/v1')).replace(/\/$/, '');
   if (!/^https?:\/\//.test(base)) throw new Error('模型地址必须为 HTTP 或 HTTPS');
   const modelId = connection.defaultModel.replace(/^pi\//, '');
   return { name: `${connection.name} / ${modelId}`, model: async (system, prompt) => {
@@ -32,7 +39,7 @@ async function createModel(workspacePath: string, deadline: string): Promise<{ m
     if (anthropic) { headers['anthropic-version'] = '2023-06-01'; if (key) headers[connection.authType === 'bearer_token' ? 'Authorization' : 'x-api-key'] = connection.authType === 'bearer_token' ? `Bearer ${key}` : key; }
     else if (key) headers.Authorization = `Bearer ${key}`;
     const response = await fetch(url, { method: 'POST', headers, redirect: 'error', signal: AbortSignal.timeout(Math.min(90000, remaining)),
-      body: JSON.stringify(anthropic ? { model: modelId, max_tokens: 3500, system, messages: [{ role: 'user', content: prompt }] } : { model: modelId, max_tokens: 3500, messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }], stream: false }) });
+      body: JSON.stringify(anthropic ? { model: modelId, max_tokens: 3500, system, messages: [{ role: 'user', content: prompt }] } : { model: modelId, max_tokens: 3500, messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }], stream: false, ...(providerModel?.reasoning && provider === 'deepseek' && providerModel.thinkingLevelMap?.off !== null ? { thinking: { type: 'disabled' } } : {}) }) });
     if (!response.ok) { await response.body?.cancel(); throw new Error(`模型请求失败（HTTP ${response.status}），请检查连接、额度与模型权限`); }
     const reader = response.body?.getReader();
     if (!reader) throw new Error('模型返回空响应');
@@ -46,11 +53,15 @@ async function createModel(workspacePath: string, deadline: string): Promise<{ m
   } };
 }
 
-export async function executeRetailInvestigation(run: Investigation, workspacePath: string, save: Save): Promise<void> {
+export async function executeRetailInvestigation(run: AnyInvestigation, workspacePath: string, save: Save): Promise<void> {
   try {
     let model: ModelPort | null = null;
-    if (run.mode === 'model') { const adapter = await createModel(workspacePath, run.deadlineAt); model = adapter.model; await save({ model: adapter.name }); }
-    const report = await runInvestigation(run, model, event => save({ event }));
+    if (run.mode === 'model') { const adapter = await createInvestigationModel(workspacePath, run.deadlineAt); model = adapter.model; await save({ model: adapter.name }); }
+    const scenario = isSignalInvestigation(run) ? run.scenario : 'margin';
+    const skillsRoot = process.env.CRAFT_IS_PACKAGED === '1' ? getBundledAssetsDir('retail-skills') : join(process.env.CRAFT_APP_ROOT || process.cwd(), 'packages/retail-domain/skills');
+    if (!skillsRoot) throw new Error('应用缺少调查 Skill 资源，请重新构建');
+    const skill = readFileSync(join(skillsRoot, scenario, 'SKILL.md'), 'utf8');
+    const report = isSignalInvestigation(run) ? await runSignalInvestigation(run, model, event => save({ event }), skill) : await runInvestigation(run, model, event => save({ event }), skill);
     await save({ report });
   } catch (error) {
     // Never persist raw provider responses or credential-bearing URLs.

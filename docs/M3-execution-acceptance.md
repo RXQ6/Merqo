@@ -1,5 +1,7 @@
 # M3 本地模拟执行验收
 
+> 后续进度：单动作补偿申请、再审批与本地模拟恢复已接入，见[补偿验收](M3-compensation-acceptance.md)。本文保留执行切片当时的范围和验证结果。
+
 ## 启动当前构建
 
 退出旧 RetailPilot 窗口。在 PowerShell 执行：

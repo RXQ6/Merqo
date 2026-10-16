@@ -1,3 +1,5 @@
+import { CompensationLedger, installCompensationSchema } from './compensation';
+import type { CompensationView } from './compensation';
 import { Database } from 'bun:sqlite';
 import { SimulationLedger, installSimulationSchema, requireExecutor } from './simulation';
 import type { ExecutionView, SimulationExecutor } from './simulation';
@@ -36,8 +38,8 @@ export class DecisionStore {
       this.db.query('ATTACH DATABASE ? AS signals_scope').run(file + '.signals.sqlite');
       this.db.exec('CREATE TABLE IF NOT EXISTS decision_schema(version INTEGER PRIMARY KEY) STRICT');
       const schemaVersion = this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0;
-      if (schemaVersion > 3) throw new Error('决策数据库版本高于当前程序');
-      if (schemaVersion === 1 || schemaVersion === 2) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
+      if (schemaVersion > 4) throw new Error('决策数据库版本高于当前程序');
+      if (schemaVersion >= 1 && schemaVersion <= 3) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
       this.db.transaction(() => { this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS decision_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
         CREATE TABLE IF NOT EXISTS decision_requests(id TEXT PRIMARY KEY,decision_id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),UNIQUE(decision_id,version)) STRICT;
@@ -47,8 +49,8 @@ export class DecisionStore {
       this.db.exec(`CREATE TABLE IF NOT EXISTS approval_resolutions(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS approval_invalidations(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE INDEX IF NOT EXISTS approval_requests_recent ON decision_requests(json_extract(json,'$.requestedAt'));`);
-      installSimulationSchema(this.db);
-      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(3)'); }).immediate();
+      installSimulationSchema(this.db);installCompensationSchema(this.db);
+      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(4)'); }).immediate();
     } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
@@ -184,6 +186,14 @@ export class DecisionStore {
   reconcileExecution(id:string,actor:SimulationExecutor|null):ExecutionView {
     requireExecutor(actor);return this.db.transaction(()=>new SimulationLedger(this.db,this.workspaceId).reconcile(id,actor)).immediate();
   }
+  compensations():CompensationView[]{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).list()).immediate();}
+  createCompensation(jobId:string,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).create(jobId,reason)).immediate();}
+  reviseCompensation(id:string,expectedVersion:number,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).revise(id,expectedVersion,reason)).immediate();}
+  resolveCompensation(id:string,version:number,hash:string,choice:'approve'|'reject',reason:string,actor:SimulationApprover|null):CompensationView{
+    const result=this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).resolve(id,version,hash,choice,reason,actor)).immediate();if(result.error)throw new Error(result.error);return result.view;
+  }
+  executeCompensation(id:string,version:number,hash:string,actor:SimulationExecutor|null):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).execute(id,version,hash,actor)).immediate();}
+  reconcileCompensation(id:string,actor:SimulationExecutor|null):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).reconcile(id,actor)).immediate();}
   private save(d: DecisionDraft, event: string): void {
     this.db.query('INSERT INTO decisions VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,json=excluded.json').run(d.id, d.investigationId, d.version, JSON.stringify(d));
     this.db.query('INSERT INTO decision_versions VALUES(?,?,?)').run(d.id, d.version, JSON.stringify(d));

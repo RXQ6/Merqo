@@ -1,5 +1,7 @@
 # M3 本地模拟执行验证记录
 
+> 后续进度：单动作补偿申请、再审批与本地模拟恢复已接入，见[补偿验收](M3-compensation-acceptance.md)。本文保留执行切片当时的范围和验证结果。
+
 日期：2026-10-16。对应[设计](M3-execution-design.md)和[手动验收](M3-execution-acceptance.md)。范围是三类本地单动作模拟，不代表M3整体或完整PRD完成。
 
 | 验证 | 结果 |

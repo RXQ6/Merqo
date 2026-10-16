@@ -125,6 +125,14 @@ For inventory, the original five-day lead-time example correctly fails its pre-a
 
 ![Local simulation receipt — isolated protocol test](docs/images/simulation-execution.png)
 
+## Compensation with renewed approval
+
+Select **申请补偿** on a successful simulation receipt, or open **补偿记录**. The server derives the restore target from the original receipt and checks current evidence and the complete target version. A fresh reason and approval are required; revisions supersede older approvals. Only a locally pending replenishment request can be cancelled, without changing sellable stock.
+
+Restoration must still pass current business constraints. The default margin example cannot restore its original coupon because that would violate the margin floor. A later target change blocks compensation even if values return to the same numbers; revisions cannot bypass that conflict. Successful compensation has its own unique receipt, reread checks, attempts and version history, all retained across restart and included in report exports. See [compensation acceptance](docs/M3-compensation-acceptance.md).
+
+![Compensation with renewed approval — isolated protocol test](docs/images/compensation.png)
+
 ## CSV examples
 
 Download templates in the application or use [fixtures/retail](fixtures/retail):
@@ -182,14 +190,14 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 105 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 121 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
 Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
 
 ## Status and roadmap
 
-- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts and reread reconciliation.
-- **Next:** remaining M3 compensation requests with renewed approval and conflict checks; then operational outcome reviews. Production multi-user authorization remains pending. Historical Case retrieval, pause/resume and AgentBackend reuse remain pending.
+- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation.
+- **Next:** remaining M3 fault contracts for multi-action partial success and external unknown outcomes; then operational outcome reviews and scoped Case memory. Production multi-user authorization remains pending. Historical Case retrieval, pause/resume and AgentBackend reuse remain pending.
 - **Later:** operational review workflows, production authorization/integrations and Windows packaging.
 
 No real ERP or advertising platform integration, real business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
@@ -208,6 +216,9 @@ No real ERP or advertising platform integration, real business writes, productio
 - [Simulation execution acceptance](docs/M3-execution-acceptance.md)
 - [Simulation execution design](docs/M3-execution-design.md)
 - [Simulation execution verification](docs/M3-execution-verification.md)
+- [Compensation acceptance](docs/M3-compensation-acceptance.md)
+- [Compensation design](docs/M3-compensation-design.md)
+- [Compensation verification](docs/M3-compensation-verification.md)
 - [Domain contracts](docs/domain-contracts.md)
 - [Original upstream README](docs/upstream-README.md)
 

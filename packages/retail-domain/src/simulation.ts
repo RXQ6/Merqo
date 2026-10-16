@@ -4,7 +4,7 @@ import type { ApprovalResolution } from './approval-types';
 import type { DecisionDraft } from './decisions';
 
 export interface SimulationExecutor { id: 'local-simulation-executor'; role: 'executor'; environment: 'simulation' }
-export interface SimulationState { resourceKey: string; version: number; evidenceHash: string; values: Record<string, number>; updatedAt: string }
+export interface SimulationState { purchaseRequestStatus?: 'pending' | 'accepted' | 'cancelled'; resourceKey: string; version: number; evidenceHash: string; values: Record<string, number>; updatedAt: string }
 export interface ExecutionJob {
   id: string; workspaceId: string; requestId: string; resolutionId: string; decisionId: string; decisionVersion: number;
   actionHash: string; evidenceHash: string; reportHash: string; policyVersion: string; expiresAt: string;
@@ -86,7 +86,7 @@ export class SimulationLedger {
       const stored=this.state(job.resourceKey);
       const before: SimulationState=stored??{resourceKey:job.resourceKey,version:0,evidenceHash:job.evidenceHash,values:job.expectedBefore,updatedAt:job.createdAt};
       if(before.version!==job.expectedStateVersion||(stored?hash(stored):null)!==job.expectedStateHash||JSON.stringify(before.values)!==JSON.stringify(job.expectedBefore)) throw new Error('模拟目标版本或前值冲突，未写入；请重新调查并核对当前模拟状态');
-      const after: SimulationState={...before,evidenceHash:job.evidenceHash,version:before.version+1,values:job.expectedAfter,updatedAt:new Date().toISOString()};
+      const after: SimulationState={...before,evidenceHash:job.evidenceHash,version:before.version+1,values:job.expectedAfter,...(job.scenario==='inventory'?{purchaseRequestStatus:'pending' as const}:{}),updatedAt:new Date().toISOString()};
       this.db.query('INSERT INTO simulation_states VALUES(?,?) ON CONFLICT(resource_key) DO UPDATE SET json=excluded.json').run(job.resourceKey,JSON.stringify(after));
       const receipt: ExecutionReceipt={id:randomUUID(),jobId:id,requestId:job.requestId,resolutionId:job.resolutionId,actionHash:job.actionHash,evidenceHash:job.evidenceHash,reportHash:job.reportHash,decisionVersion:job.decisionVersion,localRequestId:'sim-'+id,at:after.updatedAt,actor,before,after};
       this.db.query('INSERT INTO simulation_receipts VALUES(?,?)').run(id,JSON.stringify(receipt));

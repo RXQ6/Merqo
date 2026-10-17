@@ -23,6 +23,7 @@ type ApiToChannelMapKeys = Exclude<
   | 'getSystemWarnings' // reads env var set at startup — no IPC needed
   | 'relaunchApp' // direct IPC to main process — not through WS RPC
   | 'retailWindow' // direct IPC; workspace inferred from the trusted calling window
+  | 'onRetailSurface' // direct IPC subscription for navigation in the calling window
   | 'retailRequest' // direct IPC; trusted local window determines retail database scope
   | 'removeWorkspace' // direct IPC to main process — modifies local config
   | 'invokeOnServer' // direct IPC to main process — cross-server RPC

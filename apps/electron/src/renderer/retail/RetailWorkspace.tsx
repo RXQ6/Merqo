@@ -29,7 +29,7 @@ function download(name: string, content: string, mime = 'text/csv;charset=utf-8'
   const anchor = document.createElement('a'); anchor.href = url; anchor.download = name; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export function RetailWorkspace({ onOpenAgent, workspaceName }: { onOpenAgent: () => void; workspaceName?: string }) {
+export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: { onOpenAgent: () => void; workspaceName?: string; active?: boolean }) {
   const followupReview=useCallback((run:AnyInvestigation)=>{setInvestigationTarget(null);setInvestigationId(run.id);setPage('investigations');},[]);
   const [investigationId,setInvestigationId]=useState<string|null>(null);
   const [reviewJobId,setReviewJobId]=useState<string|null>(null);
@@ -45,10 +45,10 @@ export function RetailWorkspace({ onOpenAgent, workspaceName }: { onOpenAgent: (
   const [shop, setShop] = useState(''); const [channel, setChannel] = useState(''); const [date, setDate] = useState('');
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
   const [selected, setSelected] = useState<EvidenceRecord | null>(null);
-  useRegisterDismissibleLayer(useMemo(() => selected ? {
+  useRegisterDismissibleLayer(useMemo(() => active && selected ? {
     id: 'retail-evidence', type: 'modal' as const, priority: 100,
     close: () => setSelected(null),
-  } : null, [selected]));
+  } : null, [selected, active]));
   const detailRef = useRef<HTMLElement>(null);
   const [busy, setBusy] = useState(false); const pending = useRef(false);
   const [error, setError] = useState(''); const [notice, setNotice] = useState('');
@@ -106,7 +106,7 @@ export function RetailWorkspace({ onOpenAgent, workspaceName }: { onOpenAgent: (
   };
   const updateMapping = (key: string, value: string) => { setMapping(current => ({ ...current, [key]: value })); setPreview(current => current ? { ...current, valid: [] } : null); };
   return <div className="retail-app" data-testid="retail-workspace">
-    <header className="retail-windowbar"><div className="retail-wordmark"><Boxes size={19}/><strong>Merqo</strong><span>经营分析</span></div><div className="retail-windowbar-actions"><span>{workspaceName??'当前工作空间'}</span><button onClick={onOpenAgent}>会话窗口</button></div></header>
+    <header className="retail-windowbar"><div className="retail-wordmark"><Boxes size={19}/><strong>Merqo</strong><span>经营分析</span></div><div className="retail-windowbar-actions"><span>{workspaceName??'当前工作空间'}</span><button onClick={onOpenAgent}>返回会话</button></div></header>
     <div className="retail-window-layout">
     <aside className="retail-navigation"><nav aria-label="经营导航">
       <p className="retail-nav-group">经营洞察</p>

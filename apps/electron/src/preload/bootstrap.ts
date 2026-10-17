@@ -445,5 +445,12 @@ client.onConnectionStateChanged((state) => {
 }
 
 ;(api as ElectronAPI).retailWindow = action => ipcRenderer.invoke('retail:window', action)
+;(api as ElectronAPI).onRetailSurface = callback => {
+  const listener = (_event: Electron.IpcRendererEvent, action: unknown) => {
+    if (action === 'open' || action === 'agent') callback(action)
+  }
+  ipcRenderer.on('retail:surface', listener)
+  return () => { ipcRenderer.removeListener('retail:surface', listener) }
+}
 ;(api as ElectronAPI).retailRequest = (request) => ipcRenderer.invoke('retail:request', request)
 contextBridge.exposeInMainWorld('electronAPI', api)

@@ -66,46 +66,31 @@ app.on('web-contents-created', (_event, contents) => {
         await js(`Array.from(document.querySelectorAll('button')).find(el => /^(Setup later|稍后设置)$/.test(el.textContent.trim())).click()`);
       }
       await waitFor(`!!document.querySelector('[data-focus-zone="sidebar"]')`, 'original desktop shell');
-      await assert(`!document.querySelector('[data-testid="retail-workspace"]') && !document.querySelector('.retail-back-to-business')`, 'startup preserves original desktop workspace');
       const desktopWindow = BrowserWindow.fromWebContents(contents);
-      if (Math.abs(desktopWindow.getContentBounds().height - desktopWindow.getBounds().height) > 2) throw new Error('Separate Windows title strip still occupies client height');
-      if (!desktopWindow.isMinimizable() || !desktopWindow.isMaximizable() || !desktopWindow.isClosable()) throw new Error('Native caption capabilities missing');
-      checks.push('Windows separate title strip removed while caption capabilities remain enabled');
-      await capture('desktop-shell.png');
-      if(phase==='window-restore'){
-        const restoredDeadline=Date.now()+15000;
-        while(!BrowserWindow.getAllWindows().some(w=>w.webContents.getURL().includes('surface=retail'))&&Date.now()<restoredDeadline)await new Promise(r=>setTimeout(r,100));
-        if(!BrowserWindow.getAllWindows().some(w=>w.webContents.getURL().includes('surface=retail')))throw new Error('Normal quit did not restore dedicated retail role');
-        checks.push('dedicated retail window restored before clicking primary entry');
-      }
-      await click('经营分析');
-      const attachRetail=async()=>{
-        const until=Date.now()+20000;let win;
-        while(Date.now()<until){win=BrowserWindow.getAllWindows().find(w=>!w.isDestroyed()&&w.webContents.getURL().includes('surface=retail'));if(win)break;await new Promise(r=>setTimeout(r,100));}
-        if(!win)throw new Error('Independent retail window did not open');contents=win.webContents;
-        await waitFor(`!!document.querySelector('[data-testid="retail-workspace"]')`, 'independent retail renderer ready');return win;
-      };
-      let retailWindow=await attachRetail();
-      if(retailWindow.id===desktopWindow.id)throw new Error('Retail reused primary window');
-      await assert(`!document.querySelector('[data-focus-zone="sidebar"]')&&document.querySelectorAll('.retail-nav-group').length===3`, 'independent retail surface has three grouped sections and no general Agent sidebar');
-      if(await agentJs(`!!document.querySelector('[data-testid="retail-workspace"]')`))throw new Error('Primary workspace was replaced');
-      const firstRetailId=retailWindow.id;await agentJs(`window.electronAPI.retailWindow('open')`);await agentJs(`window.electronAPI.retailWindow('open')`);
-      if(BrowserWindow.getAllWindows().filter(w=>w.webContents.getURL().includes('surface=retail')).length!==1||!BrowserWindow.fromWebContents(contents)||BrowserWindow.fromWebContents(contents).id!==firstRetailId)throw new Error('Repeated retail entry created duplicate windows');
-      checks.push('entry opens a separate singleton window while preserving primary workspace');
-      await assert(`(async()=>{const forged=await window.electronAPI.retailWindow({action:'open',workspaceId:'other'});const main=await window.electronAPI.retailWindow('agent');return !forged.ok&&main.ok;})()`, 'retail window control rejects forged scope and returns to primary window');
-      await waitFor(`!!document.querySelector('[data-testid="retail-workspace"]') && !document.body.innerText.includes('正在读取本机')`, 'retail page');
-      await assert(`!!document.querySelector('.retail-windowbar') && !!document.querySelector('.retail-navigation')`, 'retail window uses its own header and grouped navigation');
+      const initialWindowIds=BrowserWindow.getAllWindows().map(w=>w.id);
+      const analysisVisible=`!!document.querySelector('[data-testid="retail-workspace"]')?.checkVisibility()`;
+      if(phase==='window-restore') {
+        await waitFor(analysisVisible, 'normal quit restores analysis in the original window');
+        if(initialWindowIds.length!==1)throw new Error('Restoration created an extra analysis window');
+        checks.push('normal quit restores one window with the analysis view');
+      } else await click('经营分析');
+      await waitFor(analysisVisible, 'same window analysis ready');
+      await assert(`!document.querySelector('[data-focus-zone="sidebar"]').checkVisibility()&&document.querySelectorAll('.retail-nav-group').length===3`, 'analysis hides general sidebar and keeps three grouped sections');
+      await js(`window.electronAPI.retailWindow('open')`);await js(`window.electronAPI.retailWindow('open')`);
+      if(JSON.stringify(BrowserWindow.getAllWindows().map(w=>w.id))!==JSON.stringify(initialWindowIds))throw new Error('Repeated entry created another window');
+      checks.push('repeated entry keeps the original native window');
+      await assert(`(async()=>{const forged=await window.electronAPI.retailWindow({action:'open',workspaceId:'other'});return !forged.ok;})()`, 'navigation rejects renderer supplied workspace');
+      await click('返回会话');
+      await waitFor(`document.querySelector('[data-focus-zone="sidebar"]').checkVisibility()&&!document.querySelector('[data-testid="retail-workspace"]').checkVisibility()`, 'return to original conversation surface');
+      await click('经营分析');await waitFor(analysisVisible,'reentry');
+      await assert(`!!document.querySelector('.retail-windowbar')&&!!document.querySelector('.retail-navigation')`, 'analysis retains clean header and grouped navigation');
       if(phase==='window-save'||phase==='window-restore'){
-        await waitFor(`document.querySelectorAll('tbody tr').length===7`, 'lifecycle profile retains seven original and follow-up records');
-        if(!retailWindow.isMinimizable()||!retailWindow.isMaximizable()||!retailWindow.isClosable())throw new Error('Dedicated window native controls missing');
-        if(phase==='window-restore'){
-          const state=JSON.parse(fs.readFileSync(path.join(profile,'config/window-state.json'),'utf8'));
-          if(state.windows.filter(w=>w.url?.includes('surface=retail')).length!==1||state.windows.filter(w=>!w.url?.includes('surface=retail')).length!==1)throw new Error('Saved window roles are invalid');
-          checks.push('normal quit retains one primary and one retail role and restores the same workspace data');
-        }
+        await waitFor(`document.querySelectorAll('tbody tr').length===7`, 'same persisted workspace data');
+        if(BrowserWindow.getAllWindows().length!==1)throw new Error('Lifecycle produced two windows');
         await capture('retail-window-'+phase+'.png');finish();return;
       }
       if (phase === 'restart') {
+        await waitFor(`document.querySelectorAll('tbody tr').length === 7`, 'persisted snapshot finished loading');
         await assert(`document.querySelectorAll('tbody tr').length === 7`, 'original demo and explicit follow-up observation survive application restart');
         await click('调查记录');
         await waitFor(`document.body.innerText.includes('方案比较（代码测算）')`, 'investigation report survives restart');
@@ -149,16 +134,18 @@ app.on('web-contents-created', (_event, contents) => {
         await capture('overview-dark.png');
         nativeTheme.themeSource = 'light';
         await waitFor(`document.documentElement.classList.contains('light')`, 'desktop light theme');
-        await click('会话窗口');
-        if(!await agentJs(`!!document.querySelector('[data-focus-zone="sidebar"]')&&!document.querySelector('[data-testid="retail-workspace"]')`))throw new Error('Primary shell was changed');
+        await click('返回会话');
+        if(!await agentJs(`document.querySelector('[data-focus-zone="sidebar"]').checkVisibility()&&!document.querySelector('[data-testid="retail-workspace"]').checkVisibility()`))throw new Error('Primary shell was changed');
         await agentJs(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='经营分析').click()`);
         await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'retail re-entry preserves current records');
         const primaryReply=await agentJs(`window.electronAPI.retailRequest({op:'snapshot'})`);const retailReply=await js(`window.electronAPI.retailRequest({op:'snapshot'})`);
         if(!primaryReply.ok||!retailReply.ok||JSON.stringify(primaryReply.data.records)!==JSON.stringify(retailReply.data.records))throw new Error('Retail opened a different workspace dataset');
-        await js(`void window.electronAPI.closeWindow()`);const closeLimit=Date.now()+12000;while(!retailWindow.isDestroyed()&&Date.now()<closeLimit)await new Promise(r=>setTimeout(r,100));if(!retailWindow.isDestroyed())throw new Error('Retail window did not close');
-        if(desktopWindow.isDestroyed())throw new Error('Closing analysis also closed primary shell');
-        await agentJs(`window.electronAPI.retailWindow('open')`);retailWindow=await attachRetail();await waitFor(`document.querySelectorAll('tbody tr').length===6`, 'reopened independent window reads persisted data');
-        checks.push('close, reopen, shared workspace scope and primary navigation remain independent');
+        await js(`Array.from(document.querySelectorAll('[aria-label="经营导航"] button')).find(b=>b.textContent.startsWith('异常中心')).click()`);await waitFor(`document.querySelector('h1')?.textContent==='经营异常'`, 'analysis selected page');
+        await click('返回会话');await click('经营分析');
+        await waitFor(`document.querySelector('h1')?.textContent==='经营异常'`, 'analysis page preserved after round trip');
+        await click('经营总览');
+        if(BrowserWindow.getAllWindows().length!==initialWindowIds.length||BrowserWindow.fromWebContents(contents).id!==desktopWindow.id)throw new Error('Round trip changed the native window');
+        checks.push('conversation round trip preserves analysis state and original workspace scope');
         await js(`document.querySelector('button[aria-label="查看 TEA-500 计算与证据"]').click()`);
         await waitFor(`!!document.querySelector('[role=dialog]')`, 'evidence drawer');
         await assert(`document.querySelector('[role=dialog]').innerText.includes('14.29%') && document.querySelector('[role=dialog]').innerText.includes('¥70.00') && document.querySelector('[role=dialog]').innerText.includes('快照 SHA-256')`, 'evidence drawer shows formula, margin and source hash');

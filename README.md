@@ -82,9 +82,9 @@ Expected demo results:
 
 The sample 20% thresholds and two-day inventory buffer are **versioned demonstration rules**, not universal operating targets. Product gross profit excludes advertising, shipping and platform commissions.
 
-## Independent analysis window
+## Analysis in the current window
 
-Retail analysis opens in a dedicated window bound to the current local workspace. Repeat entry focuses the existing window and preserves its current page; **会话窗口** returns to the conversation workspace. Closing and reopening analysis retains saved data and history. Its neutral light layout groups navigation into insights, decisions/execution, and data management. Model credentials are required only when requesting a model investigation, not for opening local analysis.
+Retail analysis switches inside the current desktop window. Click **经营分析** to enter the grouped analysis surface, then **返回会话** to return to the conversation workspace. Switching preserves the conversation shell and analysis page/filter state without opening another window. A normal quit restores the selected surface; former dedicated analysis windows are folded into the primary workspace window on upgrade. Model credentials are required only when requesting a model investigation, not for opening local analysis.
 
 See [window design and acceptance](docs/retail-window-design.md).
 

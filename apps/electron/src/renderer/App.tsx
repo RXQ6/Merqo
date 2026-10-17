@@ -291,7 +291,22 @@ export default function App() {
   // App state: loading -> check auth -> onboarding or ready
   const [appState, setAppState] = useState<AppState>('loading')
   const [setupNeeds, setSetupNeeds] = useState<SetupNeeds | null>(null)
-  const retailSurface = new URLSearchParams(window.location.search).get('surface') === 'retail'
+  const [retailSurface, setRetailSurface] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('view') === 'retail' || params.get('surface') === 'retail'
+  })
+  const [retailVisited, setRetailVisited] = useState(retailSurface)
+  useEffect(() => window.electronAPI.onRetailSurface(action => {
+    if (action === 'open') setRetailVisited(true)
+    setRetailSurface(action === 'open')
+  }), [])
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    url.searchParams.delete('surface')
+    if (retailSurface) url.searchParams.set('view', 'retail')
+    else url.searchParams.delete('view')
+    window.history.replaceState(window.history.state, '', url)
+  }, [retailSurface])
 
   // Per-session Jotai atom setters for isolated updates
   // NOTE: No sessionsAtom - we don't store a Session[] array anywhere to prevent memory leaks
@@ -742,7 +757,7 @@ export default function App() {
     }
 
     initialize()
-  }, [retailSurface])
+  }, [])
 
   // Session selection state
   const [sessionSelection, setSession] = useSession()
@@ -2047,7 +2062,7 @@ export default function App() {
   return (
     <PlatformProvider actions={platformActions}>
     <ShikiThemeProvider shikiTheme={shikiTheme}>
-      <ActionRegistryProvider>
+      <ActionRegistryProvider enabled={!retailSurface}>
       <FocusProvider>
         <DismissibleLayerProvider>
         <ModalProvider>
@@ -2087,9 +2102,11 @@ export default function App() {
               />
             )}
             <div className="flex-1 min-h-0">
-              {retailSurface ? (
-                <RetailWorkspace key={windowWorkspaceId} workspaceName={workspaces.find(w=>w.id===windowWorkspaceId)?.name} onOpenAgent={()=>{void window.electronAPI.retailWindow('agent').then(r=>{if(!r.ok)toast.error(r.error??'会话窗口打开失败')}).catch(()=>toast.error('会话窗口打开失败'))}}/>
-              ) : sessionLoadError ? (
+              {retailVisited && <div hidden={!retailSurface} className="h-full" {...(!retailSurface ? { inert: '' } : {})}>
+                <RetailWorkspace active={retailSurface} key={windowWorkspaceId} workspaceName={workspaces.find(w=>w.id===windowWorkspaceId)?.name} onOpenAgent={()=>{void window.electronAPI.retailWindow('agent').then(r=>{if(!r.ok)toast.error(r.error??'返回会话失败')}).catch(()=>toast.error('返回会话失败'))}}/>
+              </div>}
+              <div hidden={retailSurface} className="h-full" {...(retailSurface ? { inert: '' } : {})}>
+              {sessionLoadError ? (
                 <SessionLoadErrorScreen
                   message={sessionLoadError}
                   onRetry={() => { void loadSessionsFromServer() }}
@@ -2102,6 +2119,7 @@ export default function App() {
                   isFocusedMode={isFocusedMode}
                 />
               )}
+              </div>
             </div>
             <ResetConfirmationDialog
               open={showResetDialog}

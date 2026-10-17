@@ -45,3 +45,5 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 ## Breaking Changes
 
 - **Restore desktop workspace** — Keep the original desktop shell as the startup experience. Open retail analysis from its sidebar, with shared themes and panel styling instead of a separate dashboard shell.
+
+- **经营分析同窗口切换** — 经营分析与会话在当前窗口内往返，保留页面状态；升级时合并旧经营分析窗口，避免重启恢复两个窗口。

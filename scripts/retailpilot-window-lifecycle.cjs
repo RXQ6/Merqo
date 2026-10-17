@@ -12,4 +12,13 @@ async function run(phase){
  const result=JSON.parse(fs.readFileSync(path.join(out,'e2e-'+phase+'.json'),'utf8'));if(!result.ok||result.error||result.profile!==profile||result.phase!==phase||result.failures.length)throw new Error('Lifecycle result mismatch');
  console.log(JSON.stringify({phase,ok:result.ok,checks:result.checks}));
 }
-(async()=>{await run('window-save');await run('window-restore');})().catch(e=>{console.error(e.message);process.exitCode=1;});
+(async()=>{
+ await run('window-save');
+ // Upgrade fixture: the old app saved a second surface=retail window.
+ const statePath=path.join(profile,'config/window-state.json');
+ const state=JSON.parse(fs.readFileSync(statePath,'utf8'));
+ if(state.windows.length!==1||!state.windows[0].url?.includes('view=retail'))throw new Error('Expected one saved window with analysis view');
+ const legacyUrl=new URL(state.windows[0].url);legacyUrl.searchParams.delete('view');legacyUrl.searchParams.set('surface','retail');
+ state.windows.push({...state.windows[0],url:legacyUrl.toString()});fs.writeFileSync(statePath,JSON.stringify(state,null,2));
+ await run('window-restore');
+})().catch(e=>{console.error(e.message);process.exitCode=1;});

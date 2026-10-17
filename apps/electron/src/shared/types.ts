@@ -225,6 +225,7 @@ import type {
 
 export interface ElectronAPI {
   retailWindow(action: 'open' | 'agent'): Promise<{ok: boolean; error?: string}>
+  onRetailSurface(callback: (action: 'open' | 'agent') => void): () => void
   retailRequest(request: import('../../../../packages/retail-domain/src/operations').RetailRequest): Promise<import('../../../../packages/retail-domain/src/operations').RetailReply>
   // Session management
   getSessions(): Promise<Session[]>

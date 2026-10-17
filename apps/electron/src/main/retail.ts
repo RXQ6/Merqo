@@ -17,8 +17,8 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workspaceId = manager?.getWorkspaceForWindow(event.sender.id);
       const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null;
       if (!manager || !workspaceId || !workspace || workspace.remoteServer) throw new Error('请选择本机 Workspace；远程经营窗口暂不支持');
-      if (action === 'open') manager.openRetailWindow(workspaceId);
-      else manager.focusOrCreateWindow(workspaceId);
+      // Switch only the trusted calling renderer; navigation never creates a window.
+      event.sender.send('retail:surface', action);
       return {ok:true};
     } catch (error) { return {ok:false,error:error instanceof Error ? error.message : '窗口打开失败'}; }
   });

@@ -29,6 +29,24 @@ export interface WindowState {
   lastFocusedWorkspaceId?: string
 }
 
+/** Fold the former dedicated analysis window into its workspace's primary window.
+ * Modern view=retail windows remain ordinary windows and are never deduplicated.
+ */
+export function migrateRetailWindows(windows: SavedWindow[]): SavedWindow[] {
+  const legacy = (saved: SavedWindow) => {
+    try { return new URL(saved.url ?? '').searchParams.get('surface') === 'retail' } catch { return false }
+  }
+  const primary = windows.filter(saved => !legacy(saved))
+  for (const saved of windows.filter(legacy)) {
+    if (primary.some(item => item.workspaceId === saved.workspaceId)) continue
+    const url = new URL(saved.url!)
+    url.searchParams.delete('surface')
+    url.searchParams.set('view', 'retail')
+    primary.push({ ...saved, url: url.toString() })
+  }
+  return primary
+}
+
 const CONFIG_DIR = process.env.CRAFT_CONFIG_DIR || join(homedir(), '.retailpilot')
 const WINDOW_STATE_FILE = join(CONFIG_DIR, 'window-state.json')
 
@@ -68,7 +86,7 @@ export function loadWindowState(): WindowState | null {
     }
 
     mainLog.info('[WindowState] Loaded window state:', state.windows.length, 'windows')
-    return state
+    return { ...state, windows: migrateRetailWindows(state.windows) }
   } catch (error) {
     mainLog.error('[WindowState] Failed to load window state:', error)
     return null

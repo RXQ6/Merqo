@@ -2,7 +2,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const profile = path.join(root, '.runtime', `m1-e2e-${Date.now()}`);
+const restartOnly = process.argv.includes('--restart');
+const initial = restartOnly ? JSON.parse(fs.readFileSync(path.join(root, 'artifacts/m1/e2e-initial.json'), 'utf8')) : null;
+const profile = initial ? path.resolve(initial.profile) : path.join(root, '.runtime', `m1-e2e-${Date.now()}`);
+if(initial && (!initial.ok || !profile.startsWith(path.join(root, '.runtime') + path.sep))) throw new Error('Restart requires a successful isolated initial run');
 fs.mkdirSync(path.join(root, 'artifacts/m1'), { recursive: true });
 async function run(phase) {
   const env = { ...process.env, RETAILPILOT_M1_PROFILE: profile, RETAILPILOT_M1_PHASE: phase };
@@ -19,4 +22,4 @@ async function run(phase) {
   if(result.ok!==true||result.profile!==profile||result.phase!==phase||result.error||result.failures?.length)throw new Error(`M1 ${phase} did not produce a matching successful result`);
   console.log(JSON.stringify(result,null,2));
 }
-(async () => { await run('initial'); await run('restart'); })().catch(error => { console.error(error); process.exitCode = 1; });
+(async () => { if (!restartOnly) await run('initial'); await run('restart'); })().catch(error => { console.error(error); process.exitCode = 1; });

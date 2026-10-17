@@ -26,7 +26,7 @@ interface ActionRegistryContextType {
 
 const ActionRegistryContext = createContext<ActionRegistryContextType | null>(null)
 
-export function ActionRegistryProvider({ children }: { children: React.ReactNode }) {
+export function ActionRegistryProvider({ children, enabled = true }: { children: React.ReactNode; enabled?: boolean }) {
   const handlersRef = useRef<Map<ActionId, ActionHandler[]>>(new Map())
   const userOverrides = useRef<Map<ActionId, string | null>>(new Map())
 
@@ -79,6 +79,7 @@ export function ActionRegistryProvider({ children }: { children: React.ReactNode
   // Set up global hotkey listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!enabled) return
       // Build context snapshot from DOM state at event time
       const context = getKeybindingContext(e)
 
@@ -105,7 +106,7 @@ export function ActionRegistryProvider({ children }: { children: React.ReactNode
     // Capture phase for reliable interception
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [getHotkey])
+  }, [getHotkey, enabled])
 
   const value: ActionRegistryContextType = {
     register,

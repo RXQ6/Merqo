@@ -199,7 +199,6 @@ export class WindowManager {
   createWindow(options: CreateWindowOptions): BrowserWindow {
     const { workspaceId, focused = false, initialDeepLink, restoreUrl } = options
     let retail = options.retail === true
-    if (restoreUrl) { try { retail = retail || new URL(restoreUrl).searchParams.get('surface') === 'retail' } catch { /* use explicit role */ } }
 
     if (retail) {
       const existing = [...this.windows.values()].find(m => m.retail && m.workspaceId === workspaceId && !m.window.isDestroyed())
@@ -557,18 +556,6 @@ export class WindowManager {
     return null
   }
 
-  /** One independent retail window per workspace; repeated entry preserves its current page. */
-  openRetailWindow(workspaceId: string): BrowserWindow {
-    const existing = [...this.windows.values()].find(m => m.retail && m.workspaceId === workspaceId && !m.window.isDestroyed())
-    if (existing) {
-      if (existing.window.isMinimized()) existing.window.restore()
-      existing.window.show()
-      existing.window.focus()
-      return existing.window
-    }
-    return this.createWindow({workspaceId, retail: true})
-  }
-
   /**
    * Get ALL windows for a workspace (main window + tab content windows)
    * Used for broadcasting events to all windows showing the same workspace
@@ -687,7 +674,6 @@ export class WindowManager {
   registerWindow(window: BrowserWindow, workspaceId: string): void {
     const webContentsId = window.webContents.id
     let retail = this.windows.get(webContentsId)?.retail ?? false
-    try { retail = retail || new URL(window.webContents.getURL()).searchParams.get('surface') === 'retail' } catch { /* renderer may still be loading */ }
     this.windows.set(webContentsId, { window, workspaceId, retail })
     // Re-apply window-title policy after re-registration (e.g. post-refresh).
     this.refreshWindowTitles()

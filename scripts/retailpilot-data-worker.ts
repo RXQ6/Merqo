@@ -1,3 +1,4 @@
+import { ScheduledChecks } from '../packages/retail-domain/src/scheduled-checks';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { DecisionStore } from '../packages/retail-domain/src/decisions';
@@ -28,13 +29,32 @@ let store: RetailStore | undefined;
 let investigations: InvestigationStore | undefined;
 let signals: SignalStore | undefined;
 let decisions: DecisionStore | undefined;
+let checks: ScheduledChecks | undefined;
 try {
   const input: unknown = JSON.parse(await Bun.stdin.text());
-  store = openStore(() => new RetailStore(file, process.argv[3] || '当前 Workspace'));
-  investigations = openStore(() => new InvestigationStore(file + '.investigations.sqlite', false, workspaceId));
-  // Internal worker protocol is not exposed by the renderer IPC whitelist.
-  const internal = z.strictObject({ op: z.literal('investigation_update'), id: z.string().uuid(), event: z.custom<Trace>().optional(), report: z.custom<InvestigationReport>().optional(), error: z.string().max(1000).optional(), model: z.string().max(200).optional() }).safeParse(input);
-  if (internal.success) {
+  const tick = z.strictObject({op:z.literal('check_tick')}).safeParse(input);
+  const checkOp = typeof input === 'object' && input !== null && 'op' in input && ['checks','check_configure','check_run','check_catchup','check_retry'].includes(String(input.op));
+  if (tick.success || checkOp) {
+    const readChecks = () => {
+      store ??= openStore(() => new RetailStore(file, process.argv[3] || '当前 Workspace'));
+      signals ??= openStore(() => new SignalStore(file + '.signals.sqlite'));
+      return [...store.snapshot().records, ...signals.snapshot().records];
+    };
+    // Open the ledger before source data, so source failures remain inspectable.
+    checks = openStore(() => new ScheduledChecks(file + '.checks.sqlite', workspaceId, readChecks));
+    let result;
+    if(tick.success) result = checks.run('scheduled');
+    else {
+      const request = RetailRequestSchema.parse(input);
+      result = request.op === 'check_configure' ? checks.configure(request.expectedRevision,request.config) : request.op === 'check_retry' ? checks.retry(request.id) : request.op === 'check_run' ? checks.run('manual') : request.op === 'check_catchup' ? checks.run('catchup') : checks.view();
+    }
+    console.log(JSON.stringify({ok:true,kind:'checks',data:result}));
+  } else {
+    store = openStore(() => new RetailStore(file, process.argv[3] || '当前 Workspace'));
+    investigations = openStore(() => new InvestigationStore(file + '.investigations.sqlite', false, workspaceId));
+    // Internal worker protocol is not exposed by the renderer IPC whitelist.
+    const internal = z.strictObject({ op: z.literal('investigation_update'), id: z.string().uuid(), event: z.custom<Trace>().optional(), report: z.custom<InvestigationReport>().optional(), error: z.string().max(1000).optional(), model: z.string().max(200).optional() }).safeParse(input);
+    if (internal.success) {
     const { id, event, report, error, model } = internal.data;
     console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [investigations.update(id, { ...(event ? { event } : {}), ...(report ? { report } : {}), ...(error ? { error } : {}), ...(model ? { model } : {}) })] }));
   } else {
@@ -131,7 +151,8 @@ try {
       else console.log(JSON.stringify(reply));
     }
   }
+  }
 } catch (error) {
   console.log(JSON.stringify({ ok: false, error: error instanceof Error ? error.message : '经营数据处理失败' }));
   process.exitCode = 1;
-} finally { decisions?.close(); signals?.close(); investigations?.close(); store?.close(); }
+} finally { checks?.close(); decisions?.close(); signals?.close(); investigations?.close(); store?.close(); }

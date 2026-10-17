@@ -1,0 +1,137 @@
+{
+  "date": "2026-10-17",
+  "change": "P0 local scheduled checks, bounded manual catch-up, durable failure recovery and deduplication",
+  "domainTests": {
+    "passed": 182,
+    "assertions": 960
+  },
+  "finalFocusedTests": {
+    "passed": 12,
+    "assertions": 61
+  },
+  "domainTypecheck": true,
+  "electronTypecheck": true,
+  "fullBuild": true,
+  "native": {
+    "initial": {
+      "passed": true,
+      "count": 56,
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "old demo reload preserves true import history and explains its age exemption",
+        "demo totals match independently calculated revenue and gross profit",
+        "retail analysis keeps its requested neutral light surface independent of Agent theme",
+        "conversation round trip preserves analysis state and original workspace scope",
+        "evidence drawer shows formula, margin and source hash",
+        "evidence participates in native dismissible layer stack",
+        "start investigation is visible and missing model is not simulated as success",
+        "margin numeric audit distinguishes unit, total and five-yuan coupon reduction",
+        "real inference adapter executes six local HTTP contract calls with no native tool authority",
+        "desktop investigation uses four actual MCP stdio tool calls",
+        "JSON and Markdown download through native desktop and retain frozen evidence index",
+        "duplicate simulated approval requests are idempotent",
+        "approval requires an explicit reason",
+        "approval actor comes from server, forged identity rejects and retries remain idempotent",
+        "explicit local simulation confirmation is required",
+        "execution is server-scoped, idempotent and isolated from source snapshots",
+        "decision draft, exact-version simulation submission, revision and superseded request work in desktop",
+        "approve, execute isolated simulation, supersede old approval, reject revision and preserve history without real business writes",
+        "report export includes decision history, superseded request and execution receipt",
+        "two deterministic scenarios and evidence are displayed",
+        "renderer cannot forge investigation completion",
+        "explicit offline replay remains distinct from model investigation",
+        "inventory model conditional plans",
+        "inventory plan does not erase pre-arrival gap",
+        "ads model conditional plans",
+        "ads budget scales revenue at unchanged ROAS",
+        "all three scenarios and offline replay consume actual MCP evidence",
+        "inventory and ads model contracts, readonly Reviewer and explicit offline plans passed",
+        "offline draft cannot submit simulation approval",
+        "draft recovery opens the original offline record",
+        "exact run read works through renderer IPC",
+        "needs_evidence cannot submit approval",
+        "rejected cannot submit approval",
+        "offline, needs-evidence and rejected drafts expose exact origin without automatic model calls or approval bypass",
+        "unified anomaly center excludes all four normal rows across three scenarios",
+        "repeat file is idempotent",
+        "correction changes current SKU to 33.33% while retaining source separation",
+        "IPC rejects renderer-supplied workspace scope",
+        "IPC rejects business execution operations",
+        "inventory coverage and ROAS decline match independent arithmetic",
+        "scenario evidence shows rule, formula and immutable source hash",
+        "two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center",
+        "concurrent read refreshes do not block page remounts",
+        "all three UI workflows execute only isolated simulation and inventory is not received as sellable stock",
+        "pending replenishment compensation cancels request instead of receiving inventory",
+        "compensation is newly approved, idempotent, exportable, server scoped and isolated from source stock",
+        "unsafe compensation has no approval or execute action",
+        "unknown outcome disables resubmission",
+        "batch recovery fences old intent and retry never duplicates successful item",
+        "review export retains Case evidence and rejects renderer role injection",
+        "Case retrieval is scoped, frozen and actually passed through desktop MCP",
+        "inventory review follows its business window and requires explicit confirmation"
+      ]
+    },
+    "restart": {
+      "passed": true,
+      "count": 16,
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "original demo and explicit follow-up observation survive application restart",
+        "all three scenario histories survive restart",
+        "legacy margin report retains calculations",
+        "corrected margin survives application restart",
+        "inventory and advertising corrections survive restart",
+        "versioned draft and superseded approval request survive restart",
+        "superseded approval is visible and rejected decision cannot be approved again",
+        "successful simulation and reconciliation survive restart without another execution",
+        "compensation receipt, reread, rejected history and no repeat action survive restart",
+        "batch recovery audit and no replay actions survive restart",
+        "immutable Case, confounders and no overwrite action survive restart",
+        "review display units match formatted currency and percentages"
+      ]
+    },
+    "checks": {
+      "passed": true,
+      "count": 7,
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "real minute callback checks three scenarios without model calls",
+        "manual reentry deduplicates slots and renderer cannot trigger internal scheduling",
+        "scheduled checks create no approvals or executions"
+      ]
+    },
+    "checks-restart": {
+      "passed": true,
+      "count": 5,
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "check config, scheduled result and slot uniqueness survive restart"
+      ]
+    }
+  },
+  "nativeMinuteTrigger": "Actual SchedulerService tick at 2026-10-17T10:55:00Z; no simulated clock or direct test tick.",
+  "sqlPlan": "SEARCH check_runs USING INDEX check_active (status=? AND started_at<?)",
+  "limits": [
+    "App must be running; no guarantee while closed or sleeping.",
+    "Catch-up reads data at actual observation time; newest 24 slots, six per call; no historical realtime reconstruction.",
+    "Deterministic checks only; no model calls or automatic investigation, approval or execution.",
+    "Native full regression uses local inference contract fixtures, not new real-model quality evaluation."
+  ],
+  "testRepairs": [
+    "When test clock is frozen, find the new configuration revision instead of assuming random-ID tie order.",
+    "Distinct large-count fixtures must vary business identity, not only import IDs."
+  ]
+}

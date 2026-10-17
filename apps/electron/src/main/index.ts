@@ -120,6 +120,7 @@ import { checkForUpdatesOnLaunch, setAutoUpdateEventSink, isUpdating, setBeforeU
 import type { EventSink } from '@craft-agent/server-core/transport'
 import { validateGitBashPath, checkVCRedistInstalled } from '@craft-agent/server-core/services'
 import { registerRetailIpc } from './retail'
+import { createRetailCheckScheduler } from './retail-check-scheduler'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -210,6 +211,8 @@ const DEEPLINK_SCHEME = process.env.CRAFT_DEEPLINK_SCHEME || 'retailpilot'
 
 let windowManager: WindowManager | null = null
 registerRetailIpc(() => windowManager)
+const retailChecksScheduler = createRetailCheckScheduler()
+app.on('before-quit', () => retailChecksScheduler.stop())
 let sessionManager: SessionManager | null = null
 let browserPaneManager: BrowserPaneManager | null = null
 let oauthFlowStore: OAuthFlowStore | null = null
@@ -385,6 +388,7 @@ async function createInitialWindows(): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  retailChecksScheduler.start()
   // Export packaged state as env var so logger.ts (and headless Bun) don't need 'electron'
   process.env.CRAFT_IS_PACKAGED = app.isPackaged ? 'true' : 'false'
 

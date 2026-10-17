@@ -7,6 +7,8 @@ import type { ApprovalView } from './approval-types';
 import type { DecisionDraft } from './decisions';
 import type { AnyInvestigation } from './investigations';
 import type { SignalPreview, SignalSnapshot } from './signals';
+import { CheckConfigSchema } from './check-types';
+import type { ChecksView } from './check-types';
 
 export const RULE_VERSION = 'retail-margin-v1';
 export const FIELDS = ['date', 'shop_id', 'channel', 'sku_id', 'product_name', 'spec', 'currency', 'list_price_minor', 'coupon_minor', 'full_reduction_minor', 'subsidy_minor', 'subsidy_funder', 'cost_minor', 'sold_qty', 'on_hand', 'reserved', 'inbound_qty'] as const;
@@ -31,6 +33,11 @@ export interface RejectedRow { line: number; reason: string }
 export interface Preview { headers: string[]; mapping: Record<string, string>; sample: string[][]; valid: RetailRow[]; rejected: RejectedRow[]; duplicateCount: number; total: number }
 export const MappingSchema = z.record(z.string(), z.string().max(200));
 export const RetailRequestSchema = z.discriminatedUnion('op', [
+  z.strictObject({ op: z.literal('checks') }),
+  z.strictObject({ op: z.literal('check_configure'), expectedRevision: z.number().int().min(1), config: CheckConfigSchema }),
+  z.strictObject({ op: z.literal('check_run') }),
+  z.strictObject({ op: z.literal('check_catchup') }),
+  z.strictObject({ op: z.literal('check_retry'), id: z.string().uuid() }),
   z.strictObject({ op: z.literal('signals') }),
   z.strictObject({ op: z.literal('signals_demo') }),
   z.strictObject({ op: z.literal('signals_replenishment_demo') }),
@@ -145,7 +152,7 @@ export function calculate(row: RetailRow, specConflict = false): Calculation {
 export interface EvidenceRecord { id: string; batchId: string; source: 'demo' | 'csv'; importedAt: string; snapshotHash: string; ruleVersion: string; row: RetailRow; calculation: Calculation; status: 'normal' | 'low_margin' | 'needs_evidence'; reasons: string[]; thresholdBps: number }
 export interface BatchSummary { id: string; source: 'demo' | 'csv'; importedAt: string; accepted: number; rejected: number; hash: string; errors: RejectedRow[]; ruleVersion: string }
 export interface Snapshot { workspaceName: string; records: EvidenceRecord[]; batches: BatchSummary[]; dbVersion: number; ruleVersion: string; thresholdBps: number }
-export type RetailReply = {ok:true;kind:'reviews';data:ReviewView[];selectedId?:string} | {ok:true;kind:'review_preview';data:ObservationPreview} | {ok:true;kind:'execution_batches';data:BatchView[];selectedId?:string} | {ok:true;kind:'compensations';data:CompensationView[];selectedId?:string} | { ok: true; kind: 'executions'; data: ExecutionView[]; selectedId?: string } | { ok: true; kind: 'approvals'; data: ApprovalView[]; selectedId?: string } | { ok: true; kind: 'export'; filename: string; mime: string; content: string } | { ok: true; kind: 'decisions'; data: DecisionDraft[]; selectedId?: string; history?: DecisionDraft[] } | { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: AnyInvestigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
+export type RetailReply = { ok: true; kind: 'checks'; data: ChecksView } | {ok:true;kind:'reviews';data:ReviewView[];selectedId?:string} | {ok:true;kind:'review_preview';data:ObservationPreview} | {ok:true;kind:'execution_batches';data:BatchView[];selectedId?:string} | {ok:true;kind:'compensations';data:CompensationView[];selectedId?:string} | { ok: true; kind: 'executions'; data: ExecutionView[]; selectedId?: string } | { ok: true; kind: 'approvals'; data: ApprovalView[]; selectedId?: string } | { ok: true; kind: 'export'; filename: string; mime: string; content: string } | { ok: true; kind: 'decisions'; data: DecisionDraft[]; selectedId?: string; history?: DecisionDraft[] } | { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: AnyInvestigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
 
 const demoRows: RetailRow[] = [
   { date: '2026-10-14', shop_id: 'demo-nanfeng', channel: '线上商城', sku_id: 'TEA-500', product_name: '桂花乌龙冷萃茶', spec: '500ml × 6瓶', currency: 'CNY', list_price_minor: 10000, coupon_minor: 2000, full_reduction_minor: 1000, subsidy_minor: 0, subsidy_funder: 'platform', cost_minor: 6000, sold_qty: 40, on_hand: 120, reserved: 10, inbound_qty: 60 },

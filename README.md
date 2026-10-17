@@ -88,6 +88,12 @@ Retail analysis switches inside the current desktop window. Click **经营分析
 
 See [window design and acceptance](docs/retail-window-design.md).
 
+## Scheduled retail checks
+
+Open **经营分析 → 经营巡检** to enable minute-aligned checks of locally imported margin, inventory and advertising data. Choose demo or CSV data and a 15-minute, hourly or daily interval. The first check runs on the next minute tick for the current interval; repeated entries reuse the same config-version/slot record. Scheduling runs while the desktop app is alive, independently of the analysis page.
+
+Manual checks work while paused. Catch-up covers the most recent 24 intervals, up to six per request, reading the snapshots available at catch-up time rather than reconstructing historical live data. Failures/interrupted jobs support up to three attempts with retained history. Config, results, business-content finding deduplication and lease recovery persist locally. No model calls, approvals or business executions are created by these checks. See [design and acceptance](docs/P0-scheduled-checks-design.md).
+
 ## Margin evidence and review
 
 New margin investigations include a six-item evidence checklist separating snapshot arithmetic, causal evidence and real execution prerequisites. Missing-cost and scope conflicts remain blocked. The checklist states which evidence the current snapshot import can accept and which adapters remain unavailable. Reviewer sees the final disclosed unknowns before the report is saved; historical reports are not backfilled.
@@ -233,7 +239,7 @@ Inference transport tests use a **local HTTP contract fixture**. They verify the
 ## Status and roadmap
 
 - **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation, independent execution batches, durable uncertain outcomes and per-item recovery/retry, plus synthetic outcome reviews and scoped frozen Case retrieval.
-- **Next:** domain scheduling, manual catch-up and deduplication, remaining investigation recovery, and release gates. Real outcome observation, external outcome queries, model-generated multi-action plans, production multi-user authorization, pause/resume and AgentBackend reuse remain pending.
+- **Next:** business-quality evaluation, performance and Windows packaging gates, plus remaining investigation recovery. Domain rule scheduling, bounded manual catch-up and deduplication are implemented. Real outcome observation, external outcome queries, model-generated multi-action plans, production multi-user authorization, pause/resume and AgentBackend reuse remain pending.
 - **Later:** real-system outcome review and integrations, production authorization and Windows packaging.
 
 No real ERP or advertising platform integration, real business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.

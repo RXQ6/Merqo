@@ -99,6 +99,28 @@ app.on('web-contents-created', (_event, contents) => {
       await waitFor(`document.querySelector('[data-focus-zone="sidebar"]').checkVisibility()&&!document.querySelector('[data-testid="retail-workspace"]').checkVisibility()`, 'return to original conversation surface');
       await click('经营分析');await waitFor(analysisVisible,'reentry');
       await assert(`!!document.querySelector('.retail-windowbar')&&!!document.querySelector('.retail-navigation')`, 'analysis retains clean header and grouped navigation');
+      if(phase==='checks'||phase==='checks-restart'){
+        await click('经营巡检');await waitFor(`!!document.querySelector('[aria-label="巡检运行列表"]')`, 'checks UI ready');
+        if(phase==='checks-restart'){
+          await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'checks'});return r.ok&&!r.data.config.enabled&&r.data.runs.some(v=>v.trigger==='scheduled'&&v.status==='succeeded')&&new Set(r.data.runs.map(v=>v.config.revision+v.slot)).size===r.data.runs.length;})()`, 'check config, scheduled result and slot uniqueness survive restart');
+          await capture('checks-restart.png');finish();return;
+        }
+        const beforeBusiness=await js(`(async()=>({approvals:(await window.electronAPI.retailRequest({op:'approvals'})).data.length,executions:(await window.electronAPI.retailRequest({op:'executions'})).data.length}))()`);
+        await js(`(async()=>{const r=await window.electronAPI.retailRequest({op:'checks'});const c=r.data.config;const reset=await window.electronAPI.retailRequest({op:'check_configure',expectedRevision:c.revision,config:{enabled:false,source:'demo',intervalMinutes:15}});if(!reset.ok)throw new Error(reset.error);})()`);
+        await click('刷新巡检记录');
+        await js(`(()=>{const select=document.querySelector('select[aria-label="巡检启用状态"]');select.value='on';select.dispatchEvent(new Event('change',{bubbles:true}));const interval=document.querySelector('select[aria-label="巡检间隔"]');interval.value='15';interval.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+        await click('保存巡检配置');await waitFor(`document.querySelector('[data-testid="retail-checks"]').innerText.includes('配置已保存')`, 'enabled schedule saved');
+        const config=await js(`(async()=>{const r=await window.electronAPI.retailRequest({op:'checks'});return r.data.config;})()`);
+        await waitFor(`document.querySelector('[aria-label="巡检运行列表"]').innerText.includes('定时 / v${config.revision}')`, 'actual shared SchedulerService minute tick creates a run',90000);
+        await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'checks'});const job=r.data.runs.find(v=>v.config.revision===${config.revision}&&v.trigger==='scheduled');return job?.status==='succeeded'&&job.result.byScenario.margin>0&&job.result.byScenario.inventory>0&&job.result.byScenario.ads>0;})()`, 'real minute callback checks three scenarios without model calls');
+        await click('检查当前时段');await waitFor(`document.querySelector('[data-testid="retail-checks"]').innerText.includes('本次新运行')`, 'manual current slot result');await click('检查当前时段');
+        await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'checks'});const denied=await window.electronAPI.retailRequest({op:'check_tick'});return !denied.ok&&new Set(r.data.runs.map(v=>v.config.revision+v.slot)).size===r.data.runs.length;})()`, 'manual reentry deduplicates slots and renderer cannot trigger internal scheduling');
+        await capture('checks.png');
+        await assert(`(async()=>{return (await window.electronAPI.retailRequest({op:'approvals'})).data.length===${beforeBusiness.approvals}&&(await window.electronAPI.retailRequest({op:'executions'})).data.length===${beforeBusiness.executions};})()`, 'scheduled checks create no approvals or executions');
+        await js(`(()=>{const select=document.querySelector('select[aria-label="巡检启用状态"]');select.value='off';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);await click('保存巡检配置');
+        await waitFor(`(async()=>{const r=await window.electronAPI.retailRequest({op:'checks'});return r.ok&&!r.data.config.enabled;})()`, 'pause persisted');
+        finish();return;
+      }
       if(phase==='evidence'){
         const runId=await js(`(async()=>{const snapshot=await window.electronAPI.retailRequest({op:'snapshot'});const record=snapshot.data.records.find(r=>r.source==='demo'&&r.row.sku_id==='TEA-500');const result=await window.electronAPI.retailRequest({op:'investigate',recordId:record.id,scenario:'margin',mode:'replay',retry:true});if(!result.ok)throw new Error(result.error);return result.data[0].id;})()`);
         await waitFor(`(async()=>{const r=await window.electronAPI.retailRequest({op:'investigations',id:${JSON.stringify(runId)}});return r.ok&&r.data[0].report?.evidenceAssessment?.version==='margin-evidence-v1';})()`, 'new assessment persisted through actual worker and MCP',20000);

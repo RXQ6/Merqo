@@ -8,13 +8,14 @@ async function run(phase){
  const env={...process.env,RETAILPILOT_M1_PROFILE:profile,RETAILPILOT_M1_PHASE:phase};delete env.ELECTRON_RUN_AS_NODE;
  const log=fs.createWriteStream(path.join(out,'process-'+phase+'.log'));
  const child=spawn(path.join(root,'node_modules/electron/dist/electron.exe'),[path.join(root,'scripts/retailpilot-m1-host.cjs')],{cwd:root,env,windowsHide:true,stdio:['ignore','pipe','pipe']});child.stdout.pipe(log,{end:false});child.stderr.pipe(log,{end:false});
- await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{child.kill();reject(new Error('Window lifecycle timeout'));},90000);child.on('error',e=>{clearTimeout(timer);log.end();reject(e);});child.on('exit',code=>{clearTimeout(timer);log.end();code===0?resolve():reject(new Error(phase+' failed'));});});
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{child.kill();reject(new Error('Window lifecycle timeout'));},phase==='checks'?150000:90000);child.on('error',e=>{clearTimeout(timer);log.end();reject(e);});child.on('exit',code=>{clearTimeout(timer);log.end();code===0?resolve():reject(new Error(phase+' failed'));});});
  const result=JSON.parse(fs.readFileSync(path.join(out,'e2e-'+phase+'.json'),'utf8'));if(!result.ok||result.error||result.profile!==profile||result.phase!==phase||result.failures.length)throw new Error('Lifecycle result mismatch');
  console.log(JSON.stringify({phase,ok:result.ok,checks:result.checks}));
 }
 (async()=>{
  if(process.argv.includes('--navigation')){await run('navigation');return;}
  if(process.argv.includes('--evidence')){await run('evidence');return;}
+ if(process.argv.includes('--checks')){await run('checks');await run('checks-restart');return;}
  await run('window-save');
  // Upgrade fixture: the old app saved a second surface=retail window.
  const statePath=path.join(profile,'config/window-state.json');

@@ -6,9 +6,9 @@ Merqo brings promotion margins, stockout risks, and advertising ROAS into one de
 
 Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, Bun, and SQLite**.
 
-> Development prototype for Windows. The current desktop application, launch scripts, and local configuration names still use **RetailPilot**. Merqo is the repository name. Sample results are synthetic and do not represent real business performance.
+> Development prototype for Windows. Some launch scripts, runtime settings and historical screenshots retain the **RetailPilot** name. Sample results are synthetic and do not represent real business performance. No Windows installer is available yet.
 
-![Merqo independent retail workbench](docs/images/retail-window.png)
+![Retail workbench — historical layout](docs/images/retail-window.png)
 
 ## Features
 
@@ -20,6 +20,8 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 | Decision drafts | Deterministic before/after values, immutable revisions, action/evidence hashes, expiration checks, simulation approval/rejection, isolated execution receipts and persistent audit history |
 | Data and evidence | CSV mapping and preview, validation, quarantined rows, duplicate protection, versioned rules, source hashes and quality reports |
 | Three-scenario investigations | Read-only tool loop, cited observations and hypotheses, alternative explanations, two deterministic scenarios, sequential Reviewer and persistent history |
+| Scheduled checks | Persistent local rule scans, bounded manual catch-up, finding deduplication and interrupted-job recovery while the app is running |
+| Business evaluation | 48 registered contracts, 36 executable cases passing, 12 unsupported cases explicitly excluded from passes; inspectable datasets, evidence and confusion matrices |
 
 All three analytical scenarios work with synthetic data or imported CSVs **without model credentials**. All three investigations support a configured API model or an explicitly labeled offline rules demonstration.
 
@@ -65,8 +67,8 @@ node node_modules/electron/install.js
 The current application UI is primarily Chinese:
 
 1. If prompted for a model connection, choose **稍后设置** (Set up later).
-2. Select **经营分析** (Retail analysis) in the desktop sidebar to open its own window. The conversation workspace stays available.
-3. In the independent analysis window, open **数据与导入**, then select **载入演示数据** to load all three scenarios.
+2. Select **经营分析** (Retail analysis) in the desktop sidebar to switch to analysis within the same window. Select **返回会话** to return to conversations.
+3. Open **数据与导入**, then select **载入演示数据** to load all three scenarios.
 4. Open **库存与广告** to inspect inventory and advertising evidence.
 5. Open **异常中心** to review the combined anomaly list.
 
@@ -226,13 +228,28 @@ Run after building:
 
 ```powershell
 bun run retail:check
+bun run retail:eval
 bun run retail:check:mcp
 bun run typecheck:all
 bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 164 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The latest domain verification on 2026-10-17 passed **185 tests and 1,188 assertions**, including the fixed business evaluation, plus the domain TypeScript check. Earlier verification records cover transport contracts, desktop type checks/builds and native Electron workflows with restart recovery; those broader checks were not rerun for the evaluation-only change. Desktop tests use isolated profiles and write local reports under `artifacts/`.
+
+### Fixed business evaluation
+
+`bun run retail:eval` creates `dataset.json`, `report.json` and `report.md` in `artifacts/business-eval/`. The catalog registers the PRD's 12 failure modes with three variants each, plus 12 approval/execution faults. Each contract includes input, rule, allowed conclusions, required evidence, forbidden actions and expected state.
+
+| Latest fixed-set result | Count |
+| --- | ---: |
+| Executable cases passed | 36 |
+| Executable cases failed | 0 |
+| Registered but unsupported cases | 12 |
+
+Unsupported cases cover bundle-component mapping, gift costs, member-price semantics and filtering unavailable offers. They are not executed or counted as passes, and do not prove the application blocks those inputs. The approval/execution harness uses a local model/Reviewer protocol fixture; these results do not measure real-model reasoning quality.
+
+For release checks, run `bun run retail:eval --release-gate`. It currently **exits 1** because release gates remain unmet. A normal evaluation exit of 0 only means there were no executable-case failures. See the [archived report](docs/verification/business-eval-2026-10-17/report.md), [input contracts](docs/verification/business-eval-2026-10-17/dataset.json), [full evidence](docs/verification/business-eval-2026-10-17/report.json) and [scope and acceptance](docs/M5-business-evaluation.md).
 
 Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. These are small engineering checks, not a full business-quality benchmark. Earlier checks completed inventory and advertising simulation chains. The latest single synthetic margin workflow also completed model review, simulation approval/execution, reread and Case creation after purpose-scoped disclosures were formed before review. The separate ten-case Reviewer diagnostic scored 5/10 before that disclosure repair; it remains recorded and has not been replaced by the successful workflow run. See [margin evidence validation](docs/M4-margin-evidence-design.md). See the [latest recovery and live validation](docs/M4-reviewer-recovery-verification.md) and [earlier evaluation record](docs/M2-verification.md).
 
@@ -240,13 +257,17 @@ Inference transport tests use a **local HTTP contract fixture**. They verify the
 
 - **M5 evaluation foundation:** `bun run retail:eval` writes the fixed-case dataset and inspectable Markdown/JSON reports under `artifacts/business-eval/`. Current result: 36 executable cases pass, 12 registered cases remain unsupported (bundle mapping, gifts, member prices and unavailable offers). These do not count as passes. `bun run retail:eval --release-gate` currently exits 1. See [business evaluation scope and acceptance](docs/M5-business-evaluation.md).
 - **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation, independent execution batches, durable uncertain outcomes and per-item recovery/retry, plus synthetic outcome reviews and scoped frozen Case retrieval.
-- **Next:** business-quality evaluation, performance and Windows packaging gates, plus remaining investigation recovery. Domain rule scheduling, bounded manual catch-up and deduplication are implemented. Real outcome observation, external outcome queries, model-generated multi-action plans, production multi-user authorization, pause/resume and AgentBackend reuse remain pending.
-- **Later:** real-system outcome review and integrations, production authorization and Windows packaging.
+- **Current PRD stage:** M5 evaluation foundation. M0–M4 provide the local three-scenario analysis and simulation workflow; business coverage gaps below remain open. M5 is not complete and release gates have not passed.
+- **Next:** implement bundle mapping, gifts, member prices and unavailable-offer handling against the 12 unsupported contracts; expand the narrower SKU-matching and sales-anomaly coverage. Then run five real-model investigations per main scenario, validate the 100,000-row/30-query p95 target and complete Windows installer acceptance. Investigation pause/resume and AgentBackend reuse remain pending.
+- **Later:** real-system integrations and outcome observation, external outcome queries, model-generated multi-action plans and production multi-user authorization.
 
 No real ERP or advertising platform integration, real business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
 
 ## Documentation
 
+- [M5 business evaluation and acceptance](docs/M5-business-evaluation.md)
+- [Latest fixed-set evaluation report](docs/verification/business-eval-2026-10-17/report.md)
+- [Scheduled retail checks and bounded catch-up](docs/P0-scheduled-checks-design.md)
 - [Three-scenario acceptance and data contracts](docs/M1-three-scenarios.md)
 - [Three-scenario verification record](docs/M1-signals-verification.md)
 - [Three-scenario investigation setup and acceptance](docs/M2-investigation.md)

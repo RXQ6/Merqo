@@ -43,8 +43,8 @@ try {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
       if (request.op === 'signals_preview') console.log(JSON.stringify({ ok: true, kind: 'signals_preview', data: previewSignals(request.kind, request.csv, request.mapping) }));
       else if (request.op === 'signals_import') { const result = signals.import(request.kind, request.csv, request.mapping, 'csv'); console.log(JSON.stringify({ ok: true, kind: 'signals', data: result.data, notice: result.notice })); }
-      else if(request.op==='signals_replenishment_demo'){const result=signals.import('inventory',INVENTORY_EXECUTION_DEMO,undefined,'demo');console.log(JSON.stringify({ok:true,kind:'signals',data:result.data,notice:'已载入1天交期的合成补货流程演示；原5天样例可重新载入。'}));}
-      else console.log(JSON.stringify({ ok: true, kind: 'signals', data: request.op === 'signals_demo' ? signals.demo() : signals.snapshot() }));
+      else if(request.op==='signals_replenishment_demo'){const result=signals.import('inventory',INVENTORY_EXECUTION_DEMO,undefined,'demo',true);console.log(JSON.stringify({ok:true,kind:'signals',data:result.data,notice:'已载入1天交期的合成补货流程演示；原5天样例可重新载入。'}));}
+      else console.log(JSON.stringify({ ok: true, kind: 'signals', data: request.op === 'signals_demo' ? signals.demo() : signals.snapshot(),...(request.op==='signals_demo'?{notice:'已重新载入内置库存与广告样例；合成演示不受24小时限制，历史与CSV数据保留。'}:{}) }));
     }
     else if (request.op === 'reviews' || request.op.startsWith('review_') || request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile' || request.op === 'compensations' || request.op === 'execution_batches' || request.op.startsWith('batch_') || request.op.startsWith('compensation_') || request.op.startsWith('decision_')) {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
@@ -56,8 +56,8 @@ try {
         if(!view.case||view.case.id!==request.expectedCaseId||!r.final||r.observation?.origin!=='builtin_synthetic')throw new Error('仅已复核的内置合成观察可明确载入后续演示调查；请刷新核对Case');
         const row=r.observation.row;const cells=(v:unknown)=>'"'+String(v??'').replaceAll('"','""')+'"';const csv=[Object.keys(row).join(','),Object.values(row).map(cells).join(',')].join('\n');
         let result;
-        if(r.job.scenario==='margin'){store.import(csv,undefined,'demo');const e=store.snapshot().records.find(e=>e.source==='demo'&&e.row.date===row.date&&e.row.shop_id===row.shop_id&&e.row.channel===row.channel&&e.row.sku_id===row.sku_id);if(!e)throw new Error('后续合成记录未载入');result=investigations.create(e,request.mode,true);}
-        else {signals.import(r.job.scenario,csv,undefined,'demo');const e=signals.snapshot().records.find(e=>e.source==='demo'&&e.kind===r.job.scenario&&e.row.date===row.date&&e.row.shop_id===row.shop_id&&e.row.channel===row.channel&&e.row.sku_id===row.sku_id&&('warehouse_id' in e.row?e.row.warehouse_id===r.job.scope.warehouse:'campaign_id' in e.row&&e.row.campaign_id===r.job.scope.campaign));if(!e)throw new Error('后续合成记录未载入');result=investigations.createSignal(e,request.mode,true);}
+        if(r.job.scenario==='margin'){store.import(csv,undefined,'demo',true);const e=store.snapshot().records.find(e=>e.source==='demo'&&e.row.date===row.date&&e.row.shop_id===row.shop_id&&e.row.channel===row.channel&&e.row.sku_id===row.sku_id);if(!e)throw new Error('后续合成记录未载入');result=investigations.create(e,request.mode,true);}
+        else {signals.import(r.job.scenario,csv,undefined,'demo',true);const e=signals.snapshot().records.find(e=>e.source==='demo'&&e.kind===r.job.scenario&&e.row.date===row.date&&e.row.shop_id===row.shop_id&&e.row.channel===row.channel&&e.row.sku_id===row.sku_id&&('warehouse_id' in e.row?e.row.warehouse_id===r.job.scope.warehouse:'campaign_id' in e.row&&e.row.campaign_id===r.job.scope.campaign));if(!e)throw new Error('后续合成记录未载入');result=investigations.createSignal(e,request.mode,true);}
         console.log(JSON.stringify({ok:true,kind:'investigations',data:[result.run],created:result.created}));
       }else if(request.op==='reviews'||request.op==='review_create'||request.op==='review_preview'||request.op==='review_demo'||request.op==='review_observe'||request.op==='review_finalize'){
         if(request.op==='review_preview')console.log(JSON.stringify({ok:true,kind:'review_preview',data:decisions.previewObservation(request.id,request.csv)}));
@@ -127,7 +127,7 @@ try {
       console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [result.run], created: result.created }));
     } else {
       const reply = store.request(request);
-      if (reply.ok && reply.kind === 'snapshot') { signals = openStore(() => new SignalStore(file + '.signals.sqlite')); console.log(JSON.stringify({ ...reply, signals: request.op === 'demo' ? signals.demo() : signals.snapshot() })); }
+      if (reply.ok && reply.kind === 'snapshot') { signals = openStore(() => new SignalStore(file + '.signals.sqlite')); console.log(JSON.stringify({ ...reply, signals: request.op === 'demo' ? signals.demo() : signals.snapshot(),...(request.op==='demo'?{notice:'已载入内置样例；合成演示不受24小时限制。'+(reply.notice??'')+'；库存与广告样例亦已载入。'}:{}) })); }
       else console.log(JSON.stringify(reply));
     }
   }

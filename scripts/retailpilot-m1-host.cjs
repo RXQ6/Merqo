@@ -104,6 +104,11 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`document.body.innerText.includes('从一组可核对的经营数据开始')`, 'empty state');
         await waitFor(`!!Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()==='载入演示数据'&&!el.disabled)`, 'demo action ready');
         await click('载入演示数据');
+        await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'demo imported before aging fixture');
+        // Historical synthetic fixtures must remain usable without falsifying import timestamps.
+        testBun(`import {Database} from 'bun:sqlite';const db=new Database(${JSON.stringify(testDatabase())});db.query("UPDATE retail_batches SET imported_at=? WHERE source='demo'").run('2000-01-01T00:00:00Z');db.close();const signals=new Database(${JSON.stringify(testDatabase()+'.signals.sqlite')});signals.query("UPDATE signal_batches SET imported_at=?,json=json_set(json,'$.importedAt',?) WHERE source='demo'").run('2000-01-01T00:00:00Z','2000-01-01T00:00:00Z');signals.close();`);
+        await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'demo'});if(!r.ok)throw new Error(r.error);const records=r.data.records.filter(e=>e.source==='demo');return records.length===6&&records.every(e=>e.importedAt==='2000-01-01T00:00:00Z')&&r.notice.includes('不受24小时限制');})()`, 'old demo reload preserves true import history and explains its age exemption');
+
         await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'demo rows');
         await assert(`document.body.innerText.includes('¥7,125.00') && document.body.innerText.includes('¥1,765.00')`, 'demo totals match independently calculated revenue and gross profit');
         await capture('overview.png');

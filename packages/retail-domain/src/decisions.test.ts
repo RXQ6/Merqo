@@ -67,11 +67,11 @@ test('current snapshot replacement and quality conflicts block a previously vali
 test('CSV is analysis only and cannot use demo simulation exception',async()=>{
  data.import(DEMO_CSV,undefined,'csv');const run=await complete('margin','model','passed','TEA-500','csv');const d=decisions.create(run.id,'reduce_coupon','');expect(d.environment).toBe('analysis_only');expect(()=>decisions.submit(d.id,1)).toThrow('CSV');
 });
-test('expired draft, aged evidence and tampered action digest block submission',async()=>{
+test('expired draft, invalid import time and tampered action digest block submission',async()=>{
  const run=await complete();const d=decisions.create(run.id,'reduce_coupon','');const db=new Database(file+'.investigations.sqlite');
  const expired={...d,expiresAt:'2000-01-01T00:00:00Z'};db.query('UPDATE decisions SET json=? WHERE id=?').run(JSON.stringify(expired),d.id);expect(()=>decisions.submit(d.id,1)).toThrow('有效期');
  db.query('UPDATE decisions SET json=? WHERE id=?').run(JSON.stringify({...d,after:{couponMinor:1}}),d.id);expect(()=>decisions.submit(d.id,1)).toThrow('参数摘要');
- db.query('UPDATE decisions SET json=? WHERE id=?').run(JSON.stringify(d),d.id);db.query('UPDATE investigations SET json=? WHERE id=?').run(JSON.stringify({...run,evidence:{...run.evidence,importedAt:'2000-01-01T00:00:00Z'}}),run.id);expect(()=>decisions.submit(d.id,1)).toThrow('24小时');db.close();
+ db.query('UPDATE decisions SET json=? WHERE id=?').run(JSON.stringify(d),d.id);db.query('UPDATE investigations SET json=? WHERE id=?').run(JSON.stringify({...run,evidence:{...run.evidence,importedAt:'2999-01-01T00:00:00Z'}}),run.id);expect(()=>decisions.submit(d.id,1)).toThrow('导入时间');db.close();
 });
 test('workspace mismatch and renderer-supplied actor, amounts, approval and paths reject',async()=>{
  const run=await complete();const d=decisions.create(run.id,'reduce_coupon','');const other=new DecisionStore(file,'other-workspace',current);try{expect(()=>other.history(d.id)).toThrow('工作空间');}finally{other.close();}
@@ -371,4 +371,14 @@ for(const scenario of ['inventory','ads'] as const)test(`${scenario}: historical
 });
 test('explicit follow-up loads only reviewed built-in synthetic observation and freezes Case without execution',async()=>{
  const {observed}=await observedReview();const r=observed.review;const done=decisions.finalizeReview(r.id,r.version,r.observation!.hash,'comparison_only','比较','未核实活动','local-simulation-reviewer');const receipts=decisions.executions().map(v=>v.receipt?.id);const invoke=async(expectedCaseId:string)=>{const child=Bun.spawn([Bun.which('bun')||'bun',resolve(import.meta.dir,'../../../scripts/retailpilot-data-worker.ts'),file,'Test','test-workspace','local-analyst'],{stdin:new Blob([JSON.stringify({op:'review_followup',id:r.id,expectedCaseId,mode:'replay'})]),stdout:'pipe',stderr:'pipe'});const output=await new Response(child.stdout).text();await child.exited;return JSON.parse(output);};expect((await invoke('00000000-0000-4000-8000-000000000000')).ok).toBe(false);const next=await invoke(done.case!.id);expect(next.ok).toBe(true);expect(next.data[0].caseContext[0].id).toBe(done.case!.id);expect(next.data[0].evidence.row.date).toBe(r.windowEnd);expect(next.data[0].mode).toBe('replay');expect(decisions.executions().map(v=>v.receipt?.id)).toEqual(receipts);expect(runs.get(r.investigationId).caseContext??[]).toEqual([]);
+});
+
+for(const scenario of ['margin','inventory','ads'] as const)test(`${scenario}: old synthetic import remains eligible while new draft and approval gates still apply`,async()=>{
+ if(scenario==='inventory')signals.import('inventory',INVENTORY_EXECUTION_DEMO,undefined,'demo');
+ const old='2000-01-01T00:00:00Z';const db=new Database(file);db.query("UPDATE retail_batches SET imported_at=? WHERE source='demo'").run(old);db.close();const sdb=new Database(file+'.signals.sqlite');sdb.query("UPDATE signal_batches SET imported_at=?,json=json_set(json,'$.importedAt',?) WHERE source='demo'").run(old,old);sdb.close();
+ const run=await complete(scenario,'model','passed','TEA-500','demo',true);expect(run.evidence.importedAt).toBe(old);const d=decisions.create(run.id,action(run),'历史合成样例仍可模拟');expect(d.submissionBlockers).toEqual([]);const pending=decisions.submit(d.id,1);expect(pending.state).toBe('pending_approval');decisions.resolveApproval(pending.request!.id,1,pending.actionHash,'approve','仅本地模拟',approver);const job=decisions.executions().find(v=>v.job.decisionId===d.id)!.job;expect(decisions.executeSimulation(job.id,1,job.actionHash,executor).receipt).not.toBeNull();expect(current().find(e=>e.id===run.recordId)?.importedAt).toBe(old);
+ if(scenario==='ads'){const comp=decisions.createCompensation(job.id,'历史合成演示恢复');expect(comp.blockers).toEqual([]);approveCompensation(comp.request.id);expect(decisions.executeCompensation(comp.request.id,1,comp.request.actionHash,executor).receipt).not.toBeNull();}
+});
+test('explicit sample restore creates a new evidence revision and never revives prior approval after a round trip',async()=>{
+ const ready=await approvedExecution('inventory');const initial=ready.job.evidenceHash;signals.demo();signals.import('inventory',INVENTORY_EXECUTION_DEMO,undefined,'demo',true);const now=signals.snapshot().records.find(e=>e.kind==='inventory'&&e.row.sku_id==='TEA-500')!;expect(now.hash).not.toBe(initial);expect(decisions.approvals().find(v=>v.id===ready.job.requestId)?.status).toBe('invalidated');const result=decisions.executeSimulation(ready.job.id,1,ready.job.actionHash,executor);expect(result.receipt).toBeNull();expect(result.attempts[0]?.reason).toContain('快照');
 });

@@ -38,14 +38,20 @@ export class SignalStore {
     });
     return { records, batches: this.db.query<{ json: string }, []>('SELECT json FROM signal_batches ORDER BY imported_at DESC,id DESC LIMIT 50').all().map(r => JSON.parse(r.json) as SignalBatch), ruleVersion: SIGNAL_RULE };
   }
-  import(kind: SignalKind, csv: string, mapping: Record<string, string> | undefined, source: 'demo' | 'csv'): { data: SignalSnapshot; notice: string; preview: SignalPreview } {
+  import(kind: SignalKind, csv: string, mapping: Record<string, string> | undefined, source: 'demo' | 'csv', reloadDemo = false): { data: SignalSnapshot; notice: string; preview: SignalPreview } {
     if (this.readOnly) throw new Error('只读数据连接不允许导入');
     const preview = previewSignals(kind, csv, mapping);
     if (!preview.valid.length) throw new Error('没有有效行，请修正映射和数据');
-    const digest = hash(JSON.stringify({ csv, mapping: preview.mapping, rule: SIGNAL_RULE })); const id = `${kind}-${source}-${digest.slice(0, 24)}`;
+    if(reloadDemo&&source!=='demo')throw new Error('仅内置合成演示允许重新载入');
+    let digest = hash(JSON.stringify({ csv, mapping: preview.mapping, rule: SIGNAL_RULE })); let id = `${kind}-${source}-${digest.slice(0, 24)}`;
     let duplicate = false;
     this.db.transaction(() => {
-      if (this.db.query('SELECT id FROM signal_batches WHERE id=?').get(id)) { duplicate = true; return; }
+      const exists=this.db.query('SELECT id FROM signal_batches WHERE id=?').get(id);
+      if(exists&&!reloadDemo){duplicate=true;return;}
+      if(reloadDemo){const rows=this.db.query<{row_key:string;json:string;batch_id:string},[string,string]>('SELECT row_key,json,batch_id FROM signal_current WHERE kind=? AND source=?').all(kind,source);const byKey=new Map(rows.map(r=>[r.row_key,r]));
+        if(preview.valid.every(row=>byKey.get(signalKey(kind,row))?.json===JSON.stringify(row))){duplicate=true;return;}
+        if(exists){const previous=preview.valid.map(row=>[signalKey(kind,row),byKey.get(signalKey(kind,row))?.batch_id??null]).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));digest=hash(JSON.stringify({contentHash:digest,previous}));id=`${kind}-demo-${digest.slice(0,24)}`;}
+      }
       const keys = this.db.query<{ row_key: string }, [string, string]>('SELECT row_key FROM signal_current WHERE kind=? AND source=?').all(kind, source).map(r => r.row_key);
       if (new Set([...keys, ...preview.valid.map(r => signalKey(kind, r))]).size > 10000) throw new Error('每类来源最多保留 10,000 条当前快照');
       const batch: SignalBatch = { ruleVersion: SIGNAL_RULE, id, kind, source, importedAt: new Date().toISOString(), accepted: preview.valid.length, rejected: preview.rejected.length, hash: digest, errors: preview.rejected };
@@ -56,7 +62,7 @@ export class SignalStore {
         this.db.query('INSERT INTO signal_history VALUES (?,?,?)').run(rowId, id, json);
       }
     }).immediate();
-    return { data: this.snapshot(), notice: duplicate ? '此文件与映射已导入，未重复写入' : `已导入 ${preview.valid.length} 条，隔离 ${preview.rejected.length} 条；历史快照保留`, preview };
+    return { data: this.snapshot(), notice: duplicate ? reloadDemo?'内置演示样例已就绪，内容相同，未重复写入；合成演示不受24小时限制':'此文件与映射已导入，未重复写入' : `已导入 ${preview.valid.length} 条，隔离 ${preview.rejected.length} 条；历史快照保留`, preview };
   }
-  demo(): SignalSnapshot { this.import('inventory', INVENTORY_DEMO, undefined, 'demo'); this.import('ads', ADS_DEMO, undefined, 'demo'); return this.snapshot(); }
+  demo(): SignalSnapshot { this.import('inventory', INVENTORY_DEMO, undefined, 'demo', true); this.import('ads', ADS_DEMO, undefined, 'demo', true); return this.snapshot(); }
 }

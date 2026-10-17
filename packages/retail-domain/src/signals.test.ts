@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Database } from 'bun:sqlite';
-import { ADS_DEMO, INVENTORY_DEMO, calculateSignal, previewSignals, InventorySchema, AdsSchema } from './signals';
+import { ADS_DEMO, INVENTORY_DEMO, INVENTORY_EXECUTION_DEMO, calculateSignal, previewSignals, InventorySchema, AdsSchema } from './signals';
 import type { AdsRow, InventoryRow } from './signals';
 import { SignalStore } from './signal-store';
 import { RetailRequestSchema } from './operations';
@@ -114,4 +114,8 @@ describe('signal persistence and evidence', () => {
       expect(store.snapshot().records.every(r => r.status === 'needs_evidence')).toBe(true); expect(other.snapshot().records).toEqual([]);
     } finally { other.close(); }
   });
+});
+
+test('explicit scenario reload restores archived variants without altering CSV or timestamping unchanged data',()=>{
+ const folder=mkdtempSync(join(tmpdir(),'merqo-demo-reload-'));const store=new SignalStore(join(folder,'signals.sqlite'));try{store.demo();const original=store.snapshot().records.find(r=>r.kind==='inventory'&&r.row.sku_id==='TEA-500')!;store.import('inventory',INVENTORY_DEMO,undefined,'csv');const csv=store.snapshot().records.filter(r=>r.source==='csv');store.import('inventory',INVENTORY_EXECUTION_DEMO,undefined,'demo',true);expect((store.snapshot().records.find(r=>r.kind==='inventory'&&r.source==='demo'&&r.row.sku_id==='TEA-500')!.row as InventoryRow).lead_days).toBe(1);store.demo();const restored=store.snapshot().records.find(r=>r.kind==='inventory'&&r.source==='demo'&&r.row.sku_id==='TEA-500')!;expect((restored.row as InventoryRow).lead_days).toBe(5);expect(restored.id).not.toBe(original.id);const loaded=store.snapshot();store.demo();expect(store.snapshot()).toEqual(loaded);expect(store.snapshot().records.filter(r=>r.source==='csv')).toEqual(csv);expect(()=>store.import('inventory',INVENTORY_DEMO,undefined,'csv',true)).toThrow('仅内置');}finally{store.close();rmSync(folder,{recursive:true,force:true});}
 });

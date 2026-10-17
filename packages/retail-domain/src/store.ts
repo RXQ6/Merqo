@@ -70,17 +70,23 @@ export class RetailStore {
     const batches: BatchSummary[] = this.db.query<StoredBatch, []>('SELECT b.id,b.source,b.imported_at,b.accepted,b.rejected,b.hash,b.errors_json,r.rule_version FROM retail_batches b JOIN retail_batch_rules r ON r.batch_id=b.id ORDER BY b.imported_at DESC,b.id DESC LIMIT 50').all().map(batch => ({ id: batch.id, source: batch.source, importedAt: batch.imported_at, accepted: batch.accepted, rejected: batch.rejected, hash: batch.hash, errors: JSON.parse(batch.errors_json) as BatchSummary['errors'], ruleVersion: batch.rule_version }));
     return { workspaceName: this.workspaceName, records, batches, dbVersion: 2, ruleVersion: RULE_VERSION, thresholdBps: 2000 };
   }
-  import(csv: string, mapping: Record<string, string> | undefined, source: 'demo' | 'csv'): { snapshot: Snapshot; notice: string; preview: Preview } {
+  import(csv: string, mapping: Record<string, string> | undefined, source: 'demo' | 'csv', reloadDemo = false): { snapshot: Snapshot; notice: string; preview: Preview } {
     if (this.readOnly) throw new Error('只读数据连接不允许导入');
     const preview = previewCsv(csv, mapping);
     if (!preview.valid.length) throw new Error('没有可导入的有效数据，请检查字段映射和错误行');
-    const digest = hash(JSON.stringify({ csv, mapping: preview.mapping }));
-    const id = `${source}-${digest.slice(0, 20)}`;
+    if(reloadDemo&&source!=='demo')throw new Error('仅内置合成演示允许重新载入');
+    let digest = hash(JSON.stringify({ csv, mapping: preview.mapping }));
+    let id = `${source}-${digest.slice(0, 20)}`;
     let duplicate = false;
     const imported = new Date().toISOString();
     this.db.transaction(() => {
       const exists = this.db.query<{ id: string }, [string]>('SELECT id FROM retail_batches WHERE id=?').get(id);
-      if (exists) { duplicate = true; return; }
+      if (exists && !reloadDemo) { duplicate = true; return; }
+      if(reloadDemo){
+        const rows=this.db.query<{row_key:string;row_json:string;batch_id:string},[string]>('SELECT row_key,row_json,batch_id FROM retail_records WHERE source=?').all(source);const byKey=new Map(rows.map(r=>[r.row_key,r]));
+        if(preview.valid.every(row=>byKey.get(rowKey(row))?.row_json===JSON.stringify(row))){duplicate=true;return;}
+        if(exists){const previous=preview.valid.map(row=>[rowKey(row),byKey.get(rowKey(row))?.batch_id??null]).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));digest=hash(JSON.stringify({contentHash:digest,previous}));id=`demo-${digest.slice(0,20)}`;}
+      }
       const current = this.db.query<{ row_key: string }, [string]>('SELECT row_key FROM retail_records WHERE source=?').all(source);
       if (new Set([...current.map(record => record.row_key), ...preview.valid.map(rowKey)]).size > 10000) throw new Error('每类数据最多保留 10,000 条当前记录，请缩小导入范围');
       this.db.query('INSERT INTO retail_batches (id,source,imported_at,accepted,rejected,hash,errors_json) VALUES (?,?,?,?,?,?,?)').run(id, source, imported, preview.valid.length, preview.rejected.length, digest, JSON.stringify(preview.rejected));
@@ -94,7 +100,7 @@ export class RetailStore {
         history.run(rowId, id, json);
       }
     }).immediate();
-    if (duplicate) return { snapshot: this.snapshot(), notice: '此文件与映射已导入，未重复写入', preview };
+    if (duplicate) return { snapshot: this.snapshot(), notice: reloadDemo?'内置演示样例已就绪，内容相同，未重复写入；合成演示不受24小时限制':'此文件与映射已导入，未重复写入', preview };
     return { snapshot: this.snapshot(), notice: `已导入 ${preview.valid.length} 条，隔离 ${preview.rejected.length} 条；同业务键的新快照替换当前视图，历史版本保留`, preview };
   }
   request(request: RetailRequest): RetailReply {
@@ -103,7 +109,7 @@ export class RetailStore {
     if (request.op === 'preview') return { ok: true, kind: 'preview', data: previewCsv(request.csv, request.mapping) };
     if (request.op === 'snapshot') return { ok: true, kind: 'snapshot', data: this.snapshot() };
     if (request.op !== 'demo' && request.op !== 'import') throw new Error('请求必须由调查或决策服务处理');
-    const result = request.op === 'demo' ? this.import(DEMO_CSV, undefined, 'demo') : this.import(request.csv, request.mapping, 'csv');
+    const result = request.op === 'demo' ? this.import(DEMO_CSV, undefined, 'demo', true) : this.import(request.csv, request.mapping, 'csv');
     return { ok: true, kind: 'snapshot', data: result.snapshot, notice: result.notice };
   }
 }

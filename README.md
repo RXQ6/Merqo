@@ -103,7 +103,7 @@ Runs are limited to five minutes, twelve model decisions and one Reviewer round 
 
 From a completed investigation, select **生成决策草稿**. Choose one of its computed plans, add a note and save. The **决策草稿** tab shows before/after values, scope, evidence, constraints, version history and submission blockers. Parameter values come from domain code; the browser cannot submit arbitrary prices or quantities.
 
-**提交模拟审批** creates a pending request bound to the exact version, action hash, evidence and expiry. It does not approve or execute anything. Changes create a new version and supersede the previous request. Only fresh synthetic/demo evidence with a model Reviewer pass and feasible constraints can enter this local simulation inbox. Offline reports, evidence gaps, replaced snapshots, expired drafts and imported CSV business data are blocked. The local actor is explicitly a single-user demonstration identity.
+**提交模拟审批** creates a pending request bound to the exact version, action hash, evidence and expiry. It does not approve or execute anything. Changes create a new version and supersede the previous request. Only unchanged synthetic/demo evidence with a model Reviewer pass and feasible constraints can enter this local simulation inbox. Offline reports, evidence gaps, replaced snapshots, expired drafts and imported CSV business data are blocked. The local actor is explicitly a single-user demonstration identity. Built-in synthetic evidence does not expire after 24 hours. Its true import timestamps remain unchanged on identical reloads; changed samples can be explicitly restored as new evidence revisions. Drafts still expire after 30 minutes, and model Reviewer, version, scope and constraint checks remain required. Older policy drafts must be saved as a new version before submission.
 
 Export **Markdown** or **报告与证据 JSON** from an investigation, including failed runs with partial evidence. Files include the run ID, source, evidence index, frozen snapshot, trace, report and up to 30 associated decision revisions. See [acceptance steps](docs/M2-close-acceptance.md).
 
@@ -210,7 +210,7 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 145 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 152 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
 Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
 
@@ -245,6 +245,7 @@ No real ERP or advertising platform integration, real business writes, productio
 - [Outcome review and Case acceptance](docs/M4-review-acceptance.md)
 - [Outcome review and Case design](docs/M4-review-design.md)
 - [Outcome review and Case verification](docs/M4-review-verification.md)
+- [Demo evidence age and reload fix](docs/demo-evidence-policy-fix.md)
 - [Domain contracts](docs/domain-contracts.md)
 - [Original upstream README](docs/upstream-README.md)
 

@@ -1,3 +1,4 @@
+import { evidenceTimeIssue } from './evidence-policy';
 import { ReviewLedger, installReviewSchema } from './outcome-reviews';
 import type { ReviewView, ObservationPreview, CaseMemory } from './outcome-reviews';
 import { ExecutionBatchLedger, installBatchSchema } from './execution-batches';
@@ -15,7 +16,7 @@ import type { AnyInvestigation, Scenario } from './investigations';
 import type { EvidenceRecord } from './operations';
 import type { SignalRecord } from './signals';
 export type DraftEvidence = EvidenceRecord | SignalRecord;
-export const DECISION_POLICY = 'merqo-simulation-draft-v1';
+export const DECISION_POLICY = 'merqo-simulation-draft-v2';
 export interface ApprovalRequest { id: string; decisionId: string; decisionVersion: number; actionHash: string; policyVersion: string; requestedAt: string; expiresAt: string; requestedBy: 'local-analyst'; status: ApprovalStatus }
 export interface DecisionDraft {
   id: string; version: number; workspaceId: string; investigationId: string; scenario: 'margin' | 'inventory' | 'ads';
@@ -78,7 +79,7 @@ export class DecisionStore {
     if (run.mode !== 'model' || run.report?.reviewer.mode !== 'model' || run.report.reviewer.verdict !== 'passed' || run.state !== 'completed') reasons.push('需要真实模型Reviewer通过，离线演示或待补证报告不能提交');
     if (!d.selected.passed) reasons.push(...d.selected.constraints, '所选方案未通过硬约束');
     if (('metrics' in e ? e.metrics.issues : e.calculation.issues).length) reasons.push('冻结证据缺少关键字段或口径冲突');
-    const age = Date.now() - Date.parse(e.importedAt); if (!Number.isFinite(age) || age > 86400000 || age < -300000) reasons.push('演示证据导入时间超过24小时或时间异常，请更新证据并重新调查');
+    const timeIssue=evidenceTimeIssue(e);if(timeIssue)reasons.push(timeIssue);
     if (Date.now() >= Date.parse(d.expiresAt)) reasons.push('草稿30分钟有效期已过，请保存新版本');
     const current = this.current().find(r => r.id === e.id);
     if (!current || hashOf(current) !== d.evidenceHash || current.ruleVersion !== d.ruleVersion || JSON.stringify(current.row) !== JSON.stringify(e.row) || ('metrics' in current ? current.metrics.issues : current.calculation.issues).length) reasons.push('当前业务快照、规则或质量已变化，请重新调查');

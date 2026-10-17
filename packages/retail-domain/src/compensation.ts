@@ -1,3 +1,4 @@
+import { evidenceTimeIssue } from './evidence-policy';
 import type { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { SimulationLedger, requireExecutor } from './simulation';
@@ -6,7 +7,7 @@ import type { SimulationApprover } from './approval-types';
 import type { DraftEvidence } from './decisions';
 import { calculate } from './operations';
 
-const POLICY='merqo-simulation-compensation-v1';
+const POLICY='merqo-simulation-compensation-v2';
 const digest=(x:unknown):string=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 export interface CompensationRequest {
  id:string;version:number;workspaceId:string;sourceJobId:string;sourceReceiptId:string;sourceReceiptHash:string;
@@ -66,7 +67,7 @@ export class CompensationLedger {
   const state=this.simulation.state(origin.job.resourceKey);
   if(!state||!r.before||digest(state)!==digest(r.before)||digest(r.before)!==digest(origin.receipt.after))reasons.push('模拟目标已被后续动作修改或状态不明，不能覆盖；请人工核查');
   const e=this.evidence(origin.job);if(!e||!r.evidence||JSON.stringify(this.capture(origin.job))!==JSON.stringify(r.evidence))reasons.push('当前演示证据或规则已变化，请重新申请并核验');
-  if(e){const age=now-Date.parse(e.importedAt);if(!Number.isFinite(age)||age>86400000||age < -300000)reasons.push('演示证据导入超过24小时或时间异常');
+  if(e){const timeIssue=evidenceTimeIssue(e,now);if(timeIssue)reasons.push(timeIssue);
    if(r.scenario==='margin'){
     if('metrics'in e)reasons.push('毛利证据类型不符');else{const coupon=r.target.couponMinor;if(coupon===undefined||!Number.isSafeInteger(coupon)||coupon<0)reasons.push('恢复商家券参数无效');else{const calc=calculate({...e.row,coupon_minor:coupon},e.calculation.issues.includes('同店铺同渠道 SKU 出现多种规格，须人工核对映射'));if(calc.issues.length)reasons.push(...calc.issues);if(calc.marginBps===null||calc.marginBps<e.thresholdBps)reasons.push('恢复原商家券会低于当前毛利下限，补偿不能绕过硬约束；请人工制定新方案');}}
    }else if('metrics'in e&&e.metrics.issues.length)reasons.push(...e.metrics.issues);

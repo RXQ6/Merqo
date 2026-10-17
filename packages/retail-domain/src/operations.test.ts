@@ -100,6 +100,10 @@ describe('SQLite retail lifecycle', () => {
     expect(current?.status).toBe('normal'); expect(current?.id).not.toBe(old?.id);
     expect(store.snapshot().records.length).toBe(6); expect(store.snapshot().batches.length).toBe(2);
   });
+  test('explicit built-in reload restores corrected demo rows with new identity but retains CSV and history',()=>{
+    store.request({op:'demo'});const original=store.snapshot().records.find(r=>r.row.sku_id==='TEA-500')!;store.import(DEMO_CSV,undefined,'csv');const csv=store.snapshot().records.filter(r=>r.source==='csv');store.import(DEMO_CSV.replace(',CNY,10000,2000,1000,',',CNY,10000,0,0,'),undefined,'demo');
+    store.request({op:'demo'});const restored=store.snapshot().records.find(r=>r.source==='demo'&&r.row.sku_id==='TEA-500')!;expect(restored.row.coupon_minor).toBe(2000);expect(restored.id).not.toBe(original.id);expect(store.snapshot().records.filter(r=>r.source==='csv')).toEqual(csv);const count=store.snapshot().batches.length;store.request({op:'demo'});expect(store.snapshot().batches).toHaveLength(count);expect(()=>store.import(DEMO_CSV,undefined,'csv',true)).toThrow('仅内置');
+  });
   test('all-invalid imports do not create batches, and demo stays separate from user CSV', () => {
     expect(() => store.import('x,y\n1,2', undefined, 'csv')).toThrow();
     expect(store.snapshot().batches.length).toBe(0);

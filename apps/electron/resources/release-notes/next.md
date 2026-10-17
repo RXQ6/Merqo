@@ -34,6 +34,8 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 - **调查格式稳定性** — 明确报告引用数组结构，复核格式错误可有界纠正一次；仍失败时显示阶段和字段，保留已有证据，禁止无效报告进入完成状态。
 
+- **演示审批与重新载入** — 内置合成样例不再因导入超过24小时被阻断，保留真实导入历史；明确重新载入可恢复已切换的样例并追加证据版本，不影响CSV或历史回执。相同内容不重复写入，Reviewer、草稿有效期、版本和硬约束仍须通过；旧策略草稿需保存新版本并重新审批。
+
 ## Breaking Changes
 
 - **Restore desktop workspace** — Keep the original desktop shell as the startup experience. Open retail analysis from its sidebar, with shared themes and panel styling instead of a separate dashboard shell.

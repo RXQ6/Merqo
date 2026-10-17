@@ -44,6 +44,21 @@ app.on('web-contents-created', (_event, contents) => {
     }
     const assert = async (expression, label) => { if (!await js(`(async () => (${expression}))()`)) throw new Error(label); checks.push(label); console.log('RETAIL_CHECK '+label); };
     const click = async text => {await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===${JSON.stringify(text)}&&!b.disabled)`,text+' enabled');return js(`(() => { const button = Array.from(document.querySelectorAll('button')).find(el => el.textContent.trim() === ${JSON.stringify(text)}); if (!button || button.disabled) throw new Error('Button unavailable: '+${JSON.stringify(text)}); button.click(); })()`);};
+    const pointerClick = async text => {
+      const target = await js(`(() => {
+        const button=Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===${JSON.stringify(text)}&&b.checkVisibility());
+        if(!button||button.disabled)return {error:'Visible button unavailable'};
+        const rect=button.getBoundingClientRect(),x=Math.round(rect.x+rect.width/2),y=Math.round(rect.y+rect.height/2);
+        const hit=document.elementFromPoint(x,y);
+        if(!hit||hit.closest('button')!==button)return {error:'Pointer blocked for '+${JSON.stringify(text)}+' by '+hit?.className};
+        return {x,y,appRegion:getComputedStyle(button).getPropertyValue('-webkit-app-region')};
+      })()`);
+      if(target.error)throw new Error(target.error);
+      contents.sendInputEvent({type:'mouseMove',x:target.x,y:target.y});
+      contents.sendInputEvent({type:'mouseDown',x:target.x,y:target.y,button:'left',clickCount:1});
+      contents.sendInputEvent({type:'mouseUp',x:target.x,y:target.y,button:'left',clickCount:1});
+      return target;
+    };
     const chooseExecution=async label=>{await waitFor(`!!Array.from(document.querySelectorAll('[aria-label="模拟执行列表"] button')).find(b=>b.innerText.includes(${JSON.stringify(label)}))`,label+' execution row loaded');await js(`Array.from(document.querySelectorAll('[aria-label="模拟执行列表"] button')).find(b=>b.innerText.includes(${JSON.stringify(label)})).click()`);};
     const fillText=async(label,value)=>{await waitFor(`!!document.querySelector('textarea[aria-label="${label}"]')`,label+' ready');await js(`(()=>{const input=document.querySelector('textarea[aria-label="${label}"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event('input',{bubbles:true}));})()`);};
     const approveCompensationUi=async()=>{await fillText('补偿审批理由','核对原回执、当前状态和补偿约束');await click('批准补偿');await waitFor(`!!document.querySelector('input[aria-label="确认执行本地模拟补偿"]')`, 'new compensation approved');await js(`document.querySelector('input[aria-label="确认执行本地模拟补偿"]').click()`);await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='执行模拟补偿'&&!b.disabled)`, 'compensation confirmed');await click('执行模拟补偿');await waitFor(`!!document.querySelector('[aria-label="模拟补偿回执"]')&&document.querySelector('[aria-label="补偿回读记录"]')?.innerText.includes('补偿回读核对一致')`, 'compensation receipt and reread');};
@@ -84,6 +99,20 @@ app.on('web-contents-created', (_event, contents) => {
       await waitFor(`document.querySelector('[data-focus-zone="sidebar"]').checkVisibility()&&!document.querySelector('[data-testid="retail-workspace"]').checkVisibility()`, 'return to original conversation surface');
       await click('经营分析');await waitFor(analysisVisible,'reentry');
       await assert(`!!document.querySelector('.retail-windowbar')&&!!document.querySelector('.retail-navigation')`, 'analysis retains clean header and grouped navigation');
+      if(phase==='navigation'){
+        for(const width of [1400,1000]){
+          desktopWindow.setSize(width,900);
+          await waitFor(`window.innerWidth===${width}`, 'resized native viewport');
+          const target=await pointerClick('返回会话');
+          if(target.appRegion!=='no-drag')throw new Error('Return button is inside draggable region');
+          await waitFor(`document.querySelector('[data-focus-zone="sidebar"]').checkVisibility()&&!document.querySelector('[data-testid="retail-workspace"]').checkVisibility()`, 'pointer returns to conversation');
+          await pointerClick('经营分析');await waitFor(analysisVisible,'pointer reopens analysis');
+          await assert(`getComputedStyle(document.querySelector('.retail-windowbar')).getPropertyValue('-webkit-app-region')==='drag'`, 'analysis titlebar remains draggable at '+width);
+          if(BrowserWindow.getAllWindows().length!==1)throw new Error('Pointer navigation created another window');
+          checks.push('unobstructed native pointer round trip at '+width);
+        }
+        await capture('navigation-pointer.png');finish();return;
+      }
       if(phase==='window-save'||phase==='window-restore'){
         await waitFor(`document.querySelectorAll('tbody tr').length===7`, 'same persisted workspace data');
         if(BrowserWindow.getAllWindows().length!==1)throw new Error('Lifecycle produced two windows');

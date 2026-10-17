@@ -23,3 +23,9 @@
 [验证记录](verification/single-window-2026-10-17.json)
 
 ![同窗口经营分析](images/retail-window.png)
+
+## 返回按钮鼠标命中修复
+
+共享固定拖动层位于 z-index 40，分析标题栏原来未设置层级，真实鼠标命中的是透明拖动层。之前直接调用 DOM click 的测试漏掉了此问题。标题栏现采用与通用工作台一致的 panel 层级 50；返回按钮保持 no-drag，标题栏空白区域继续支持拖动。新增 `node scripts/retailpilot-window-lifecycle.cjs --navigation`：检查 elementFromPoint 命中可见按钮，再发送鼠标移动、按下、抬起事件，在 1400 和 1000 宽度下验证返回和再次进入，窗口数量保持不变。
+
+修复版 renderer 构建通过；隔离桌面鼠标回归 8 项通过（含两种宽度的真实输入往返、标题栏拖动属性、单窗口和 IPC 范围检查）。[验证记录](verification/return-pointer-2026-10-17.json)。

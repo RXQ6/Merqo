@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-17",
+  "change": "Fix return-to-conversation pointer obstruction",
+  "cause": "Shared fixed drag layer at z-index 40 covered the analysis header. DOM click tests did not test hit targeting.",
+  "fix": "Analysis header uses the existing panel layer (50) with no-drag return button.",
+  "rendererBuild": true,
+  "nativeNavigation": {
+    "ok": true,
+    "checks": [
+      "analysis hides general sidebar and keeps three grouped sections",
+      "repeated entry keeps the original native window",
+      "navigation rejects renderer supplied workspace",
+      "analysis retains clean header and grouped navigation",
+      "analysis titlebar remains draggable at 1400",
+      "unobstructed native pointer round trip at 1400",
+      "analysis titlebar remains draggable at 1000",
+      "unobstructed native pointer round trip at 1000"
+    ],
+    "widths": [
+      1400,
+      1000
+    ],
+    "input": "elementFromPoint plus Electron mouseMove/mouseDown/mouseUp"
+  },
+  "validationHistory": [
+    "Previous build failed at pointer target check.",
+    "An overlapping diagnostic launch during renderer rebuild could not load index.html and timed out; excluded from acceptance.",
+    "Final test ran after renderer build completion and passed."
+  ]
+}

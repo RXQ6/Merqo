@@ -6,7 +6,7 @@ Merqo brings promotion margins, stockout risks, and advertising ROAS into one de
 
 Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, Bun, and SQLite**.
 
-> Development prototype for Windows. Some launch scripts, runtime settings and historical screenshots retain the **RetailPilot** name. Sample results are synthetic and do not represent real business performance. No Windows installer is available yet.
+> Windows desktop preview. Some launch scripts, runtime settings and historical screenshots retain the **RetailPilot** name. Sample results are synthetic and do not represent real business performance. The installer is an unsigned prerelease; full PRD release gates remain unmet.
 
 ![Retail workbench — historical layout](docs/images/retail-window.png)
 
@@ -36,7 +36,17 @@ All three analytical scenarios work with synthetic data or imported CSVs **witho
 
 ![Inventory and advertising analysis](docs/images/inventory-advertising.png)
 
-## Quick start
+## Download the desktop app
+
+**[Download Merqo for Windows x64 — 0.1.0-beta.1](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.1/Merqo-Setup-0.1.0-beta.1-x64.exe)**
+
+[Release notes](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.1) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.1/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
+
+Run the installer, launch Merqo and select **经营分析 → 数据与导入 → 载入演示数据**. Retail analysis includes its own Bun runtime, data worker, MCP and Skills; you do not need Node.js or Bun. If Git Bash is absent, select **仅使用经营分析** on first launch. Git for Windows is still needed for the general Agent's shell tools. Configure your own model connection only when requesting a model investigation.
+
+This Windows x64 preview was tested on Windows 11. It is not code-signed, so Windows may show an unknown-publisher or SmartScreen prompt. Check the source and SHA-256 before running it. Updates are downloaded manually from Releases. Uninstall retains user data; the development `.runtime` profile is not automatically migrated.
+
+## Build from source
 
 ### Prerequisites
 
@@ -258,13 +268,15 @@ Inference transport tests use a **local HTTP contract fixture**. They verify the
 - **M5 evaluation foundation:** `bun run retail:eval` writes the fixed-case dataset and inspectable Markdown/JSON reports under `artifacts/business-eval/`. Current result: 36 executable cases pass, 12 registered cases remain unsupported (bundle mapping, gifts, member prices and unavailable offers). These do not count as passes. `bun run retail:eval --release-gate` currently exits 1. See [business evaluation scope and acceptance](docs/M5-business-evaluation.md).
 - **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation, independent execution batches, durable uncertain outcomes and per-item recovery/retry, plus synthetic outcome reviews and scoped frozen Case retrieval.
 - **Current PRD stage:** M5 evaluation foundation. M0–M4 provide the local three-scenario analysis and simulation workflow; business coverage gaps below remain open. M5 is not complete and release gates have not passed.
-- **Next:** implement bundle mapping, gifts, member prices and unavailable-offer handling against the 12 unsupported contracts; expand the narrower SKU-matching and sales-anomaly coverage. Then run five real-model investigations per main scenario, validate the 100,000-row/30-query p95 target and complete Windows installer acceptance. Investigation pause/resume and AgentBackend reuse remain pending.
+- **Windows preview:** a per-user x64 NSIS installer bundles the required retail runtime. Packaging and isolated lifecycle acceptance are documented separately from business-quality gates; cross-version upgrade and clean-VM compatibility remain unverified.
+- **Next:** implement bundle mapping, gifts, member prices and unavailable-offer handling against the 12 unsupported contracts; expand the narrower SKU-matching and sales-anomaly coverage. Then run five real-model investigations per main scenario, validate the 100,000-row/30-query p95 target and broaden Windows compatibility/upgrade acceptance. Investigation pause/resume and AgentBackend reuse remain pending.
 - **Later:** real-system integrations and outcome observation, external outcome queries, model-generated multi-action plans and production multi-user authorization.
 
-No real ERP or advertising platform integration, real business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
+No real ERP or advertising platform integration, real business writes or production multi-user authorization is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
 
 ## Documentation
 
+- [Windows preview installation and packaging](docs/windows-preview.md)
 - [M5 business evaluation and acceptance](docs/M5-business-evaluation.md)
 - [Latest fixed-set evaluation report](docs/verification/business-eval-2026-10-17/report.md)
 - [Scheduled retail checks and bounded catch-up](docs/P0-scheduled-checks-design.md)

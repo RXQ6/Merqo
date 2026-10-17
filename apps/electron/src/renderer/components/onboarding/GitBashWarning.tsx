@@ -14,6 +14,7 @@ interface GitBashWarningProps {
   onUsePath: (path: string) => void
   onRecheck: () => void
   onBack: () => void
+  onSkip?: () => void
   isRechecking?: boolean
   errorMessage?: string
   onClearError?: () => void
@@ -34,6 +35,7 @@ export function GitBashWarning({
   onUsePath,
   onRecheck,
   onBack,
+  onSkip,
   isRechecking = false,
   errorMessage,
   onClearError,
@@ -66,6 +68,16 @@ export function GitBashWarning({
       description={t("onboarding.gitBash.description")}
     >
       <div className="space-y-4">
+        {onSkip && (
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="mb-3 text-sm text-muted-foreground">
+              {t('onboarding.gitBash.retailOptional', { defaultValue: '经营分析不需要 Git Bash；通用 Agent 的 Shell 工具仍需另行安装 Git for Windows。' })}
+            </p>
+            <Button onClick={onSkip} className="w-full">
+              {t('onboarding.gitBash.retailContinue', { defaultValue: '仅使用经营分析' })}
+            </Button>
+          </div>
+        )}
         {/* Primary action: Download Git */}
         <div className="rounded-lg border border-border bg-foreground-2 p-4">
           <h3 className="text-sm font-medium text-foreground">

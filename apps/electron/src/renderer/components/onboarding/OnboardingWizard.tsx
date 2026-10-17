@@ -134,6 +134,7 @@ export function OnboardingWizard({
             onBrowse={onBrowseGitBash!}
             onUsePath={onUseGitBashPath!}
             onRecheck={onRecheckGitBash!}
+            onSkip={onSkipSetup}
             onBack={onBack}
             isRechecking={state.isRecheckingGitBash}
             errorMessage={state.errorMessage}

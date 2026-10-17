@@ -165,7 +165,7 @@ if (isDebugMode) {
   process.env.CRAFT_UV = bundledUvExists ? uvBinary : (fallbackUv ?? uvBinary)
 
   // Bun runtime (packaged builds should prefer bundled runtime over PATH)
-  const bunBinary = join(resourcesBase, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
+  const bunBinary = join(app.isPackaged && process.platform === 'win32' ? process.resourcesPath : resourcesBase, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
   if (existsSync(bunBinary)) {
     process.env.CRAFT_BUN = bunBinary
   }
@@ -231,7 +231,7 @@ let pendingDeepLink: string | null = null
 
 // Set app name early (before app.whenReady) to ensure correct macOS menu bar title
 // Supports multi-instance dev: CRAFT_APP_NAME env var (e.g., "RetailPilot [1]")
-app.setName(process.env.RETAILPILOT_APP_NAME || 'RetailPilot')
+app.setName(process.env.RETAILPILOT_APP_NAME || (app.isPackaged ? 'Merqo' : 'RetailPilot'))
 app.setPath('userData', process.env.RETAILPILOT_USER_DATA_DIR || join(app.getPath('appData'), 'RetailPilot'))
 
 // Register as default protocol client for retailpilot:// URLs

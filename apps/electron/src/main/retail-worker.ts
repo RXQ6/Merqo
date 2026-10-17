@@ -7,7 +7,7 @@ import type { RetailReply } from '../../../../packages/retail-domain/src/operati
 export async function requestRetailWorker(workspace: {rootPath:string;name:string}, workspaceId: string, payload: unknown, operation: string): Promise<RetailReply> {
   const root = process.env.CRAFT_APP_ROOT || process.cwd();
   const worker = join(root, 'scripts/retailpilot-data-worker.ts');
-  if (!existsSync(worker)) throw new Error('经营数据工作进程缺失，请从源码项目启动当前版本');
+  if (!existsSync(worker)) throw new Error('经营数据工作进程缺失，请重新安装或重新构建当前版本');
   return await new Promise<RetailReply>((resolve, reject) => {
     const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
     const child = spawn(process.env.CRAFT_BUN || 'bun', [worker, join(workspace.rootPath, 'retail', 'operations.sqlite'), workspace.name, workspaceId, operation === 'review_finalize' ? 'local-simulation-reviewer' : operation === 'approval_resolve' || operation === 'compensation_resolve' ? 'local-simulation-approver' : operation === 'simulation_execute' || operation === 'execution_reconcile' || operation === 'compensation_execute' || operation === 'compensation_reconcile' || operation === 'batch_run' || operation === 'batch_retry_item' || operation === 'batch_recover' ? 'local-simulation-executor' : 'local-analyst'], { cwd: root, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });

@@ -100,6 +100,7 @@
     "check-version": "bun run scripts/check-version.ts",
     "oss:sync": "bun run scripts/oss-sync.ts",
     "retail:build": "bun run electron:build",
+    "retail:dist:win": "node scripts/merqo-package-win.cjs",
     "retail:start": "bun run scripts/retailpilot-launch.ts",
     "retail:check": "bun test packages/retail-domain/src && bun run --cwd packages/retail-domain typecheck",
     "retail:mcp": "bun scripts/merqo-retail-mcp.ts",

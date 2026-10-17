@@ -1,0 +1,8 @@
+{
+  "version": "0.1.0-beta.1",
+  "bunVersion": "1.4.2",
+  "electronVersion": "39.2.7",
+  "appId": "local.retailpilot.agent",
+  "productName": "Merqo",
+  "repository": "RXQ6/Merqo"
+}

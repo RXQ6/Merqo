@@ -183,7 +183,7 @@ app.on('web-contents-created', (_event, contents) => {
             let output;
             if (system.includes('串行只读 Reviewer')) output = {verdict:reviewVerdict, notes:['本地协议测试复核，非真实模型质量验证；复核意见标记 '+reviewVerdict]};
             else if (context.observations.length < 4) output = {tool:toolNames[context.observations.length]};
-            else output = {report:{summary:'本地协议测试报告，非真实模型生成的业务结论',observations:[{text:context.scenario ? '本地场景协议检查，经营事实以工具证据为准' : '单位收入70元、商品毛利10元、毛利率14.29%',evidenceIds:[context.observations[2].evidenceId]}],hypotheses:[],unknowns:['缺少实时数据'],alternatives:['成本或优惠分摊口径可能错误'],options:[{kind:'observe',rationale:'补证后再决定'},{kind:context.scenario === 'inventory' ? 'replenish_draft' : context.scenario === 'ads' ? 'reduce_budget' : 'reduce_coupon',rationale:'仅作条件测算'}]}};
+            else output = {report:{summary:'本地协议测试报告，非真实模型生成的业务结论',observations:context.scenario?[{text:'本地场景协议检查，经营事实以工具证据为准',evidenceIds:[context.observations[2].evidenceId]}]:[],hypotheses:[],unknowns:['缺少实时数据'],alternatives:['成本或优惠分摊口径可能错误'],options:[{kind:'observe',rationale:'补证后再决定'},{kind:context.scenario === 'inventory' ? 'replenish_draft' : context.scenario === 'ads' ? 'reduce_budget' : 'reduce_coupon',rationale:'仅作条件测算'}]}};
             res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(output)}}]}));
           } catch(e) { failures.push(e.message); res.statusCode=500; res.end('{}'); }
         });
@@ -196,6 +196,11 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`document.body.innerText.includes('本地协议测试报告') && document.body.innerText.includes('只读 Reviewer 复核')`, 'model transport and bounded tool loop');
         if (contractCalls !== 6) throw new Error('Expected 5 model decisions and one reviewer call, got '+contractCalls);
         await capture('investigation-contract.png');
+        await waitFor(`!!document.querySelector('[aria-label="毛利数值核验"]')`, 'code numeric audit visible in investigation');
+        await js(`document.querySelector('[aria-label="毛利数值核验"] > summary').click()`);
+        await assert(`Array.from(document.querySelectorAll('table[aria-label="毛利数值事实"] tbody tr')).some(r=>r.innerText.includes('商家券减少额')&&r.innerText.includes('¥5.00'))&&document.querySelector('table[aria-label="毛利数值事实"]').innerText.includes('快照合计')`, 'margin numeric audit distinguishes unit, total and five-yuan coupon reduction');
+        await capture('margin-numeric.png');await js(`document.querySelector('[aria-label="毛利数值核验"] > summary').click()`);
+
         checks.push('real inference adapter executes six local HTTP contract calls with no native tool authority');
         await assert(`(await window.electronAPI.retailRequest({op:'investigations'})).data.filter(r=>r.state==='completed').every(r=>r.trace.filter(t=>t.stage==='investigate').length===4&&r.trace.filter(t=>t.stage==='investigate').every(t=>t.transport==='mcp_stdio'))`, 'desktop investigation uses four actual MCP stdio tool calls');
         await click('导出报告与证据 JSON');
@@ -204,6 +209,7 @@ app.on('web-contents-created', (_event, contents) => {
         if(downloads.length!==1||downloads[0].state!=='completed')throw new Error('JSON export did not complete');
         const exported=JSON.parse(fs.readFileSync(downloads[0].target,'utf8'));
         if(exported.evidenceIndex.length!==4||!exported.evidenceIndex.every(e=>e.transport==='mcp_stdio')||!exported.investigation.evidence.snapshotHash)throw new Error('Exported evidence/provenance incomplete');
+        if(exported.investigation.report?.numericAudit?.version!=='margin-facts-v1'||!exported.investigation.report.numericAudit.facts.some(f=>f.key==='couponReduction'&&f.value===500))throw new Error('Exported numeric audit or delta missing');
         await click('导出 Markdown'); const mdDeadline=Date.now()+10000;while(downloads.length<2&&Date.now()<mdDeadline)await new Promise(r=>setTimeout(r,100));
         if(downloads.length!==2||!fs.readFileSync(downloads[1].target,'utf8').includes(exported.runId))throw new Error('Markdown export lacks run ID');
         checks.push('JSON and Markdown download through native desktop and retain frozen evidence index');

@@ -18,13 +18,13 @@ function create(mode: 'model' | 'replay' = 'replay', sku = 'TEA-500'): Investiga
   return store.create(record, mode).run;
 }
 const toolNames = ['retail_get_data_health', 'retail_get_sku_context', 'retail_get_promotions', 'retail_simulate_actions'];
-function modelFor(run: Investigation, mutate?: (draft: DraftReport) => void): ModelPort {
+function modelFor(_run: Investigation, mutate?: (draft: DraftReport) => void): ModelPort {
   let step = 0;
   return async system => {
     if (system.includes('串行只读 Reviewer')) return JSON.stringify({ verdict: 'passed', notes: ['引用与计算一致，仍需执行前核验'] });
     const tool = toolNames[step++];
     if (tool) return JSON.stringify({ tool });
-    const draft: DraftReport = { summary: '商家优惠叠加压缩商品毛利，不能推断净利润或销量因果', observations: [{ text: '当前毛利率14.29%', evidenceIds: [`${run.recordId}:retail_get_promotions`] }], hypotheses: [], unknowns: ['缺实时数据'], alternatives: ['成本口径可能有误'], options: [{ kind: 'observe', rationale: '先补证' }, { kind: 'reduce_coupon', rationale: '仅做条件测算' }] };
+    const draft: DraftReport = { summary: '商家优惠叠加压缩商品毛利，不能推断净利润或销量因果', observations: [], hypotheses: [], unknowns: ['缺实时数据'], alternatives: ['成本口径可能有误'], options: [{ kind: 'observe', rationale: '先补证' }, { kind: 'reduce_coupon', rationale: '仅做条件测算' }] };
     mutate?.(draft); return JSON.stringify({ report: draft });
   };
 }
@@ -46,7 +46,7 @@ describe('bounded retail investigation', () => {
   });
   test('rejects nonexistent citations and refuses unsupported tools', async () => {
     const run = create('model');
-    await expect(runInvestigation(run, modelFor(run, d => { d.observations[0]!.evidenceIds = ['fabricated']; }), async () => {})).rejects.toThrow('不存在的证据');
+    await expect(runInvestigation(run, modelFor(run, d => { d.hypotheses.push({text:'尚待验证的假设',evidenceIds:['fabricated']}); }), async () => {})).rejects.toThrow('不存在的证据');
     await expect(runInvestigation(run, async () => '{"tool":"execute_price","price":1}', async () => {})).rejects.toThrow();
   });
   test('requires all evidence tools and two distinct plans', async () => {
@@ -121,4 +121,20 @@ test('Reviewer receives analysis-only scope and may still request evidence or re
 test('margin tools state per-sales-unit versus snapshot totals without altering arithmetic',()=>{
  const run=create();const result=readTool(run.evidence,'retail_get_sku_context') as {soldQty:number;calculationGrain:{salesUnit:string};calculation:{revenueMinor:number;totalRevenueMinor:number;profitMinor:number;totalProfitMinor:number}};
  expect(result.calculationGrain.salesUnit).toContain('SKU规格');expect(result.calculation.totalRevenueMinor).toBe(result.calculation.revenueMinor*result.soldQty);expect(result.calculation.totalProfitMinor).toBe(result.calculation.profitMinor*result.soldQty);
+});
+
+test('contradictory MCP amounts terminate before Reviewer and preserve tool trace',async()=>{
+ const run=create('model');const base=modelFor(run);let reviews=0;const events:Trace[]=[];
+ await expect(runInvestigation(run,async(system,prompt)=>{if(system.includes('串行只读 Reviewer'))reviews++;return base(system,prompt);},async t=>{events.push(t);},undefined,async name=>{const data=structuredClone(readTool(run.evidence,name as Parameters<typeof readTool>[1]));if(name==='retail_get_promotions')(data as {couponMinor:number}).couponMinor=1234;return data;})).rejects.toThrow('不一致');
+ expect(reviews).toBe(0);expect(events.filter(e=>e.stage==='investigate')).toHaveLength(4);expect(events.some(e=>e.stage==='review')).toBe(false);
+});
+test('numeric audit survives report storage and legacy reports are not backfilled',async()=>{
+ const run=create('model');const report=await runInvestigation(run,modelFor(run),async()=>{});store.update(run.id,{report});store.close();store=new InvestigationStore(join(dir,'runs.sqlite'));expect(store.get(run.id).report?.numericAudit).toEqual(report.numericAudit);expect(report.observations[2]?.text).toContain('商家券减少额：¥5.00');
+ const old=structuredClone(report);delete old.numericAudit;const previous=store.create(run.evidence,'replay',true).run;store.update(previous.id,{report:old});expect(store.get(previous.id).report?.numericAudit).toBeUndefined();
+});
+
+test('model numeric prose is corrected within the existing budget, not silently accepted',async()=>{
+ const run=create('model');const base=modelFor(run);let malformed=false;const events:Trace[]=[];
+ const report=await runInvestigation(run,async(system,prompt)=>{const output=await base(system,prompt);const parsed=JSON.parse(output);if(parsed.report&&!malformed){malformed=true;parsed.report.summary='商家券减少200分';return JSON.stringify(parsed);}return output;},async e=>{events.push(e);});
+ expect(events.filter(e=>e.stage==='contract')).toHaveLength(1);expect(report.summary).not.toContain('200');expect(report.numericAudit?.facts.find(f=>f.key==='couponReduction')?.value).toBe(500);expect(report.reviewer.verdict).toBe('passed');
 });

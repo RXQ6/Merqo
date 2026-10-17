@@ -25,7 +25,7 @@ function modelFor(run:AnyInvestigation,verdict='passed'):ModelPort { return asyn
  if(system.includes('串行只读 Reviewer'))return JSON.stringify({verdict,notes:['本地契约测试，非真实模型评估']});
  const context=JSON.parse(prompt);const tools=['retail_get_data_health','retail_get_sku_context',run.scenario==='ads'?'retail_get_campaigns':run.scenario==='inventory'?'retail_get_inventory':'retail_get_promotions','retail_simulate_actions'];
  if(context.observations.length<4)return JSON.stringify({tool:tools[context.observations.length]});
- return JSON.stringify({report:{summary:'合成案例契约报告',observations:[{text:'核对工具证据',evidenceIds:[`${run.recordId}:${tools[2]}`]}],hypotheses:[],unknowns:['缺实时状态'],alternatives:['可能存在口径差异'],options:[{kind:'observe',rationale:'核验'},{kind:run.scenario==='ads'?'reduce_budget':run.scenario==='inventory'?'replenish_draft':'reduce_coupon',rationale:'仅作条件测算'}]}});
+ return JSON.stringify({report:{summary:'合成案例契约报告',observations:run.scenario==='ads'||run.scenario==='inventory'?[{text:'核对工具证据',evidenceIds:[`${run.recordId}:${tools[2]}`]}]:[],hypotheses:[],unknowns:['缺实时状态'],alternatives:['可能存在口径差异'],options:[{kind:'observe',rationale:'核验'},{kind:run.scenario==='ads'?'reduce_budget':run.scenario==='inventory'?'replenish_draft':'reduce_coupon',rationale:'仅作条件测算'}]}});
 }; }
 async function complete(scenario:'margin'|'ads'|'inventory'='margin',mode:'model'|'replay'='model',verdict='passed',sku='TEA-500',source:'demo'|'csv'='demo',retry=false):Promise<AnyInvestigation>{
  const run=scenario==='margin'?runs.create(data.snapshot().records.find(r=>r.source===source&&r.row.sku_id===sku)!,mode,retry).run:runs.createSignal(signals.snapshot().records.find(r=>r.source===source&&r.kind===scenario&&r.row.sku_id===sku)!,mode,retry).run;

@@ -94,6 +94,8 @@ Select **开始调查** next to a margin, inventory or advertising alert, such a
 
 The investigation workflow queries four scoped, read-only tools, separates observations from hypotheses, links claims to evidence, compares two scenarios and runs a sequential Reviewer. Calculations, evidence-reference checks, missing-data blocks and persistence are controlled by code.
 
+Promotion-margin reports now obtain their numeric observations from code-verified frozen evidence. The model supplies qualitative explanations; **数值与引用核验** separates unit amounts, snapshot totals and coupon reductions. Arithmetic, unit or citation conflicts reject the report before Reviewer. This verifies consistency, not business completeness or causality; existing reports are not backfilled. See [numeric audit and validation](docs/M4-margin-numeric-design.md).
+
 - Supported inference protocols: Anthropic Messages and OpenAI Chat Completions compatible endpoints.
 - Supported authentication: API key, bearer token, or no authentication for a configured local compatible endpoint.
 - Select the connection as the workspace or global default in Settings.
@@ -218,7 +220,7 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 156 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 164 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
 Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. These are small engineering checks, not a full business-quality benchmark. The latest workflow check completed inventory and advertising simulation chains; margin remained blocked by Reviewer needs-evidence. See the [latest recovery and live validation](docs/M4-reviewer-recovery-verification.md) and [earlier evaluation record](docs/M2-verification.md).
 

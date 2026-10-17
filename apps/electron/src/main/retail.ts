@@ -9,6 +9,19 @@ import { executeRetailInvestigation } from './retail-investigation';
 import type { WindowManager } from './window-manager';
 
 export function registerRetailIpc(getWindowManager: () => WindowManager | null): void {
+  ipcMain.handle('retail:window', (event, action: unknown, ...extra: unknown[]) => {
+    try {
+      if (event.senderFrame !== event.sender.mainFrame || extra.length) throw new Error('经营窗口请求无效');
+      if (action !== 'open' && action !== 'agent') throw new Error('未知窗口操作');
+      const manager = getWindowManager();
+      const workspaceId = manager?.getWorkspaceForWindow(event.sender.id);
+      const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null;
+      if (!manager || !workspaceId || !workspace || workspace.remoteServer) throw new Error('请选择本机 Workspace；远程经营窗口暂不支持');
+      if (action === 'open') manager.openRetailWindow(workspaceId);
+      else manager.focusOrCreateWindow(workspaceId);
+      return {ok:true};
+    } catch (error) { return {ok:false,error:error instanceof Error ? error.message : '窗口打开失败'}; }
+  });
   const active = new Set<number>();
   const readers = new Map<number, number>();
   ipcMain.handle('retail:request', async (event, input: unknown): Promise<RetailReply> => {

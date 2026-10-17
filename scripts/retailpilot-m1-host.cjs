@@ -18,14 +18,15 @@ function finish(error) {
   if (finished) return; finished = true; clearTimeout(timeout);
   const result = { ok: !error, phase, checks, profile, error: error?.stack || null, failures };
   fs.writeFileSync(path.join(out, `e2e-${phase}.json`), JSON.stringify(result, null, 2));
-  console.log('M1_E2E ' + JSON.stringify(result)); app.exit(error ? 1 : 0);
+  console.log('M1_E2E ' + JSON.stringify(result)); if(!error&&phase==='window-save')app.quit();else app.exit(error ? 1 : 0);
 }
 const timeout = setTimeout(() => finish(new Error('Retail UI test exceeded 300 seconds')), 300000);
 app.on('web-contents-created', (_event, contents) => {
   contents.setBackgroundThrottling(false);
   contents.on('preload-error', (_event, _preload, error) => failures.push(error.message));
   contents.on('did-finish-load', async () => {
-    if (!contents.getURL().includes('renderer/index.html')) return;
+    if (!contents.getURL().includes('renderer/index.html') || new URL(contents.getURL()).searchParams.get('surface')==='retail') return;
+    const agentContents=contents; const agentJs=code=>agentContents.executeJavaScript(code);
     const js = async code => {try{return await contents.executeJavaScript(code);}catch(error){const body=await contents.executeJavaScript('document.body.innerText').catch(()=>'(unavailable)');throw new Error(error.message+'\nExpression: '+code.slice(0,1200)+'\nPage: '+body);}};
     const downloads = [];
     contents.session.on('will-download', (_event, item) => { const target = path.join(out, item.getFilename()); item.setSavePath(target); item.once('done', (_event, state) => downloads.push({ target, state })); });
@@ -41,7 +42,7 @@ app.on('web-contents-created', (_event, contents) => {
       }
       throw new Error('Timed out: ' + label + '\n' + await js('document.body.innerText'));
     }
-    const assert = async (expression, label) => { if (!await js(`(async () => (${expression}))()`)) throw new Error(label); checks.push(label); };
+    const assert = async (expression, label) => { if (!await js(`(async () => (${expression}))()`)) throw new Error(label); checks.push(label); console.log('RETAIL_CHECK '+label); };
     const click = async text => {await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===${JSON.stringify(text)}&&!b.disabled)`,text+' enabled');return js(`(() => { const button = Array.from(document.querySelectorAll('button')).find(el => el.textContent.trim() === ${JSON.stringify(text)}); if (!button || button.disabled) throw new Error('Button unavailable: '+${JSON.stringify(text)}); button.click(); })()`);};
     const chooseExecution=async label=>{await waitFor(`!!Array.from(document.querySelectorAll('[aria-label="模拟执行列表"] button')).find(b=>b.innerText.includes(${JSON.stringify(label)}))`,label+' execution row loaded');await js(`Array.from(document.querySelectorAll('[aria-label="模拟执行列表"] button')).find(b=>b.innerText.includes(${JSON.stringify(label)})).click()`);};
     const fillText=async(label,value)=>{await waitFor(`!!document.querySelector('textarea[aria-label="${label}"]')`,label+' ready');await js(`(()=>{const input=document.querySelector('textarea[aria-label="${label}"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event('input',{bubbles:true}));})()`);};
@@ -71,9 +72,39 @@ app.on('web-contents-created', (_event, contents) => {
       if (!desktopWindow.isMinimizable() || !desktopWindow.isMaximizable() || !desktopWindow.isClosable()) throw new Error('Native caption capabilities missing');
       checks.push('Windows separate title strip removed while caption capabilities remain enabled');
       await capture('desktop-shell.png');
+      if(phase==='window-restore'){
+        const restoredDeadline=Date.now()+15000;
+        while(!BrowserWindow.getAllWindows().some(w=>w.webContents.getURL().includes('surface=retail'))&&Date.now()<restoredDeadline)await new Promise(r=>setTimeout(r,100));
+        if(!BrowserWindow.getAllWindows().some(w=>w.webContents.getURL().includes('surface=retail')))throw new Error('Normal quit did not restore dedicated retail role');
+        checks.push('dedicated retail window restored before clicking primary entry');
+      }
       await click('经营分析');
+      const attachRetail=async()=>{
+        const until=Date.now()+20000;let win;
+        while(Date.now()<until){win=BrowserWindow.getAllWindows().find(w=>!w.isDestroyed()&&w.webContents.getURL().includes('surface=retail'));if(win)break;await new Promise(r=>setTimeout(r,100));}
+        if(!win)throw new Error('Independent retail window did not open');contents=win.webContents;
+        await waitFor(`!!document.querySelector('[data-testid="retail-workspace"]')`, 'independent retail renderer ready');return win;
+      };
+      let retailWindow=await attachRetail();
+      if(retailWindow.id===desktopWindow.id)throw new Error('Retail reused primary window');
+      await assert(`!document.querySelector('[data-focus-zone="sidebar"]')&&document.querySelectorAll('.retail-nav-group').length===3`, 'independent retail surface has three grouped sections and no general Agent sidebar');
+      if(await agentJs(`!!document.querySelector('[data-testid="retail-workspace"]')`))throw new Error('Primary workspace was replaced');
+      const firstRetailId=retailWindow.id;await agentJs(`window.electronAPI.retailWindow('open')`);await agentJs(`window.electronAPI.retailWindow('open')`);
+      if(BrowserWindow.getAllWindows().filter(w=>w.webContents.getURL().includes('surface=retail')).length!==1||!BrowserWindow.fromWebContents(contents)||BrowserWindow.fromWebContents(contents).id!==firstRetailId)throw new Error('Repeated retail entry created duplicate windows');
+      checks.push('entry opens a separate singleton window while preserving primary workspace');
+      await assert(`(async()=>{const forged=await window.electronAPI.retailWindow({action:'open',workspaceId:'other'});const main=await window.electronAPI.retailWindow('agent');return !forged.ok&&main.ok;})()`, 'retail window control rejects forged scope and returns to primary window');
       await waitFor(`!!document.querySelector('[data-testid="retail-workspace"]') && !document.body.innerText.includes('正在读取本机')`, 'retail page');
-      await assert(`!!document.querySelector('[data-focus-zone="sidebar"]') && !document.querySelector('.retail-nav') && !!document.querySelector('[data-panel-role="workspace-tool"]')`, 'retail analysis shares native sidebar and panel chrome');
+      await assert(`!!document.querySelector('.retail-windowbar') && !!document.querySelector('.retail-navigation')`, 'retail window uses its own header and grouped navigation');
+      if(phase==='window-save'||phase==='window-restore'){
+        await waitFor(`document.querySelectorAll('tbody tr').length===7`, 'lifecycle profile retains seven original and follow-up records');
+        if(!retailWindow.isMinimizable()||!retailWindow.isMaximizable()||!retailWindow.isClosable())throw new Error('Dedicated window native controls missing');
+        if(phase==='window-restore'){
+          const state=JSON.parse(fs.readFileSync(path.join(profile,'config/window-state.json'),'utf8'));
+          if(state.windows.filter(w=>w.url?.includes('surface=retail')).length!==1||state.windows.filter(w=>!w.url?.includes('surface=retail')).length!==1)throw new Error('Saved window roles are invalid');
+          checks.push('normal quit retains one primary and one retail role and restores the same workspace data');
+        }
+        await capture('retail-window-'+phase+'.png');finish();return;
+      }
       if (phase === 'restart') {
         await assert(`document.querySelectorAll('tbody tr').length === 7`, 'original demo and explicit follow-up observation survive application restart');
         await click('调查记录');
@@ -114,20 +145,20 @@ app.on('web-contents-created', (_event, contents) => {
         await capture('overview.png');
         nativeTheme.themeSource = 'dark';
         await waitFor(`document.documentElement.classList.contains('dark')`, 'desktop dark theme');
-        await assert(`getComputedStyle(document.querySelector('.retail-app')).backgroundColor === getComputedStyle(document.documentElement).getPropertyValue('--background').trim() || getComputedStyle(document.querySelector('.retail-app')).getPropertyValue('--paper').trim() === getComputedStyle(document.documentElement).getPropertyValue('--background').trim()`, 'retail content inherits desktop background token');
+        await assert(`getComputedStyle(document.querySelector('.retail-app')).getPropertyValue('--paper').trim()==='#fff' && getComputedStyle(document.querySelector('.retail-app')).colorScheme==='light'`, 'retail analysis keeps its requested neutral light surface independent of Agent theme');
         await capture('overview-dark.png');
         nativeTheme.themeSource = 'light';
         await waitFor(`document.documentElement.classList.contains('light')`, 'desktop light theme');
-        await click('返回会话');
-        await waitFor(`!document.querySelector('[data-testid="retail-workspace"]')`, 'return to original sessions');
-        await click('经营分析');
-        await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'reopen retail preserves data');
-        checks.push('native desktop and retail navigation round trip retains persisted data');
-        await js(`Array.from(document.querySelectorAll('[data-focus-zone="sidebar"] button')).find(el => /^(所有会话|All Sessions)/.test(el.textContent.trim())).click()`);
-        await waitFor(`!document.querySelector('[data-testid="retail-workspace"]')`, 'native sidebar leaves analysis even when session route is unchanged');
-        await click('经营分析');
-        await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'native sidebar reopens analysis');
-        checks.push('original sidebar navigation remains usable');
+        await click('会话窗口');
+        if(!await agentJs(`!!document.querySelector('[data-focus-zone="sidebar"]')&&!document.querySelector('[data-testid="retail-workspace"]')`))throw new Error('Primary shell was changed');
+        await agentJs(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='经营分析').click()`);
+        await waitFor(`document.querySelectorAll('tbody tr').length === 6`, 'retail re-entry preserves current records');
+        const primaryReply=await agentJs(`window.electronAPI.retailRequest({op:'snapshot'})`);const retailReply=await js(`window.electronAPI.retailRequest({op:'snapshot'})`);
+        if(!primaryReply.ok||!retailReply.ok||JSON.stringify(primaryReply.data.records)!==JSON.stringify(retailReply.data.records))throw new Error('Retail opened a different workspace dataset');
+        await js(`void window.electronAPI.closeWindow()`);const closeLimit=Date.now()+12000;while(!retailWindow.isDestroyed()&&Date.now()<closeLimit)await new Promise(r=>setTimeout(r,100));if(!retailWindow.isDestroyed())throw new Error('Retail window did not close');
+        if(desktopWindow.isDestroyed())throw new Error('Closing analysis also closed primary shell');
+        await agentJs(`window.electronAPI.retailWindow('open')`);retailWindow=await attachRetail();await waitFor(`document.querySelectorAll('tbody tr').length===6`, 'reopened independent window reads persisted data');
+        checks.push('close, reopen, shared workspace scope and primary navigation remain independent');
         await js(`document.querySelector('button[aria-label="查看 TEA-500 计算与证据"]').click()`);
         await waitFor(`!!document.querySelector('[role=dialog]')`, 'evidence drawer');
         await assert(`document.querySelector('[role=dialog]').innerText.includes('14.29%') && document.querySelector('[role=dialog]').innerText.includes('¥70.00') && document.querySelector('[role=dialog]').innerText.includes('快照 SHA-256')`, 'evidence drawer shows formula, margin and source hash');

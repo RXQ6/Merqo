@@ -39,12 +39,15 @@ function getWindowsBackgroundMaterial(): 'mica' | 'acrylic' | undefined {
 
 interface ManagedWindow {
   window: BrowserWindow
+  retail: boolean
   workspaceId: string
 }
 
 export interface CreateWindowOptions {
   /** The workspace to open (empty string for onboarding) */
   workspaceId: string
+  /** Dedicated retail surface; shares trusted workspace scope. */
+  retail?: boolean
   /** Whether to open in focused mode (smaller window, no sidebars) */
   focused?: boolean
   /** Deep link URL to navigate to after window loads (without ?window= param) */
@@ -172,8 +175,8 @@ export class WindowManager {
    */
   private refreshWindowTitles(): void {
     const defaultTitle = app.getName()
-    const showWorkspaceName = this.windows.size > 1
-    for (const { window, workspaceId } of this.windows.values()) {
+    const showWorkspaceName = [...this.windows.values()].filter(m => !m.retail).length > 1
+    for (const { window, workspaceId, retail } of this.windows.values()) {
       if (window.isDestroyed()) continue
       let title = defaultTitle
       if (showWorkspaceName && workspaceId) {
@@ -184,6 +187,7 @@ export class WindowManager {
           windowLog.warn('refreshWindowTitles: workspace lookup failed', { workspaceId, err })
         }
       }
+      if (retail) title = `经营分析 · ${getWorkspaceByNameOrId(workspaceId)?.name ?? defaultTitle}`
       window.setTitle(title)
     }
   }
@@ -194,6 +198,13 @@ export class WindowManager {
    */
   createWindow(options: CreateWindowOptions): BrowserWindow {
     const { workspaceId, focused = false, initialDeepLink, restoreUrl } = options
+    let retail = options.retail === true
+    if (restoreUrl) { try { retail = retail || new URL(restoreUrl).searchParams.get('surface') === 'retail' } catch { /* use explicit role */ } }
+
+    if (retail) {
+      const existing = [...this.windows.values()].find(m => m.retail && m.workspaceId === workspaceId && !m.window.isDestroyed())
+      if (existing) return existing.window
+    }
 
     // Load platform-specific app icon
     // In packaged app, resources are at dist/resources/ (same level as __dirname)
@@ -216,8 +227,8 @@ export class WindowManager {
     }
 
     // Use smaller window size for focused mode (single session view)
-    const windowWidth = focused ? 900 : 1400
-    const windowHeight = focused ? 700 : 900
+    const windowWidth = retail ? 1440 : focused ? 900 : 1400
+    const windowHeight = retail ? 960 : focused ? 700 : 900
 
     // Platform-specific window options
     const isMac = process.platform === 'darwin'
@@ -227,7 +238,7 @@ export class WindowManager {
     const window = new BrowserWindow({
       width: windowWidth,
       height: windowHeight,
-      minWidth: 800,
+      minWidth: retail ? 1000 : 800,
       minHeight: 600,
       show: false, // Don't show until ready-to-show event (faster perceived startup)
       title: '',
@@ -317,7 +328,7 @@ export class WindowManager {
     // Store the window mapping BEFORE loadURL — bootstrap preload uses
     // __get-workspace-id (via sendSync) which reads this map during eval.
     const webContentsId = window.webContents.id
-    this.windows.set(webContentsId, { window, workspaceId })
+    this.windows.set(webContentsId, { window, workspaceId, retail })
 
     // Apply window-title policy now that the map size reflects this window —
     // covers both the new window and any existing windows that should switch
@@ -340,11 +351,13 @@ export class WindowManager {
           // Preserve pathname and search from saved URL, use dev server host
           devUrl.pathname = savedUrl.pathname
           devUrl.search = savedUrl.search
+          devUrl.searchParams.set('workspaceId', workspaceId)
+          if (retail) devUrl.searchParams.set('surface','retail')
           window.loadURL(devUrl.toString())
         } catch {
           // Fallback if URL parsing fails
           windowLog.warn('Failed to parse restoreUrl, using default:', restoreUrl)
-          const params = new URLSearchParams({ workspaceId, ...(focused && { focused: 'true' }) }).toString()
+          const params = new URLSearchParams({ workspaceId, ...(focused && { focused: 'true' }), ...(retail && { surface: 'retail' }) }).toString()
           window.loadURL(`${VITE_DEV_SERVER_URL}?${params}`)
         }
       } else {
@@ -355,14 +368,16 @@ export class WindowManager {
           const savedUrl = new URL(restoreUrl)
           const query: Record<string, string> = {}
           savedUrl.searchParams.forEach((value, key) => { query[key] = value })
+          query.workspaceId = workspaceId
+          if (retail) query.surface = 'retail'
           window.loadFile(join(__dirname, 'renderer/index.html'), { query })
         } catch {
-          window.loadFile(join(__dirname, 'renderer/index.html'), { query: { workspaceId } })
+          window.loadFile(join(__dirname, 'renderer/index.html'), { query: { workspaceId, ...(retail ? {surface: 'retail'} : {}) } })
         }
       }
     } else {
       // Build URL from options
-      const query: Record<string, string> = { workspaceId }
+      const query: Record<string, string> = { workspaceId, ...(retail ? {surface: 'retail'} : {}) }
       if (focused) {
         query.focused = 'true' // Open in focused mode (no sidebars)
       }
@@ -386,11 +401,11 @@ export class WindowManager {
         failLoadRetries++
         windowLog.info(`Retrying Vite dev server (attempt ${failLoadRetries}/5)...`)
         setTimeout(() => {
-          const params = new URLSearchParams({ workspaceId }).toString()
+          const params = new URLSearchParams({ workspaceId, ...(retail ? {surface: 'retail'} : {}) }).toString()
           window.loadURL(`${VITE_DEV_SERVER_URL}?${params}`)
         }, 1000)
       } else {
-        window.loadFile(join(__dirname, 'renderer/index.html'), { query: { workspaceId } })
+        window.loadFile(join(__dirname, 'renderer/index.html'), { query: { workspaceId, ...(retail ? {surface: 'retail'} : {}) } })
       }
     })
 
@@ -535,11 +550,23 @@ export class WindowManager {
    */
   getWindowByWorkspace(workspaceId: string): BrowserWindow | null {
     for (const managed of this.windows.values()) {
-      if (managed.workspaceId === workspaceId && !managed.window.isDestroyed()) {
+      if (!managed.retail && managed.workspaceId === workspaceId && !managed.window.isDestroyed()) {
         return managed.window
       }
     }
     return null
+  }
+
+  /** One independent retail window per workspace; repeated entry preserves its current page. */
+  openRetailWindow(workspaceId: string): BrowserWindow {
+    const existing = [...this.windows.values()].find(m => m.retail && m.workspaceId === workspaceId && !m.window.isDestroyed())
+    if (existing) {
+      if (existing.window.isMinimized()) existing.window.restore()
+      existing.window.show()
+      existing.window.focus()
+      return existing.window
+    }
+    return this.createWindow({workspaceId, retail: true})
   }
 
   /**
@@ -659,7 +686,9 @@ export class WindowManager {
    */
   registerWindow(window: BrowserWindow, workspaceId: string): void {
     const webContentsId = window.webContents.id
-    this.windows.set(webContentsId, { window, workspaceId })
+    let retail = this.windows.get(webContentsId)?.retail ?? false
+    try { retail = retail || new URL(window.webContents.getURL()).searchParams.get('surface') === 'retail' } catch { /* renderer may still be loading */ }
+    this.windows.set(webContentsId, { window, workspaceId, retail })
     // Re-apply window-title policy after re-registration (e.g. post-refresh).
     this.refreshWindowTitles()
     windowLog.info(`Registered window ${webContentsId} for workspace ${workspaceId}`)

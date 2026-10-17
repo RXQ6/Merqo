@@ -79,8 +79,6 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar } from "./LeftSidebar"
-import { RetailWorkspace } from "@/retail/RetailWorkspace"
-import { useRegisterDismissibleLayer } from "@/context/DismissibleLayerContext"
 import { useSession } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -595,13 +593,12 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
-  const [retailOpen, setRetailOpen] = React.useState(false)
-  useRegisterDismissibleLayer(React.useMemo(() => retailOpen ? {
-    id: 'retail-workspace', type: 'custom' as const, priority: 1,
-    close: () => setRetailOpen(false),
-  } : null, [retailOpen]))
-  // Native navigation (including shortcuts and deep links) leaves the workspace tool.
-  React.useEffect(() => { setRetailOpen(false) }, [navState, activeWorkspaceId])
+  const openRetail = React.useCallback(async () => {
+    try {
+      const reply = await window.electronAPI.retailWindow('open')
+      if (!reply.ok) toast.error(reply.error ?? '经营分析窗口打开失败')
+    } catch { toast.error('经营分析窗口打开失败，请重试') }
+  }, [])
 
   const store = useStore()
   const panelStack = useAtomValue(panelStackAtom)
@@ -2028,7 +2025,6 @@ function AppShellContent({
 
   // Create a new chat and select it
   const handleNewChat = useCallback((newPanel: boolean = false) => {
-    setRetailOpen(false)
     if (!activeWorkspace) return
 
     // Exit search mode and switch to All Sessions
@@ -2104,7 +2100,7 @@ function AppShellContent({
 
   const unifiedSidebarItems = React.useMemo((): SidebarItem[] => {
     const result: SidebarItem[] = []
-    result.push({ id: 'nav:retail', type: 'nav', action: () => setRetailOpen(true) })
+    result.push({ id: 'nav:retail', type: 'nav', action: () => void openRetail() })
 
     // 1. Sessions section: All Sessions (expandable) with status items, Flagged, Archived as children
     result.push({ id: 'nav:allSessions', type: 'nav', action: handleAllSessionsClick })
@@ -2135,9 +2131,9 @@ function AppShellContent({
     result.push({ id: 'nav:whats-new', type: 'nav', action: handleWhatsNewClick })
 
     return result.map(item => item.id === 'nav:retail' ? item : {
-      ...item, action: () => { setRetailOpen(false); item.action?.() },
+      ...item, action: () => { item.action?.() },
     })
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, viewConfigs, handleViewClick, handleSourcesClick, handleSkillsClick, handleAutomationsClick, handleSettingsClick, handleWhatsNewClick])
+  }, [openRetail, handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, viewConfigs, handleViewClick, handleSourcesClick, handleSkillsClick, handleAutomationsClick, handleSettingsClick, handleWhatsNewClick])
 
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
@@ -2391,14 +2387,12 @@ function AppShellContent({
         }}
       >
         <PanelStackContainer
-          contentOverride={retailOpen ? <RetailWorkspace key={activeWorkspaceId} onOpenAgent={() => setRetailOpen(false)}/> : undefined}
           sidebarSlot={
             <div
               ref={sidebarRef}
               style={{ width: sidebarWidth }}
               className="h-full font-sans relative"
               data-focus-zone="sidebar"
-              onClickCapture={() => setRetailOpen(false)}
               tabIndex={sidebarFocused ? 0 : -1}
               onKeyDown={handleSidebarKeyDown}
             >
@@ -2443,8 +2437,8 @@ function AppShellContent({
                   links={[
                     {
                       id: 'nav:retail', title: '经营分析', icon: ChartNoAxesCombined,
-                      variant: retailOpen ? 'default' : 'ghost',
-                      onClick: () => setRetailOpen(true),
+                      variant: 'ghost',
+                      onClick: () => void openRetail(),
                     },
                     { id: 'separator:retail', type: 'separator' },
                     // --- Sessions Section ---
@@ -2454,7 +2448,7 @@ function AppShellContent({
                       title: t("sidebar.allSessions"),
                       label: String(workspaceSessionMetas.length),
                       icon: Inbox,
-                      variant: !retailOpen && sessionFilter?.kind === 'allSessions' ? "default" : "ghost",
+                      variant: sessionFilter?.kind === 'allSessions' ? "default" : "ghost",
                       onClick: handleAllSessionsClick,
                       expandable: true,
                       expanded: isExpanded('nav:allSessions'),
@@ -3646,7 +3640,7 @@ function AppShellContent({
         )}
 
         {/* Session List Resize Handle (absolute, hidden in focused mode and board view) */}
-        {!retailOpen && !effectiveSidebarAndNavigatorHidden && !isBoardView && (
+        {!effectiveSidebarAndNavigatorHidden && !isBoardView && (
         <div
           ref={sessionListHandleRef}
           onMouseDown={(e) => { e.preventDefault(); setIsResizing('session-list') }}

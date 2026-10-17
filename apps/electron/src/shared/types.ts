@@ -224,6 +224,7 @@ import type {
 } from '@craft-agent/shared/protocol'
 
 export interface ElectronAPI {
+  retailWindow(action: 'open' | 'agent'): Promise<{ok: boolean; error?: string}>
   retailRequest(request: import('../../../../packages/retail-domain/src/operations').RetailRequest): Promise<import('../../../../packages/retail-domain/src/operations').RetailReply>
   // Session management
   getSessions(): Promise<Session[]>

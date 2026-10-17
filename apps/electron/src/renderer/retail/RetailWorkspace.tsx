@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDownToLine, ArrowLeft, ArrowRight, Boxes, CircleAlert, FileSpreadsheet, LayoutDashboard, RefreshCw, Search, ShieldCheck, X } from 'lucide-react';
 import { DEMO_CSV, exportCsv, FIELDS, FIELD_LABELS } from '../../../../../packages/retail-domain/src/operations';
 import type { EvidenceRecord, Preview, RetailRequest, RetailReply, Snapshot } from '../../../../../packages/retail-domain/src/operations';
-import { PanelHeader } from '@/components/app-shell/PanelHeader';
 import { useRegisterDismissibleLayer } from '@/context/DismissibleLayerContext';
 import { SignalsPanel } from './SignalsPanel';
 import type { SignalSnapshot, SignalRecord } from '../../../../../packages/retail-domain/src/signals';
@@ -30,7 +29,7 @@ function download(name: string, content: string, mime = 'text/csv;charset=utf-8'
   const anchor = document.createElement('a'); anchor.href = url; anchor.download = name; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
+export function RetailWorkspace({ onOpenAgent, workspaceName }: { onOpenAgent: () => void; workspaceName?: string }) {
   const followupReview=useCallback((run:AnyInvestigation)=>{setInvestigationTarget(null);setInvestigationId(run.id);setPage('investigations');},[]);
   const [investigationId,setInvestigationId]=useState<string|null>(null);
   const [reviewJobId,setReviewJobId]=useState<string|null>(null);
@@ -107,18 +106,22 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
   };
   const updateMapping = (key: string, value: string) => { setMapping(current => ({ ...current, [key]: value })); setPreview(current => current ? { ...current, valid: [] } : null); };
   return <div className="retail-app" data-testid="retail-workspace">
-    <PanelHeader title="经营分析" actions={<button className="retail-link" onClick={onOpenAgent}><ArrowLeft size={14}/>返回会话</button>}/>
-    <nav className="retail-tabs" aria-label="经营导航">
-      <button aria-current={page === 'overview' ? 'page' : undefined} onClick={() => { setPage('overview'); setStatus('all'); }}><LayoutDashboard size={14}/>经营总览</button>
-      <button aria-current={page === 'anomalies' ? 'page' : undefined} onClick={() => { setPage('anomalies'); setStatus('all'); }}><CircleAlert size={14}/>异常中心<span className="retail-tab-count">{warning + missing + signalCount}</span></button>
-      <button aria-current={page === 'data' ? 'page' : undefined} onClick={() => setPage('data')}><FileSpreadsheet size={14}/>数据与导入</button>
-      <button aria-current={page === 'signals' ? 'page' : undefined} onClick={() => { setQuery(''); setPage('signals'); }}>库存与广告</button>
+    <header className="retail-windowbar"><div className="retail-wordmark"><Boxes size={19}/><strong>Merqo</strong><span>经营分析</span></div><div className="retail-windowbar-actions"><span>{workspaceName??'当前工作空间'}</span><button onClick={onOpenAgent}>会话窗口</button></div></header>
+    <div className="retail-window-layout">
+    <aside className="retail-navigation"><nav aria-label="经营导航">
+      <p className="retail-nav-group">经营洞察</p>
+      <button aria-current={page === 'overview' ? 'page' : undefined} onClick={() => { setPage('overview'); setStatus('all'); }}><LayoutDashboard size={16}/>经营总览</button>
+      <button aria-current={page === 'anomalies' ? 'page' : undefined} onClick={() => { setPage('anomalies'); setStatus('all'); }}><CircleAlert size={16}/>异常中心<span className="retail-tab-count">{warning + missing + signalCount}</span></button>
+      <button aria-current={page === 'signals' ? 'page' : undefined} onClick={() => { setQuery(''); setPage('signals'); }}><Boxes size={16}/>库存与广告</button>
       <button aria-current={page === 'investigations' ? 'page' : undefined} onClick={() => { setInvestigationTarget(null); setInvestigationId(null); setPage('investigations'); }}>调查记录</button>
+      <p className="retail-nav-group">决策执行</p>
       <button aria-current={page === 'decisions' ? 'page' : undefined} onClick={() => { setDecisionTarget(null); setPage('decisions'); }}>决策草稿</button>
       <button aria-current={page === 'approvals' ? 'page' : undefined} onClick={() => { setApprovalRequestId(null); setPage('approvals'); }}>审批中心</button>
       <button aria-current={page === 'executions' || page === 'batches' || page === 'reviews' ? 'page' : undefined} onClick={() => { setExecutionRequestId(null); setPage('executions'); }}>执行记录</button>
       <button aria-current={page === 'compensations' ? 'page' : undefined} onClick={() => { setCompensationTarget(null); setPage('compensations'); }}>补偿记录</button>
-    </nav>
+      <p className="retail-nav-group">数据管理</p>
+      <button aria-current={page === 'data' ? 'page' : undefined} onClick={() => setPage('data')}><FileSpreadsheet size={16}/>数据与导入</button>
+    </nav><p className="retail-navigation-note">本地经营工作台<br/><span>分析与模拟执行</span></p></aside>
     <main className="retail-main">
       {page === 'reviews' ? <ReviewsPanel onFollowup={followupReview} jobId={reviewJobId} onBack={()=>setPage('executions')}/> : page === 'batches' ? <ExecutionBatchesPanel onBack={()=>setPage('executions')}/> : page === 'compensations' ? <CompensationsPanel target={compensationTarget} onBack={()=>setPage('executions')}/> : page === 'executions' ? <ExecutionsPanel onReview={jobId=>{setReviewJobId(jobId);setPage('reviews');}} onBatches={()=>setPage('batches')} onCompensation={item=>{setCompensationTarget(item);setPage('compensations');}} initialRequestId={executionRequestId} onBack={() => setPage('approvals')}/> : page === 'approvals' ? <ApprovalsPanel onExecution={id => { setExecutionRequestId(id); setPage('executions'); }} initialRequestId={approvalRequestId} onBack={() => { setDecisionTarget(null); setPage('decisions'); }}/> : page === 'decisions' ? <DecisionsPanel onInvestigation={id=>{setInvestigationTarget(null);setInvestigationId(id);setPage('investigations');}} target={decisionTarget} onBack={() => setPage('overview')} onApproval={id => { setApprovalRequestId(id); setPage('approvals'); }}/> : page === 'investigations' ? <InvestigationPanel onData={()=>setPage('data')} initialId={investigationId} target={investigationTarget} onBack={() => setPage('overview')} onDraft={run => { setDecisionTarget(run); setPage('decisions'); }}/> : <>
       <header className="retail-header"><div><h1>{page === 'overview' ? '商品毛利分析' : page === 'anomalies' ? '经营异常' : page === 'signals' ? '库存与广告' : '经营数据'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : page === 'signals' ? '按相邻等长窗口核对销量、库存覆盖与广告回报。' : page === 'anomalies' ? '按店铺、渠道与经营日期核对三类异常及证据。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
@@ -155,6 +158,7 @@ export function RetailWorkspace({ onOpenAgent }: { onOpenAgent: () => void }) {
       <footer className="retail-footer"><span>本机 SQLite 持久化 · 规则 {page === 'signals' ? signals?.ruleVersion ?? 'retail-stock-roas-v1' : snapshot?.ruleVersion ?? 'retail-margin-v1'}</span><span>{busy ? '正在处理…' : '数据查询与分析，不执行经营写入'}</span></footer>
       </>}
     </main>
+    </div>
     {selected && <div className="retail-detail-backdrop" onClick={() => setSelected(null)}><section className="retail-detail" role="dialog" aria-modal="true" aria-label="毛利计算与证据" onClick={event => event.stopPropagation()} tabIndex={-1} ref={detailRef} onKeyDown={event => {
       if (event.key !== 'Tab') return;
       const controls = event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),[href],summary,[tabindex="0"]');

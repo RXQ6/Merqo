@@ -1,3 +1,4 @@
+import { RetailWorkspace } from '@/retail/RetailWorkspace'
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
@@ -290,6 +291,7 @@ export default function App() {
   // App state: loading -> check auth -> onboarding or ready
   const [appState, setAppState] = useState<AppState>('loading')
   const [setupNeeds, setSetupNeeds] = useState<SetupNeeds | null>(null)
+  const retailSurface = new URLSearchParams(window.location.search).get('surface') === 'retail'
 
   // Per-session Jotai atom setters for isolated updates
   // NOTE: No sessionsAtom - we don't store a Session[] array anywhere to prevent memory leaks
@@ -713,6 +715,9 @@ export default function App() {
         // Get this window's workspace ID (passed via URL query param from main process)
         const wsId = await window.electronAPI.getWindowWorkspace()
         setWindowWorkspaceId(wsId)
+        // Local analysis does not require Agent provider onboarding. Model investigations
+        // still validate the configured connection in the trusted main process.
+        if (retailSurface && wsId) { setAppState('ready'); return }
 
         const needs = await window.electronAPI.getSetupNeeds()
         setSetupNeeds(needs)
@@ -737,7 +742,7 @@ export default function App() {
     }
 
     initialize()
-  }, [])
+  }, [retailSurface])
 
   // Session selection state
   const [sessionSelection, setSession] = useSession()
@@ -2073,7 +2078,7 @@ export default function App() {
           {/* Main UI - always rendered, splash fades away to reveal it */}
           <div
             className="h-full flex flex-col text-foreground"
-            style={{ paddingTop: 'var(--topbar-height)' }}
+            style={{ paddingTop: retailSurface ? 0 : 'var(--topbar-height)' }}
           >
             {showTransportConnectionBanner && connectionState && (
               <TransportConnectionBanner
@@ -2082,7 +2087,9 @@ export default function App() {
               />
             )}
             <div className="flex-1 min-h-0">
-              {sessionLoadError ? (
+              {retailSurface ? (
+                <RetailWorkspace key={windowWorkspaceId} workspaceName={workspaces.find(w=>w.id===windowWorkspaceId)?.name} onOpenAgent={()=>{void window.electronAPI.retailWindow('agent').then(r=>{if(!r.ok)toast.error(r.error??'会话窗口打开失败')}).catch(()=>toast.error('会话窗口打开失败'))}}/>
+              ) : sessionLoadError ? (
                 <SessionLoadErrorScreen
                   message={sessionLoadError}
                   onRetry={() => { void loadSessionsFromServer() }}

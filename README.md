@@ -8,7 +8,7 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 > Development prototype for Windows. The current desktop application, launch scripts, and local configuration names still use **RetailPilot**. Merqo is the repository name. Sample results are synthetic and do not represent real business performance.
 
-![Merqo retail workbench](docs/images/workbench.png)
+![Merqo independent retail workbench](docs/images/retail-window.png)
 
 ## Features
 
@@ -65,8 +65,8 @@ node node_modules/electron/install.js
 The current application UI is primarily Chinese:
 
 1. If prompted for a model connection, choose **稍后设置** (Set up later).
-2. Open **经营分析** (Retail analysis) in the desktop sidebar.
-3. Open **数据与导入**, then select **载入演示数据** to load all three scenarios.
+2. Select **经营分析** (Retail analysis) in the desktop sidebar to open its own window. The conversation workspace stays available.
+3. In the independent analysis window, open **数据与导入**, then select **载入演示数据** to load all three scenarios.
 4. Open **库存与广告** to inspect inventory and advertising evidence.
 5. Open **异常中心** to review the combined anomaly list.
 
@@ -81,6 +81,12 @@ Expected demo results:
 | Combined anomalies, including evidence gaps | 8: four margin, two inventory, two advertising |
 
 The sample 20% thresholds and two-day inventory buffer are **versioned demonstration rules**, not universal operating targets. Product gross profit excludes advertising, shipping and platform commissions.
+
+## Independent analysis window
+
+Retail analysis opens in a dedicated window bound to the current local workspace. Repeat entry focuses the existing window and preserves its current page; **会话窗口** returns to the conversation workspace. Closing and reopening analysis retains saved data and history. Its neutral light layout groups navigation into insights, decisions/execution, and data management. Model credentials are required only when requesting a model investigation, not for opening local analysis.
+
+See [window design and acceptance](docs/retail-window-design.md).
 
 ## Investigations
 

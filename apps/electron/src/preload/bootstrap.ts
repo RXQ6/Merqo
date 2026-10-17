@@ -444,5 +444,6 @@ client.onConnectionStateChanged((state) => {
   }
 }
 
+;(api as ElectronAPI).retailWindow = action => ipcRenderer.invoke('retail:window', action)
 ;(api as ElectronAPI).retailRequest = (request) => ipcRenderer.invoke('retail:request', request)
 contextBridge.exposeInMainWorld('electronAPI', api)

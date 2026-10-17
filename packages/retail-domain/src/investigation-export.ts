@@ -13,6 +13,10 @@ export function exportInvestigation(run: AnyInvestigation, format: 'json' | 'md'
   const report = run.report;
   const lines = ['# Merqo 经营调查报告', '', `运行 ID：${run.id}`, `场景：${run.scenario ?? 'margin'}；来源：${run.evidence.source}；模式：${run.mode}；状态：${run.state}`, '', '> 历史证据与模型观点，不构成批准或经营执行授权。', '', '## 调查摘要', '', escape(report?.summary ?? run.error ?? '调查尚未生成报告')];
   if (report) {
+    if (report.evidenceAssessment) {
+      lines.push('', '## 证据与补证清单', '', '范围：冻结快照与条件测算；清单不代表 Reviewer 通过、归因证明或真实执行授权。', '');
+      for (const r of report.evidenceAssessment.requirements) lines.push(`- ${escape(r.label)}（${r.purpose} / ${r.status}）：${escape(r.detail)} 下一步：${escape(r.nextStep)} 引用：${r.evidenceIds.map(escape).join(', ')}`);
+    }
     for (const [title, claims] of [['观察与证据', report.observations], ['原因假设（尚未证实）', report.hypotheses]] as const) lines.push('', `## ${title}`, '', ...claims.map(c => `- ${escape(c.text)} — ${c.evidenceIds.map(escape).join(', ')}`));
     for (const [title, texts] of [['替代解释', report.alternatives], ['未知项与待补证', report.unknowns]] as const) lines.push('', `## ${title}`, '', ...texts.map(t => `- ${escape(t)}`));
     lines.push('', '## 条件方案', '');

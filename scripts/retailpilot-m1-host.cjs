@@ -99,6 +99,16 @@ app.on('web-contents-created', (_event, contents) => {
       await waitFor(`document.querySelector('[data-focus-zone="sidebar"]').checkVisibility()&&!document.querySelector('[data-testid="retail-workspace"]').checkVisibility()`, 'return to original conversation surface');
       await click('经营分析');await waitFor(analysisVisible,'reentry');
       await assert(`!!document.querySelector('.retail-windowbar')&&!!document.querySelector('.retail-navigation')`, 'analysis retains clean header and grouped navigation');
+      if(phase==='evidence'){
+        const runId=await js(`(async()=>{const snapshot=await window.electronAPI.retailRequest({op:'snapshot'});const record=snapshot.data.records.find(r=>r.source==='demo'&&r.row.sku_id==='TEA-500');const result=await window.electronAPI.retailRequest({op:'investigate',recordId:record.id,scenario:'margin',mode:'replay',retry:true});if(!result.ok)throw new Error(result.error);return result.data[0].id;})()`);
+        await waitFor(`(async()=>{const r=await window.electronAPI.retailRequest({op:'investigations',id:${JSON.stringify(runId)}});return r.ok&&r.data[0].report?.evidenceAssessment?.version==='margin-evidence-v1';})()`, 'new assessment persisted through actual worker and MCP',20000);
+        await click('调查记录');await waitFor(`!!document.querySelector('[aria-label="毛利证据清单"]')`, 'evidence checklist visible');
+        await assert(`document.querySelectorAll('[aria-label="毛利补证要求"] tbody tr').length===6&&document.querySelector('[aria-label="毛利证据清单"]').innerText.includes('尚不接收这类证据')`, 'six purpose-scoped requirements disclose unsupported import evidence');
+        await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'investigation_export',id:${JSON.stringify(runId)},format:'json'});const bundle=JSON.parse(r.content);return bundle.investigation.report.evidenceAssessment.requirements.length===6&&bundle.investigation.report.reviewer.mode==='replay'&&bundle.investigation.report.reviewer.verdict==='needs_evidence';})()`, 'export retains checklist without upgrading offline approval authority');
+        await js(`document.querySelector('[aria-label="毛利证据清单"]').scrollIntoView()`);await capture('margin-evidence-checklist.png');
+        await click('前往数据与导入');await waitFor(`document.querySelector('.retail-main h1')?.textContent==='经营数据'`, 'evidence recovery navigates to existing import surface');
+        checks.push('checklist recovery opens data import without mutating frozen reports');finish();return;
+      }
       if(phase==='navigation'){
         for(const width of [1400,1000]){
           desktopWindow.setSize(width,900);

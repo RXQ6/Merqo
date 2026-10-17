@@ -25,3 +25,5 @@ JSON与Markdown完整快照携带numericAudit；保存草稿时reportHash绑定�
 原生桌面完整首轮 58 项、同配置重启 18 项通过；检查数值核验表、五元商家券差额、JSON导出、独立窗口以及三场景审批/执行/补偿/复盘回归。模型响应为本地协议fixture。
 
 ![毛利数值与引用核验](images/margin-numeric.png)
+
+后续进展：证据分层、最终披露前置及一次毛利真实模型合成闭环已完成；原拒绝/待补证记录不改写。详见[毛利证据与专项验收](M4-margin-evidence-design.md)。

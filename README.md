@@ -88,6 +88,12 @@ Retail analysis switches inside the current desktop window. Click **经营分析
 
 See [window design and acceptance](docs/retail-window-design.md).
 
+## Margin evidence and review
+
+New margin investigations include a six-item evidence checklist separating snapshot arithmetic, causal evidence and real execution prerequisites. Missing-cost and scope conflicts remain blocked. The checklist states which evidence the current snapshot import can accept and which adapters remain unavailable. Reviewer sees the final disclosed unknowns before the report is saved; historical reports are not backfilled.
+
+A fixed ten-case Reviewer evaluation is available with `bun scripts/merqo-margin-review-eval.ts --live` (up to twenty configured-provider calls). It is a Reviewer-only diagnostic, not the PRD's full business benchmark. See [implementation and acceptance](docs/M4-margin-evidence-design.md) for actual evaluation results and limits.
+
 ## Investigations
 
 Select **开始调查** next to a margin, inventory or advertising alert, such as TEA-500.
@@ -222,7 +228,7 @@ node scripts/retailpilot-m1-e2e.cjs
 
 The recorded verification includes 164 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
-Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. These are small engineering checks, not a full business-quality benchmark. The latest workflow check completed inventory and advertising simulation chains; margin remained blocked by Reviewer needs-evidence. See the [latest recovery and live validation](docs/M4-reviewer-recovery-verification.md) and [earlier evaluation record](docs/M2-verification.md).
+Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. These are small engineering checks, not a full business-quality benchmark. Earlier checks completed inventory and advertising simulation chains. The latest single synthetic margin workflow also completed model review, simulation approval/execution, reread and Case creation after purpose-scoped disclosures were formed before review. The separate ten-case Reviewer diagnostic scored 5/10 before that disclosure repair; it remains recorded and has not been replaced by the successful workflow run. See [margin evidence validation](docs/M4-margin-evidence-design.md). See the [latest recovery and live validation](docs/M4-reviewer-recovery-verification.md) and [earlier evaluation record](docs/M2-verification.md).
 
 ## Status and roadmap
 

@@ -14,6 +14,7 @@ async function run(phase){
 }
 (async()=>{
  if(process.argv.includes('--navigation')){await run('navigation');return;}
+ if(process.argv.includes('--evidence')){await run('evidence');return;}
  await run('window-save');
  // Upgrade fixture: the old app saved a second surface=retail window.
  const statePath=path.join(profile,'config/window-state.json');

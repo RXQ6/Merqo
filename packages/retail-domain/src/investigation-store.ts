@@ -1,3 +1,4 @@
+import { ReviewLedger } from './outcome-reviews';
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
 import type { SignalRecord } from './signals';
@@ -8,7 +9,7 @@ import type { Investigation, AnyInvestigation, SignalInvestigation, Investigatio
 interface Stored { json: string }
 export class InvestigationStore {
   private readonly db: Database;
-  constructor(file: string, private readonly readOnly = false) {
+  constructor(file: string, private readonly readOnly = false, private readonly workspaceId?: string) {
     this.db = new Database(file, readOnly ? { readonly: true, strict: true } : { create: true, strict: true });
     if (readOnly) { this.db.exec('PRAGMA busy_timeout=5000'); return; }
     try {
@@ -58,7 +59,9 @@ export class InvestigationStore {
       const active = this.db.query<{ n: number }, []>("SELECT count(*) AS n FROM investigations WHERE state='running'").get()?.n ?? 0;
       if (active >= 2) throw new Error('当前经营空间已有两项调查进行中，请等待完成或超时后重试');
       const now = new Date().toISOString();
-      const base = { id: randomUUID(), recordId: evidence.id, mode, state: 'running', createdAt: now, updatedAt: now, deadlineAt: new Date(Date.now() + 300000).toISOString(), evidence, trace: [], report: null, error: null, model: null };
+      const hasCases=this.db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='retail_cases'").get();
+      const caseContext=this.workspaceId&&hasCases?new ReviewLedger(this.db,this.workspaceId).search(evidence,scenario,now):[];
+      const base = { caseContext, id: randomUUID(), recordId: evidence.id, mode, state: 'running', createdAt: now, updatedAt: now, deadlineAt: new Date(Date.now() + 300000).toISOString(), evidence, trace: [], report: null, error: null, model: null };
       const run: AnyInvestigation = scenario === 'margin' ? { ...base, state: 'running', evidence: evidence as EvidenceRecord } : { ...base, state: 'running', scenario, evidence: evidence as SignalRecord };
       this.db.query('INSERT INTO investigations(id,record_id,mode,state,updated_at,deadline_at,json) VALUES (?,?,?,?,?,?,?)').run(run.id, evidence.id, mode, run.state, now, run.deadlineAt, JSON.stringify(run));
       return { run, created: true };

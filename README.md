@@ -143,6 +143,16 @@ See [batch acceptance](docs/M3-batches-acceptance.md) and [design](docs/M3-batch
 
 ![Execution batch — isolated protocol test](docs/images/execution-batches.png)
 
+## Outcome reviews and Case history
+
+From a successful receipt, select **创建或查看复盘**, or open **执行记录 → 复盘与 Case**. Reviews bind the original investigation, approval and receipt to an adjacent equal-length observation window. Built-in replay and previewed single-row CSV observations retain their provenance and immutable revisions. Open windows remain pending; missing values remain unknown. Reviewers record their conclusion and confounding factors before saving a read-only Case.
+
+This is **synthetic business-date replay**, not measured business performance after the wall-clock execution time. Built-in observations preserve business metrics; they do not invent uplift. A simulated replenishment request does not become stock received. Cases confirm comparisons or explicitly record insufficient evidence; they do not establish causality or grant execution authority.
+
+A reviewed built-in replay can explicitly seed a later demo investigation from its observation. The investigation freezes up to five matching Cases by workspace, shop, channel, SKU, scenario, dimensions and time. History is returned through the existing read-only `retail_get_sku_context` MCP tool and checked against the frozen run. Old investigations are not backfilled, and real CSV analysis does not retrieve synthetic Cases. See [review acceptance](docs/M4-review-acceptance.md) and [design](docs/M4-review-design.md).
+
+![Outcome review and Case — isolated protocol test](docs/images/outcome-review.png)
+
 ## CSV examples
 
 Download templates in the application or use [fixtures/retail](fixtures/retail):
@@ -200,15 +210,15 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 132 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 145 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
 Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
 
 ## Status and roadmap
 
-- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation, independent execution batches, durable uncertain outcomes and per-item recovery/retry.
-- **Next:** operational outcome reviews and scoped Case memory. Real external outcome queries, model-generated multi-action plans, production multi-user authorization, historical Case retrieval, pause/resume and AgentBackend reuse remain pending.
-- **Later:** operational review workflows, production authorization/integrations and Windows packaging.
+- **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation, independent execution batches, durable uncertain outcomes and per-item recovery/retry, plus synthetic outcome reviews and scoped frozen Case retrieval.
+- **Next:** domain scheduling, manual catch-up and deduplication, remaining investigation recovery, and release gates. Real outcome observation, external outcome queries, model-generated multi-action plans, production multi-user authorization, pause/resume and AgentBackend reuse remain pending.
+- **Later:** real-system outcome review and integrations, production authorization and Windows packaging.
 
 No real ERP or advertising platform integration, real business writes, production multi-user authorization or installer is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
 
@@ -232,6 +242,9 @@ No real ERP or advertising platform integration, real business writes, productio
 - [Execution batch acceptance](docs/M3-batches-acceptance.md)
 - [Execution batch design](docs/M3-batches-design.md)
 - [Execution batch verification](docs/M3-batches-verification.md)
+- [Outcome review and Case acceptance](docs/M4-review-acceptance.md)
+- [Outcome review and Case design](docs/M4-review-design.md)
+- [Outcome review and Case verification](docs/M4-review-verification.md)
 - [Domain contracts](docs/domain-contracts.md)
 - [Original upstream README](docs/upstream-README.md)
 

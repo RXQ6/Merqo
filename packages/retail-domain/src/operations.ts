@@ -1,3 +1,4 @@
+import type { ReviewView, ObservationPreview } from './outcome-reviews';
 import type { BatchView } from './execution-batches';
 import type { CompensationView } from './compensation';
 import { z } from 'zod';
@@ -36,6 +37,13 @@ export const RetailRequestSchema = z.discriminatedUnion('op', [
   z.strictObject({ op: z.literal('signals_preview'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema.optional() }),
   z.strictObject({ op: z.literal('signals_import'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema }),
   z.strictObject({ op: z.literal('investigation_export'), id: z.string().uuid(), format: z.enum(['json', 'md']) }),
+  z.strictObject({op:z.literal('review_followup'),id:z.string().uuid(),expectedCaseId:z.string().uuid(),mode:z.enum(['model','replay'])}),
+  z.strictObject({op:z.literal('reviews')}),
+  z.strictObject({op:z.literal('review_create'),jobId:z.string().regex(/^[a-f0-9]{64}$/)}),
+  z.strictObject({op:z.literal('review_preview'),id:z.string().uuid(),csv:z.string().min(1).max(2_000_000)}),
+  z.strictObject({op:z.literal('review_observe'),id:z.string().uuid(),expectedVersion:z.number().int().min(1).max(100000),synthetic:z.literal(true),csv:z.string().min(1).max(2_000_000),previewHash:z.string().regex(/^[a-f0-9]{64}$/)}),
+  z.strictObject({op:z.literal('review_demo'),id:z.string().uuid(),expectedVersion:z.number().int().min(1).max(100000),synthetic:z.literal(true)}),
+  z.strictObject({op:z.literal('review_finalize'),id:z.string().uuid(),expectedVersion:z.number().int().min(1).max(100000),observationHash:z.string().regex(/^[a-f0-9]{64}$/),conclusion:z.enum(['comparison_only','inconclusive']),note:z.string().trim().min(1).max(2000),confounders:z.string().trim().min(1).max(2000)}),
   z.strictObject({ op: z.literal('compensations') }),
   z.strictObject({ op: z.literal('compensation_create'), sourceJobId:z.string().regex(/^[a-f0-9]{64}$/), reason:z.string().trim().min(1).max(2000) }),
   z.strictObject({ op: z.literal('compensation_revise'), id:z.string().uuid(), expectedVersion:z.number().int().min(1).max(100000), reason:z.string().trim().min(1).max(2000) }),
@@ -137,7 +145,7 @@ export function calculate(row: RetailRow, specConflict = false): Calculation {
 export interface EvidenceRecord { id: string; batchId: string; source: 'demo' | 'csv'; importedAt: string; snapshotHash: string; ruleVersion: string; row: RetailRow; calculation: Calculation; status: 'normal' | 'low_margin' | 'needs_evidence'; reasons: string[]; thresholdBps: number }
 export interface BatchSummary { id: string; source: 'demo' | 'csv'; importedAt: string; accepted: number; rejected: number; hash: string; errors: RejectedRow[]; ruleVersion: string }
 export interface Snapshot { workspaceName: string; records: EvidenceRecord[]; batches: BatchSummary[]; dbVersion: number; ruleVersion: string; thresholdBps: number }
-export type RetailReply = {ok:true;kind:'execution_batches';data:BatchView[];selectedId?:string} | {ok:true;kind:'compensations';data:CompensationView[];selectedId?:string} | { ok: true; kind: 'executions'; data: ExecutionView[]; selectedId?: string } | { ok: true; kind: 'approvals'; data: ApprovalView[]; selectedId?: string } | { ok: true; kind: 'export'; filename: string; mime: string; content: string } | { ok: true; kind: 'decisions'; data: DecisionDraft[]; selectedId?: string; history?: DecisionDraft[] } | { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: AnyInvestigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
+export type RetailReply = {ok:true;kind:'reviews';data:ReviewView[];selectedId?:string} | {ok:true;kind:'review_preview';data:ObservationPreview} | {ok:true;kind:'execution_batches';data:BatchView[];selectedId?:string} | {ok:true;kind:'compensations';data:CompensationView[];selectedId?:string} | { ok: true; kind: 'executions'; data: ExecutionView[]; selectedId?: string } | { ok: true; kind: 'approvals'; data: ApprovalView[]; selectedId?: string } | { ok: true; kind: 'export'; filename: string; mime: string; content: string } | { ok: true; kind: 'decisions'; data: DecisionDraft[]; selectedId?: string; history?: DecisionDraft[] } | { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: AnyInvestigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
 
 const demoRows: RetailRow[] = [
   { date: '2026-10-14', shop_id: 'demo-nanfeng', channel: '线上商城', sku_id: 'TEA-500', product_name: '桂花乌龙冷萃茶', spec: '500ml × 6瓶', currency: 'CNY', list_price_minor: 10000, coupon_minor: 2000, full_reduction_minor: 1000, subsidy_minor: 0, subsidy_funder: 'platform', cost_minor: 6000, sold_qty: 40, on_hand: 120, reserved: 10, inbound_qty: 60 },

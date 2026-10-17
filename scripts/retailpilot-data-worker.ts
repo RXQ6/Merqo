@@ -23,6 +23,7 @@ function openStore<T>(create: () => T): T {
 }
 const file = process.argv[2];
 if (!file) throw new Error('Missing trusted database path');
+const workspaceId = process.argv[4] || 'local-' + createHash('sha256').update(resolve(file)).digest('hex').slice(0, 24);
 let store: RetailStore | undefined;
 let investigations: InvestigationStore | undefined;
 let signals: SignalStore | undefined;
@@ -30,7 +31,7 @@ let decisions: DecisionStore | undefined;
 try {
   const input: unknown = JSON.parse(await Bun.stdin.text());
   store = openStore(() => new RetailStore(file, process.argv[3] || '当前 Workspace'));
-  investigations = openStore(() => new InvestigationStore(file + '.investigations.sqlite'));
+  investigations = openStore(() => new InvestigationStore(file + '.investigations.sqlite', false, workspaceId));
   // Internal worker protocol is not exposed by the renderer IPC whitelist.
   const internal = z.strictObject({ op: z.literal('investigation_update'), id: z.string().uuid(), event: z.custom<Trace>().optional(), report: z.custom<InvestigationReport>().optional(), error: z.string().max(1000).optional(), model: z.string().max(200).optional() }).safeParse(input);
   if (internal.success) {
@@ -45,13 +46,28 @@ try {
       else if(request.op==='signals_replenishment_demo'){const result=signals.import('inventory',INVENTORY_EXECUTION_DEMO,undefined,'demo');console.log(JSON.stringify({ok:true,kind:'signals',data:result.data,notice:'已载入1天交期的合成补货流程演示；原5天样例可重新载入。'}));}
       else console.log(JSON.stringify({ ok: true, kind: 'signals', data: request.op === 'signals_demo' ? signals.demo() : signals.snapshot() }));
     }
-    else if (request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile' || request.op === 'compensations' || request.op === 'execution_batches' || request.op.startsWith('batch_') || request.op.startsWith('compensation_') || request.op.startsWith('decision_')) {
+    else if (request.op === 'reviews' || request.op.startsWith('review_') || request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile' || request.op === 'compensations' || request.op === 'execution_batches' || request.op.startsWith('batch_') || request.op.startsWith('compensation_') || request.op.startsWith('decision_')) {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
       // Batches release locks between items: every action must re-read current source evidence.
       const current = () => [...store!.snapshot().records, ...signals!.snapshot().records];
-      const workspaceId = process.argv[4] || 'local-' + createHash('sha256').update(resolve(file)).digest('hex').slice(0, 24);
       decisions = openStore(() => new DecisionStore(file, workspaceId, current));
-      if(request.op==='execution_batches'||request.op==='batch_create'||request.op==='batch_run'||request.op==='batch_retry_item'||request.op==='batch_recover') {
+      if(request.op==='review_followup'){
+        const view=decisions.review(request.id);const r=view.review;
+        if(!view.case||view.case.id!==request.expectedCaseId||!r.final||r.observation?.origin!=='builtin_synthetic')throw new Error('仅已复核的内置合成观察可明确载入后续演示调查；请刷新核对Case');
+        const row=r.observation.row;const cells=(v:unknown)=>'"'+String(v??'').replaceAll('"','""')+'"';const csv=[Object.keys(row).join(','),Object.values(row).map(cells).join(',')].join('\n');
+        let result;
+        if(r.job.scenario==='margin'){store.import(csv,undefined,'demo');const e=store.snapshot().records.find(e=>e.source==='demo'&&e.row.date===row.date&&e.row.shop_id===row.shop_id&&e.row.channel===row.channel&&e.row.sku_id===row.sku_id);if(!e)throw new Error('后续合成记录未载入');result=investigations.create(e,request.mode,true);}
+        else {signals.import(r.job.scenario,csv,undefined,'demo');const e=signals.snapshot().records.find(e=>e.source==='demo'&&e.kind===r.job.scenario&&e.row.date===row.date&&e.row.shop_id===row.shop_id&&e.row.channel===row.channel&&e.row.sku_id===row.sku_id&&('warehouse_id' in e.row?e.row.warehouse_id===r.job.scope.warehouse:'campaign_id' in e.row&&e.row.campaign_id===r.job.scope.campaign));if(!e)throw new Error('后续合成记录未载入');result=investigations.createSignal(e,request.mode,true);}
+        console.log(JSON.stringify({ok:true,kind:'investigations',data:[result.run],created:result.created}));
+      }else if(request.op==='reviews'||request.op==='review_create'||request.op==='review_preview'||request.op==='review_demo'||request.op==='review_observe'||request.op==='review_finalize'){
+        if(request.op==='review_preview')console.log(JSON.stringify({ok:true,kind:'review_preview',data:decisions.previewObservation(request.id,request.csv)}));
+        else {let selectedId:string|undefined;
+          if(request.op==='review_create')selectedId=decisions.createReview(request.jobId).review.id;
+          if(request.op==='review_demo')selectedId=decisions.observeReview(request.id,request.expectedVersion,null).review.id;
+          if(request.op==='review_observe')selectedId=decisions.observeReview(request.id,request.expectedVersion,{csv:request.csv,hash:request.previewHash}).review.id;
+          if(request.op==='review_finalize')selectedId=decisions.finalizeReview(request.id,request.expectedVersion,request.observationHash,request.conclusion,request.note,request.confounders,process.argv[5]||'').review.id;
+          console.log(JSON.stringify({ok:true,kind:'reviews',data:decisions.reviews(),...(selectedId?{selectedId}:{})}));}
+      }else if(request.op==='execution_batches'||request.op==='batch_create'||request.op==='batch_run'||request.op==='batch_retry_item'||request.op==='batch_recover') {
         let selectedId:string|undefined;const actor=process.argv[5]==='local-simulation-executor'?{id:'local-simulation-executor',role:'executor',environment:'simulation'} as const:null;
         if(request.op==='batch_create')selectedId=decisions.createExecutionBatch(request.jobIds,request.reason).batch.id;
         if(request.op==='batch_run')selectedId=decisions.runExecutionBatch(request.id,actor).batch.id;
@@ -83,7 +99,7 @@ try {
         const drafts=decisions.forInvestigation(run.id).flatMap(d=>decisions!.history(d.id));
         const ids=new Set(drafts.map(d=>d.id));
         const executionViews=decisions.executions().filter(e=>ids.has(e.job.decisionId));const executionIds=new Set(executionViews.map(e=>e.job.id));
-        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, drafts, executionViews, decisions.compensations().filter(c=>executionIds.has(c.request.sourceJobId)), decisions.executionBatches().filter(b=>b.batch.items.some(i=>executionIds.has(i.jobId)))) }));
+        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, drafts, executionViews, decisions.compensations().filter(c=>executionIds.has(c.request.sourceJobId)), decisions.executionBatches().filter(b=>b.batch.items.some(i=>executionIds.has(i.jobId))),decisions.reviews().filter(r=>executionIds.has(r.review.job.id))) }));
       } else {
         let selectedId: string | undefined; let history;
         if (request.op === 'decision_create') selectedId = decisions.create(request.investigationId, request.kind, request.note).id;

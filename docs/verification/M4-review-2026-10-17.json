@@ -1,0 +1,187 @@
+{
+  "date": "2026-10-17",
+  "scope": "M4 first slice: synthetic business-date outcome review and scoped frozen Case retrieval",
+  "schemaVersion": 6,
+  "domain": {
+    "passed": 145,
+    "failed": 0,
+    "assertions": 726,
+    "typecheck": "passed"
+  },
+  "fullTypecheck": "passed; final domain and Electron types rechecked",
+  "build": "passed; inherited chunk-size warnings; final main/renderer/resources rebuilt",
+  "transport": {
+    "passed": 2,
+    "assertions": 1244
+  },
+  "mcp": {
+    "ok": true,
+    "checks": [
+      "margin: real stdio tools, scope denial, Skill resource and frozen evidence passed",
+      "margin: desktop MCP adapter validates frozen run scope after correction",
+      "inventory: real stdio tools, scope denial, Skill resource and frozen evidence passed",
+      "inventory: desktop MCP adapter validates frozen run scope after correction",
+      "ads: real stdio tools, scope denial, Skill resource and frozen evidence passed",
+      "ads: desktop MCP adapter validates frozen run scope after correction",
+      "reviewed Case: actual MCP stdio returns frozen scoped history despite later library changes",
+      "reviewed Case: desktop rejects MCP history that differs from its frozen run"
+    ]
+  },
+  "nativeFullWorkflow": [
+    {
+      "ok": true,
+      "phase": "initial",
+      "checks": [
+        "startup preserves original desktop workspace",
+        "Windows separate title strip removed while caption capabilities remain enabled",
+        "retail analysis shares native sidebar and panel chrome",
+        "demo totals match independently calculated revenue and gross profit",
+        "retail content inherits desktop background token",
+        "native desktop and retail navigation round trip retains persisted data",
+        "original sidebar navigation remains usable",
+        "evidence drawer shows formula, margin and source hash",
+        "evidence participates in native dismissible layer stack",
+        "start investigation is visible and missing model is not simulated as success",
+        "real inference adapter executes six local HTTP contract calls with no native tool authority",
+        "desktop investigation uses four actual MCP stdio tool calls",
+        "JSON and Markdown download through native desktop and retain frozen evidence index",
+        "duplicate simulated approval requests are idempotent",
+        "approval requires an explicit reason",
+        "approval actor comes from server, forged identity rejects and retries remain idempotent",
+        "explicit local simulation confirmation is required",
+        "execution is server-scoped, idempotent and isolated from source snapshots",
+        "decision draft, exact-version simulation submission, revision and superseded request work in desktop",
+        "approve, execute isolated simulation, supersede old approval, reject revision and preserve history without real business writes",
+        "report export includes decision history, superseded request and execution receipt",
+        "two deterministic scenarios and evidence are displayed",
+        "renderer cannot forge investigation completion",
+        "explicit offline replay remains distinct from model investigation",
+        "inventory model conditional plans",
+        "inventory plan does not erase pre-arrival gap",
+        "ads model conditional plans",
+        "ads budget scales revenue at unchanged ROAS",
+        "all three scenarios and offline replay consume actual MCP evidence",
+        "inventory and ads model contracts, readonly Reviewer and explicit offline plans passed",
+        "unified anomaly center excludes all four normal rows across three scenarios",
+        "repeat file is idempotent",
+        "correction changes current SKU to 33.33% while retaining source separation",
+        "IPC rejects renderer-supplied workspace scope",
+        "IPC rejects business execution operations",
+        "inventory coverage and ROAS decline match independent arithmetic",
+        "scenario evidence shows rule, formula and immutable source hash",
+        "two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center",
+        "concurrent read refreshes do not block page remounts",
+        "all three UI workflows execute only isolated simulation and inventory is not received as sellable stock",
+        "pending replenishment compensation cancels request instead of receiving inventory",
+        "compensation is newly approved, idempotent, exportable, server scoped and isolated from source stock",
+        "unsafe compensation has no approval or execute action",
+        "unknown outcome disables resubmission",
+        "batch recovery fences old intent and retry never duplicates successful item",
+        "review export retains Case evidence and rejects renderer role injection",
+        "Case retrieval is scoped, frozen and actually passed through desktop MCP",
+        "inventory review follows its business window and requires explicit confirmation"
+      ],
+      "error": null,
+      "failures": []
+    },
+    {
+      "ok": true,
+      "phase": "restart",
+      "checks": [
+        "startup preserves original desktop workspace",
+        "Windows separate title strip removed while caption capabilities remain enabled",
+        "retail analysis shares native sidebar and panel chrome",
+        "original demo and explicit follow-up observation survive application restart",
+        "all three scenario histories survive restart",
+        "legacy margin report retains calculations",
+        "corrected margin survives application restart",
+        "inventory and advertising corrections survive restart",
+        "versioned draft and superseded approval request survive restart",
+        "superseded approval is visible and rejected decision cannot be approved again",
+        "successful simulation and reconciliation survive restart without another execution",
+        "compensation receipt, reread, rejected history and no repeat action survive restart",
+        "batch recovery audit and no replay actions survive restart",
+        "immutable Case, confounders and no overwrite action survive restart"
+      ],
+      "error": null,
+      "failures": []
+    }
+  ],
+  "finalDisplayRestart": {
+    "ok": true,
+    "phase": "restart",
+    "checks": [
+      "startup preserves original desktop workspace",
+      "Windows separate title strip removed while caption capabilities remain enabled",
+      "retail analysis shares native sidebar and panel chrome",
+      "original demo and explicit follow-up observation survive application restart",
+      "all three scenario histories survive restart",
+      "legacy margin report retains calculations",
+      "corrected margin survives application restart",
+      "inventory and advertising corrections survive restart",
+      "versioned draft and superseded approval request survive restart",
+      "superseded approval is visible and rejected decision cannot be approved again",
+      "successful simulation and reconciliation survive restart without another execution",
+      "compensation receipt, reread, rejected history and no repeat action survive restart",
+      "batch recovery audit and no replay actions survive restart",
+      "immutable Case, confounders and no overwrite action survive restart",
+      "review display units match formatted currency and percentages"
+    ],
+    "error": null,
+    "failures": []
+  },
+  "queryPlans": [
+    {
+      "sql": "SELECT id FROM outcome_reviews WHERE workspace_id=? ORDER BY json_extract(json,'$.updatedAt') DESC,id DESC LIMIT 50",
+      "plan": [
+        {
+          "id": 5,
+          "parent": 0,
+          "notused": 62,
+          "detail": "SEARCH outcome_reviews USING INDEX outcome_reviews_recent (workspace_id=?)"
+        },
+        {
+          "id": 29,
+          "parent": 0,
+          "notused": 0,
+          "detail": "USE TEMP B-TREE FOR LAST TERM OF ORDER BY"
+        }
+      ]
+    },
+    {
+      "sql": "SELECT json FROM outcome_review_versions WHERE id=? ORDER BY version DESC LIMIT 30",
+      "plan": [
+        {
+          "id": 5,
+          "parent": 0,
+          "notused": 62,
+          "detail": "SEARCH outcome_review_versions USING INDEX sqlite_autoindex_outcome_review_versions_1 (id=?)"
+        }
+      ]
+    },
+    {
+      "sql": "SELECT json FROM retail_cases WHERE workspace_id=? AND shop=? AND channel=? AND sku=? AND scenario=? AND window_end<=? AND reviewed_at<=? AND json_extract(json,'$.spec') IS ? AND json_extract(json,'$.warehouse') IS ? AND json_extract(json,'$.campaign') IS ? ORDER BY window_end DESC,reviewed_at DESC,id DESC LIMIT 5",
+      "plan": [
+        {
+          "id": 5,
+          "parent": 0,
+          "notused": 50,
+          "detail": "SEARCH retail_cases USING INDEX retail_cases_scope (workspace_id=? AND shop=? AND channel=? AND sku=? AND scenario=? AND window_end<?)"
+        },
+        {
+          "id": 52,
+          "parent": 0,
+          "notused": 0,
+          "detail": "USE TEMP B-TREE FOR LAST TERM OF ORDER BY"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Synthetic business-date replay only; no real post-execution business outcomes or causal attribution",
+    "Manual local simulation reviewer identity; no production authorization",
+    "Case history returned in existing retail_get_sku_context; no separate retail_search_cases tool",
+    "No new paid/live-model Case quality evaluation",
+    "No scheduling, pause/resume, 100k-row performance gate or installer acceptance"
+  ]
+}

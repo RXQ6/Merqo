@@ -1,0 +1,47 @@
+import type { AnyInvestigation } from '../../../../../packages/retail-domain/src/investigations';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ObservationPreview, ReviewView, ReviewMetric } from '../../../../../packages/retail-domain/src/outcome-reviews';
+import type { RetailRequest } from '../../../../../packages/retail-domain/src/operations';
+
+const states = {awaiting_window:'待观察',needs_evidence:'待补证',ready:'待人工复核',reviewed:'已复核并保存Case'};
+const value = (n:number|null,unit:ReviewMetric['unit']) => n===null?'未知':unit==='minor'?'¥'+(n/100).toFixed(2):unit==='bps'?(n/100).toFixed(2)+'%':Number.isInteger(n)?String(n):n.toFixed(2);
+export function ReviewsPanel({jobId,onBack,onFollowup}:{jobId:string|null;onBack:()=>void;onFollowup:(run:AnyInvestigation)=>void}) {
+  const [items,setItems]=useState<ReviewView[]>([]);const [focus,setFocus]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [notice,setNotice]=useState('');
+  const [csv,setCsv]=useState('');const [preview,setPreview]=useState<ObservationPreview|null>(null);const [synthetic,setSynthetic]=useState(false);const [confirmed,setConfirmed]=useState(false);
+  const [note,setNote]=useState('');const [confounders,setConfounders]=useState('');const [conclusion,setConclusion]=useState<'comparison_only'|'inconclusive'>('comparison_only');
+  const pending=useRef(false);const alive=useRef(true);useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+  const call=useCallback(async(request:RetailRequest)=>{
+    if(pending.current)return;pending.current=true;setBusy(true);setError('');setNotice('');
+    try {const reply=await window.electronAPI.retailRequest(request);if(!reply.ok)throw new Error(reply.error);if(!alive.current)return;
+      if(reply.kind==='investigations'){if(reply.data[0])onFollowup(reply.data[0]);return;}
+      if(reply.kind==='review_preview'){setPreview(reply.data);return;}
+      if(reply.kind!=='reviews')throw new Error('复盘返回类型不符');setItems(reply.data);if(reply.selectedId)setFocus(reply.selectedId);
+      if(request.op==='review_demo'||request.op==='review_observe'){setPreview(null);setConfirmed(false);setNotice('观察快照已保存。请核对口径、窗口与干扰因素后再复核。');}
+      if(request.op==='review_finalize')setNotice('已保存只读Case。后续同范围调查可按时间检索；不会自动批准或执行。');
+    }catch(e){if(alive.current)setError((e instanceof Error?e.message:'复盘请求失败')+'。请刷新复盘核对记录。');}
+    finally{pending.current=false;if(alive.current)setBusy(false);}
+  },[onFollowup]);
+  useEffect(()=>{void call(jobId?{op:'review_create',jobId}:{op:'reviews'});},[call,jobId]);
+  const selected=items.find(v=>v.review.id===focus)??items[0];const r=selected?.review;
+  useEffect(()=>{setCsv('');setPreview(null);setSynthetic(false);setConfirmed(false);setNote('');setConfounders('');setConclusion('comparison_only');},[r?.id]);
+  useEffect(()=>{setConfirmed(false);setPreview(null);},[r?.id,r?.version]);
+  const metrics=(list:ReviewMetric[],label:string)=><div className="retail-table-wrap"><table aria-label={label}><thead><tr><th>指标</th><th>原窗口</th><th>观察窗口</th><th>差值</th></tr></thead><tbody>{list.map(m=><tr key={m.key}><td>{m.label}</td><td>{value(m.before,m.unit)}</td><td>{value(m.after,m.unit)}</td><td>{m.unit==='bps'&&m.delta!==null?(m.delta/100).toFixed(2)+' 个百分点':value(m.delta,m.unit)}</td></tr>)}</tbody></table></div>;
+  return <section data-testid="retail-reviews"><div className="retail-section-title"><div><h2>复盘与 Case</h2><p>核对观察窗口、前后指标和同期活动，保留可追溯的比较记录。</p></div><button onClick={onBack}>返回执行记录</button></div>
+    {error&&<div className="retail-alert error" role="alert">{error}</div>}{notice&&<div className="retail-alert success" role="status">{notice}</div>}
+    <div className="retail-inline-actions"><button disabled={busy} onClick={()=>void call({op:'reviews'})}>刷新复盘</button><span className="retail-muted">最近50项；保留原回执，不改写经营快照</span></div>
+    <div className="retail-investigation-layout"><aside className="retail-investigation-list" aria-label="经营复盘列表">{!items.length&&<p>{busy?'正在读取…':'暂无复盘。先完成一个本地模拟动作，再从成功回执创建复盘。'}</p>}{items.map(v=><button disabled={busy} key={v.review.id} aria-current={selected?.review.id===v.review.id?'true':undefined} onClick={()=>setFocus(v.review.id)}><strong>{v.review.job.scope.sku} · {v.review.job.scenario==='margin'?'促销毛利':v.review.job.scenario==='ads'?'广告回报':'库存销量'}</strong><span>{states[v.state]}</span><small>{v.review.windowStart} 至 {v.review.windowEnd}</small></button>)}</aside>
+      <article className="retail-investigation-body">{r&&selected&&<><h2>{r.job.scope.sku} · {states[selected.state]}</h2><p>{r.job.scope.shop} / {r.job.scope.channel}</p>
+        <div className="retail-alert">合成业务日期回放。这里只比较样例窗口，不是实际执行后的真实经营观测，不证明动作导致指标变化。</div>
+        <section aria-label="复盘观察窗口"><h3>观察窗口</h3><p>原窗口结束：{r.baseline.row.date}；后续窗口：{r.windowStart} 至 {r.windowEnd}（{r.windowDays}天，Asia/Shanghai）。</p><p>本地执行时间：{new Date(r.receipt.at).toLocaleString('zh-CN')}。执行时间与样例业务日期分别记录。</p><p>观察来源：{r.observation?.origin==='builtin_synthetic'?'内置合成回放（业务指标保持原值）':r.observation?'用户上传并声明的模拟观察CSV':'尚未载入'}。</p></section>
+        {selected.blockers.length>0&&<ul className="retail-reasons" aria-label="复盘待补证原因">{selected.blockers.map((b,i)=><li key={i}>{b}</li>)}</ul>}
+        {selected.metrics.length>0&&metrics(selected.metrics,'复盘指标比较')}
+        {!r.final&&<section aria-label="载入模拟观察"><h3>补充观察记录</h3><label><input type="checkbox" aria-label="确认仅用于合成复盘" checked={synthetic} disabled={busy} onChange={e=>setSynthetic(e.target.checked)}/> 我确认载入的是模拟观察数据，用于合成业务时间回放</label><div className="retail-inline-actions"><button disabled={busy||!synthetic} onClick={()=>void call({op:'review_demo',id:r.id,expectedVersion:r.version,synthetic:true})}>载入合成观察回放</button></div>
+          <p>也可上传现有场景格式CSV，须恰好一条记录，范围和日期与本复盘一致。先预览再保存。</p><input aria-label="选择复盘观察CSV" type="file" accept=".csv,text/csv" disabled={busy} onChange={async e=>{const file=e.target.files?.[0];setPreview(null);setCsv('');if(!file)return;if(file.size>2_000_000){setError('CSV超过2MB，请缩减后重试');return;}try{setCsv(await file.text());}catch{setError('文件读取失败，请重新选择');}}}/><button disabled={busy||!csv} onClick={()=>void call({op:'review_preview',id:r.id,csv})}>预览观察CSV</button>
+          {preview&&<section aria-label="复盘CSV预览"><p>预览摘要：{preview.hash}</p>{preview.blockers.map((b,i)=><p key={i}>{b}</p>)}{metrics(preview.metrics,'观察CSV预览指标')}<button disabled={busy||!synthetic||preview.blockers.some(b=>/不匹配|不一致|不是|必须/.test(b))} onClick={()=>void call({op:'review_observe',id:r.id,expectedVersion:r.version,synthetic:true,csv,previewHash:preview.hash})}>保存模拟观察CSV</button></section>}
+        </section>}
+        {!r.final&&r.observation&&<section aria-label="人工复盘复核"><h3>人工复核</h3><label className="retail-draft-field">结论类型<select aria-label="复盘结论类型" value={conclusion} disabled={busy} onChange={e=>setConclusion(e.target.value==='inconclusive'?'inconclusive':'comparison_only')}><option value="comparison_only">仅确认前后比较，不判断因果</option><option value="inconclusive">证据不足，无法判断</option></select></label><label className="retail-draft-field">复盘结论<textarea aria-label="复盘结论" rows={3} maxLength={2000} value={note} disabled={busy} onChange={e=>setNote(e.target.value)}/></label><label className="retail-draft-field">同期活动与干扰因素<textarea aria-label="复盘干扰因素" rows={3} maxLength={2000} value={confounders} disabled={busy} onChange={e=>setConfounders(e.target.value)}/></label><label><input type="checkbox" aria-label="确认复核不代表因果证明" checked={confirmed} disabled={busy} onChange={e=>setConfirmed(e.target.checked)}/> 已核对来源、窗口和干扰因素，记录不代表真实效果或执行授权</label><div className="retail-inline-actions"><button className="retail-primary" disabled={busy||!confirmed||!note.trim()||!confounders.trim()||selected.state==='awaiting_window'||(selected.blockers.length>0&&conclusion!=='inconclusive')} onClick={()=>void call({op:'review_finalize',id:r.id,expectedVersion:r.version,observationHash:r.observation!.hash,conclusion,note,confounders})}>复核并保存 Case</button></div></section>}
+        {r.final&&selected.case&&<section aria-label="已复核经营Case"><h3>已复核 Case</h3><p>{r.final.conclusion==='inconclusive'?'证据不足，无法判断':'仅确认前后比较，不判断因果'}</p><p>{r.final.note}</p><p>干扰因素：{r.final.confounders}</p><p>本机模拟复核员 · {new Date(r.final.at).toLocaleString('zh-CN')}</p><p>{selected.case.warning}</p><p>Case：{selected.case.id}</p>{r.observation?.origin==='builtin_synthetic'&&<div className="retail-inline-actions"><button disabled={busy} onClick={()=>void call({op:'review_followup',id:r.id,expectedCaseId:selected.case!.id,mode:'model'})}>开始后续模型调查</button><button disabled={busy} onClick={()=>void call({op:'review_followup',id:r.id,expectedCaseId:selected.case!.id,mode:'replay'})}>运行后续离线调查</button><p>明确将本条内置合成观察载入演示来源，再开始调查；不会自动执行经营动作。</p></div>}<p>后续同店铺、渠道、SKU与场景的演示调查，只检索观察窗已结束且在调查开始前复核的Case。原调查不会被回填。</p></section>}
+        {selected.compensations.length>0&&<section aria-label="复盘关联补偿"><h3>关联补偿记录</h3>{selected.compensations.map(c=><p key={c.id}>申请：{c.id}；{c.receiptId?'已有成功补偿回执：'+c.receiptId:'尚无成功补偿回执'}。原执行成功不代表当前仍保持该动作。</p>)}</section>}<details aria-label="复盘证据与版本"><summary>证据绑定与历史版本</summary><p>调查：{r.investigationId}；批准：{r.job.resolutionId}</p><p>执行：{r.job.id}；回执：{r.receipt.id}</p><p>基线证据：{r.job.evidenceHash}；观察摘要：{r.observation?.hash??'暂无'}</p>{selected.history.map(h=><p key={h.version}>v{h.version} · {new Date(h.updatedAt).toLocaleString('zh-CN')} · {h.final?'已复核':h.observation?'观察已保存':'已创建窗口'}</p>)}</details>
+      </>}</article></div>
+  </section>;
+}

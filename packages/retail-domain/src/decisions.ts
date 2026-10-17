@@ -1,3 +1,5 @@
+import { ReviewLedger, installReviewSchema } from './outcome-reviews';
+import type { ReviewView, ObservationPreview, CaseMemory } from './outcome-reviews';
 import { ExecutionBatchLedger, installBatchSchema } from './execution-batches';
 import type { BatchView, BatchLease } from './execution-batches';
 import { CompensationLedger, installCompensationSchema } from './compensation';
@@ -40,8 +42,8 @@ export class DecisionStore {
       this.db.query('ATTACH DATABASE ? AS signals_scope').run(file + '.signals.sqlite');
       this.db.exec('CREATE TABLE IF NOT EXISTS decision_schema(version INTEGER PRIMARY KEY) STRICT');
       const schemaVersion = this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0;
-      if (schemaVersion > 5) throw new Error('决策数据库版本高于当前程序');
-      if (schemaVersion >= 1 && schemaVersion <= 4) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
+      if (schemaVersion > 6) throw new Error('决策数据库版本高于当前程序');
+      if (schemaVersion >= 1 && schemaVersion <= 5) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
       this.db.transaction(() => { this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS decision_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
         CREATE TABLE IF NOT EXISTS decision_requests(id TEXT PRIMARY KEY,decision_id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),UNIQUE(decision_id,version)) STRICT;
@@ -51,8 +53,8 @@ export class DecisionStore {
       this.db.exec(`CREATE TABLE IF NOT EXISTS approval_resolutions(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS approval_invalidations(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE INDEX IF NOT EXISTS approval_requests_recent ON decision_requests(json_extract(json,'$.requestedAt'));`);
-      installSimulationSchema(this.db);installCompensationSchema(this.db);installBatchSchema(this.db);
-      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(5)'); }).immediate();
+      installSimulationSchema(this.db);installCompensationSchema(this.db);installBatchSchema(this.db);installReviewSchema(this.db);
+      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(6)'); }).immediate();
     } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
@@ -206,6 +208,13 @@ export class DecisionStore {
     for(const item of candidates){const lease=this.claimBatchItem(id,item.item.jobId,retryJobId?'failed':'ready',actor);try{this.executeSimulation(item.item.jobId,item.item.version,item.item.actionHash,actor,lease);}catch{/* Query the durable ledger; exceptions are never assumed to mean not executed. */}const settled=this.settleBatchItem(lease,actor);if(settled.items.some(v=>v.dispatch.status==='unknown'))break;}
     return this.executionBatch(id);
   }
+  review(id:string):ReviewView{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).view(id)).immediate();}
+  reviews():ReviewView[]{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).list()).immediate();}
+  createReview(jobId:string):ReviewView{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).create(jobId)).immediate();}
+  previewObservation(id:string,csv:string):ObservationPreview{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).preview(id,csv)).immediate();}
+  observeReview(id:string,version:number,input:{csv:string;hash:string}|null):ReviewView{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).observe(id,version,input)).immediate();}
+  finalizeReview(id:string,version:number,hash:string,conclusion:'comparison_only'|'inconclusive',note:string,confounders:string,actor:string):ReviewView{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).finalize(id,version,hash,conclusion,note,confounders,actor)).immediate();}
+  searchCases(e:DraftEvidence,scenario:DecisionDraft['scenario'],asOf:string):CaseMemory[]{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).search(e,scenario,asOf)).immediate();}
   compensations():CompensationView[]{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).list()).immediate();}
   createCompensation(jobId:string,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).create(jobId,reason)).immediate();}
   reviseCompensation(id:string,expectedVersion:number,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).revise(id,expectedVersion,reason)).immediate();}

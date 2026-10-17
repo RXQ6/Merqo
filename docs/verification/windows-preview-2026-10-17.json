@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-17",
+  "version": "0.1.0-beta.1",
+  "sourceCommit": "8f811b109aab7df2368afb17cfd71fd6d220f290",
+  "platform": "Windows 11 x64 (10.0.26200)",
+  "installer": "Merqo-Setup-0.1.0-beta.1-x64.exe",
+  "bytes": 204136639,
+  "sha256": "4c5e028858a0f1e4d4271b7d565121ea0b17d3a7b916490b23f11954bc077a91",
+  "signed": false,
+  "electron": "39.2.7",
+  "bun": "1.4.2",
+  "bunSha256": "15277c59ccd6c6c20f8dc9716c2b59c1776320d606b6a8658f70be8799519ca4",
+  "domainTests": 185,
+  "domainAssertions": 1188,
+  "domainTypecheck": true,
+  "electronTypecheck": true,
+  "packagedChecksPassed": true,
+  "checks": [
+    "per-user NSIS silent install succeeds into isolated directory",
+    "no-Git-Bash first run can enter retail analysis",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "packaged data worker imports three scenarios and computes the expected margin",
+    "packaged margin API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged ads API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged inventory API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged approval, isolated execution, reread and receipt idempotency",
+    "analysis and conversations round-trip in a single window",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "normal restart preserves demo data, model connection settings, investigation and execution receipt",
+    "installer reinstall preserves data, connection settings and execution receipt",
+    "NSIS uninstall removes installed executable and retains isolated user configuration"
+  ],
+  "protocolRequests": 18,
+  "modelFixture": true,
+  "liveModelQuality": false,
+  "noDeveloperPath": true,
+  "limits": [
+    "same-version reinstall; cross-version upgrade not tested",
+    "isolated custom user-data paths; real user profile untouched",
+    "no SmartScreen reputation or code-signing certificate",
+    "no clean Windows VM tested"
+  ]
+}

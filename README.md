@@ -46,6 +46,8 @@ Run the installer, launch Merqo and select **经营分析 → 数据与导入 �
 
 This Windows x64 preview was tested on Windows 11. It is not code-signed, so Windows may show an unknown-publisher or SmartScreen prompt. Check the source and SHA-256 before running it. Updates are downloaded manually from Releases. Uninstall retains user data; the development `.runtime` profile is not automatically migrated.
 
+The installer passed isolated installation, first-run retail access without Git Bash, three-scenario MCP/protocol checks, simulated execution, restart, same-version reinstall and uninstall checks. These used a local model protocol fixture. See the [verification record](docs/verification/windows-preview-2026-10-17.json) for results and limits.
+
 ## Build from source
 
 ### Prerequisites

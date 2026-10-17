@@ -10,7 +10,7 @@ const detail = (e: Evidence) => 'spec' in e.row ? e.row.spec : 'campaign_id' in 
 const names = {margin:'促销毛利调查',inventory:'缺货风险调查',ads:'广告回报调查'};
 const states = { running: '调查中', completed: '分析完成', needs_evidence: '待补证 / 待复核', failed: '调查失败' };
 const amount = (n: number | null) => n === null ? '待补证' : `¥${(n / 100).toFixed(2)}`;
-export function InvestigationPanel({ target, onBack, onDraft }: { target: Evidence | null; onBack: () => void; onDraft: (run: AnyInvestigation) => void }) {
+export function InvestigationPanel({ target, initialId, onBack, onDraft, onData }: { target: Evidence | null; initialId?: string | null; onData: () => void; onBack: () => void; onDraft: (run: AnyInvestigation) => void }) {
   const [runs, setRuns] = useState<AnyInvestigation[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [exporting,setExporting]=useState(false); const [exportError,setExportError]=useState('');
@@ -33,9 +33,10 @@ export function InvestigationPanel({ target, onBack, onDraft }: { target: Eviden
     finally { pending.current = false; if (alive.current) setBusy(false); }
   }, []);
   useEffect(() => {
-    if (target) void call({ op: 'investigate', recordId: target.id, scenario: scenarioOf(target), mode: 'model' }, true);
+    if (initialId) void call({op:'investigations',id:initialId},true);
+    else if (target) void call({ op: 'investigate', recordId: target.id, scenario: scenarioOf(target), mode: 'model' }, true);
     else void call({ op: 'investigations' });
-  }, [target?.id, call]);
+  }, [target?.id, initialId, call]);
   const selected = runs.find(r => r.id === selectedId) ?? runs[0];
   const hasRunning = runs.some(r => r.state === 'running');
   useEffect(() => {
@@ -49,7 +50,7 @@ export function InvestigationPanel({ target, onBack, onDraft }: { target: Eviden
   const scenario = record ? scenarioOf(record) : 'margin';
   const citation = (id: string) => <a key={id} href={`#investigation-evidence-${selected?.trace.findIndex(t => t.evidenceId === id)}`} title={id}>[{id.split(':').at(-1)}]</a>;
   return <section data-testid="retail-investigation" className="retail-investigation">
-    <div className="retail-section-title"><div><h2>{names[scenario]}</h2><p>只读调查 → 证据归纳 → 条件测算 → 复核。当前不提供审批或改价。</p></div><button onClick={onBack}>返回经营总览</button></div>
+    <div className="retail-section-title"><div><h2>{names[scenario]}</h2><p>只读调查 → 证据归纳 → 条件测算 → 复核。复核通过后可生成草稿并进入本地模拟审批；不改写真实平台。</p></div><button onClick={onBack}>返回经营总览</button></div>
     {exportError && <div className="retail-alert error" role="alert">{exportError}</div>}
     {error && <div className="retail-alert error" role="alert">{error}<button disabled={busy} onClick={() => void call({ op: 'investigations' })}>重新读取调查</button></div>}
     <div className="retail-investigation-layout">
@@ -59,7 +60,7 @@ export function InvestigationPanel({ target, onBack, onDraft }: { target: Eviden
       </aside>
       <article className="retail-investigation-body">
         {record && <><h2>{title(record)} · {record.row.sku_id}</h2><p className="retail-muted">{record.row.shop_id} / {record.row.channel} / {record.row.date} / {detail(record)}</p>
-          <div className="retail-inline-actions"><button disabled={busy || selected?.state === 'running'} className="retail-primary" onClick={() => start('model')}>重新进行模型调查</button><button disabled={busy || selected?.state === 'running'} onClick={() => start('replay')}>运行离线规则演示</button></div></>}
+          <div className="retail-inline-actions"><button onClick={onData}>更新或补充证据</button><button disabled={busy || selected?.state === 'running'} className="retail-primary" onClick={() => start('model')}>重新进行模型调查</button><button disabled={busy || selected?.state === 'running'} onClick={() => start('replay')}>运行离线规则演示</button></div></>}
         {selected && <><p role="status" className="retail-investigation-status">{states[selected.state]} · {selected.mode === 'replay' ? '离线规则演示，未调用模型' : selected.model ?? (selected.state === 'running' ? '正在检查模型连接' : '未建立模型连接')}{selected.state === 'running' ? ' · 最长 5 分钟，最多 12 次决策与 1 次复核' : ''}</p>
           {selected.error && <div className="retail-alert error" role="alert">{selected.error}</div>}
           <p className="retail-muted">证据来自创建调查时的冻结快照。历史分析不代表当前实时状态；模型观点仍需人工核验。</p>

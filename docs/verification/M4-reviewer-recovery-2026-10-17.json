@@ -1,0 +1,1064 @@
+{
+  "date": "2026-10-17",
+  "scope": "M4 reviewer recovery and synthetic workflow validation",
+  "completeM4": false,
+  "completeP0": false,
+  "liveModelDesktopClicks": false,
+  "liveModelWorkflowPassedScenarios": [
+    "inventory",
+    "ads"
+  ],
+  "liveModelWorkflowBlockedScenarios": [
+    "margin"
+  ],
+  "checks": {
+    "domain": {
+      "passed": 156,
+      "failed": 0,
+      "assertions": 788
+    },
+    "allTypes": "passed",
+    "fullBuild": "passed",
+    "finalMainBuild": "passed",
+    "mcpChecks": 8,
+    "native": {
+      "sameProfile": true,
+      "initial": {
+        "ok": true,
+        "phase": "initial",
+        "checks": [
+          "startup preserves original desktop workspace",
+          "Windows separate title strip removed while caption capabilities remain enabled",
+          "retail analysis shares native sidebar and panel chrome",
+          "old demo reload preserves true import history and explains its age exemption",
+          "demo totals match independently calculated revenue and gross profit",
+          "retail content inherits desktop background token",
+          "native desktop and retail navigation round trip retains persisted data",
+          "original sidebar navigation remains usable",
+          "evidence drawer shows formula, margin and source hash",
+          "evidence participates in native dismissible layer stack",
+          "start investigation is visible and missing model is not simulated as success",
+          "real inference adapter executes six local HTTP contract calls with no native tool authority",
+          "desktop investigation uses four actual MCP stdio tool calls",
+          "JSON and Markdown download through native desktop and retain frozen evidence index",
+          "duplicate simulated approval requests are idempotent",
+          "approval requires an explicit reason",
+          "approval actor comes from server, forged identity rejects and retries remain idempotent",
+          "explicit local simulation confirmation is required",
+          "execution is server-scoped, idempotent and isolated from source snapshots",
+          "decision draft, exact-version simulation submission, revision and superseded request work in desktop",
+          "approve, execute isolated simulation, supersede old approval, reject revision and preserve history without real business writes",
+          "report export includes decision history, superseded request and execution receipt",
+          "two deterministic scenarios and evidence are displayed",
+          "renderer cannot forge investigation completion",
+          "explicit offline replay remains distinct from model investigation",
+          "inventory model conditional plans",
+          "inventory plan does not erase pre-arrival gap",
+          "ads model conditional plans",
+          "ads budget scales revenue at unchanged ROAS",
+          "all three scenarios and offline replay consume actual MCP evidence",
+          "inventory and ads model contracts, readonly Reviewer and explicit offline plans passed",
+          "offline draft cannot submit simulation approval",
+          "draft recovery opens the original offline record",
+          "exact run read works through renderer IPC",
+          "needs_evidence cannot submit approval",
+          "rejected cannot submit approval",
+          "offline, needs-evidence and rejected drafts expose exact origin without automatic model calls or approval bypass",
+          "unified anomaly center excludes all four normal rows across three scenarios",
+          "repeat file is idempotent",
+          "correction changes current SKU to 33.33% while retaining source separation",
+          "IPC rejects renderer-supplied workspace scope",
+          "IPC rejects business execution operations",
+          "inventory coverage and ROAS decline match independent arithmetic",
+          "scenario evidence shows rule, formula and immutable source hash",
+          "two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center",
+          "concurrent read refreshes do not block page remounts",
+          "all three UI workflows execute only isolated simulation and inventory is not received as sellable stock",
+          "pending replenishment compensation cancels request instead of receiving inventory",
+          "compensation is newly approved, idempotent, exportable, server scoped and isolated from source stock",
+          "unsafe compensation has no approval or execute action",
+          "unknown outcome disables resubmission",
+          "batch recovery fences old intent and retry never duplicates successful item",
+          "review export retains Case evidence and rejects renderer role injection",
+          "Case retrieval is scoped, frozen and actually passed through desktop MCP",
+          "inventory review follows its business window and requires explicit confirmation"
+        ],
+        "error": null,
+        "failures": []
+      },
+      "restart": {
+        "ok": true,
+        "phase": "restart",
+        "checks": [
+          "startup preserves original desktop workspace",
+          "Windows separate title strip removed while caption capabilities remain enabled",
+          "retail analysis shares native sidebar and panel chrome",
+          "original demo and explicit follow-up observation survive application restart",
+          "all three scenario histories survive restart",
+          "legacy margin report retains calculations",
+          "corrected margin survives application restart",
+          "inventory and advertising corrections survive restart",
+          "versioned draft and superseded approval request survive restart",
+          "superseded approval is visible and rejected decision cannot be approved again",
+          "successful simulation and reconciliation survive restart without another execution",
+          "compensation receipt, reread, rejected history and no repeat action survive restart",
+          "batch recovery audit and no replay actions survive restart",
+          "immutable Case, confounders and no overwrite action survive restart",
+          "review display units match formatted currency and percentages"
+        ],
+        "error": null,
+        "failures": []
+      }
+    },
+    "finalResourceBuild": "passed"
+  },
+  "liveRounds": [
+    {
+      "artifact": "m4-live-workflow.json",
+      "evaluatedAt": "2026-10-17T02:21:21.965Z",
+      "syntheticOnly": true,
+      "businessDateReplay": "builtin dates minus 14 days; inventory lead 1 day",
+      "automatedSimulationRoles": true,
+      "results": [
+        {
+          "scenario": "margin",
+          "state": "needs_evidence",
+          "model": "RetailPilot Backend (API Key) / deepseek-v4-flash",
+          "modelCalls": 6,
+          "elapsedMs": 11573,
+          "error": null,
+          "evidence": {
+            "id": "2cab200087aa5a72397ce4ba",
+            "batchId": "demo-bc0b64c39dfef3126b89",
+            "source": "demo",
+            "importedAt": "2026-10-17T02:20:51.679Z",
+            "snapshotHash": "bc0b64c39dfef3126b89218875f74668c1f8d847c5ddb89c5312fffbd00e3ba6",
+            "ruleVersion": "retail-margin-v1",
+            "row": {
+              "date": "2026-09-30",
+              "shop_id": "demo-nanfeng",
+              "channel": "线上商城",
+              "sku_id": "TEA-500",
+              "product_name": "桂花乌龙冷萃茶",
+              "spec": "500ml × 6瓶",
+              "currency": "CNY",
+              "list_price_minor": 10000,
+              "coupon_minor": 2000,
+              "full_reduction_minor": 1000,
+              "subsidy_minor": 0,
+              "subsidy_funder": "platform",
+              "cost_minor": 6000,
+              "sold_qty": 40,
+              "on_hand": 120,
+              "reserved": 10,
+              "inbound_qty": 60
+            },
+            "calculation": {
+              "revenueMinor": 7000,
+              "profitMinor": 1000,
+              "marginBps": 1429,
+              "totalRevenueMinor": 280000,
+              "totalProfitMinor": 40000,
+              "available": 110,
+              "issues": []
+            },
+            "status": "low_margin",
+            "thresholdBps": 2000,
+            "reasons": [
+              "商品毛利率低于 20% 演示规则阈值"
+            ]
+          },
+          "report": {
+            "summary": "TEA-500在2026-09-30线上商城冻结快照：售价10000分，商家券2000分+满减1000分，成本6000分/件，销量40，营收280000分，毛利40000分，毛利率14.29%，未达20%演示阈值。数据为静态日快照，partial=true，缺逐单优惠分摊与需求弹性，仅作调查，非执行授权。",
+            "observations": [
+              {
+                "text": "数据健康检查无issues，但partial=true；局限为静态日快照，缺逐单优惠分摊、实时库存与历史对照，不可直接执行。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_data_health"
+                ]
+              },
+              {
+                "text": "SKU上下文：成本6000分/件，销量40，可用110，在途60，营收280000分，毛利40000分，毛利率1429bps；historicalCases为空，无可用同范围历史Case。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_sku_context"
+                ]
+              },
+              {
+                "text": "促销：售价10000分，商家券2000分，满减1000分，平台补贴0；按工具计算利润1000分/件、毛利率1429bps。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_promotions"
+                ]
+              },
+              {
+                "text": "测算比对：继续观察方案毛利1429bps未过20%阈值；减少商家券至1500分方案毛利率2000bps通过，但仅为条件测算。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_simulate_actions"
+                ]
+              }
+            ],
+            "hypotheses": [
+              {
+                "text": "商家券与满减合计3000分/件占售价30%，是当前毛利率低于20%阈值的可能主因；未证实销量影响。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_promotions",
+                  "2cab200087aa5a72397ce4ba:retail_simulate_actions"
+                ]
+              }
+            ],
+            "unknowns": [
+              "逐单优惠分摊与真实核销率缺失",
+              "需求弹性及优惠减少后销量变化未知",
+              "实时库存与在途到货时间未核实",
+              "缺少同店同渠道历史对照（historicalCases为空）",
+              "仅有静态日快照，缺少实时状态、逐单优惠分摊及需求弹性证据"
+            ],
+            "alternatives": [
+              "毛利率偏低也可能源于成本上升或定价偏低，而非仅优惠侵蚀",
+              "销量40件可能受促销拉动，减券后销量可能下降，抵消毛利改善",
+              "平台补贴为0，若改为平台承担部分补贴可替代减少商家券"
+            ],
+            "options": [
+              {
+                "kind": "observe",
+                "rationale": "先补齐逐单优惠分摊、核销率与需求弹性，并复核快照时效；当前快照partial且未达阈值，不宜凭此执行变更。"
+              },
+              {
+                "kind": "reduce_coupon",
+                "rationale": "条件测算显示商家券由2000分降至1500分，毛利率升至2000bps；未测算销量影响，需业务复核后另行评估，不构成执行授权。"
+              }
+            ],
+            "scenarios": [
+              {
+                "kind": "observe",
+                "title": "不调整，补证并继续观察",
+                "rationale": "先补齐逐单优惠分摊、核销率与需求弹性，并复核快照时效；当前快照partial且未达阈值，不宜凭此执行变更。",
+                "couponMinor": 2000,
+                "revenueMinor": 7000,
+                "profitMinor": 1000,
+                "marginBps": 1429,
+                "passed": false,
+                "constraints": [
+                  "未达到 20% 演示毛利阈值"
+                ],
+                "assumptions": [
+                  "售价、成本、满减及补贴保持不变",
+                  "未测算需求弹性和优惠变更后的销量",
+                  "仅历史快照分析，执行前须重新核对时效与业务权限"
+                ]
+              },
+              {
+                "kind": "reduce_coupon",
+                "title": "减少商家券（条件测算）",
+                "rationale": "条件测算显示商家券由2000分降至1500分，毛利率升至2000bps；未测算销量影响，需业务复核后另行评估，不构成执行授权。",
+                "couponMinor": 1500,
+                "revenueMinor": 7500,
+                "profitMinor": 1500,
+                "marginBps": 2000,
+                "passed": true,
+                "constraints": [],
+                "assumptions": [
+                  "售价、成本、满减及补贴保持不变",
+                  "未测算需求弹性和优惠变更后的销量",
+                  "仅历史快照分析，执行前须重新核对时效与业务权限"
+                ]
+              }
+            ],
+            "reviewer": {
+              "verdict": "needs_evidence",
+              "notes": [
+                "口径一致性存疑：draft.summary将营收描述为280000分、毛利为40000分、毛利率为14.29%，而证据retail_get_sku_context与retail_get_promotions中的calculation显示revenueMinor=7000、profitMinor=1000、marginBps=1429、totalRevenueMinor=280000、totalProfitMinor=40000；情景数据中的revenueMinor、profitMinor均为单件口径。draft未说明summary采用总量口径、情景采用单件口径，易造成毛利与毛利率的计算基准混淆，应当明确或统一。",
+                "结论中的“毛利率14.29%”“1429bps”和“2000bps”与证据一致；其中减少商家券后的2000bps由retail_simulate_actions直接给出，但该结果以“售价、成本、满减和补贴不变、销量不变”为假设，证据未包含需求弹性，因此只能作为条件测算，不能作为经营效果证据。draft已将其标注为条件测算，这一点表述恰当。",
+                "假设与观察的区分基本正确：hypotheses将“商家券与满减合计占售价30%”“是毛利率偏低主因”“未证实销量影响”表述为可能主因和未证实的影响，属于假设；observations均附有evidenceIds，属于快照计算与记录观察，两者未混淆。",
+                "未知项已披露：逐单优惠分摊、核销率、需求弹性、实时库存与在途时效、同店同渠道历史对照（historicalCases为空）均已列入unknowns；partial=true与limitation也可由retail_get_data_health证据支持。unknowns清单中的“实时库存与在途到货时间未核实”属于本次分析之外的执行前置边界，不应冒充已补齐，也无需在此单独补证。",
+                "关键计算字段存在冲突，需要澄清：情景observe中的revenueMinor=7000、profitMinor=1000与同一快照工具输出的totalRevenueMinor=280000、totalProfitMinor=40000并存，draft既未说明这两个口径之间的关系，也未说明在“售价10000分、成本6000分、商家券2000分、满减1000分”条件下单件毛利1000分与总毛利40000分如何各自成立。该冲突不影响“毛利率14.29%”这一比率结论，但影响对规模和利润的解读，因此需要补证说明。",
+                "未发现伪造事实或引用不支持结论的情况：draft各观察均能对应evidenceIds中的工具输出，reduce_coupon的passed=true仅为工具条件测算结果，draft已明确“不构成执行授权”，未误称为净利润或承诺收益。",
+                "综合判断：结论方向（未达20%演示阈值、需要补证、不构成执行授权）有证据支持，但由于单件与总量口径并存且未作说明，关键计算字段存在冲突，因此判定为needs_evidence，而非passed；同时不构成越权或伪造，因此也不判为rejected。",
+                "仅完成冻结快照分析；真实业务未执行，本地模拟须另经草稿约束与审批"
+              ],
+              "mode": "model"
+            }
+          },
+          "mcpToolQueries": 4,
+          "workflow": {
+            "status": "blocked",
+            "blockers": [
+              "模型Reviewer待补证或调查未完成，请查看原调查的未知项和复核意见；不能提交"
+            ],
+            "approval": null,
+            "executionStatus": null,
+            "receiptId": null,
+            "rereadMatched": null,
+            "reviewState": null,
+            "caseId": null
+          }
+        },
+        {
+          "scenario": "inventory",
+          "state": "completed",
+          "model": "RetailPilot Backend (API Key) / deepseek-v4-flash",
+          "modelCalls": 6,
+          "elapsedMs": 9274,
+          "error": null,
+          "evidence": {
+            "id": "ff82ba25984d9caecbffd1b7",
+            "kind": "inventory",
+            "source": "demo",
+            "row": {
+              "date": "2026-09-30",
+              "baseline_end_date": "2026-09-23",
+              "shop_id": "demo-nanfeng",
+              "channel": "线上商城",
+              "sku_id": "TEA-500",
+              "window_days": 7,
+              "baseline_window_days": 7,
+              "product_name": "桂花乌龙冷萃茶",
+              "spec": "500ml × 6瓶",
+              "warehouse_id": "WH-01",
+              "recent_sales_qty": 140,
+              "baseline_sales_qty": 210,
+              "on_hand": 50,
+              "reserved": 10,
+              "inbound_qty": 100,
+              "inbound_eta": "2026-10-06",
+              "lead_days": 1
+            },
+            "metrics": {
+              "available": 40,
+              "coverageDays": 2,
+              "salesChangeBps": -3333,
+              "roas": null,
+              "baselineRoas": null,
+              "roasChangeBps": null,
+              "conversionBps": null,
+              "baselineConversionBps": null,
+              "flags": [
+                "库存覆盖不足补货交期加 2 天缓冲",
+                "相邻等长窗口销量下降至少 20%",
+                "预计到货晚于当前销量下的库存覆盖期"
+              ],
+              "issues": [],
+              "notes": [
+                "静态窗口快照，非实时监控；阈值为版本化演示规则",
+                "观察窗与对照窗均按 Asia/Shanghai 日口径，数据须来自相同业务范围",
+                "即时可售 = 现存 − 占用；在途不计入即时可售",
+                "覆盖天数 = 即时可售 ÷（观察窗净销量 ÷ 天数），假设日均销量不变，不等于需求预测",
+                "销量下降不能直接归因为缺货；在途受理不表示已经到账"
+              ]
+            },
+            "status": "warning",
+            "importedAt": "2026-10-17T02:20:51.683Z",
+            "batchId": "inventory-demo-6aedf4b2210c0e1d602d1345",
+            "hash": "6aedf4b2210c0e1d602d13458bcccd0448ea8ffae1ac5d2389f72290a103fb12",
+            "ruleVersion": "retail-stock-roas-v1"
+          },
+          "report": {
+            "summary": "桂花乌龙冷萃茶(TEA-500, WH-01)即时可售40瓶，按观察窗日均20瓶仅覆盖2天，不足以支撑1天交期加2天缓冲；在途100瓶ETA 2026-10-06晚于覆盖期，不计入即时可售。销量较对照窗下降33.33%，但缺货不能单独归因。无可用历史Case。建议先核验销量与在途，再考虑条件补货草稿。",
+            "observations": [
+              {
+                "text": "即时可售40(=现存50−占用10)，覆盖2天；日均销量20，观察窗140、对照窗210，销量变化-3333bps。",
+                "evidenceIds": [
+                  "ff82ba25984d9caecbffd1b7:retail_get_inventory"
+                ]
+              },
+              {
+                "text": "在途100瓶ETA 2026-10-06晚于当前覆盖期，模拟中及时在途为0，不用于覆盖测算。",
+                "evidenceIds": [
+                  "ff82ba25984d9caecbffd1b7:retail_simulate_actions",
+                  "ff82ba25984d9caecbffd1b7:retail_get_inventory"
+                ]
+              },
+              {
+                "text": "数据健康检查无issue，但为静态快照、partial=true，在途受理不等于到账。",
+                "evidenceIds": [
+                  "ff82ba25984d9caecbffd1b7:retail_get_data_health"
+                ]
+              },
+              {
+                "text": "SKU上下文historicalCases为空，无可用历史Case。",
+                "evidenceIds": [
+                  "ff82ba25984d9caecbffd1b7:retail_get_sku_context"
+                ]
+              }
+            ],
+            "hypotheses": [
+              {
+                "text": "销量环比下降可能部分源于可售不足，但快照不支持因果结论。",
+                "evidenceIds": [
+                  "ff82ba25984d9caecbffd1b7:retail_get_inventory"
+                ]
+              }
+            ],
+            "unknowns": [
+              "实际供应商交期与容量、最小起订量",
+              "在途100瓶是否按ETA到账及数量准确性",
+              "日均销量20是否稳定（无需求预测）",
+              "是否存在促销或渠道流量变化解释销量下降",
+              "静态快照不代表实时状态，缺少真实业务权限与执行前校验"
+            ],
+            "alternatives": [
+              "销量下降由需求端或促销节奏变化导致，而非缺货",
+              "在途实际可提前到货，缺口小于测算",
+              "观察窗天数口径差异影响日均销量估计"
+            ],
+            "options": [
+              {
+                "kind": "observe",
+                "rationale": "不新增补货，核验实际可售、在途到账与销量稳定性，补齐交期与到账证据后再决策。"
+              },
+              {
+                "kind": "replenish_draft",
+                "rationale": "基于工具测算的条件补货草稿20瓶（目标3天、及时在途0），仅为测算，未创建采购单，须人工核验交期与MOQ。"
+              }
+            ],
+            "scenarios": [
+              {
+                "couponMinor": null,
+                "revenueMinor": null,
+                "profitMinor": null,
+                "marginBps": null,
+                "kind": "observe",
+                "title": "不新增补货，核验销量与在途",
+                "rationale": "不新增补货，核验实际可售、在途到账与销量稳定性，补齐交期与到账证据后再决策。",
+                "values": {
+                  "available": 40,
+                  "dailySales": 20,
+                  "coverageDays": 2,
+                  "leadDays": 1,
+                  "timelyInbound": 0,
+                  "targetDays": 3,
+                  "targetStock": 60,
+                  "proposedQuantity": 0
+                },
+                "passed": true,
+                "constraints": [],
+                "assumptions": [
+                  "观察窗日均销量保持不变，未建立需求预测模型",
+                  "仅将预计在现有库存覆盖期内到货的在途用于条件测算，仍须人工核验",
+                  "常规交期、供应商容量、最小起订量和资金约束须另行核验；未创建采购单"
+                ]
+              },
+              {
+                "couponMinor": null,
+                "revenueMinor": null,
+                "profitMinor": null,
+                "marginBps": null,
+                "kind": "replenish_draft",
+                "title": "补货草稿量（条件测算）",
+                "rationale": "基于工具测算的条件补货草稿20瓶（目标3天、及时在途0），仅为测算，未创建采购单，须人工核验交期与MOQ。",
+                "values": {
+                  "available": 40,
+                  "dailySales": 20,
+                  "coverageDays": 2,
+                  "leadDays": 1,
+                  "timelyInbound": 0,
+                  "targetDays": 3,
+                  "targetStock": 60,
+                  "proposedQuantity": 20
+                },
+                "passed": true,
+                "constraints": [],
+                "assumptions": [
+                  "观察窗日均销量保持不变，未建立需求预测模型",
+                  "仅将预计在现有库存覆盖期内到货的在途用于条件测算，仍须人工核验",
+                  "常规交期、供应商容量、最小起订量和资金约束须另行核验；未创建采购单"
+                ]
+              }
+            ],
+            "reviewer": {
+              "verdict": "passed",
+              "notes": [
+                "引用核对：即时可售40（现存50−占用10）、覆盖天数2、日均销量20、观察窗销量140/对照窗210、销量变化-3333bps均与 retail_get_inventory 原始行及 metrics 一致，引用支持结论。",
+                "在途口径正确：inbound_qty=100、ETA 2026-10-06 晚于以当前日均销量计算出的库存覆盖期，报告将 timelyInbound 记为0且不计入即时可售，符合数据健康说明中“在途不计入即时可售”的规则，未把在途误作可售。",
+                "销量因果表述审慎：报告仅称销量环比下降33.33%“可能部分源于可售不足”但明确“快照不支持因果结论”，未捏造缺货导致销量下降的因果，也未虚构需求侧归因。",
+                "补货草稿为条件测算而非执行动作：proposedQuantity=20 来自 targetStock 60 − available 40、timelyInbound=0，且多处声明“仅测算、未创建采购单、须人工核验交期与MOQ与资金约束”，未混淆历史条件方案与可执行动作。",
+                "未出现降预算或提高ROAS的承诺：roas/baselineRoas/roasChangeBps 均为 null，options 与 scenarios 中无促销或预算类承诺，符合约束。",
+                "未知项已披露：交期与供应商容量、MOQ、在途到账准确性、日均销量稳定性、促销与渠道流量变化均列入 unknowns，未见隐瞒。",
+                "边界声明充分：报告标注静态快照、partial=true、在途受理不等于到账，观察窗或对照窗天数口径（各7天，Asia/Shanghai）与证据一致。",
+                "simulate_actions 返回的 passed=true 与 observe、replenish_draft 两方案的数值一致（available 40、dailySales 20、coverageDays 2、targetDays 3、proposedQuantity 0/20），未发现数值冲突或伪造字段。",
+                "复核通过仅代表分析报告完成，不授予补货或预算写权限"
+              ],
+              "mode": "model"
+            }
+          },
+          "mcpToolQueries": 4,
+          "workflow": {
+            "status": "completed",
+            "blockers": [],
+            "approval": "approved",
+            "executionStatus": "succeeded",
+            "receiptId": "ee46e55d-8f6b-4bde-bf65-cbddbc4ae2cc",
+            "rereadMatched": true,
+            "reviewState": "reviewed",
+            "caseId": "5b602b90-d0b0-4480-8203-6ff52f2df175"
+          }
+        },
+        {
+          "scenario": "ads",
+          "state": "completed",
+          "model": "RetailPilot Backend (API Key) / deepseek-v4-flash",
+          "modelCalls": 6,
+          "elapsedMs": 9425,
+          "error": null,
+          "evidence": {
+            "id": "9aa6c08f26562ed71e202255",
+            "kind": "ads",
+            "source": "demo",
+            "row": {
+              "date": "2026-09-30",
+              "baseline_end_date": "2026-09-23",
+              "shop_id": "demo-nanfeng",
+              "channel": "线上商城",
+              "sku_id": "TEA-500",
+              "window_days": 7,
+              "baseline_window_days": 7,
+              "campaign_id": "CMP-TEA",
+              "currency": "CNY",
+              "attribution_window": "7d_click",
+              "baseline_attribution_window": "7d_click",
+              "spend_minor": 100000,
+              "attributed_revenue_minor": 180000,
+              "clicks": 1000,
+              "conversions": 30,
+              "baseline_spend_minor": 100000,
+              "baseline_revenue_minor": 300000,
+              "baseline_clicks": 1000,
+              "baseline_conversions": 50
+            },
+            "metrics": {
+              "available": null,
+              "coverageDays": null,
+              "salesChangeBps": null,
+              "roas": 1.8,
+              "baselineRoas": 3,
+              "roasChangeBps": -4000,
+              "conversionBps": 300,
+              "baselineConversionBps": 500,
+              "flags": [
+                "同口径 ROAS 相对下降至少 20%"
+              ],
+              "issues": [],
+              "notes": [
+                "静态窗口快照，非实时监控；阈值为版本化演示规则",
+                "观察窗与对照窗均按 Asia/Shanghai 日口径，数据须来自相同业务范围",
+                "ROAS = 归因成交额 ÷ 广告花费，不代表毛利或净利润",
+                "点击转化率 = 转化数 ÷ 点击数；零点击时显示未知，不假定为零",
+                "缺少库存、自然流量和完整费用证据，不能仅凭 ROAS 下降直接调整预算"
+              ]
+            },
+            "status": "warning",
+            "importedAt": "2026-10-17T02:20:51.685Z",
+            "batchId": "ads-demo-35eee166887e20b0f700e628",
+            "hash": "35eee166887e20b0f700e628dbb148ae1c22cfcb915b3dfa507feb11c01fae2e",
+            "ruleVersion": "retail-stock-roas-v1"
+          },
+          "report": {
+            "summary": "同口径7d_click窗口下，CMP-TEA的ROAS由3.0降至1.8（-4000bps），点击转化率由500bps降至300bps，花费与点击持平。数据健康无阻塞性问题，但快照不完整。无可用历史Case。ROAS不等于利润，下降不能归因单一原因，也不构成执行依据。",
+            "observations": [
+              {
+                "text": "观察窗花费100000分、归因成交额180000分，ROAS=1.8；对照窗花费同为100000分、成交额300000分，ROAS=3.0，roasChangeBps=-4000，触发“同口径ROAS相对下降至少20%”标记。",
+                "evidenceIds": [
+                  "9aa6c08f26562ed71e202255:retail_get_campaigns"
+                ]
+              },
+              {
+                "text": "点击数两窗均为1000，转化数由50降至30，点击转化率由500bps降至300bps。",
+                "evidenceIds": [
+                  "9aa6c08f26562ed71e202255:retail_get_campaigns"
+                ]
+              },
+              {
+                "text": "数据健康检查无issues，但partial=true，notes提示缺少库存、自然流量与完整费用证据，不能仅凭ROAS下降直接调整预算。",
+                "evidenceIds": [
+                  "9aa6c08f26562ed71e202255:retail_get_data_health"
+                ]
+              },
+              {
+                "text": "retail_get_sku_context返回historicalCases为空，本店铺/渠道/SKU/场景无可用历史Case；模拟工具给出observe与reduce_budget（预算降至90000分、假设成交额162000分）两项条件测算，均声明效率不变、非预测、未修改Campaign。",
+                "evidenceIds": [
+                  "9aa6c08f26562ed71e202255:retail_get_sku_context",
+                  "9aa6c08f26562ed71e202255:retail_simulate_actions"
+                ]
+              }
+            ],
+            "hypotheses": [
+              {
+                "text": "假设转化环节效率下降（点击未变而转化减少）是ROAS下降的主要驱动，但现有证据不足以证明因果。",
+                "evidenceIds": [
+                  "9aa6c08f26562ed71e202255:retail_get_campaigns"
+                ]
+              }
+            ],
+            "unknowns": [
+              "商品毛利与净利润数据缺失，无法判断ROAS=1.8是否仍盈利",
+              "实时库存与覆盖天数未知，无法排除缺货或断码影响转化",
+              "自然流量与站内其他流量变化未知",
+              "完整归因账单与归因窗口一致性未核验",
+              "平台预算上下限与实际投放策略未知",
+              "观察窗与对照窗是否存在促销、价格或素材变更",
+              "静态快照不代表实时状态，缺少真实业务权限与执行前校验"
+            ],
+            "alternatives": [
+              "成交额下降可能源于落地页或商品详情页改版、价格调整，而非广告效率本身",
+              "转化减少可能由库存不足、物流时效或评价变化引起",
+              "归因口径或数据回传延迟可能造成两窗差异",
+              "季节性需求波动或竞品促销导致点击质量变化"
+            ],
+            "options": [
+              {
+                "kind": "observe",
+                "rationale": "维持预算不变，按retail_simulate_actions的observe方案核验归因数据与经营数据（毛利、库存、自然流量），补齐证据后再评估；未修改Campaign。"
+              },
+              {
+                "kind": "reduce_budget",
+                "rationale": "条件测算：预算由100000分降至90000分，在归因效率不变假设下成交额约162000分、ROAS仍为1.8；减少花费不保证提升ROAS，须先补齐毛利、库存与平台预算约束证据，不构成执行授权。"
+              }
+            ],
+            "scenarios": [
+              {
+                "couponMinor": null,
+                "revenueMinor": null,
+                "profitMinor": null,
+                "marginBps": null,
+                "kind": "observe",
+                "title": "不调整预算，核验归因与经营数据",
+                "rationale": "维持预算不变，按retail_simulate_actions的observe方案核验归因数据与经营数据（毛利、库存、自然流量），补齐证据后再评估；未修改Campaign。",
+                "values": {
+                  "currentSpendMinor": 100000,
+                  "proposedSpendMinor": 100000,
+                  "hypotheticalRevenueMinor": 180000,
+                  "roas": 1.8,
+                  "baselineRoas": 3
+                },
+                "passed": true,
+                "constraints": [],
+                "assumptions": [
+                  "归因效率保持不变，按花费同比例缩放成交额；这不是预测结果",
+                  "减少花费不保证提升ROAS，未测算销量、自然流量、利润或长期影响",
+                  "缺商品毛利、实时库存、平台预算上下限和完整归因账单，实际调整前必须补证；未修改Campaign"
+                ]
+              },
+              {
+                "couponMinor": null,
+                "revenueMinor": null,
+                "profitMinor": null,
+                "marginBps": null,
+                "kind": "reduce_budget",
+                "title": "预算降低 10%（条件测算）",
+                "rationale": "条件测算：预算由100000分降至90000分，在归因效率不变假设下成交额约162000分、ROAS仍为1.8；减少花费不保证提升ROAS，须先补齐毛利、库存与平台预算约束证据，不构成执行授权。",
+                "values": {
+                  "currentSpendMinor": 100000,
+                  "proposedSpendMinor": 90000,
+                  "hypotheticalRevenueMinor": 162000,
+                  "roas": 1.8,
+                  "baselineRoas": 3
+                },
+                "passed": true,
+                "constraints": [],
+                "assumptions": [
+                  "归因效率保持不变，按花费同比例缩放成交额；这不是预测结果",
+                  "减少花费不保证提升ROAS，未测算销量、自然流量、利润或长期影响",
+                  "缺商品毛利、实时库存、平台预算上下限和完整归因账单，实际调整前必须补证；未修改Campaign"
+                ]
+              }
+            ],
+            "reviewer": {
+              "verdict": "passed",
+              "notes": [
+                "引用核对：观察窗 ROAS=180000/100000=1.8、对照窗 300000/100000=3.0、roasChangeBps=(1.8-3.0)/3.0=-4000bps，点击转化率 30/1000=300bps 对 50/1000=500bps，均与 retail_get_campaigns 原始行字段一致，引用支持结论。",
+                "未捏造销量因果：报告仅将转化效率下降列为主假设，并明示“现有证据不足以证明因果”，同时给出落地页、价格、库存、物流、评价、归因延迟、季节性等替代解释，未把 ROAS 下降归因为单一原因。",
+                "在途未误作可售：summary、unknowns 与两方案假设均声明缺实时库存与覆盖天数，未把库存或在途数量当作可售供给，也未据此推导销量或成交额。",
+                "未承诺降预算提高 ROAS：reduce_budget 方案明确“归因效率不变假设下 ROAS 仍为 1.8”“减少花费不保证提升 ROAS”，并标注非预测，与 retail_simulate_actions 的 assumptions 逐字一致，无升 ROAS 承诺。",
+                "历史条件方案与可执行动作未混淆：observe 与 reduce_budget 均为 retail_simulate_actions 产出的条件测算，rationale 与 assumptions 反复声明“未修改 Campaign”“不构成执行授权”，需先补毛利、库存、平台预算上限与完整归因账单证据。",
+                "partial=true 与 notes 的缺失项（库存、自然流量、完整费用证据）已在 unknowns 中完整披露，summary 亦写明“快照不完整”，未知项未被冒充补齐；source=demo 为合成样例，非实时/无平台权限不单独作为补证理由。",
+                "口径一致性可核：两窗 attribution_window 均为 7d_click、window_days 与 baseline_window_days 均为 7、同 shop/channel/SKU，且数据健康说明两窗同按 Asia/Shanghai 日口径；归因账单与窗口完整一致性列为未知，属应披露边界而非伪造，",
+                "复核通过仅代表分析报告完成，不授予补货或预算写权限"
+              ],
+              "mode": "model"
+            }
+          },
+          "mcpToolQueries": 4,
+          "workflow": {
+            "status": "completed",
+            "blockers": [],
+            "approval": "approved",
+            "executionStatus": "succeeded",
+            "receiptId": "790e4719-76af-4c5c-add4-ff41609de436",
+            "rereadMatched": true,
+            "reviewState": "reviewed",
+            "caseId": "eb6ea6e3-7d39-4e47-a1ea-038985c7ac5c"
+          }
+        }
+      ]
+    },
+    {
+      "artifact": "m4-live-workflow-margin-before-scope.json",
+      "evaluatedAt": "2026-10-17T02:22:46.120Z",
+      "syntheticOnly": true,
+      "businessDateReplay": "builtin dates minus 14 days; inventory lead 1 day",
+      "automatedSimulationRoles": true,
+      "results": [
+        {
+          "scenario": "margin",
+          "state": "needs_evidence",
+          "model": "RetailPilot Backend (API Key) / deepseek-v4-flash",
+          "modelCalls": 6,
+          "elapsedMs": 9365,
+          "error": null,
+          "evidence": {
+            "id": "2cab200087aa5a72397ce4ba",
+            "batchId": "demo-bc0b64c39dfef3126b89",
+            "source": "demo",
+            "importedAt": "2026-10-17T02:22:36.746Z",
+            "snapshotHash": "bc0b64c39dfef3126b89218875f74668c1f8d847c5ddb89c5312fffbd00e3ba6",
+            "ruleVersion": "retail-margin-v1",
+            "row": {
+              "date": "2026-09-30",
+              "shop_id": "demo-nanfeng",
+              "channel": "线上商城",
+              "sku_id": "TEA-500",
+              "product_name": "桂花乌龙冷萃茶",
+              "spec": "500ml × 6瓶",
+              "currency": "CNY",
+              "list_price_minor": 10000,
+              "coupon_minor": 2000,
+              "full_reduction_minor": 1000,
+              "subsidy_minor": 0,
+              "subsidy_funder": "platform",
+              "cost_minor": 6000,
+              "sold_qty": 40,
+              "on_hand": 120,
+              "reserved": 10,
+              "inbound_qty": 60
+            },
+            "calculation": {
+              "revenueMinor": 7000,
+              "profitMinor": 1000,
+              "marginBps": 1429,
+              "totalRevenueMinor": 280000,
+              "totalProfitMinor": 40000,
+              "available": 110,
+              "issues": []
+            },
+            "status": "low_margin",
+            "thresholdBps": 2000,
+            "reasons": [
+              "商品毛利率低于 20% 演示规则阈值"
+            ]
+          },
+          "report": {
+            "summary": "TEA-500线上商城2026-09-30静态快照：单价10000分，实收7000分/件，单件毛利1000分，毛利率1429bp，低于20%演示阈值；数据部分可用且无历史Case。条件测算显示减少商家券200分/件可提高毛利，但未验证需求弹性与执行权限。",
+            "observations": [
+              {
+                "text": "快照摘要缺少逐单优惠分摊、实时库存和历史对照，数据为部分可用。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_data_health"
+                ]
+              },
+              {
+                "text": "SKU成本6000分、售出40件，实现收入280000分、毛利40000分，毛利率1429bp。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_sku_context"
+                ]
+              },
+              {
+                "text": "售价10000分，商家券2000分、满减1000分，平台补贴0分，对应单件实收7000分、毛利1000分。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_promotions"
+                ]
+              },
+              {
+                "text": "条件测算：券降至1500分后单件毛利1500分、毛利率2000bp，达到演示阈值；继续观察方案未达标。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_simulate_actions"
+                ]
+              }
+            ],
+            "hypotheses": [
+              {
+                "text": "商家券2000分可能是毛利侵蚀主要来源之一，但受满减叠加影响，无法归因。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_promotions"
+                ]
+              }
+            ],
+            "unknowns": [
+              "逐单优惠分摊与真实核销率",
+              "优惠变更后的需求弹性与销量",
+              "实时库存与补货节奏",
+              "平台补贴后续是否变化",
+              "仅有静态日快照，缺少实时状态、逐单优惠分摊及需求弹性证据"
+            ],
+            "alternatives": [
+              "低毛利也可能来自成本结构或渠道定价，而非券本身",
+              "部分可用快照可能有数据缺口"
+            ],
+            "options": [
+              {
+                "kind": "observe",
+                "rationale": "补齐逐单优惠分摊与历史对照后再判断，不改变任何优惠。"
+              },
+              {
+                "kind": "reduce_coupon",
+                "rationale": "条件测算显示券降至1500分可使毛利率达2000bp，但仅为假设测算，未验证销量影响与执行权限，不得直接执行。"
+              }
+            ],
+            "scenarios": [
+              {
+                "kind": "observe",
+                "title": "不调整，补证并继续观察",
+                "rationale": "补齐逐单优惠分摊与历史对照后再判断，不改变任何优惠。",
+                "couponMinor": 2000,
+                "revenueMinor": 7000,
+                "profitMinor": 1000,
+                "marginBps": 1429,
+                "passed": false,
+                "constraints": [
+                  "未达到 20% 演示毛利阈值"
+                ],
+                "assumptions": [
+                  "售价、成本、满减及补贴保持不变",
+                  "未测算需求弹性和优惠变更后的销量",
+                  "仅历史快照分析，执行前须重新核对时效与业务权限"
+                ]
+              },
+              {
+                "kind": "reduce_coupon",
+                "title": "减少商家券（条件测算）",
+                "rationale": "条件测算显示券降至1500分可使毛利率达2000bp，但仅为假设测算，未验证销量影响与执行权限，不得直接执行。",
+                "couponMinor": 1500,
+                "revenueMinor": 7500,
+                "profitMinor": 1500,
+                "marginBps": 2000,
+                "passed": true,
+                "constraints": [],
+                "assumptions": [
+                  "售价、成本、满减及补贴保持不变",
+                  "未测算需求弹性和优惠变更后的销量",
+                  "仅历史快照分析，执行前须重新核对时效与业务权限"
+                ]
+              }
+            ],
+            "reviewer": {
+              "verdict": "needs_evidence",
+              "notes": [
+                "快照毛利率与实收口径可核对：profitMinor=1000、revenueMinor=7000、marginBps=1429，与证据 retail_get_sku_context、retail_get_promotions 的计算一致；实收=售价10000-商家券2000-满减1000-平台补贴0，计算可复现。",
+                "数据健康证据明确 partial=true，limitation 指出缺少逐单优惠分摊、实时库存与历史对照；报告在 observations、unknowns、assumptions 中已披露该缺口，未把静态快照当作实时执行依据。",
+                "报告未误称净利润：全文使用毛利/毛利率；但 reduce_coupon 场景把条件测算标为 passed=true，虽在 rationale 中写明仅为假设测算，仍与方案“未验证销量影响与执行权限”相冲突，容易被误读为该条件方案已经成立。",
+                "2000bp 毛利阈值是 demo 演示阈值，不能作为真实业务达标或收益承诺；报告 summary 将该阈值限定为演示语境，结论未承诺收益，这一点合规。",
+                "unknowns 列出了需求弹性、真实核销率、实时库存与平台补贴变化，这些是 reduce_coupon 结论成立与否的关键缺失证据，未将假设当观测。",
+                "hypotheses 将商家券列为可能的毛利侵蚀来源之一，并明确受满减叠加影响无法归因，引用 retail_get_promotions 支持该谨慎表述，未过度归因。",
+                "alternatives 提出低毛利也可能来自成本结构或渠道定价，属于合理的替代解释，且未被证据排除，因此不宜仅凭现有证据把减少商家券作为确定结论。",
+                "总体：引用与计算口径可支持观察与假设，但 reduce_coupon 的 passed 标记与“未验证需求弹性、执行权限”的证据状态不一致，需修正为条件性未通过或补充销量弹性与执行权限证据后再判。",
+                "仅完成冻结快照分析；真实业务未执行，本地模拟须另经草稿约束与审批"
+              ],
+              "mode": "model"
+            }
+          },
+          "mcpToolQueries": 4,
+          "workflow": {
+            "status": "blocked",
+            "blockers": [
+              "模型Reviewer待补证或调查未完成，请查看原调查的未知项和复核意见；不能提交"
+            ],
+            "approval": null,
+            "executionStatus": null,
+            "receiptId": null,
+            "rereadMatched": null,
+            "reviewState": null,
+            "caseId": null
+          }
+        }
+      ]
+    },
+    {
+      "artifact": "m4-live-workflow-margin.json",
+      "evaluatedAt": "2026-10-17T02:25:15.210Z",
+      "syntheticOnly": true,
+      "businessDateReplay": "builtin dates minus 14 days; inventory lead 1 day",
+      "automatedSimulationRoles": true,
+      "results": [
+        {
+          "scenario": "margin",
+          "state": "needs_evidence",
+          "model": "RetailPilot Backend (API Key) / deepseek-v4-flash",
+          "modelCalls": 6,
+          "elapsedMs": 9933,
+          "error": null,
+          "evidence": {
+            "id": "2cab200087aa5a72397ce4ba",
+            "batchId": "demo-bc0b64c39dfef3126b89",
+            "source": "demo",
+            "importedAt": "2026-10-17T02:25:05.269Z",
+            "snapshotHash": "bc0b64c39dfef3126b89218875f74668c1f8d847c5ddb89c5312fffbd00e3ba6",
+            "ruleVersion": "retail-margin-v1",
+            "row": {
+              "date": "2026-09-30",
+              "shop_id": "demo-nanfeng",
+              "channel": "线上商城",
+              "sku_id": "TEA-500",
+              "product_name": "桂花乌龙冷萃茶",
+              "spec": "500ml × 6瓶",
+              "currency": "CNY",
+              "list_price_minor": 10000,
+              "coupon_minor": 2000,
+              "full_reduction_minor": 1000,
+              "subsidy_minor": 0,
+              "subsidy_funder": "platform",
+              "cost_minor": 6000,
+              "sold_qty": 40,
+              "on_hand": 120,
+              "reserved": 10,
+              "inbound_qty": 60
+            },
+            "calculation": {
+              "revenueMinor": 7000,
+              "profitMinor": 1000,
+              "marginBps": 1429,
+              "totalRevenueMinor": 280000,
+              "totalProfitMinor": 40000,
+              "available": 110,
+              "issues": []
+            },
+            "status": "low_margin",
+            "thresholdBps": 2000,
+            "reasons": [
+              "商品毛利率低于 20% 演示规则阈值"
+            ]
+          },
+          "report": {
+            "summary": "TEA-500 在演示店铺线上商城 2026-09-30 的冻结快照快照显示毛利偏薄：单件收入 7000 分、成本 6000 分、利润 1000 分，毛利率 1429bps，合计收入 280000 分、利润 40000 分、销量 40。数据健康检查无问题，但为静态部分快照，缺少逐单优惠分摊与历史对照，不可执行。缺少同范围历史Case。",
+            "observations": [
+              {
+                "text": "数据健康检查无问题，但标注 partial=true，限制为静态日快照、缺逐单优惠分摊、实时库存与历史对照。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_data_health"
+                ]
+              },
+              {
+                "text": "SKU 单件收入 7000 分、成本 6000 分、利润 1000 分，毛利率 1429bps；销量 40，合计收入 280000 分、利润 40000 分。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_sku_context"
+                ]
+              },
+              {
+                "text": "标价 10000 分，商家券 2000 分、满减 1000 分、平台补贴 0 分；historicalCases 为空，无同范围历史Case可比。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_promotions",
+                  "2cab200087aa5a72397ce4ba:retail_get_sku_context"
+                ]
+              },
+              {
+                "text": "条件测算：维持现状毛利 1429bps 未达 20% 演示阈值；券降至 1500 分时毛利 2000bps 达标，均假设售价成本销量不变。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_simulate_actions"
+                ]
+              }
+            ],
+            "hypotheses": [
+              {
+                "text": "商家券 2000 分可能是毛利偏低的主要优惠因素，但快照无逐单分摊，无法确认其对实际成交的侵蚀程度。",
+                "evidenceIds": [
+                  "2cab200087aa5a72397ce4ba:retail_get_promotions",
+                  "2cab200087aa5a72397ce4ba:retail_get_sku_context"
+                ]
+              }
+            ],
+            "unknowns": [
+              "逐单优惠分摊与实际核销率",
+              "需求弹性及优惠变化后销量影响",
+              "毛利阈值 20% 的业务依据与审批口径",
+              "库存 110、在途 60 的时效性与真实性",
+              "仅有静态日快照，缺少实时状态、逐单优惠分摊及需求弹性证据"
+            ],
+            "alternatives": [
+              "毛利偏低也可能源于成本 6000 分偏高或定价结构，而非仅商家券",
+              "满减 1000 分与平台补贴承担方式可能影响实际让利归属",
+              "快照部分数据可能有缺失，实际毛利率可能不同"
+            ],
+            "options": [
+              {
+                "kind": "observe",
+                "rationale": "维持现有优惠，先补齐逐单分摊、核销率与历史对照再判断；当前 1429bps 未达 20% 演示阈值，仅作观察。"
+              },
+              {
+                "kind": "reduce_coupon",
+                "rationale": "条件测算显示商家券降至 1500 分时毛利 2000bps，但未测算需求弹性与销量，仅为假设性测算，不代表可执行改价。"
+              }
+            ],
+            "scenarios": [
+              {
+                "kind": "observe",
+                "title": "不调整，补证并继续观察",
+                "rationale": "维持现有优惠，先补齐逐单分摊、核销率与历史对照再判断；当前 1429bps 未达 20% 演示阈值，仅作观察。",
+                "couponMinor": 2000,
+                "revenueMinor": 7000,
+                "profitMinor": 1000,
+                "marginBps": 1429,
+                "passed": false,
+                "constraints": [
+                  "未达到 20% 演示毛利阈值"
+                ],
+                "assumptions": [
+                  "售价、成本、满减及补贴保持不变",
+                  "未测算需求弹性和优惠变更后的销量",
+                  "仅历史快照分析，执行前须重新核对时效与业务权限"
+                ]
+              },
+              {
+                "kind": "reduce_coupon",
+                "title": "减少商家券（条件测算）",
+                "rationale": "条件测算显示商家券降至 1500 分时毛利 2000bps，但未测算需求弹性与销量，仅为假设性测算，不代表可执行改价。",
+                "couponMinor": 1500,
+                "revenueMinor": 7500,
+                "profitMinor": 1500,
+                "marginBps": 2000,
+                "passed": true,
+                "constraints": [],
+                "assumptions": [
+                  "售价、成本、满减及补贴保持不变",
+                  "未测算需求弹性和优惠变更后的销量",
+                  "仅历史快照分析，执行前须重新核对时效与业务权限"
+                ]
+              }
+            ],
+            "reviewer": {
+              "verdict": "needs_evidence",
+              "notes": [
+                "数据口径与计算的引用可以支持：单件收入7000分、成本6000分、利润1000分、毛利率1429bps、销量40、合计收入280000分、利润40000分，均与retail_get_sku_context和retail_get_promotions一致；标价10000分、商家券2000分、满减1000分、平台补贴0分也匹配。",
+                "数据健康检查“无问题”与partial=true的限制均有evidence支撑，报告已披露静态日快照、缺逐单优惠分摊、实时库存与历史对照，并明确不可执行，边界表述合规。",
+                "报告未把利润误称为净利润：全文使用“利润/毛利”表述，未出现净利口径；20%阈值标明为“演示阈值”，未包装为真实收益承诺，也未将条件测算通过称为可执行改价。",
+                "scenarios中reduce_coupon的passed=true仅表示在其列明假设（售价、成本、满减及补贴不变）下通过数值约束，报告已同时声明未测算需求弹性与销量、不代表可执行改价，未把条件通过误称真实收益，符合现行要求。",
+                "关键缺口仍需补证：逐单优惠分摊、实际核销率缺失，导致“商家券2000分可能是毛利偏低主因”仅是假设，无法确认优惠对实际成交的侵蚀程度；hypotheses标注恰当，但结论支撑不足。",
+                "需求弹性与优惠变更后销量影响未测算，reduce_coupon以“券降至1500分即毛利率2000bps”成立依赖售价销量不变假设，属于条件测算，缺少需求侧证据，不能作为业务结论。",
+                "毛利阈值20%的业务依据与审批口径未披露，仅为演示阈值；在缺少该口径来源的情况下，无法判断达标与否的业务意义，应列为未知项补证。",
+                "库存110、在途60的时效性与真实性未核实，且属执行前置条件，报告已作为未知项与边界记录，方向正确，但仍需在提交前独立核对，不宜视为已补齐。",
+                "historicalCases为空，报告已明确“无同范围历史Case可比”；同时for alternatives中成本偏高、定价结构、满减与补贴承担方式等替代解释未被量化排除，结论证据仍不足。",
+                "演示来源source=demo已明确标注为合成样例，未将模拟解释为真实经营效果；本次needs_evidence针对缺失计算口径与证据链，而非要求真实平台权限或实时补证。",
+                "仅完成冻结快照分析；真实业务未执行，本地模拟须另经草稿约束与审批"
+              ],
+              "mode": "model"
+            }
+          },
+          "mcpToolQueries": 4,
+          "workflow": {
+            "status": "blocked",
+            "blockers": [
+              "模型Reviewer待补证或调查未完成，请查看原调查的未知项和复核意见；不能提交"
+            ],
+            "approval": null,
+            "executionStatus": null,
+            "receiptId": null,
+            "rereadMatched": null,
+            "reviewState": null,
+            "caseId": null
+          }
+        }
+      ]
+    }
+  ],
+  "remaining": [
+    "毛利数值、引用与Reviewer一致性验收",
+    "领域调度/补跑/去重",
+    "48+行业样例、性能与Windows安装发布"
+  ]
+}

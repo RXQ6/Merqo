@@ -382,3 +382,9 @@ for(const scenario of ['margin','inventory','ads'] as const)test(`${scenario}: o
 test('explicit sample restore creates a new evidence revision and never revives prior approval after a round trip',async()=>{
  const ready=await approvedExecution('inventory');const initial=ready.job.evidenceHash;signals.demo();signals.import('inventory',INVENTORY_EXECUTION_DEMO,undefined,'demo',true);const now=signals.snapshot().records.find(e=>e.kind==='inventory'&&e.row.sku_id==='TEA-500')!;expect(now.hash).not.toBe(initial);expect(decisions.approvals().find(v=>v.id===ready.job.requestId)?.status).toBe('invalidated');const result=decisions.executeSimulation(ready.job.id,1,ready.job.actionHash,executor);expect(result.receipt).toBeNull();expect(result.attempts[0]?.reason).toContain('快照');
 });
+
+test('draft blockers distinguish offline, needs-evidence and rejection without granting approval',async()=>{
+ for(const [scenario,mode,verdict,reason] of [['margin','replay','passed','离线演示没有模型Reviewer'],['ads','model','needs_evidence','Reviewer待补证'],['margin','model','rejected','Reviewer已驳回']] as const){
+  const run=await complete(scenario,mode,verdict,'TEA-500','demo',true);const d=decisions.create(run.id,action(run),'');expect(d.submissionBlockers.some(s=>s.includes(reason))).toBe(true);expect(()=>decisions.submit(d.id,1)).toThrow('不能提交');expect(decisions.approvals()).toHaveLength(0);
+ }
+});

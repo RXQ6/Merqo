@@ -3,7 +3,7 @@ import type { AnyInvestigation, Scenario } from '../../../../../packages/retail-
 import type { DecisionDraft } from '../../../../../packages/retail-domain/src/decisions';
 import type { RetailRequest } from '../../../../../packages/retail-domain/src/operations';
 import { DecisionValues, draftStateLabels as states } from './DecisionValues';
-export function DecisionsPanel({ target, onBack, onApproval }: { target: AnyInvestigation | null; onBack: () => void; onApproval: (id:string) => void }) {
+export function DecisionsPanel({ target, onBack, onApproval, onInvestigation }: { target: AnyInvestigation | null; onBack: () => void; onApproval: (id:string) => void; onInvestigation: (id:string) => void }) {
   const [items,setItems]=useState<DecisionDraft[]>([]); const [focus,setFocus]=useState(target?'new':'');
   const [history,setHistory]=useState<DecisionDraft[]>([]); const [kind,setKind]=useState<Scenario['kind']>('observe'); const [note,setNote]=useState('');
   const [busy,setBusy]=useState(false); const [error,setError]=useState(''); const [notice,setNotice]=useState('');
@@ -19,6 +19,9 @@ export function DecisionsPanel({ target, onBack, onApproval }: { target: AnyInve
   },[]);
   useEffect(()=>{void call({op:'decisions'});},[call]);
   const selected=focus==='new'?items.find(d=>d.investigationId===target?.id):items.find(d=>d.id===focus)??(!target?items[0]:undefined);
+  const [origin,setOrigin]=useState<AnyInvestigation|null>(null); const [originError,setOriginError]=useState('');
+  const runId=selected?.investigationId??target?.id;
+  useEffect(()=>{let active=true;setOrigin(null);setOriginError('');if(runId)void window.electronAPI.retailRequest({op:'investigations',id:runId}).then(reply=>{if(!active)return;if(!reply.ok)throw new Error(reply.error);if(reply.kind!=='investigations'||!reply.data[0])throw new Error('原调查读取失败');setOrigin(reply.data[0]);}).catch(()=>{if(active)setOriginError('原调查读取失败，请打开原调查重试。');});return()=>{active=false;};},[runId]);
   useEffect(()=>{if(selected){setKind(selected.selectedKind);setNote(selected.note);setHistory([]);}else if(target){setKind(target.report?.scenarios.find(s=>s.kind!=='observe')?.kind??'observe');setNote('');setHistory([]);}},[selected?.id,selected?.version,target?.id]);
   const dirty=!!selected&&(kind!==selected.selectedKind||note!==selected.note);
   const options=selected?.alternatives??target?.report?.scenarios??[];
@@ -42,6 +45,7 @@ export function DecisionsPanel({ target, onBack, onApproval }: { target: AnyInve
         <h3>影响范围与有效期</h3><p>仅 {selected.scope.shop} / {selected.scope.channel} / {selected.scope.sku}{selected.scope.campaign?` / ${selected.scope.campaign}`:''}{selected.scope.warehouse?` / ${selected.scope.warehouse}`:''}。{selected.environment==='simulation'?'只允许本地模拟审批。':'仅保存分析草稿，尚不能进入真实业务审批。'}</p><p>当前版本有效至 {new Date(selected.expiresAt).toLocaleString('zh-CN')}；提交时由服务重新检查。</p>
         <h3>假设与约束</h3><ul>{[...selected.selected.assumptions,...selected.selected.constraints].map((s,i)=><li key={i}>{s}</li>)}</ul>
         <h3>提交检查</h3>{selected.submissionBlockers.length?<ul className="retail-reasons">{selected.submissionBlockers.map((s,i)=><li key={i}>{s}</li>)}</ul>:<p>当前模拟提交检查通过；提交瞬间会再次校验版本、快照和时效。</p>}
+        <section aria-label="草稿关联调查"><h3>关联调查与复核</h3>{origin?<><p>{origin.mode==='replay'?'离线规则演示（没有模型审核）':`模型调查 · ${origin.model??'未建立模型连接'}`} · {origin.report?({passed:'Reviewer 通过',needs_evidence:'Reviewer 待补证',rejected:'Reviewer 驳回'})[origin.report.reviewer.verdict]:origin.state==='failed'?'调查失败':origin.state==='running'?'调查进行中':'尚无复核结论'}</p>{origin.error&&<p role="alert">{origin.error}</p>}<ul>{origin.report?.reviewer.notes.map((s,i)=><li key={i}>{s}</li>)}</ul>{origin.mode==='replay'?<p>离线报告可用于分析和保存草稿；提交模拟审批前，需明确发起模型调查并通过 Reviewer。</p>:origin.report?.reviewer.verdict!=='passed'&&<p>请先处理报告中的未知项和复核意见；重试不会保证通过。</p>}</>:<p>{originError||'正在读取原调查…'}</p>}<button disabled={busy} onClick={()=>onInvestigation(selected.investigationId)}>查看原调查与补证</button><p className="retail-muted">打开记录不会调用模型。重新调查产生独立报告；通过后请从新报告生成草稿，旧草稿不会自动更换调查或审批。</p></section>
         {selected.request&&<p role="status">申请 {selected.request.id} · 绑定 v{selected.request.decisionVersion} · {states[selected.state]}。当前不执行业务动作。<button className="retail-link" onClick={()=>onApproval(selected.request!.id)}>查看审批</button></p>}
         <details><summary>版本绑定与证据索引</summary><p>来源：{selected.scope.source}；调查：{selected.investigationId}；规则：{selected.ruleVersion}；策略：{selected.policyVersion}</p><p>动作摘要：{selected.actionHash}</p><p>证据摘要：{selected.evidenceHash}</p><ul>{selected.evidenceIds.map(id=><li key={id}>{id}</li>)}</ul></details>
         {!!history.length&&<section aria-label="决策版本记录"><h3>版本记录</h3>{history.map(d=><details key={d.version}><summary>v{d.version} · {states[d.state]} · {new Date(d.updatedAt).toLocaleString('zh-CN')}</summary><p>{d.selected.title}；备注：{d.note||'未填写'}</p><p>动作摘要：{d.actionHash}</p>{d.request&&<p>该版本申请：{d.request.id}（{d.request.status}）</p>}<pre>{JSON.stringify({before:d.before,after:d.after},null,2)}</pre></details>)}</section>}

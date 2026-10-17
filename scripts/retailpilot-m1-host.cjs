@@ -12,7 +12,7 @@ process.env.CRAFT_DEEPLINK_SCHEME = 'retailpilot';
 const out = path.join(root, 'artifacts/m1'); fs.mkdirSync(out, { recursive: true });
 const phase = process.env.RETAILPILOT_M1_PHASE || 'initial';
 const checks = []; const failures = [];
-let contractServer; let contractCalls = 0;
+let contractServer; let contractCalls = 0; let reviewVerdict='passed';
 let finished = false;
 function finish(error) {
   if (finished) return; finished = true; clearTimeout(timeout);
@@ -150,7 +150,7 @@ app.on('web-contents-created', (_event, contents) => {
             const context = JSON.parse(request.messages[1].content);
             const toolNames = ['retail_get_data_health','retail_get_sku_context',context.scenario === 'inventory' ? 'retail_get_inventory' : context.scenario === 'ads' ? 'retail_get_campaigns' : 'retail_get_promotions','retail_simulate_actions'];
             let output;
-            if (system.includes('串行只读 Reviewer')) output = {verdict:'passed', notes:['本地协议测试复核，非真实模型质量验证']};
+            if (system.includes('串行只读 Reviewer')) output = {verdict:reviewVerdict, notes:['本地协议测试复核，非真实模型质量验证；复核意见标记 '+reviewVerdict]};
             else if (context.observations.length < 4) output = {tool:toolNames[context.observations.length]};
             else output = {report:{summary:'本地协议测试报告，非真实模型生成的业务结论',observations:[{text:context.scenario ? '本地场景协议检查，经营事实以工具证据为准' : '单位收入70元、商品毛利10元、毛利率14.29%',evidenceIds:[context.observations[2].evidenceId]}],hypotheses:[],unknowns:['缺少实时数据'],alternatives:['成本或优惠分摊口径可能错误'],options:[{kind:'observe',rationale:'补证后再决定'},{kind:context.scenario === 'inventory' ? 'replenish_draft' : context.scenario === 'ads' ? 'reduce_budget' : 'reduce_coupon',rationale:'仅作条件测算'}]}};
             res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(output)}}]}));
@@ -238,6 +238,25 @@ app.on('web-contents-created', (_event, contents) => {
         if (contractCalls!==18) throw new Error('Expected 18 HTTP calls for three scenarios, got '+contractCalls);
         await assert(`(await window.electronAPI.retailRequest({op:'investigations'})).data.filter(r=>r.report).every(r=>r.trace.filter(t=>t.stage==='investigate').every(t=>t.transport==='mcp_stdio'))`, 'all three scenarios and offline replay consume actual MCP evidence');
         checks.push('inventory and ads model contracts, readonly Reviewer and explicit offline plans passed');
+        await click('调查记录');await waitFor(`!!document.querySelector('[data-testid="retail-investigation"]')`, 'investigations for blocker recovery');
+        await click('运行离线规则演示');await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('离线规则演示，未调用模型')&&document.querySelector('.retail-investigation-body')?.innerText.includes('方案比较（代码测算）')`, 'offline source ready');
+        await click('生成决策草稿');await waitFor(`!!document.querySelector('[data-testid="retail-decisions"]')`, 'offline draft editor');await click('保存草稿');
+        await waitFor(`document.querySelector('[aria-label="草稿关联调查"]')?.innerText.includes('离线规则演示（没有模型审核）')`, 'offline source reason in draft');
+        await assert(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='提交模拟审批')?.disabled`, 'offline draft cannot submit simulation approval');
+        const offlineDraft=await js(`(async()=>{const r=await window.electronAPI.retailRequest({op:'decisions'});if(!r.ok)throw new Error(r.error);return r.data[0];})()`);const callsBeforeOpen=contractCalls;
+        await click('查看原调查与补证');await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('离线规则演示，未调用模型')`, 'open exact offline origin');
+        await assert(`document.querySelector('.retail-investigation-list button[aria-current="true"]')?.innerText.includes('离线演示')`, 'draft recovery opens the original offline record');
+        if(contractCalls!==callsBeforeOpen)throw new Error('Reading original investigation invoked a model');
+        await assert(`(await window.electronAPI.retailRequest({op:'investigations',id:${JSON.stringify(offlineDraft.investigationId)}})).data[0].id===${JSON.stringify(offlineDraft.investigationId)}`, 'exact run read works through renderer IPC');
+        for(const verdict of ['needs_evidence','rejected']){
+          reviewVerdict=verdict;await click('重新进行模型调查');await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('复核意见标记 ${verdict}')&&document.querySelector('.retail-investigation-body')?.innerText.includes('方案比较（代码测算）')`, verdict+' report ready');
+          await click('生成决策草稿');await waitFor(`!!document.querySelector('[data-testid="retail-decisions"]')`, 'blocked model draft editor');await click('保存草稿');
+          await waitFor(`document.querySelector('[aria-label="草稿关联调查"]')?.innerText.includes('复核意见标记 ${verdict}')`, verdict+' notes retained in draft');
+          await assert(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='提交模拟审批')?.disabled`, verdict+' cannot submit approval');
+          await capture('reviewer-'+verdict+'.png');await click('查看原调查与补证');await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('复核意见标记 ${verdict}')`, 'exact blocked model origin');
+        }
+        reviewVerdict='passed';await click('重新进行模型调查');await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('复核意见标记 passed')`, 'restore independent passed fixture for later execution checks');checks.push('offline, needs-evidence and rejected drafts expose exact origin without automatic model calls or approval bypass');
+
 
         await click('经营总览');
 

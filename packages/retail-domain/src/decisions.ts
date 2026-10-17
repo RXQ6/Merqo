@@ -76,7 +76,9 @@ export class DecisionStore {
     const reasons: string[] = []; const run = this.run(d.investigationId); const e = run.evidence;
     if (d.selectedKind === 'observe') reasons.push('观察方案无需动作审批；可保存并继续补证');
     if (d.environment !== 'simulation' || e.source !== 'demo') reasons.push('当前仅支持演示数据的模拟审批；CSV经营数据需实时Adapter与业务权限校验');
-    if (run.mode !== 'model' || run.report?.reviewer.mode !== 'model' || run.report.reviewer.verdict !== 'passed' || run.state !== 'completed') reasons.push('需要真实模型Reviewer通过，离线演示或待补证报告不能提交');
+    if (run.mode !== 'model' || run.report?.reviewer.mode !== 'model') reasons.push('离线演示没有模型Reviewer审核，请先进行模型调查；不能提交模拟审批');
+    else if (run.report.reviewer.verdict === 'rejected') reasons.push('模型Reviewer已驳回，请查看原调查的复核意见并修正；不能提交');
+    else if (run.report.reviewer.verdict !== 'passed' || run.state !== 'completed') reasons.push('模型Reviewer待补证或调查未完成，请查看原调查的未知项和复核意见；不能提交');
     if (!d.selected.passed) reasons.push(...d.selected.constraints, '所选方案未通过硬约束');
     if (('metrics' in e ? e.metrics.issues : e.calculation.issues).length) reasons.push('冻结证据缺少关键字段或口径冲突');
     const timeIssue=evidenceTimeIssue(e);if(timeIssue)reasons.push(timeIssue);

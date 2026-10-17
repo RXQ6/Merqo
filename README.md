@@ -105,6 +105,8 @@ From a completed investigation, select **生成决策草稿**. Choose one of its
 
 **提交模拟审批** creates a pending request bound to the exact version, action hash, evidence and expiry. It does not approve or execute anything. Changes create a new version and supersede the previous request. Only unchanged synthetic/demo evidence with a model Reviewer pass and feasible constraints can enter this local simulation inbox. Offline reports, evidence gaps, replaced snapshots, expired drafts and imported CSV business data are blocked. The local actor is explicitly a single-user demonstration identity. Built-in synthetic evidence does not expire after 24 hours. Its true import timestamps remain unchanged on identical reloads; changed samples can be explicitly restored as new evidence revisions. Drafts still expire after 30 minutes, and model Reviewer, version, scope and constraint checks remain required. Older policy drafts must be saved as a new version before submission.
 
+If a draft is blocked, **关联调查与复核** shows its exact source mode and Reviewer notes. Select **查看原调查与补证** to open that frozen investigation without invoking a model. Correct missing evidence through **更新或补充证据**, then explicitly retry the model investigation and generate a draft from the new report. Old drafts and approvals are never silently rebound. Offline, needs-evidence and rejected reports remain blocked. See [recovery and live validation](docs/M4-reviewer-recovery-verification.md).
+
 Export **Markdown** or **报告与证据 JSON** from an investigation, including failed runs with partial evidence. Files include the run ID, source, evidence index, frozen snapshot, trace, report and up to 30 associated decision revisions. See [acceptance steps](docs/M2-close-acceptance.md).
 
 ![Decision draft in the original desktop shell — isolated protocol test](docs/images/decision-draft.png)
@@ -210,9 +212,9 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The recorded verification includes 152 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
+The recorded verification includes 156 domain/persistence tests, two transport contract tests, type checks, development builds and a two-phase native Electron workflow with restart recovery. The desktop test uses isolated profiles and writes local reports under `artifacts/`.
 
-Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. This is a three-case engineering check, not a full business-quality benchmark; see the [evaluation record](docs/M2-verification.md).
+Inference transport tests use a **local HTTP contract fixture**. They verify the adapter and tool loop, not real-model reasoning quality. Live DeepSeek V4 Flash smoke checks generated cited reports for three synthetic scenarios over actual MCP transport. Reviewer outcomes include passed and needs_evidence; neither outcome authorizes business execution. These are small engineering checks, not a full business-quality benchmark. The latest workflow check completed inventory and advertising simulation chains; margin remained blocked by Reviewer needs-evidence. See the [latest recovery and live validation](docs/M4-reviewer-recovery-verification.md) and [earlier evaluation record](docs/M2-verification.md).
 
 ## Status and roadmap
 

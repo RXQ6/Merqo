@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { Database } from 'bun:sqlite';
 import { RetailStore } from './store';
 import { InvestigationStore } from './investigation-store';
-import { runInvestigation, simulate } from './investigations';
+import { runInvestigation, simulate, readTool } from './investigations';
 import type { DraftReport, Investigation, ModelPort, Trace } from './investigations';
 import { DEMO_CSV, RetailRequestSchema } from './operations';
 
@@ -104,4 +104,21 @@ describe('bounded retail investigation', () => {
       expect(second.create(create().evidence, 'replay').created).toBe(false);
     } finally { second.close(); }
   });
+});
+
+test('exact investigation lookup remains available beyond recent-list limits',()=>{
+ const old=create();store.update(old.id,{error:'测试失败保留'});
+ for(let n=0;n<51;n++){const run=store.create(old.evidence,'model',true).run;store.update(run.id,{error:'测试失败保留'});}
+ expect(store.listAll()).toHaveLength(50);expect(store.get(old.id).id).toBe(old.id);expect(()=>store.get('missing')).toThrow('调查不存在');
+ expect(RetailRequestSchema.safeParse({op:'investigations',id:old.id}).success).toBe(true);expect(RetailRequestSchema.safeParse({op:'investigations',id:old.id,recordId:old.recordId}).success).toBe(false);expect(RetailRequestSchema.safeParse({op:'investigations',id:'../other',workspaceId:'other'}).success).toBe(false);
+});
+test('Reviewer receives analysis-only scope and may still request evidence or reject',async()=>{
+ for(const verdict of ['needs_evidence','rejected'] as const){const run=create('model');const base=modelFor(run);const report=await runInvestigation(run,async(system,prompt)=>{
+  if(system.includes('串行只读 Reviewer')){expect(system).toContain('不得为走通演示而给passed');expect(JSON.parse(prompt).context.source).toBe('demo');return JSON.stringify({verdict,notes:['保留复核判断']});}return base(system,prompt);
+ },async()=>{});expect(report.reviewer.verdict).toBe(verdict);store.update(run.id,{report});}
+});
+
+test('margin tools state per-sales-unit versus snapshot totals without altering arithmetic',()=>{
+ const run=create();const result=readTool(run.evidence,'retail_get_sku_context') as {soldQty:number;calculationGrain:{salesUnit:string};calculation:{revenueMinor:number;totalRevenueMinor:number;profitMinor:number;totalProfitMinor:number}};
+ expect(result.calculationGrain.salesUnit).toContain('SKU规格');expect(result.calculation.totalRevenueMinor).toBe(result.calculation.revenueMinor*result.soldQty);expect(result.calculation.totalProfitMinor).toBe(result.calculation.profitMinor*result.soldQty);
 });

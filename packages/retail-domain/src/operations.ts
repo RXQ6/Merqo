@@ -65,7 +65,7 @@ export const RetailRequestSchema = z.discriminatedUnion('op', [
   z.strictObject({ op: z.literal('decision_revise'), id: z.string().uuid(), expectedVersion: z.number().int().min(1).max(100000), kind: z.enum(['observe', 'reduce_coupon', 'replenish_draft', 'reduce_budget']), note: z.string().trim().max(2000) }),
   z.strictObject({ op: z.literal('decision_submit'), id: z.string().uuid(), expectedVersion: z.number().int().min(1).max(100000) }),
   z.strictObject({ op: z.literal('decision_history'), id: z.string().uuid() }),
-  z.strictObject({ op: z.literal('investigations'), recordId: z.string().max(64).optional() }),
+  z.strictObject({ op: z.literal('investigations'), recordId: z.string().max(64).optional(), id: z.string().min(1).max(64).optional() }).refine(r => !r.id || !r.recordId, '调查ID与快照筛选不能同时提供'),
   z.strictObject({ op: z.literal('investigate'), recordId: z.string().min(1).max(64), mode: z.enum(['model', 'replay']), scenario: z.enum(['margin', 'inventory', 'ads']).optional(), retry: z.boolean().optional() }),
   z.strictObject({ op: z.literal('snapshot') }),
   z.strictObject({ op: z.literal('demo') }),

@@ -109,7 +109,7 @@ try {
         console.log(JSON.stringify({ ok: true, kind: 'decisions', data: decisions.list(), ...(selectedId ? { selectedId } : {}), ...(history ? { history } : {}) }));
       }
     }
-    else if (request.op === 'investigations') console.log(JSON.stringify({ ok: true, kind: 'investigations', data: investigations.listAll(request.recordId) }));
+    else if (request.op === 'investigations') console.log(JSON.stringify({ ok: true, kind: 'investigations', data: request.id ? [investigations.get(request.id)] : investigations.listAll(request.recordId) }));
     else if (request.op === 'investigate') {
       let result;
       if (request.scenario === 'inventory' || request.scenario === 'ads') {

@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-18",
+  "domainTests": 224,
+  "telemetryTests": 2,
+  "totalAssertions": 1684,
+  "failedTests": 0,
+  "domainTypecheck": true,
+  "electronTypecheck": true,
+  "realMcpRegression": true,
+  "skillVersion": "1.2.0",
+  "canonicalDesktopBuild": {
+    "command": "bun run electron:build",
+    "exitCode": 0,
+    "logSha256": "cff24b590f283e551d39c21a8fad11a9a0730e8deb63c2418f9aa3af086899cb"
+  },
+  "fixedEvaluation": {
+    "total": 48,
+    "passed": 48,
+    "failed": 0,
+    "unsupported": 0,
+    "releaseReady": false,
+    "releaseGateExitCode": 1
+  },
+  "liveEvaluation": {
+    "total": 15,
+    "passed": 10,
+    "failed": 5,
+    "safetyViolations": 0,
+    "scenarios": [
+      {
+        "scenario": "margin",
+        "total": 5,
+        "passed": 0,
+        "failed": 5,
+        "passedGate": false
+      },
+      {
+        "scenario": "inventory",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "passedGate": true
+      },
+      {
+        "scenario": "ads",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "passedGate": true
+      }
+    ],
+    "passedGate": false,
+    "usage": {
+      "calls": 91,
+      "meteredCalls": 91,
+      "inputTokens": 200875,
+      "outputTokens": 14437
+    },
+    "batch": "2026-10-18T01-54-13-283Z-39fd3dc7",
+    "archiveHashesValid": true,
+    "evaluatedRuntimeHashesStillMatch": true,
+    "originalCsvInputsUnchanged": true,
+    "adsFactsAllMatch": true
+  },
+  "installerRepackaged": false
+}

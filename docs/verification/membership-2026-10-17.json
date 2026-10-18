@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-17",
+  "scope": "source-only member pricing, single cohort and business-day snapshot; published installer unchanged",
+  "domain": {
+    "command": "bun run retail:check",
+    "exitCode": 0,
+    "tests": 204,
+    "failed": 0,
+    "assertions": 1485,
+    "typecheck": "passed"
+  },
+  "electronTypecheck": {
+    "command": "bun run typecheck:electron",
+    "exitCode": 0
+  },
+  "build": {
+    "command": "bun run retail:build",
+    "exitCode": 0
+  },
+  "mcp": {
+    "command": "bun run retail:check:mcp",
+    "exitCode": 0,
+    "scope": "three real local stdio scenarios and frozen Case; no external model requests"
+  },
+  "evaluation": {
+    "command": "bun run retail:eval --release-gate",
+    "exitCode": 1,
+    "expectedExit": true,
+    "total": 48,
+    "passed": 45,
+    "failed": 0,
+    "unsupported": 3,
+    "releaseReady": false,
+    "datasetHash": "ac2fdf914eaa39712d76b9de3b78c54c9cb743031cf3815e7791fbdf071e8fc8"
+  },
+  "desktop": {
+    "command": "node scripts/merqo-member-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "members",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "member price context auto-maps",
+        "member normal/warning/unknown states survive members",
+        "member price and unknown-identity block persist members",
+        "member effective price, cohort and discount policy shown members"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\member-check-1792248894085",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "members-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "member normal/warning/unknown states survive members-restart",
+        "member price and unknown-identity block persist members-restart",
+        "member effective price, cohort and discount policy shown members-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\member-check-1792248894085",
+      "error": null,
+      "failures": []
+    }
+  },
+  "giftRegression": {
+    "command": "node scripts/merqo-gift-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "gifts",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "gift association and cost-basis fields auto-map",
+        "gift normal/warning/unknown states survive gifts",
+        "gift-inclusive totals and unknown cost persist gifts",
+        "gift component cost and inclusive margin shown gifts"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\gift-check-1792248956260",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "gifts-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "gift normal/warning/unknown states survive gifts-restart",
+        "gift-inclusive totals and unknown cost persist gifts-restart",
+        "gift component cost and inclusive margin shown gifts-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\gift-check-1792248956260",
+      "error": null,
+      "failures": []
+    }
+  },
+  "bundleRegression": {
+    "command": "node scripts/merqo-bundle-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "bundles",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "optional bundle fields auto-map in actual renderer",
+        "bundle normal/conflict/missing states survive bundles",
+        "bundle pack totals and evidence gaps persist bundles",
+        "component identities and computed pack margin shown bundles"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\bundle-check-1792249050847",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "bundles-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "bundle normal/conflict/missing states survive bundles-restart",
+        "bundle pack totals and evidence gaps persist bundles-restart",
+        "component identities and computed pack margin shown bundles-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\bundle-check-1792249050847",
+      "error": null,
+      "failures": []
+    }
+  },
+  "limitations": [
+    "No real customer authentication or platform writes",
+    "No live-model inference quality validation",
+    "One cohort per SKU/day snapshot; no mixed-cohort or order-level pricing",
+    "Business-day validity is not realtime quote authorization",
+    "Performance, remaining three offer-availability cases and full release gates unmet"
+  ]
+}

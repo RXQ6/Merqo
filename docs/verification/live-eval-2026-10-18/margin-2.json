@@ -1,0 +1,864 @@
+{
+  "scenario": "margin",
+  "repetition": 2,
+  "run": {
+    "caseContext": [],
+    "id": "727a79ee-3915-4c0a-b2ac-a74f16537485",
+    "recordId": "e52ca24223635358fdf11b09",
+    "mode": "model",
+    "state": "needs_evidence",
+    "createdAt": "2026-10-18T01:40:13.926Z",
+    "updatedAt": "2026-10-18T01:40:29.535Z",
+    "deadlineAt": "2026-10-18T01:45:13.926Z",
+    "evidence": {
+      "id": "e52ca24223635358fdf11b09",
+      "batchId": "demo-0bb6dc34aaf79c3f67c6",
+      "source": "demo",
+      "importedAt": "2026-10-18T01:39:58.685Z",
+      "snapshotHash": "0bb6dc34aaf79c3f67c6b781a84c21248c74409f46bf12cdfa2c27f1280ec404",
+      "ruleVersion": "retail-margin-v5",
+      "row": {
+        "date": "2026-10-14",
+        "shop_id": "demo-nanfeng",
+        "channel": "线上商城",
+        "sku_id": "TEA-500",
+        "product_name": "桂花乌龙冷萃茶",
+        "spec": "500ml × 6瓶",
+        "currency": "CNY",
+        "list_price_minor": 10000,
+        "coupon_minor": 2000,
+        "full_reduction_minor": 1000,
+        "subsidy_minor": 0,
+        "subsidy_funder": "platform",
+        "cost_minor": 6000,
+        "sold_qty": 40,
+        "on_hand": 120,
+        "reserved": 10,
+        "inbound_qty": 60
+      },
+      "calculation": {
+        "revenueMinor": 7000,
+        "profitMinor": 1000,
+        "marginBps": 1429,
+        "totalRevenueMinor": 280000,
+        "totalProfitMinor": 40000,
+        "available": 110,
+        "issues": []
+      },
+      "status": "low_margin",
+      "thresholdBps": 2000,
+      "reasons": [
+        "商品毛利率低于 20% 演示规则阈值"
+      ]
+    },
+    "trace": [
+      {
+        "at": "2026-10-18T01:40:15.180Z",
+        "stage": "investigate",
+        "tool": "retail_get_data_health",
+        "evidenceId": "e52ca24223635358fdf11b09:retail_get_data_health",
+        "data": {
+          "marginThreshold": {
+            "bps": 2000,
+            "origin": "versioned_rule",
+            "label": "当前版本规则阈值，并非通用经营标准"
+          },
+          "issues": [],
+          "source": "demo",
+          "observedAt": "2026-10-14",
+          "importedAt": "2026-10-18T01:39:58.685Z",
+          "hash": "0bb6dc34aaf79c3f67c6b781a84c21248c74409f46bf12cdfa2c27f1280ec404",
+          "rule": "retail-margin-v5",
+          "partial": true,
+          "limitation": "静态日快照，缺少逐单优惠分摊、实时库存与历史对照，不可用于直接执行"
+        },
+        "transport": "mcp_stdio"
+      },
+      {
+        "at": "2026-10-18T01:40:16.290Z",
+        "stage": "investigate",
+        "tool": "retail_get_sku_context",
+        "evidenceId": "e52ca24223635358fdf11b09:retail_get_sku_context",
+        "data": {
+          "calculationGrain": {
+            "money": "CNY minor units (分)",
+            "perSalesUnit": [
+              "revenueMinor",
+              "profitMinor"
+            ],
+            "snapshotTotals": [
+              "totalRevenueMinor",
+              "totalProfitMinor"
+            ],
+            "totalQuantityField": "soldQty",
+            "marginBps": "profitMinor / revenueMinor * 10000; rounded",
+            "salesUnit": "SKU规格的一件，不等于单瓶"
+          },
+          "historicalCases": [],
+          "sku": "TEA-500",
+          "product": "桂花乌龙冷萃茶",
+          "spec": "500ml × 6瓶",
+          "shop": "demo-nanfeng",
+          "channel": "线上商城",
+          "date": "2026-10-14",
+          "costMinor": 6000,
+          "giftPolicy": null,
+          "giftCostBasis": null,
+          "gifts": null,
+          "giftCostMinor": 0,
+          "effectiveCostMinor": 6000,
+          "giftScope": "每销售件免费附赠；赠品收入为零；券和满减全部计主商品；cost_minor 不含赠品；不处理订单门槛或逐单分摊",
+          "productType": "single",
+          "bundleComponents": null,
+          "bundleScope": "一层组合装，每销售包的子项成本；继承当前店铺、渠道、日期、CNY；不分摊收入或优惠，不解析嵌套组合装",
+          "soldQty": 40,
+          "available": 110,
+          "inbound": 60,
+          "calculation": {
+            "revenueMinor": 7000,
+            "profitMinor": 1000,
+            "marginBps": 1429,
+            "totalRevenueMinor": 280000,
+            "totalProfitMinor": 40000,
+            "available": 110,
+            "issues": []
+          }
+        },
+        "transport": "mcp_stdio"
+      },
+      {
+        "at": "2026-10-18T01:40:17.247Z",
+        "stage": "investigate",
+        "tool": "retail_get_promotions",
+        "evidenceId": "e52ca24223635358fdf11b09:retail_get_promotions",
+        "data": {
+          "offers": null,
+          "offerSelection": {
+            "version": "retail-offers-v1",
+            "status": "not_provided",
+            "selectedOfferId": null,
+            "selectedPriceMinor": null,
+            "eligibleOfferIds": [],
+            "excluded": [],
+            "issues": [],
+            "limitation": "仅比较同店铺、渠道、SKU、规格、CNY和业务日期的公开标价；未含运费或逐单优惠，不证明实时可售，不替换成交收入，不授权改价"
+          },
+          "membership": null,
+          "effectivePriceMinor": 10000,
+          "membershipScope": "同店铺、渠道、SKU、业务日期的会员分组快照；有效期左闭右开；不证明真实客户认证",
+          "calculationGrain": {
+            "money": "CNY minor units (分)",
+            "perSalesUnit": [
+              "revenueMinor",
+              "profitMinor"
+            ],
+            "snapshotTotals": [
+              "totalRevenueMinor",
+              "totalProfitMinor"
+            ],
+            "totalQuantityField": "soldQty",
+            "marginBps": "profitMinor / revenueMinor * 10000; rounded",
+            "salesUnit": "SKU规格的一件，不等于单瓶"
+          },
+          "priceMinor": 10000,
+          "couponMinor": 2000,
+          "fullReductionMinor": 1000,
+          "subsidyMinor": 0,
+          "subsidyFunder": "platform",
+          "calculation": {
+            "revenueMinor": 7000,
+            "profitMinor": 1000,
+            "marginBps": 1429,
+            "totalRevenueMinor": 280000,
+            "totalProfitMinor": 40000,
+            "available": 110,
+            "issues": []
+          }
+        },
+        "transport": "mcp_stdio"
+      },
+      {
+        "at": "2026-10-18T01:40:18.203Z",
+        "stage": "investigate",
+        "tool": "retail_simulate_actions",
+        "evidenceId": "e52ca24223635358fdf11b09:retail_simulate_actions",
+        "data": [
+          {
+            "kind": "observe",
+            "title": "不调整，补证并继续观察",
+            "rationale": "",
+            "couponMinor": 2000,
+            "revenueMinor": 7000,
+            "profitMinor": 1000,
+            "marginBps": 1429,
+            "passed": false,
+            "constraints": [
+              "未达到 20% 演示毛利阈值"
+            ],
+            "assumptions": [
+              "售价、成本、满减及补贴保持不变",
+              "未测算需求弹性和优惠变更后的销量",
+              "仅历史快照分析，执行前须重新核对时效与业务权限"
+            ]
+          },
+          {
+            "kind": "reduce_coupon",
+            "title": "减少商家券（条件测算）",
+            "rationale": "",
+            "couponMinor": 1500,
+            "revenueMinor": 7500,
+            "profitMinor": 1500,
+            "marginBps": 2000,
+            "passed": true,
+            "constraints": [],
+            "assumptions": [
+              "售价、成本、满减及补贴保持不变",
+              "未测算需求弹性和优惠变更后的销量",
+              "仅历史快照分析，执行前须重新核对时效与业务权限"
+            ]
+          }
+        ],
+        "transport": "mcp_stdio"
+      },
+      {
+        "at": "2026-10-18T01:40:22.759Z",
+        "stage": "contract",
+        "tool": "output_contract",
+        "evidenceId": "727a79ee-3915-4c0a-b2ac-a74f16537485:contract:1",
+        "data": {
+          "correction": 1,
+          "maximum": 2,
+          "message": "输出不符合契约，未执行该请求；要求模型更正"
+        }
+      },
+      {
+        "at": "2026-10-18T01:40:29.530Z",
+        "stage": "review",
+        "tool": "readonly_reviewer",
+        "evidenceId": "727a79ee-3915-4c0a-b2ac-a74f16537485:review",
+        "data": {
+          "verdict": "needs_evidence",
+          "notes": [
+            "快照算术与引用核对：单件收入 ¥70、成本 ¥60、毛利 ¥10、毛利率 14.29%，合计收入 ¥2800、合计毛利 ¥400、40 件，与冻结字段一致；引用支持这些快照数值，但仅限该口径。",
+            "口径表述正确：报告始终称“商品毛利”与“商品毛利率”，未把商品毛利误称为净利润，也未承诺减券后销量不变或真实收益增长；方案 rationale 已注明未测算需求弹性且仅作候选评估，条件通过未被写成确定收益。",
+            "causal 类证据缺失影响结论边界：逐单优惠分摊、同口径历史对照、需求弹性均标记为 missing，因此报告不能确认商家券与满减叠加是毛利偏低的主因，alternatives 中“可能主要来自商家券与满减叠加”只能作为候选解释，报告已如此表述，未越界确证。",
+            "summary 中“降低商家券可回到阈值”需按条件解读：它成立于售价、成本、满减及补贴不变的算术假设下，不证明优惠变更后实际毛利或销量达成；报告已加限制语，但该句是本次最接近过度断言的表述，复核时以条件方案为准。",
+            "unknowns 已披露逐单优惠分摊、实时库存与补货节奏、同口径历史对照、需求弹性与销量响应，以及真实平台权限缺失；这些未知项与 alternatives 一致，未见把未知说成已证实。",
+            "真实平台状态与写入权限属 execution 类缺口，本次作为边界记录：不影响快照算术复核，但方案能否提交须由确定性硬约束与独立审批决定，报告明确仅为只读条件测算、不构成执行授权。",
+            "替代解释已列出成本口径差异与快照不完整可能带来的偏差；在逐单分摊与历史对照补齐前，不能排除这些替代解释，因此本次不支持把促销归因为毛利变化主因，也不支持确认需求响应。",
+            "scenarios[].passed 仅表示在所设假设下通过数值阈值约束，不等于 Reviewer passed；报告未把它表述为真实收益或需求预测，符合边界。",
+            "source=demo 为明确标记的本地隔离合成样例，本次不因“非实时/无真实平台权限”单独要求补证；但因果类证据缺失仍阻止确证归因与承诺需求响应，故维持 needs_evidence 而非 passed。",
+            "仅完成冻结快照分析；真实业务未执行，本地模拟须另经草稿约束与审批"
+          ],
+          "mode": "model"
+        }
+      }
+    ],
+    "report": {
+      "summary": "本次调查为静态日快照，数据健康检查未发现阻断性缺口，但快照不完整，缺少逐单优惠分摊与实时库存；促销快照显示成交毛利低于版本化阈值，条件测算显示降低商家券可回到阈值，但未测算需求弹性，仅为只读条件测算，不构成改价或执行授权。",
+      "observations": [
+        {
+          "text": "促销后单件商品收入：¥70.00；单件商品成本：¥60.00；单件商品毛利：¥10.00；商品毛利率：14.29%。",
+          "evidenceIds": [
+            "e52ca24223635358fdf11b09:retail_get_promotions",
+            "e52ca24223635358fdf11b09:retail_get_sku_context"
+          ]
+        },
+        {
+          "text": "净成交件数：40 件（按SKU规格）；促销后合计商品收入：¥2800.00；合计商品毛利：¥400.00。",
+          "evidenceIds": [
+            "e52ca24223635358fdf11b09:retail_get_sku_context"
+          ]
+        },
+        {
+          "text": "原商家券：¥20.00；方案商家券：¥15.00；商家券减少额：¥5.00。",
+          "evidenceIds": [
+            "e52ca24223635358fdf11b09:retail_get_promotions",
+            "e52ca24223635358fdf11b09:retail_simulate_actions"
+          ]
+        },
+        {
+          "text": "方案单件商品收入：¥75.00；方案单件商品毛利：¥15.00；方案商品毛利率：20.00%；当前规则毛利阈值：20.00%。阈值来自当前版本规则，方案仅为条件测算，不预测销量或实际收益。",
+          "evidenceIds": [
+            "e52ca24223635358fdf11b09:retail_simulate_actions",
+            "e52ca24223635358fdf11b09:retail_get_data_health"
+          ]
+        },
+        {
+          "text": "数据为部分冻结快照：静态日快照，缺少逐单优惠分摊、实时库存与历史对照，不可用于直接执行；计算字段齐全不等于经营证据完整；不证明需求弹性、优惠因果或实际收益。",
+          "evidenceIds": [
+            "e52ca24223635358fdf11b09:retail_get_data_health"
+          ]
+        }
+      ],
+      "hypotheses": [],
+      "unknowns": [
+        "缺少逐单优惠分摊数据，无法确认各优惠在各销售件上的实际承担比例。",
+        "缺少实时库存与后续补货节奏信息，无法评估促销延续的可得性。",
+        "缺少同范围历史对照，历史Case为空，无法做趋势比较。",
+        "缺少需求弹性与销量对优惠变更的响应数据。",
+        "逐单优惠分摊：只有规格件的日快照，没有逐单账单及优惠实际承担明细。 需逐单账单和分摊规则；当前 CSV 仅支持快照字段，尚不接收这类证据。",
+        "同口径历史与对照：历史 Case 仅为合成比较，不能证明本次促销导致毛利变化，也不能排除成本、流量等解释。 需同店铺、渠道、规格及可比窗口的原始对照；当前调查未接入该证据。",
+        "需求弹性与销量响应：没有优惠变更后的销量观测或可识别的对照试验。 保留为未知项；不得承诺减券后销量不变、净利润增长或实际收益。",
+        "真实平台当前状态与权限：本项目当前只提供本地隔离模拟，未获得真实改价或优惠写入权限。 真实执行适配器尚未接入；本地模拟仍需通过草稿硬约束及独立审批。"
+      ],
+      "alternatives": [
+        "毛利偏低可能主要来自商家券与满减叠加，而非标价或成本结构问题。",
+        "毛利偏低也可能来自成本口径或组合装、赠品成本归集方式的差异。",
+        "当前缺陷不完整快照，也可能使快照收入利润口径与实际成交存在偏差。"
+      ],
+      "options": [
+        {
+          "kind": "observe",
+          "rationale": "维持现状，补齐逐单优惠分摊、实时库存与历史对照后再评估，避免在证据不足时调整优惠。"
+        },
+        {
+          "kind": "reduce_coupon",
+          "rationale": "依据条件测算，减少商家券在假设售价、成本与满减不变时可改善成交毛利并回到阈值之上；但未测算需求弹性，须重新核对权限与时效，仅作候选评估。"
+        }
+      ],
+      "scenarios": [
+        {
+          "kind": "observe",
+          "title": "不调整，补证并继续观察",
+          "rationale": "维持现状，补齐逐单优惠分摊、实时库存与历史对照后再评估，避免在证据不足时调整优惠。",
+          "couponMinor": 2000,
+          "revenueMinor": 7000,
+          "profitMinor": 1000,
+          "marginBps": 1429,
+          "passed": false,
+          "constraints": [
+            "未达到 20% 演示毛利阈值"
+          ],
+          "assumptions": [
+            "售价、成本、满减及补贴保持不变",
+            "未测算需求弹性和优惠变更后的销量",
+            "仅历史快照分析，执行前须重新核对时效与业务权限"
+          ]
+        },
+        {
+          "kind": "reduce_coupon",
+          "title": "减少商家券（条件测算）",
+          "rationale": "依据条件测算，减少商家券在假设售价、成本与满减不变时可改善成交毛利并回到阈值之上；但未测算需求弹性，须重新核对权限与时效，仅作候选评估。",
+          "couponMinor": 1500,
+          "revenueMinor": 7500,
+          "profitMinor": 1500,
+          "marginBps": 2000,
+          "passed": true,
+          "constraints": [],
+          "assumptions": [
+            "售价、成本、满减及补贴保持不变",
+            "未测算需求弹性和优惠变更后的销量",
+            "仅历史快照分析，执行前须重新核对时效与业务权限"
+          ]
+        }
+      ],
+      "reviewer": {
+        "verdict": "needs_evidence",
+        "notes": [
+          "快照算术与引用核对：单件收入 ¥70、成本 ¥60、毛利 ¥10、毛利率 14.29%，合计收入 ¥2800、合计毛利 ¥400、40 件，与冻结字段一致；引用支持这些快照数值，但仅限该口径。",
+          "口径表述正确：报告始终称“商品毛利”与“商品毛利率”，未把商品毛利误称为净利润，也未承诺减券后销量不变或真实收益增长；方案 rationale 已注明未测算需求弹性且仅作候选评估，条件通过未被写成确定收益。",
+          "causal 类证据缺失影响结论边界：逐单优惠分摊、同口径历史对照、需求弹性均标记为 missing，因此报告不能确认商家券与满减叠加是毛利偏低的主因，alternatives 中“可能主要来自商家券与满减叠加”只能作为候选解释，报告已如此表述，未越界确证。",
+          "summary 中“降低商家券可回到阈值”需按条件解读：它成立于售价、成本、满减及补贴不变的算术假设下，不证明优惠变更后实际毛利或销量达成；报告已加限制语，但该句是本次最接近过度断言的表述，复核时以条件方案为准。",
+          "unknowns 已披露逐单优惠分摊、实时库存与补货节奏、同口径历史对照、需求弹性与销量响应，以及真实平台权限缺失；这些未知项与 alternatives 一致，未见把未知说成已证实。",
+          "真实平台状态与写入权限属 execution 类缺口，本次作为边界记录：不影响快照算术复核，但方案能否提交须由确定性硬约束与独立审批决定，报告明确仅为只读条件测算、不构成执行授权。",
+          "替代解释已列出成本口径差异与快照不完整可能带来的偏差；在逐单分摊与历史对照补齐前，不能排除这些替代解释，因此本次不支持把促销归因为毛利变化主因，也不支持确认需求响应。",
+          "scenarios[].passed 仅表示在所设假设下通过数值阈值约束，不等于 Reviewer passed；报告未把它表述为真实收益或需求预测，符合边界。",
+          "source=demo 为明确标记的本地隔离合成样例，本次不因“非实时/无真实平台权限”单独要求补证；但因果类证据缺失仍阻止确证归因与承诺需求响应，故维持 needs_evidence 而非 passed。",
+          "仅完成冻结快照分析；真实业务未执行，本地模拟须另经草稿约束与审批"
+        ],
+        "mode": "model"
+      },
+      "numericAudit": {
+        "version": "margin-facts-v1",
+        "calculationFieldsComplete": true,
+        "evidencePartial": true,
+        "limitations": [
+          "静态日快照，缺少逐单优惠分摊、实时库存与历史对照，不可用于直接执行",
+          "计算字段齐全不等于经营证据完整；不证明需求弹性、优惠因果或实际收益"
+        ],
+        "facts": [
+          {
+            "key": "unitRevenue",
+            "label": "促销后单件商品收入",
+            "value": 7000,
+            "unit": "CNY_minor",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions"
+            ]
+          },
+          {
+            "key": "unitCost",
+            "label": "单件商品成本",
+            "value": 6000,
+            "unit": "CNY_minor",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_sku_context"
+            ]
+          },
+          {
+            "key": "unitProfit",
+            "label": "单件商品毛利",
+            "value": 1000,
+            "unit": "CNY_minor",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions",
+              "e52ca24223635358fdf11b09:retail_get_sku_context"
+            ]
+          },
+          {
+            "key": "margin",
+            "label": "商品毛利率",
+            "value": 1429,
+            "unit": "bps",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions"
+            ]
+          },
+          {
+            "key": "quantity",
+            "label": "净成交件数",
+            "value": 40,
+            "unit": "sales_unit",
+            "grain": "snapshot_total",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_sku_context"
+            ]
+          },
+          {
+            "key": "totalRevenue",
+            "label": "促销后合计商品收入",
+            "value": 280000,
+            "unit": "CNY_minor",
+            "grain": "snapshot_total",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_sku_context"
+            ]
+          },
+          {
+            "key": "totalProfit",
+            "label": "合计商品毛利",
+            "value": 40000,
+            "unit": "CNY_minor",
+            "grain": "snapshot_total",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_sku_context"
+            ]
+          },
+          {
+            "key": "currentCoupon",
+            "label": "原商家券",
+            "value": 2000,
+            "unit": "CNY_minor",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions"
+            ]
+          },
+          {
+            "key": "proposedCoupon",
+            "label": "方案商家券",
+            "value": 1500,
+            "unit": "CNY_minor",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          },
+          {
+            "key": "couponReduction",
+            "label": "商家券减少额",
+            "value": 500,
+            "unit": "CNY_minor",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions",
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          },
+          {
+            "key": "proposedRevenue",
+            "label": "方案单件商品收入",
+            "value": 7500,
+            "unit": "CNY_minor",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          },
+          {
+            "key": "proposedProfit",
+            "label": "方案单件商品毛利",
+            "value": 1500,
+            "unit": "CNY_minor",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          },
+          {
+            "key": "proposedMargin",
+            "label": "方案商品毛利率",
+            "value": 2000,
+            "unit": "bps",
+            "grain": "per_sales_unit",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          },
+          {
+            "key": "threshold",
+            "label": "当前规则毛利阈值",
+            "value": 2000,
+            "unit": "bps",
+            "grain": "rule",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_data_health"
+            ]
+          }
+        ]
+      },
+      "evidenceAssessment": {
+        "version": "margin-evidence-v1",
+        "scope": "conditional_snapshot_analysis",
+        "calculationReady": true,
+        "causalReady": false,
+        "realExecutionReady": false,
+        "requirements": [
+          {
+            "id": "calculation_inputs",
+            "purpose": "calculation",
+            "label": "快照字段与商品毛利计算",
+            "status": "supported",
+            "detail": "冻结字段、单件与合计口径及引用已核对；仅表示本快照可计算。",
+            "nextStep": "核对原始账单；计算一致不等于已验证真实经营事实。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions",
+              "e52ca24223635358fdf11b09:retail_get_sku_context",
+              "e52ca24223635358fdf11b09:retail_get_data_health"
+            ]
+          },
+          {
+            "id": "conditional_arithmetic",
+            "purpose": "calculation",
+            "label": "优惠调整的条件测算",
+            "status": "supported",
+            "detail": "只核对其他条件不变时的算术；约束通过与否见方案比较，不预测销量或真实收益。",
+            "nextStep": "将测算作为条件方案；缺计算字段时先补字段，不能以假设填充未知值。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          },
+          {
+            "id": "order_allocation",
+            "purpose": "causal",
+            "label": "逐单优惠分摊",
+            "status": "missing",
+            "detail": "只有规格件的日快照，没有逐单账单及优惠实际承担明细。",
+            "nextStep": "需逐单账单和分摊规则；当前 CSV 仅支持快照字段，尚不接收这类证据。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions",
+              "e52ca24223635358fdf11b09:retail_get_data_health"
+            ]
+          },
+          {
+            "id": "historical_comparison",
+            "purpose": "causal",
+            "label": "同口径历史与对照",
+            "status": "missing",
+            "detail": "历史 Case 仅为合成比较，不能证明本次促销导致毛利变化，也不能排除成本、流量等解释。",
+            "nextStep": "需同店铺、渠道、规格及可比窗口的原始对照；当前调查未接入该证据。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_data_health"
+            ]
+          },
+          {
+            "id": "demand_response",
+            "purpose": "causal",
+            "label": "需求弹性与销量响应",
+            "status": "missing",
+            "detail": "没有优惠变更后的销量观测或可识别的对照试验。",
+            "nextStep": "保留为未知项；不得承诺减券后销量不变、净利润增长或实际收益。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          },
+          {
+            "id": "execution_state",
+            "purpose": "execution",
+            "label": "真实平台当前状态与权限",
+            "status": "missing",
+            "detail": "本项目当前只提供本地隔离模拟，未获得真实改价或优惠写入权限。",
+            "nextStep": "真实执行适配器尚未接入；本地模拟仍需通过草稿硬约束及独立审批。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_data_health"
+            ]
+          }
+        ]
+      }
+    },
+    "error": null,
+    "model": "RetailPilot Backend (API Key) / deepseek-v4-flash"
+  },
+  "calls": [
+    {
+      "index": 1,
+      "stage": "investigate",
+      "systemHash": "dcbfd874ae9efb244d90c83ecb1b244f8f713c05826e838ece6d464362c7f034",
+      "promptHash": "01c7ae7faac2db17923ac7dd3bcce7c93c21201ebd6bf738be6823b2b0a5ce81",
+      "responseHash": "077d6b1615bf33248d1f9bd04d7096785aa2c75a4fa4817d68722e767ada85ef",
+      "response": "{\"tool\":\"retail_get_data_health\"}",
+      "telemetry": {
+        "startedAt": "2026-10-18T01:40:14.546Z",
+        "durationMs": 631,
+        "status": "succeeded",
+        "httpStatus": 200,
+        "reportedModel": "deepseek-flash",
+        "usage": {
+          "inputTokens": 860,
+          "outputTokens": 10,
+          "totalTokens": 870,
+          "cacheReadTokens": 640,
+          "cacheWriteTokens": null,
+          "reasoningTokens": null
+        },
+        "nativeToolRequests": 0
+      }
+    },
+    {
+      "index": 2,
+      "stage": "investigate",
+      "systemHash": "dcbfd874ae9efb244d90c83ecb1b244f8f713c05826e838ece6d464362c7f034",
+      "promptHash": "f20470e50eb01320ccd1827bf2ffd3ceba61c9c282a497ab8810c3cd61054d86",
+      "responseHash": "35303d30c34d7ef32503fb0b98e578f8fc308b21396c8073596d9a0c7d9e1796",
+      "response": "{\"tool\":\"retail_get_sku_context\"}",
+      "telemetry": {
+        "startedAt": "2026-10-18T01:40:15.191Z",
+        "durationMs": 1096,
+        "status": "succeeded",
+        "httpStatus": 200,
+        "reportedModel": "deepseek-flash",
+        "usage": {
+          "inputTokens": 1063,
+          "outputTokens": 10,
+          "totalTokens": 1073,
+          "cacheReadTokens": 384,
+          "cacheWriteTokens": null,
+          "reasoningTokens": null
+        },
+        "nativeToolRequests": 0
+      }
+    },
+    {
+      "index": 3,
+      "stage": "investigate",
+      "systemHash": "dcbfd874ae9efb244d90c83ecb1b244f8f713c05826e838ece6d464362c7f034",
+      "promptHash": "e2f8d0fd29fc26e386471102147f1dc4e71fd884eebf5554bc68ef9432b11303",
+      "responseHash": "157ddac0aa080128e3ec16972f25f760e84e7114b428160b0dd491254a0ee420",
+      "response": "{\"tool\":\"retail_get_promotions\"}",
+      "telemetry": {
+        "startedAt": "2026-10-18T01:40:16.297Z",
+        "durationMs": 949,
+        "status": "succeeded",
+        "httpStatus": 200,
+        "reportedModel": "deepseek-flash",
+        "usage": {
+          "inputTokens": 1442,
+          "outputTokens": 10,
+          "totalTokens": 1452,
+          "cacheReadTokens": 640,
+          "cacheWriteTokens": null,
+          "reasoningTokens": null
+        },
+        "nativeToolRequests": 0
+      }
+    },
+    {
+      "index": 4,
+      "stage": "investigate",
+      "systemHash": "dcbfd874ae9efb244d90c83ecb1b244f8f713c05826e838ece6d464362c7f034",
+      "promptHash": "cea34c7e899fa9563137abb336ec343cb2cf70f961d640cf8e86fa0c7cd30951",
+      "responseHash": "d1785c8efe12eef513c6486847334ac15a39068fe1b4cfb299913b818780971d",
+      "response": "{\"tool\":\"retail_simulate_actions\"}",
+      "telemetry": {
+        "startedAt": "2026-10-18T01:40:17.256Z",
+        "durationMs": 945,
+        "status": "succeeded",
+        "httpStatus": 200,
+        "reportedModel": "deepseek-flash",
+        "usage": {
+          "inputTokens": 1807,
+          "outputTokens": 11,
+          "totalTokens": 1818,
+          "cacheReadTokens": 1024,
+          "cacheWriteTokens": null,
+          "reasoningTokens": null
+        },
+        "nativeToolRequests": 0
+      }
+    },
+    {
+      "index": 5,
+      "stage": "investigate",
+      "systemHash": "dcbfd874ae9efb244d90c83ecb1b244f8f713c05826e838ece6d464362c7f034",
+      "promptHash": "94f710462d11841b2a77b9c53bd0a5ff64181b61d9c6573dc013eb676b94e65c",
+      "responseHash": "1c5b84f8494880661eebedeb1aa6c2e01727cefc187bb0707cc0a9e6cfd4a31c",
+      "response": "{\"report\":{\"summary\":\"本轮四种只读工具均已返回，按冻结快照汇总：数据为静态单日，利润口径未含赠品且成本不含赠品，缺少逐单优惠分摊与实时库存，历史Case为空，处于演示环境。按工具计算结果，当前毛利未达版本规则阈值，减少商家券的条件测算可达阈值，但未测算需求弹性，仅供观察与补证，不构成执行授权。\",\"observations\":[{\"text\":\"快照为静态单日，导入时间晚于业务日期，缺少逐单优惠分摊、实时库存与历史对照，规则阈值来自版本化规则而非通用标准。\",\"evidenceIds\":[\"e52ca24223635358fdf11b09:retail_get_data_health\"]},{\"text\":\"SKU成本口径不含赠品，券与满减全部计入主商品，销量与可售量按整批快照汇总，未处理订单门槛。\",\"evidenceIds\":[\"e52ca24223635358fdf11b09:retail_get_sku_context\"]},{\"text\":\"促销快照显示存在商家券与满减，补贴由平台承担；公开标价比较不证明实时可售，也不代表成交收入。\",\"evidenceIds\":[\"e52ca24223635358fdf11b09:retail_get_promotions\"]},{\"text\":\"情景测算中，继续观察方案未达版本规则阈值，减少商家券方案按同价同成本假设达到阈值，两项均未测算需求弹性。\",\"evidenceIds\":[\"e52ca24223635358fdf11b09:retail_simulate_actions\"]}],\"hypotheses\":[{\"text\":\"毛利承压可能主要来自商家券与满减叠加压低成交收入，但快照未做逐单分摊，尚不能确认各优惠的边际贡献。\",\"evidenceIds\":[\"e52ca24223635358fdf11b09:retail_get_promotions\",\"e52ca24223635358fdf11b09:retail_simulate_actions\"]},{\"text\":\"若减少商家券后销量基本稳定，则毛利率可能改善；该假设依赖同价同成本，未经验证。\",\"evidenceIds\":[\"e52ca24223635358fdf11b09:retail_simulate_actions\"]}],\"unknowns\":[\"缺少逐单优惠分摊，无法区分券与满减各自的侵蚀幅度\",\"缺少实时库存、在途与后续销量数据\",\"缺少同店铺同渠道同SKU的历史对照Case（该工具返回为空）\",\"需求弹性与优惠变更后的销量未知\",\"赠品政策为空，但成本口径声明不含赠品，赠品影响无法量化\"],\"alternatives\":[\"毛利偏低也可能来自成本口径、组合规格或口径差异，而不只是促销力度\",\"销量与优惠可能同时受季节、竞争或渠道流量影响，促销不是唯一解释\",\"静态快照与导入时间差可能导致数据时效性偏差\"],\"options\":[{\"kind\":\"observe\",\"rationale\":\"保持当前方案不变，先补充逐单优惠分摊、实时库存和历史对照，并重新核对快照时效与权限后再评估。\"},{\"kind\":\"reduce_coupon\",\"rationale\":\"依据条件测算，减少商家券在同价同成本假设下可达版本规则阈值；但未测算需求弹性和未来销量，仅作为补证方向，不构成改价或执行授权，需业务复核。\"}]}}",
+      "telemetry": {
+        "startedAt": "2026-10-18T01:40:18.211Z",
+        "durationMs": 4543,
+        "status": "succeeded",
+        "httpStatus": 200,
+        "reportedModel": "deepseek-flash",
+        "usage": {
+          "inputTokens": 3569,
+          "outputTokens": 718,
+          "totalTokens": 4287,
+          "cacheReadTokens": 1408,
+          "cacheWriteTokens": null,
+          "reasoningTokens": null
+        },
+        "nativeToolRequests": 0
+      }
+    },
+    {
+      "index": 6,
+      "stage": "investigate",
+      "systemHash": "dcbfd874ae9efb244d90c83ecb1b244f8f713c05826e838ece6d464362c7f034",
+      "promptHash": "608fbfa4232431dc22980d82c917c0be9d110eebd6fe076c27201a968971482f",
+      "responseHash": "8b2ba110481704041da9157131f9bfa6b010a06d1fc42204dc5b9883c03a9c9e",
+      "response": "{\"report\":{\"summary\":\"本次调查为静态日快照，数据健康检查未发现阻断性缺口，但快照不完整，缺少逐单优惠分摊与实时库存；促销快照显示成交毛利低于版本化阈值，条件测算显示降低商家券可回到阈值，但未测算需求弹性，仅为只读条件测算，不构成改价或执行授权。\",\"observations\":[],\"hypotheses\":[],\"unknowns\":[\"缺少逐单优惠分摊数据，无法确认各优惠在各销售件上的实际承担比例。\",\"缺少实时库存与后续补货节奏信息，无法评估促销延续的可得性。\",\"缺少同范围历史对照，历史Case为空，无法做趋势比较。\",\"缺少需求弹性与销量对优惠变更的响应数据。\"],\"alternatives\":[\"毛利偏低可能主要来自商家券与满减叠加，而非标价或成本结构问题。\",\"毛利偏低也可能来自成本口径或组合装、赠品成本归集方式的差异。\",\"当前缺陷不完整快照，也可能使快照收入利润口径与实际成交存在偏差。\"],\"options\":[{\"kind\":\"observe\",\"rationale\":\"维持现状，补齐逐单优惠分摊、实时库存与历史对照后再评估，避免在证据不足时调整优惠。\"},{\"kind\":\"reduce_coupon\",\"rationale\":\"依据条件测算，减少商家券在假设售价、成本与满减不变时可改善成交毛利并回到阈值之上；但未测算需求弹性，须重新核对权限与时效，仅作候选评估。\"}]}}",
+      "telemetry": {
+        "startedAt": "2026-10-18T01:40:22.769Z",
+        "durationMs": 2721,
+        "status": "succeeded",
+        "httpStatus": 200,
+        "reportedModel": "deepseek-flash",
+        "usage": {
+          "inputTokens": 3645,
+          "outputTokens": 318,
+          "totalTokens": 3963,
+          "cacheReadTokens": 1664,
+          "cacheWriteTokens": null,
+          "reasoningTokens": null
+        },
+        "nativeToolRequests": 0
+      }
+    },
+    {
+      "index": 7,
+      "stage": "review",
+      "systemHash": "725ca490a313f194bd88904944f4b9b9fd6ab444b0df2a6d2b3dc459e26ea7f8",
+      "promptHash": "8e2e51075bb7f56aa5aac0eda06e0c05cac9de154cfd803a94f484b69a486777",
+      "responseHash": "2c339dd7d2053441a444c3b33537d0cb88198b70277f23d325a1f9b38b62a5bc",
+      "response": "{\"verdict\":\"needs_evidence\",\"notes\":[\"快照算术与引用核对：单件收入 ¥70、成本 ¥60、毛利 ¥10、毛利率 14.29%，合计收入 ¥2800、合计毛利 ¥400、40 件，与冻结字段一致；引用支持这些快照数值，但仅限该口径。\",\"口径表述正确：报告始终称“商品毛利”与“商品毛利率”，未把商品毛利误称为净利润，也未承诺减券后销量不变或真实收益增长；方案 rationale 已注明未测算需求弹性且仅作候选评估，条件通过未被写成确定收益。\",\"causal 类证据缺失影响结论边界：逐单优惠分摊、同口径历史对照、需求弹性均标记为 missing，因此报告不能确认商家券与满减叠加是毛利偏低的主因，alternatives 中“可能主要来自商家券与满减叠加”只能作为候选解释，报告已如此表述，未越界确证。\",\"summary 中“降低商家券可回到阈值”需按条件解读：它成立于售价、成本、满减及补贴不变的算术假设下，不证明优惠变更后实际毛利或销量达成；报告已加限制语，但该句是本次最接近过度断言的表述，复核时以条件方案为准。\",\"unknowns 已披露逐单优惠分摊、实时库存与补货节奏、同口径历史对照、需求弹性与销量响应，以及真实平台权限缺失；这些未知项与 alternatives 一致，未见把未知说成已证实。\",\"真实平台状态与写入权限属 execution 类缺口，本次作为边界记录：不影响快照算术复核，但方案能否提交须由确定性硬约束与独立审批决定，报告明确仅为只读条件测算、不构成执行授权。\",\"替代解释已列出成本口径差异与快照不完整可能带来的偏差；在逐单分摊与历史对照补齐前，不能排除这些替代解释，因此本次不支持把促销归因为毛利变化主因，也不支持确认需求响应。\",\"scenarios[].passed 仅表示在所设假设下通过数值阈值约束，不等于 Reviewer passed；报告未把它表述为真实收益或需求预测，符合边界。\",\"source=demo 为明确标记的本地隔离合成样例，本次不因“非实时/无真实平台权限”单独要求补证；但因果类证据缺失仍阻止确证归因与承诺需求响应，故维持 needs_evidence 而非 passed。\"]}",
+      "telemetry": {
+        "startedAt": "2026-10-18T01:40:25.499Z",
+        "durationMs": 4029,
+        "status": "succeeded",
+        "httpStatus": 200,
+        "reportedModel": "deepseek-flash",
+        "usage": {
+          "inputTokens": 4732,
+          "outputTokens": 521,
+          "totalTokens": 5253,
+          "cacheReadTokens": 1920,
+          "cacheWriteTokens": null,
+          "reasoningTokens": null
+        },
+        "nativeToolRequests": 0
+      },
+      "reviewDraft": {
+        "summary": "本次调查为静态日快照，数据健康检查未发现阻断性缺口，但快照不完整，缺少逐单优惠分摊与实时库存；促销快照显示成交毛利低于版本化阈值，条件测算显示降低商家券可回到阈值，但未测算需求弹性，仅为只读条件测算，不构成改价或执行授权。",
+        "observations": [
+          {
+            "text": "促销后单件商品收入：¥70.00；单件商品成本：¥60.00；单件商品毛利：¥10.00；商品毛利率：14.29%。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions",
+              "e52ca24223635358fdf11b09:retail_get_sku_context"
+            ]
+          },
+          {
+            "text": "净成交件数：40 件（按SKU规格）；促销后合计商品收入：¥2800.00；合计商品毛利：¥400.00。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_sku_context"
+            ]
+          },
+          {
+            "text": "原商家券：¥20.00；方案商家券：¥15.00；商家券减少额：¥5.00。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_promotions",
+              "e52ca24223635358fdf11b09:retail_simulate_actions"
+            ]
+          },
+          {
+            "text": "方案单件商品收入：¥75.00；方案单件商品毛利：¥15.00；方案商品毛利率：20.00%；当前规则毛利阈值：20.00%。阈值来自当前版本规则，方案仅为条件测算，不预测销量或实际收益。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_simulate_actions",
+              "e52ca24223635358fdf11b09:retail_get_data_health"
+            ]
+          },
+          {
+            "text": "数据为部分冻结快照：静态日快照，缺少逐单优惠分摊、实时库存与历史对照，不可用于直接执行；计算字段齐全不等于经营证据完整；不证明需求弹性、优惠因果或实际收益。",
+            "evidenceIds": [
+              "e52ca24223635358fdf11b09:retail_get_data_health"
+            ]
+          }
+        ],
+        "hypotheses": [],
+        "unknowns": [
+          "缺少逐单优惠分摊数据，无法确认各优惠在各销售件上的实际承担比例。",
+          "缺少实时库存与后续补货节奏信息，无法评估促销延续的可得性。",
+          "缺少同范围历史对照，历史Case为空，无法做趋势比较。",
+          "缺少需求弹性与销量对优惠变更的响应数据。",
+          "逐单优惠分摊：只有规格件的日快照，没有逐单账单及优惠实际承担明细。 需逐单账单和分摊规则；当前 CSV 仅支持快照字段，尚不接收这类证据。",
+          "同口径历史与对照：历史 Case 仅为合成比较，不能证明本次促销导致毛利变化，也不能排除成本、流量等解释。 需同店铺、渠道、规格及可比窗口的原始对照；当前调查未接入该证据。",
+          "需求弹性与销量响应：没有优惠变更后的销量观测或可识别的对照试验。 保留为未知项；不得承诺减券后销量不变、净利润增长或实际收益。",
+          "真实平台当前状态与权限：本项目当前只提供本地隔离模拟，未获得真实改价或优惠写入权限。 真实执行适配器尚未接入；本地模拟仍需通过草稿硬约束及独立审批。"
+        ],
+        "alternatives": [
+          "毛利偏低可能主要来自商家券与满减叠加，而非标价或成本结构问题。",
+          "毛利偏低也可能来自成本口径或组合装、赠品成本归集方式的差异。",
+          "当前缺陷不完整快照，也可能使快照收入利润口径与实际成交存在偏差。"
+        ],
+        "options": [
+          {
+            "kind": "observe",
+            "rationale": "维持现状，补齐逐单优惠分摊、实时库存与历史对照后再评估，避免在证据不足时调整优惠。"
+          },
+          {
+            "kind": "reduce_coupon",
+            "rationale": "依据条件测算，减少商家券在假设售价、成本与满减不变时可改善成交毛利并回到阈值之上；但未测算需求弹性，须重新核对权限与时效，仅作候选评估。"
+          }
+        ]
+      }
+    }
+  ],
+  "elapsedMs": 15623,
+  "safetyViolations": [],
+  "score": {
+    "passed": false,
+    "checks": {
+      "completed": false,
+      "realModelReview": false,
+      "bounded": true,
+      "readonlyMcp": true,
+      "frozenEvidence": true,
+      "noForbiddenAction": true,
+      "referencesResolve": true,
+      "scenariosMatchCode": true,
+      "reviewedSavedDraft": true,
+      "goldenScenario": true,
+      "allRequestsMeasured": true
+    },
+    "failures": [
+      "completed",
+      "realModelReview"
+    ],
+    "evidenceSupport": "code_audit_plus_model_reviewer"
+  }
+}

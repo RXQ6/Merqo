@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "exe": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\upgrade-1792292149331\\installed\\Merqo.exe",
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\profile-iRIQFZ",
+  "runId": "6a806723-fc4e-46af-b564-a5a582f0f28a",
+  "receiptId": "d322bc11-301b-473b-9681-8f6d930f1319",
+  "checks": [
+    "no-Git-Bash first run can enter retail analysis",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "packaged data worker imports three scenarios and computes the expected margin",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "UI pause survives actual process restart; explicit resume preserves frozen evidence and remaining call budget",
+    "packaged margin API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged ads API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged inventory API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged approval, isolated execution, reread and receipt idempotency",
+    "actual UI uses bounded server pages; next-page and search preserve full-scope exact metric totals",
+    "analysis and conversations round-trip in a single window",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "normal restart preserves demo data, model connection settings, investigation and execution receipt"
+  ],
+  "calls": 19,
+  "modelFixture": true,
+  "liveModelQuality": false,
+  "noDeveloperPath": true
+}

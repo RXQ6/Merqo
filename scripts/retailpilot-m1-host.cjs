@@ -99,6 +99,93 @@ app.on('web-contents-created', (_event, contents) => {
       await waitFor(`document.querySelector('[data-focus-zone="sidebar"]').checkVisibility()&&!document.querySelector('[data-testid="retail-workspace"]').checkVisibility()`, 'return to original conversation surface');
       await click('经营分析');await waitFor(analysisVisible,'reentry');
       await assert(`!!document.querySelector('.retail-windowbar')&&!!document.querySelector('.retail-navigation')`, 'analysis retains clean header and grouped navigation');
+      if(phase==='offers'||phase==='offers-restart'){
+        if(phase==='offers'){
+          await click('数据与导入');await click('下载可售报价示例');
+          const started=Date.now();
+          while(!downloads.some(d=>d.state==='completed'&&d.target.endsWith('Merqo-可售报价示例.csv'))){if(Date.now()-started>12000)throw new Error('Offer CSV download timed out');await new Promise(resolve=>setTimeout(resolve,100));}
+          const csv=fs.readFileSync(downloads.find(d=>d.target.endsWith('Merqo-可售报价示例.csv')).target,'utf8');
+          await js(`(()=>{const input=document.querySelector('input[aria-label="选择经营 CSV 文件"]');const transfer=new DataTransfer();transfer.items.add(new File([${JSON.stringify(csv)}],'offers.csv',{type:'text/csv'}));input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+          await waitFor(`document.querySelector('[aria-label="导入预览"]')?.innerText.includes('有效 3 行')`, 'offer file preview accepts three rows');
+          await assert(`document.querySelector('select[aria-label="映射 参考报价（可选：JSON）"]').value==='offers'`, 'offer scope and availability fields auto-map');
+          await capture('offer-preview.png');await click('导入 3 条有效数据');
+          await waitFor(`document.body.innerText.includes('已导入 3 条')`, 'offer import persisted through IPC worker');
+        }
+        await click('经营总览');await js(`(()=>{const select=document.querySelector('select[aria-label="数据来源"]');select.value='csv';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+        await waitFor(`document.querySelectorAll('tbody tr').length===3`, 'three offer snapshots visible');
+        await assert(`document.querySelectorAll('tbody .retail-badge.needs_evidence').length===1&&document.querySelectorAll('tbody .retail-badge.normal').length===2`, 'offer valid/filtered/unknown states survive '+phase);
+        await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'snapshot'});const rows=r.data.records.filter(r=>r.source==='csv');return rows.length===3&&rows.find(r=>r.row.sku_id==='OFFER-FILTERED').calculation.revenueMinor===8000&&rows.find(r=>r.row.sku_id==='OFFER-UNKNOWN').calculation.profitMinor===null;})()`, 'reference price never overwrites revenue and unknown state persists '+phase);
+        await js(`document.querySelector('button[aria-label="查看 OFFER-FILTERED 计算与证据"]').click()`);
+        await waitFor(`document.querySelector('[aria-label="毛利计算与证据"]')?.innerText.includes('可售参考报价')`, 'offer evidence detail visible');
+        await assert(`document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('筛选参考价：¥30.00')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('排除：报价明确无货')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('¥80.00')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('不替换成交收入')`, 'unavailable cheap offer excluded and reference limitation shown '+phase);
+        await capture('offer-'+phase+'.png');finish();return;
+      }
+      if(phase==='members'||phase==='members-restart'){
+        if(phase==='members'){
+          await click('数据与导入');await click('下载会员价示例');
+          const started=Date.now();
+          while(!downloads.some(d=>d.state==='completed'&&d.target.endsWith('Merqo-会员价示例.csv'))){if(Date.now()-started>12000)throw new Error('Member CSV download timed out');await new Promise(resolve=>setTimeout(resolve,100));}
+          const csv=fs.readFileSync(downloads.find(d=>d.target.endsWith('Merqo-会员价示例.csv')).target,'utf8');
+          await js(`(()=>{const input=document.querySelector('input[aria-label="选择经营 CSV 文件"]');const transfer=new DataTransfer();transfer.items.add(new File([${JSON.stringify(csv)}],'membership.csv',{type:'text/csv'}));input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+          await waitFor(`document.querySelector('[aria-label="导入预览"]')?.innerText.includes('有效 3 行')`, 'member file preview accepts three rows');
+          await assert(`document.querySelector('select[aria-label="映射 会员价格上下文（可选：JSON）"]').value==='membership'`, 'member price context auto-maps');
+          await capture('member-preview.png');await click('导入 3 条有效数据');
+          await waitFor(`document.body.innerText.includes('已导入 3 条')`, 'member import persisted through IPC worker');
+        }
+        await click('经营总览');await js(`(()=>{const select=document.querySelector('select[aria-label="数据来源"]');select.value='csv';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+        await waitFor(`document.querySelectorAll('tbody tr').length===3`, 'three member snapshots visible');
+        await assert(`document.querySelectorAll('tbody .retail-badge.needs_evidence').length===1&&document.querySelectorAll('tbody .retail-badge.low_margin').length===1&&document.querySelectorAll('tbody .retail-badge.normal').length===1`, 'member normal/warning/unknown states survive '+phase);
+        await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'snapshot'});const rows=r.data.records.filter(r=>r.source==='csv');return rows.length===3&&rows.find(r=>r.row.sku_id==='MEMBER-WARNING').calculation.revenueMinor===6000&&rows.find(r=>r.row.sku_id==='MEMBER-MISSING').calculation.profitMinor===null;})()`, 'member price and unknown-identity block persist '+phase);
+        await js(`document.querySelector('button[aria-label="查看 MEMBER-WARNING 计算与证据"]').click()`);
+        await waitFor(`document.querySelector('[aria-label="毛利计算与证据"]')?.innerText.includes('会员价格上下文')`, 'member evidence detail visible');
+        await assert(`document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('gold')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('¥65.00')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('0.00%')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('允许叠加')`, 'member effective price, cohort and discount policy shown '+phase);
+        await capture('member-'+phase+'.png');finish();return;
+      }
+      if(phase==='gifts'||phase==='gifts-restart'){
+        if(phase==='gifts'){
+          await click('数据与导入');await click('下载赠品示例');
+          const started=Date.now();
+          while(!downloads.some(d=>d.state==='completed'&&d.target.endsWith('Merqo-赠品示例.csv'))){if(Date.now()-started>12000)throw new Error('Gift CSV download timed out');await new Promise(resolve=>setTimeout(resolve,100));}
+          const csv=fs.readFileSync(downloads.find(d=>d.target.endsWith('Merqo-赠品示例.csv')).target,'utf8');
+          await js(`(()=>{const input=document.querySelector('input[aria-label="选择经营 CSV 文件"]');const transfer=new DataTransfer();transfer.items.add(new File([${JSON.stringify(csv)}],'gifts.csv',{type:'text/csv'}));input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+          await waitFor(`document.querySelector('[aria-label="导入预览"]')?.innerText.includes('有效 3 行')`, 'gift file preview accepts three rows');
+          await assert(`document.querySelector('select[aria-label="映射 赠品明细（可选：JSON）"]').value==='gifts'&&document.querySelector('select[aria-label="映射 赠品成本口径（可选：additional / included / unknown）"]').value==='gift_cost_basis'`, 'gift association and cost-basis fields auto-map');
+          await capture('gift-preview.png');await click('导入 3 条有效数据');
+          await waitFor(`document.body.innerText.includes('已导入 3 条')`, 'gift import persisted through IPC worker');
+        }
+        await click('经营总览');await js(`(()=>{const select=document.querySelector('select[aria-label="数据来源"]');select.value='csv';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+        await waitFor(`document.querySelectorAll('tbody tr').length===3`, 'three gift snapshots visible');
+        await assert(`document.querySelectorAll('tbody .retail-badge.needs_evidence').length===1&&document.querySelectorAll('tbody .retail-badge.low_margin').length===1&&document.querySelectorAll('tbody .retail-badge.normal').length===1`, 'gift normal/warning/unknown states survive '+phase);
+        await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'snapshot'});const rows=r.data.records.filter(r=>r.source==='csv');return rows.length===3&&rows.find(r=>r.row.sku_id==='GIFT-WARNING').calculation.totalProfitMinor===5000&&rows.find(r=>r.row.sku_id==='GIFT-MISSING').calculation.profitMinor===null;})()`, 'gift-inclusive totals and unknown cost persist '+phase);
+        await js(`document.querySelector('button[aria-label="查看 GIFT-WARNING 计算与证据"]').click()`);
+        await waitFor(`document.querySelector('[aria-label="毛利计算与证据"]')?.innerText.includes('赠品关联（每销售件）')`, 'gift evidence detail visible');
+        await assert(`document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('GIFT-SAMPLE')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('¥15.00')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('6.25%')`, 'gift component cost and inclusive margin shown '+phase);
+        await capture('gift-'+phase+'.png');finish();return;
+      }
+      if(phase==='bundles'||phase==='bundles-restart'){
+        if(phase==='bundles'){
+          await click('数据与导入');
+          await click('下载组合装示例');
+          const started=Date.now();
+          while(!downloads.some(d=>d.state==='completed'&&d.target.endsWith('Merqo-组合装示例.csv'))){if(Date.now()-started>12000)throw new Error('Bundle CSV download timed out');await new Promise(resolve=>setTimeout(resolve,100));}
+          const csv=fs.readFileSync(downloads.find(d=>d.target.endsWith('Merqo-组合装示例.csv')).target,'utf8');
+          await js(`(()=>{const input=document.querySelector('input[aria-label="选择经营 CSV 文件"]');const transfer=new DataTransfer();transfer.items.add(new File([${JSON.stringify(csv)}],'bundle.csv',{type:'text/csv'}));input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+          await waitFor(`document.querySelector('[aria-label="导入预览"]')?.innerText.includes('有效 3 行')`, 'bundle file preview accepts three rows');
+          await assert(`document.querySelectorAll('.retail-mappings select').length===24&&document.querySelector('select[aria-label="映射 组合装子项（可选：JSON）"]').value==='bundle_components'`, 'optional bundle fields auto-map in actual renderer');
+          await capture('bundle-preview.png');
+          await click('导入 3 条有效数据');
+          await waitFor(`document.body.innerText.includes('已导入 3 条')`, 'bundle import persisted through IPC worker');
+        }
+        await click('经营总览');
+        await js(`(()=>{const select=document.querySelector('select[aria-label="数据来源"]');select.value='csv';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+        await waitFor(`document.querySelectorAll('tbody tr').length===3`, 'three bundle snapshots visible');
+        await assert(`document.querySelectorAll('tbody .retail-badge.needs_evidence').length===2&&document.querySelectorAll('tbody .retail-badge.normal').length===1`, 'bundle normal/conflict/missing states survive '+phase);
+        await assert(`(async()=>{const r=await window.electronAPI.retailRequest({op:'snapshot'});const rows=r.data.records.filter(r=>r.source==='csv');return rows.length===3&&rows.find(r=>r.row.sku_id==='PACK-NORMAL').calculation.totalProfitMinor===20000&&rows.filter(r=>r.status==='needs_evidence').every(r=>r.calculation.profitMinor===null);})()`, 'bundle pack totals and evidence gaps persist '+phase);
+        await js(`document.querySelector('button[aria-label="查看 PACK-NORMAL 计算与证据"]').click()`);
+        await waitFor(`document.querySelector('[aria-label="毛利计算与证据"]')?.innerText.includes('组合装子项（每销售包）')`, 'bundle evidence detail visible');
+        await assert(`document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('TEA-UNIT')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('COFFEE-UNIT')&&document.querySelector('[aria-label="毛利计算与证据"]').innerText.includes('25.00%')`, 'component identities and computed pack margin shown '+phase);
+        await capture('bundle-'+phase+'.png');finish();return;
+      }
       if(phase==='checks'||phase==='checks-restart'){
         await click('经营巡检');await waitFor(`!!document.querySelector('[aria-label="巡检运行列表"]')`, 'checks UI ready');
         if(phase==='checks-restart'){
@@ -231,7 +318,7 @@ app.on('web-contents-created', (_event, contents) => {
             let output;
             if (system.includes('串行只读 Reviewer')) output = {verdict:reviewVerdict, notes:['本地协议测试复核，非真实模型质量验证；复核意见标记 '+reviewVerdict]};
             else if (context.observations.length < 4) output = {tool:toolNames[context.observations.length]};
-            else output = {report:{summary:'本地协议测试报告，非真实模型生成的业务结论',observations:context.scenario?[{text:'本地场景协议检查，经营事实以工具证据为准',evidenceIds:[context.observations[2].evidenceId]}]:[],hypotheses:[],unknowns:['缺少实时数据'],alternatives:['成本或优惠分摊口径可能错误'],options:[{kind:'observe',rationale:'补证后再决定'},{kind:context.scenario === 'inventory' ? 'replenish_draft' : context.scenario === 'ads' ? 'reduce_budget' : 'reduce_coupon',rationale:'仅作条件测算'}]}};
+            else output = {report:{summary:'本地协议测试报告，非真实模型生成的业务结论',observations:context.scenario === 'inventory'?[{text:'本地场景协议检查，经营事实以工具证据为准',evidenceIds:[context.observations[2].evidenceId]}]:[],hypotheses:[],unknowns:['缺少实时数据'],alternatives:['成本或优惠分摊口径可能错误'],options:[{kind:'observe',rationale:'补证后再决定'},{kind:context.scenario === 'inventory' ? 'replenish_draft' : context.scenario === 'ads' ? 'reduce_budget' : 'reduce_coupon',rationale:'仅作条件测算'}]}};
             res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(output)}}]}));
           } catch(e) { failures.push(e.message); res.statusCode=500; res.end('{}'); }
         });

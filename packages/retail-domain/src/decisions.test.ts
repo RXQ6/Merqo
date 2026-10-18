@@ -12,7 +12,8 @@ import { DecisionStore } from './decisions';
 import { runInvestigation, isSignalInvestigation } from './investigations';
 import { runSignalInvestigation } from './signal-investigations';
 import { exportInvestigation } from './investigation-export';
-import { DEMO_CSV, RetailRequestSchema } from './operations';
+import { BUNDLE_DEMO_CSV, GIFT_DEMO_CSV, MEMBER_DEMO_CSV, OFFER_DEMO_CSV, DEMO_CSV, previewCsv, RetailRequestSchema, snapshotCsv } from './operations';
+import { selectOffers } from './offers';
 import type { SimulationExecutor } from './simulation';
 import { ADS_DEMO, INVENTORY_EXECUTION_DEMO } from './signals';
 import type { SimulationApprover } from './approval-types';
@@ -25,7 +26,7 @@ function modelFor(run:AnyInvestigation,verdict='passed'):ModelPort { return asyn
  if(system.includes('串行只读 Reviewer'))return JSON.stringify({verdict,notes:['本地契约测试，非真实模型评估']});
  const context=JSON.parse(prompt);const tools=['retail_get_data_health','retail_get_sku_context',run.scenario==='ads'?'retail_get_campaigns':run.scenario==='inventory'?'retail_get_inventory':'retail_get_promotions','retail_simulate_actions'];
  if(context.observations.length<4)return JSON.stringify({tool:tools[context.observations.length]});
- return JSON.stringify({report:{summary:'合成案例契约报告',observations:run.scenario==='ads'||run.scenario==='inventory'?[{text:'核对工具证据',evidenceIds:[`${run.recordId}:${tools[2]}`]}]:[],hypotheses:[],unknowns:['缺实时状态'],alternatives:['可能存在口径差异'],options:[{kind:'observe',rationale:'核验'},{kind:run.scenario==='ads'?'reduce_budget':run.scenario==='inventory'?'replenish_draft':'reduce_coupon',rationale:'仅作条件测算'}]}});
+ return JSON.stringify({report:{summary:'合成案例契约报告',observations:run.scenario==='inventory'?[{text:'核对工具证据',evidenceIds:[`${run.recordId}:${tools[2]}`]}]:[],hypotheses:[],unknowns:['缺实时状态'],alternatives:['可能存在口径差异'],options:[{kind:'observe',rationale:'核验'},{kind:run.scenario==='ads'?'reduce_budget':run.scenario==='inventory'?'replenish_draft':'reduce_coupon',rationale:'仅作条件测算'}]}});
 }; }
 async function complete(scenario:'margin'|'ads'|'inventory'='margin',mode:'model'|'replay'='model',verdict='passed',sku='TEA-500',source:'demo'|'csv'='demo',retry=false):Promise<AnyInvestigation>{
  const run=scenario==='margin'?runs.create(data.snapshot().records.find(r=>r.source===source&&r.row.sku_id===sku)!,mode,retry).run:runs.createSignal(signals.snapshot().records.find(r=>r.source===source&&r.kind===scenario&&r.row.sku_id===sku)!,mode,retry).run;
@@ -329,7 +330,7 @@ test('forward simulation reread mismatch rolls back the effect and success recei
  const item=await approvedExecution();const db=new Database(file+'.investigations.sqlite');db.exec("CREATE TRIGGER ignore_forward BEFORE INSERT ON simulation_states BEGIN SELECT RAISE(IGNORE);END;");const failed=decisions.executeSimulation(item.job.id,1,item.job.actionHash,executor);expect(failed.receipt).toBeNull();expect(failed.current).toBeNull();expect(failed.attempts[0]?.reason).toContain('回读不一致');db.exec('DROP TRIGGER ignore_forward');db.close();
 });
 
-function observationCsv(row:object):string {const data=row as Record<string,unknown>;const keys=Object.keys(data);return [keys.join(','),keys.map(k=>{const v=data[k]===null?'':String(data[k]);return '"'+v.replaceAll('"','""')+'"';}).join(',')].join('\n');}
+function observationCsv(row:object):string {const data=row as Record<string,unknown>;const keys=Object.keys(data);return [keys.join(','),keys.map(k=>{const raw=data[k];const v=raw==null?'':typeof raw==='object'?JSON.stringify(raw):String(raw);return '"'+v.replaceAll('"','""')+'"';}).join(',')].join('\n');}
 async function observedReview(scenario:'margin'|'inventory'|'ads'='margin') {const origin=await compensationOrigin(scenario);const opened=decisions.createReview(origin.job.id);const observed=decisions.observeReview(opened.review.id,opened.review.version,null);return {origin,observed};}
 for(const scenario of ['margin','inventory','ads'] as const)test(`${scenario}: outcome replay freezes source, compares actual input values and persists reviewed Case`,async()=>{
  const {origin,observed}=await observedReview(scenario);const snapshots=[data.snapshot(),signals.snapshot()];expect(observed.review.clockBasis).toBe('synthetic_business_date');expect(observed.metrics.every(m=>m.delta===0||m.delta===null)).toBe(true);expect(observed.review.receipt).toEqual(origin.receipt!);expect(decisions.createReview(origin.job.id).review.id).toBe(observed.review.id);
@@ -387,4 +388,244 @@ test('draft blockers distinguish offline, needs-evidence and rejection without g
  for(const [scenario,mode,verdict,reason] of [['margin','replay','passed','离线演示没有模型Reviewer'],['ads','model','needs_evidence','Reviewer待补证'],['margin','model','rejected','Reviewer已驳回']] as const){
   const run=await complete(scenario,mode,verdict,'TEA-500','demo',true);const d=decisions.create(run.id,action(run),'');expect(d.submissionBlockers.some(s=>s.includes(reason))).toBe(true);expect(()=>decisions.submit(d.id,1)).toThrow('不能提交');expect(decisions.approvals()).toHaveLength(0);
  }
+});
+
+
+test('bundle evidence gaps cannot enter approval even with a protocol Reviewer pass', async () => {
+ data.import(BUNDLE_DEMO_CSV, undefined, 'demo');
+ for (const sku of ['PACK-CONFLICT', 'PACK-MISSING']) {
+  const run = await complete('margin', 'model', 'passed', sku);
+  const draft = decisions.create(run.id, 'reduce_coupon', '仅协议夹具');
+  expect(draft.submissionBlockers.length).toBeGreaterThan(0);
+  expect(() => decisions.submit(draft.id, 1)).toThrow('不能提交');
+ }
+ expect(decisions.executions()).toHaveLength(0);
+});
+
+test('bundle simulation, observation identity and Case matching preserve the component contract', async () => {
+ const row = { ...previewCsv(BUNDLE_DEMO_CSV).valid[0]!, coupon_minor: 2000 };
+ data.import(observationCsv(row), undefined, 'demo');
+ const run = await complete('margin', 'model', 'passed', row.sku_id);
+ const draft = decisions.create(run.id, 'reduce_coupon', '组合装协议夹具');
+ const request = decisions.submit(draft.id, 1).request!;
+ decisions.resolveApproval(request.id, 1, request.actionHash, 'approve', '仅模拟', approver);
+ const job = decisions.executions().find(e => e.job.requestId === request.id)!.job;
+ const executed = decisions.executeSimulation(job.id, 1, job.actionHash, executor);
+ expect(executed.reconciliation?.matched).toBe(true);
+ const opened = decisions.createReview(job.id);
+ const observed = decisions.observeReview(opened.review.id, 1, null);
+ const r = observed.review;
+ const observation = r.observation!.row;
+ if (!('list_price_minor' in observation)) throw new Error('margin expected');
+ expect(observation.bundle_components).toEqual(row.bundle_components);
+ for (const patch of [
+  { product_type: 'single', bundle_components: undefined },
+  { bundle_components: [{ sku_id: 'OTHER', spec: '500ml', quantity: 6, unit_cost_minor: 1000 }] },
+ ]) {
+  const csv = observationCsv({ ...observation, ...patch });
+  const p = decisions.previewObservation(r.id, csv);
+  expect(p.blockers).toContain('组合装子项映射与原快照不一致');
+  expect(() => decisions.observeReview(r.id, r.version, { csv, hash: p.hash })).toThrow('不一致');
+ }
+ const finalized = decisions.finalizeReview(r.id, r.version, r.observation!.hash, 'comparison_only', '仅比较', '未确认因果', 'local-simulation-reviewer');
+ const e = data.snapshot().records.find(e => e.row.sku_id === row.sku_id)!;
+ const later = { ...e, row: { ...e.row, date: r.windowEnd } };
+ const asOf = new Date(Date.now() + 1000).toISOString();
+ expect(decisions.searchCases(later, 'margin', asOf).map(c => c.id)).toEqual([finalized.case!.id]);
+ expect(decisions.searchCases({ ...later, row: { ...later.row, product_type: 'single', bundle_components: undefined } }, 'margin', asOf)).toEqual([]);
+ expect(decisions.searchCases({ ...later, row: { ...later.row, bundle_components: [{ sku_id: 'OTHER', spec: '500ml', quantity: 6, unit_cost_minor: 1000 }] } }, 'margin', asOf)).toEqual([]);
+ const csv = observationCsv(observation);
+ expect(previewCsv(csv).valid[0]?.bundle_components).toEqual(row.bundle_components);
+});
+
+
+test('gift uncertainty and CSV origin cannot enter approval despite a protocol Reviewer pass', async () => {
+ const row = previewCsv(GIFT_DEMO_CSV).valid[1]!;
+ for (const patch of [ { gifts: [{ ...row.gifts![0]!, unit_cost_minor: null }] }, { gift_cost_basis: 'included' as const }, { gift_policy: 'unknown' as const } ]) {
+  data.import(observationCsv({ ...row, ...patch }), undefined, 'demo');
+  const run = await complete('margin', 'model', 'passed', row.sku_id, 'demo', true);
+  const draft = decisions.create(run.id, 'reduce_coupon', '赠品缺口协议测试');
+  expect(draft.submissionBlockers.length).toBeGreaterThan(0);
+  expect(() => decisions.submit(draft.id, 1)).toThrow('不能提交');
+ }
+ const usable = { ...row, gifts: [{ ...row.gifts![0]!, unit_cost_minor: 1000 }] };
+ data.import(observationCsv(usable), undefined, 'csv');
+ const csvRun = await complete('margin', 'model', 'passed', row.sku_id, 'csv');
+ const draft = decisions.create(csvRun.id, 'reduce_coupon', 'CSV仍然只分析');
+ expect(() => decisions.submit(draft.id, 1)).toThrow('不能提交'); expect(decisions.executions()).toHaveLength(0);
+});
+
+test('gift-inclusive coupon target executes once and keeps observation/Case/follow-up association', async () => {
+ const row = { ...previewCsv(GIFT_DEMO_CSV).valid[1]! };
+ row.gifts = [{ ...row.gifts![0]!, unit_cost_minor: 1000 }];
+ data.import(observationCsv(row), undefined, 'demo');
+ const run = await complete('margin', 'model', 'passed', row.sku_id);
+ const draft = decisions.create(run.id, 'reduce_coupon', '赠品协议夹具，仅模拟');
+ expect(draft.after).toMatchObject({ couponMinor: 250, revenueMinor: 8750, marginBps: 2000 });
+ expect(draft.selected.profitMinor).toBe(1750);
+ const request = decisions.submit(draft.id, 1).request!;
+ decisions.resolveApproval(request.id, 1, request.actionHash, 'approve', '仅模拟', approver);
+ const job = decisions.executions().find(e => e.job.requestId === request.id)!.job;
+ const executed = decisions.executeSimulation(job.id, 1, job.actionHash, executor);
+ expect(executed.reconciliation?.matched).toBe(true);
+ expect(decisions.executeSimulation(job.id, 1, job.actionHash, executor).receipt?.id).toBe(executed.receipt?.id);
+ const opened = decisions.createReview(job.id); const observed = decisions.observeReview(opened.review.id, 1, null); const r = observed.review;
+ const observation = r.observation!.row; if (!('list_price_minor' in observation)) throw new Error('margin expected');
+ expect(observation.gifts).toEqual(row.gifts);
+ for (const patch of [
+  { gift_policy: undefined, gift_cost_basis: undefined, gifts: undefined },
+  { gift_policy: 'none' }, { gifts: [{ ...row.gifts[0]!, quantity: 2 }] },
+  { gifts: [{ ...row.gifts[0]!, sku_id: 'OTHER-GIFT' }] }, { gift_cost_basis: 'included' },
+ ]) {
+  const csv = observationCsv({ ...observation, ...patch }); const p = decisions.previewObservation(r.id, csv);
+  expect(p.blockers).toContain('赠品关联、数量或口径与原快照不一致');
+  expect(() => decisions.observeReview(r.id, r.version, { csv, hash: p.hash })).toThrow('不一致');
+ }
+ const final = decisions.finalizeReview(r.id, r.version, r.observation!.hash, 'comparison_only', '仅比较', '赠品成本已计入，未确认因果', 'local-simulation-reviewer');
+ const e = data.snapshot().records.find(e => e.row.sku_id === row.sku_id)!; const later = { ...e, row: { ...e.row, date: r.windowEnd } };
+ const asOf = new Date(Date.now() + 1000).toISOString();
+ expect(decisions.searchCases(later, 'margin', asOf).map(c => c.id)).toEqual([final.case!.id]);
+ expect(decisions.searchCases({ ...later, row: { ...later.row, gifts: [{ ...row.gifts[0]!, quantity: 2 }] } }, 'margin', asOf)).toEqual([]);
+ const child = Bun.spawn([Bun.which('bun') || 'bun', resolve(import.meta.dir, '../../../scripts/retailpilot-data-worker.ts'), file, 'Test', 'test-workspace', 'local-analyst'], {
+  stdin: new Blob([JSON.stringify({ op: 'review_followup', id: r.id, expectedCaseId: final.case!.id, mode: 'replay' })]), stdout: 'pipe', stderr: 'pipe',
+ });
+ const next = JSON.parse(await new Response(child.stdout).text()); expect(await child.exited).toBe(0);
+ expect(next.ok).toBe(true); expect(next.data[0].evidence.row.gifts).toEqual(row.gifts);
+ expect(next.data[0].caseContext[0].id).toBe(final.case!.id);
+ expect(decisions.executions().map(e => e.receipt?.id)).toEqual([executed.receipt!.id]);
+});
+
+
+test('membership unknown/expired/conflicting policy and CSV origin cannot enter approval', async () => {
+ const row = previewCsv(MEMBER_DEMO_CSV).valid[0]!;
+ for (const patch of [
+  { membership: null }, { membership: { ...row.membership!, status: 'unknown' as const } },
+  { membership: { ...row.membership!, valid_to: row.date } }, { coupon_minor: 500 },
+  { membership: { ...row.membership!, discount_policy: 'unknown' as const } },
+ ]) {
+  data.import(snapshotCsv({ ...row, ...patch }), undefined, 'demo');
+  const run = await complete('margin', 'model', 'passed', row.sku_id, 'demo', true);
+  const draft = decisions.create(run.id, 'reduce_coupon', '会员门禁协议测试');
+  expect(draft.submissionBlockers.length).toBeGreaterThan(0);
+  expect(() => decisions.submit(draft.id, 1)).toThrow('不能提交');
+ }
+ const eligible = { ...row, coupon_minor: 1000, membership: { ...row.membership!, discount_policy: 'stackable' as const } };
+ data.import(snapshotCsv(eligible), undefined, 'csv');
+ const run = await complete('margin', 'model', 'passed', row.sku_id, 'csv');
+ expect(() => decisions.submit(decisions.create(run.id, 'reduce_coupon', 'CSV仍仅分析').id, 1)).toThrow('不能提交');
+ expect(decisions.executions()).toHaveLength(0);
+});
+
+test('membership coupon simulation preserves cohort, effective price and frozen Case through a real worker', async () => {
+ const row = { ...previewCsv(MEMBER_DEMO_CSV).valid[0]!, coupon_minor: 1000 };
+ row.membership = { ...row.membership!, discount_policy: 'stackable' };
+ data.import(snapshotCsv(row), undefined, 'demo');
+ const run = await complete('margin', 'model', 'passed', row.sku_id);
+ const draft = decisions.create(run.id, 'reduce_coupon', '会员协议夹具，仅模拟');
+ expect(draft.after).toMatchObject({ couponMinor: 500, revenueMinor: 7500, marginBps: 2000 });
+ const request = decisions.submit(draft.id, 1).request!;
+ decisions.resolveApproval(request.id, 1, request.actionHash, 'approve', '仅模拟', approver);
+ const job = decisions.executions().find(e => e.job.requestId === request.id)!.job;
+ const executed = decisions.executeSimulation(job.id, 1, job.actionHash, executor);
+ expect(executed.reconciliation?.matched).toBe(true);
+ expect(decisions.executeSimulation(job.id, 1, job.actionHash, executor).receipt?.id).toBe(executed.receipt?.id);
+ const r = decisions.observeReview(decisions.createReview(job.id).review.id, 1, null).review;
+ const observation = r.observation!.row; if (!('list_price_minor' in observation)) throw new Error('margin expected');
+ expect(observation.membership).toEqual(row.membership);
+ for (const membership of [undefined, null, { ...row.membership, status: 'non_member' as const }, { ...row.membership, segment_id: 'silver' }, { ...row.membership, discount_policy: 'exclusive' as const }]) {
+  const csv = snapshotCsv({ ...observation, membership }); const p = decisions.previewObservation(r.id, csv);
+  expect(p.blockers).toContain('会员分组、身份或叠加规则与原快照不一致');
+  expect(() => decisions.observeReview(r.id, r.version, { csv, hash: p.hash })).toThrow('不一致');
+ }
+ const final = decisions.finalizeReview(r.id, r.version, r.observation!.hash, 'comparison_only', '仅比较', '会员价变化与销量响应未核实', 'local-simulation-reviewer');
+ const e = data.snapshot().records.find(e => e.row.sku_id === row.sku_id)!; const later = { ...e, row: { ...e.row, date: r.windowEnd } };
+ const asOf = new Date(Date.now() + 1000).toISOString();
+ expect(decisions.searchCases(later, 'margin', asOf).map(c => c.id)).toEqual([final.case!.id]);
+ expect(decisions.searchCases({ ...later, row: { ...later.row, membership: { ...row.membership, segment_id: 'silver' } } }, 'margin', asOf)).toEqual([]);
+ const child = Bun.spawn([Bun.which('bun') || 'bun', resolve(import.meta.dir, '../../../scripts/retailpilot-data-worker.ts'), file, 'Test', 'test-workspace', 'local-analyst'], {
+  stdin: new Blob([JSON.stringify({ op: 'review_followup', id: r.id, expectedCaseId: final.case!.id, mode: 'replay' })]), stdout: 'pipe', stderr: 'pipe',
+ });
+ const next = JSON.parse(await new Response(child.stdout).text()); expect(await child.exited).toBe(0);
+ expect(next.ok).toBe(true); expect(next.data[0].evidence.row.membership).toEqual(row.membership);
+ expect(next.data[0].evidence.calculation.revenueMinor).toBe(7000); // Observation retains original coupon, no invented effect.
+ expect(next.data[0].caseContext[0].id).toBe(final.case!.id);
+ expect(decisions.executions().map(e => e.receipt?.id)).toEqual([executed.receipt!.id]);
+});
+
+test('changed membership evidence invalidates an approval before any simulation side effect', async () => {
+ const row = { ...previewCsv(MEMBER_DEMO_CSV).valid[0]!, coupon_minor: 1000 };
+ row.membership = { ...row.membership!, discount_policy: 'stackable' };
+ data.import(snapshotCsv(row), undefined, 'demo');
+ const run = await complete('margin', 'model', 'passed', row.sku_id);
+ const draft = decisions.create(run.id, 'reduce_coupon', '批准版本绑定');
+ const request = decisions.submit(draft.id, 1).request!;
+ decisions.resolveApproval(request.id, 1, request.actionHash, 'approve', '仅模拟', approver);
+ const job = decisions.executions().find(e => e.job.requestId === request.id)!.job;
+ data.import(snapshotCsv({ ...row, membership: { ...row.membership, segment_id: 'silver' } }), undefined, 'demo');
+ const result = decisions.executeSimulation(job.id, 1, job.actionHash, executor);
+ expect(result.receipt).toBeNull(); expect(result.current).toBeNull(); expect(result.status).toBe('failed');
+});
+
+
+test('unknown or unavailable reference offers block approval and CSV cannot gain execution privileges', async () => {
+ const row = { ...previewCsv(OFFER_DEMO_CSV).valid[0]!, coupon_minor: 2000 };
+ for (const offers of [null, row.offers!.map(o => ({ ...o, available: null })), row.offers!.map(o => ({ ...o, available: false })), row.offers!.map(o => ({ ...o, spec: 'other' }))]) {
+  data.import(snapshotCsv({ ...row, offers }), undefined, 'demo');
+  const run = await complete('margin', 'model', 'passed', row.sku_id, 'demo', true);
+  const draft = decisions.create(run.id, 'reduce_coupon', '报价门禁协议测试');
+  expect(draft.submissionBlockers.length).toBeGreaterThan(0);
+  expect(() => decisions.submit(draft.id, 1)).toThrow('不能提交');
+ }
+ data.import(snapshotCsv(row), undefined, 'csv');
+ const run = await complete('margin', 'model', 'passed', row.sku_id, 'csv');
+ expect(() => decisions.submit(decisions.create(run.id, 'reduce_coupon', '报价不能授予CSV执行权限').id, 1)).toThrow('不能提交');
+ expect(decisions.executions()).toHaveLength(0);
+});
+
+test('offer reference never becomes sale price, survives synthetic observation and freezes scoped Case through worker', async () => {
+ const row = { ...previewCsv(OFFER_DEMO_CSV).valid[1]!, coupon_minor: 2000 };
+ data.import(snapshotCsv(row), undefined, 'demo');
+ const run = await complete('margin', 'model', 'passed', row.sku_id);
+ const draft = decisions.create(run.id, 'reduce_coupon', '报价仅参考，仍需批准');
+ expect(draft.after).toMatchObject({ couponMinor: 1500, revenueMinor: 7500, marginBps: 2000 });
+ const request = decisions.submit(draft.id, 1).request!;
+ decisions.resolveApproval(request.id, 1, request.actionHash, 'approve', '仅模拟', approver);
+ const job = decisions.executions().find(e => e.job.requestId === request.id)!.job;
+ const executed = decisions.executeSimulation(job.id, 1, job.actionHash, executor);
+ expect(executed.reconciliation?.matched).toBe(true);
+ expect(decisions.executeSimulation(job.id, 1, job.actionHash, executor).receipt?.id).toBe(executed.receipt?.id);
+ const r = decisions.observeReview(decisions.createReview(job.id).review.id, 1, null).review;
+ const observation = r.observation!.row; if (!('list_price_minor' in observation)) throw new Error('margin expected');
+ expect(observation.offers!.every(o => o.observed_on === r.windowEnd)).toBe(true);
+ expect(selectOffers(observation).selectedPriceMinor).toBe(3000);
+ expect(observation.list_price_minor).toBe(10000);
+ const stripped = snapshotCsv({ ...observation, offers: undefined }); const p = decisions.previewObservation(r.id, stripped);
+ expect(p.blockers).toContain('参考报价上下文与原快照不一致，不能静默移除');
+ expect(() => decisions.observeReview(r.id, r.version, { csv: stripped, hash: p.hash })).toThrow('不一致');
+ const final = decisions.finalizeReview(r.id, r.version, r.observation!.hash, 'comparison_only', '仅比较', '合成报价，非实时可售或执行收益', 'local-simulation-reviewer');
+ const e = data.snapshot().records.find(e => e.row.sku_id === row.sku_id)!;
+ const later = { ...e, row: { ...e.row, date: r.windowEnd, offers: observation.offers } };
+ const asOf = new Date(Date.now() + 1000).toISOString();
+ expect(decisions.searchCases(later, 'margin', asOf).map(c => c.id)).toEqual([final.case!.id]);
+ expect(decisions.searchCases({ ...later, row: { ...later.row, offers: undefined } }, 'margin', asOf)).toEqual([]);
+ const child = Bun.spawn([Bun.which('bun') || 'bun', resolve(import.meta.dir, '../../../scripts/retailpilot-data-worker.ts'), file, 'Test', 'test-workspace', 'local-analyst'], {
+  stdin: new Blob([JSON.stringify({ op: 'review_followup', id: r.id, expectedCaseId: final.case!.id, mode: 'replay' })]), stdout: 'pipe', stderr: 'pipe',
+ });
+ const next = JSON.parse(await new Response(child.stdout).text()); expect(await child.exited).toBe(0);
+ expect(next.ok).toBe(true); expect(next.data[0].evidence.row.offers).toEqual(observation.offers);
+ expect(next.data[0].evidence.calculation.revenueMinor).toBe(7000);
+ expect(next.data[0].caseContext[0].id).toBe(final.case!.id);
+ expect(decisions.executions().map(e => e.receipt?.id)).toEqual([executed.receipt!.id]);
+});
+
+test('changed reference availability invalidates exact approval before any simulation side effect', async () => {
+ const row = { ...previewCsv(OFFER_DEMO_CSV).valid[0]!, coupon_minor: 2000 };
+ data.import(snapshotCsv(row), undefined, 'demo');
+ const run = await complete('margin', 'model', 'passed', row.sku_id);
+ const draft = decisions.create(run.id, 'reduce_coupon', '批准绑定冻结报价'); const request = decisions.submit(draft.id, 1).request!;
+ decisions.resolveApproval(request.id, 1, request.actionHash, 'approve', '仅模拟', approver);
+ const job = decisions.executions().find(e => e.job.requestId === request.id)!.job;
+ data.import(snapshotCsv({ ...row, offers: row.offers!.map(o => ({ ...o, available: false })) }), undefined, 'demo');
+ const result = decisions.executeSimulation(job.id, 1, job.actionHash, executor);
+ expect(result.receipt).toBeNull(); expect(result.current).toBeNull(); expect(result.status).toBe('failed');
 });

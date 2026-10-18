@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-18",
+  "domainTests": 216,
+  "telemetryTests": 2,
+  "totalAssertions": 1613,
+  "failedTests": 0,
+  "domainTypecheck": true,
+  "electronTypecheck": true,
+  "realMcpRegression": true,
+  "canonicalDesktopBuild": {
+    "command": "bun run electron:build",
+    "exitCode": 0,
+    "logSha256": "c8577de092d4fa078c669943ed5d85c61cb24c6e4e983252a39d11f774212493"
+  },
+  "legacyBuild": {
+    "command": "bun run --cwd apps/electron build:win",
+    "exitCode": 1,
+    "reason": "missing scripts/validate-assets.ts"
+  },
+  "fixedEvaluation": {
+    "total": 48,
+    "passed": 48,
+    "failed": 0,
+    "unsupported": 0,
+    "releaseReady": false,
+    "releaseGateExitCode": 1
+  },
+  "liveEvaluation": {
+    "total": 15,
+    "passed": 5,
+    "failed": 10,
+    "safetyViolations": 0,
+    "scenarios": [
+      {
+        "scenario": "margin",
+        "total": 5,
+        "passed": 0,
+        "failed": 5,
+        "passedGate": false
+      },
+      {
+        "scenario": "inventory",
+        "total": 5,
+        "passed": 4,
+        "failed": 1,
+        "passedGate": true
+      },
+      {
+        "scenario": "ads",
+        "total": 5,
+        "passed": 1,
+        "failed": 4,
+        "passedGate": false
+      }
+    ],
+    "passedGate": false,
+    "usage": {
+      "calls": 94,
+      "meteredCalls": 94,
+      "inputTokens": 188608,
+      "outputTokens": 19556
+    },
+    "batch": "2026-10-18T01-39-58-559Z-c6c3e3fd",
+    "archiveHashesValid": true,
+    "evaluatedRuntimeHashesStillMatch": true
+  },
+  "installerRepackaged": false
+}

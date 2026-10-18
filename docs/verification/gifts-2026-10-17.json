@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-17",
+  "scope": "source-only free-per-unit gifts; additional cost basis; published installer unchanged",
+  "domain": {
+    "command": "bun run retail:check",
+    "exitCode": 0,
+    "tests": 197,
+    "failed": 0,
+    "assertions": 1368,
+    "typecheck": "passed"
+  },
+  "electronTypecheck": {
+    "command": "bun run typecheck:electron",
+    "exitCode": 0
+  },
+  "build": {
+    "command": "bun run retail:build",
+    "exitCode": 0
+  },
+  "mcp": {
+    "command": "bun run retail:check:mcp",
+    "exitCode": 0,
+    "scope": "real local stdio; frozen scope and Case; no external model requests"
+  },
+  "evaluation": {
+    "command": "bun run retail:eval --release-gate",
+    "exitCode": 1,
+    "expectedExit": true,
+    "total": 48,
+    "passed": 42,
+    "failed": 0,
+    "unsupported": 6,
+    "releaseReady": false,
+    "datasetHash": "bc2707771853ee34ccbdc3bcbff57fb2157b3c6bdb96f5560bb66a1845c334b1"
+  },
+  "desktop": {
+    "command": "node scripts/merqo-gift-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "gifts",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "gift association and cost-basis fields auto-map",
+        "gift normal/warning/unknown states survive gifts",
+        "gift-inclusive totals and unknown cost persist gifts",
+        "gift component cost and inclusive margin shown gifts"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\gift-check-1792248162526",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "gifts-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "gift normal/warning/unknown states survive gifts-restart",
+        "gift-inclusive totals and unknown cost persist gifts-restart",
+        "gift component cost and inclusive margin shown gifts-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\gift-check-1792248162526",
+      "error": null,
+      "failures": []
+    }
+  },
+  "limitations": [
+    "No live-model inference or real business effects verified",
+    "No production authorization or external business writes",
+    "Only explicit free gifts per sales unit with additional costs; included/unknown costs block",
+    "Order thresholds, customer-selected gifts, self-gifting, gift stock movements, returns and order-level allocation unsupported",
+    "M5 real-model/performance and remaining business gates incomplete"
+  ],
+  "bundleRegression": {
+    "command": "node scripts/merqo-bundle-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "bundles",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "optional bundle fields auto-map in actual renderer",
+        "bundle normal/conflict/missing states survive bundles",
+        "bundle pack totals and evidence gaps persist bundles",
+        "component identities and computed pack margin shown bundles"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\bundle-check-1792248262329",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "bundles-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "bundle normal/conflict/missing states survive bundles-restart",
+        "bundle pack totals and evidence gaps persist bundles-restart",
+        "component identities and computed pack margin shown bundles-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\bundle-check-1792248262329",
+      "error": null,
+      "failures": []
+    }
+  }
+}

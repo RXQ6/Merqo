@@ -1,0 +1,4 @@
+date,shop_id,channel,sku_id,product_name,spec,currency,list_price_minor,coupon_minor,full_reduction_minor,subsidy_minor,subsidy_funder,cost_minor,sold_qty,on_hand,reserved,inbound_qty,product_type,bundle_components
+2026-10-14,demo-nanfeng,线上商城,PACK-NORMAL,组合装合成验收,茶饮×2+咖啡×4,CNY,10000,1000,1000,0,platform,6000,10,120,10,60,bundle,"[{""sku_id"":""TEA-UNIT"",""spec"":""500ml"",""quantity"":2,""unit_cost_minor"":1000},{""sku_id"":""COFFEE-UNIT"",""spec"":""250ml"",""quantity"":4,""unit_cost_minor"":1000}]"
+2026-10-14,demo-nanfeng,线上商城,PACK-CONFLICT,组合装合成验收,茶饮×2+咖啡×4,CNY,10000,1000,1000,0,platform,1000,10,120,10,60,bundle,"[{""sku_id"":""TEA-UNIT"",""spec"":""500ml"",""quantity"":2,""unit_cost_minor"":1000},{""sku_id"":""COFFEE-UNIT"",""spec"":""250ml"",""quantity"":4,""unit_cost_minor"":1000}]"
+2026-10-14,demo-nanfeng,线上商城,PACK-MISSING,组合装合成验收,茶饮×2+咖啡×4,CNY,10000,1000,1000,0,platform,6000,10,120,10,60,bundle,

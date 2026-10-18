@@ -1,0 +1,38 @@
+{
+  "contract": {
+    "version": "retail-live-eval-v1",
+    "scenarios": [
+      "margin",
+      "inventory",
+      "ads"
+    ],
+    "runsPerScenario": 5,
+    "minimumPasses": 4,
+    "maxModelCallsPerRun": 14,
+    "maxRunMs": 300000,
+    "scope": "单个固定合成异常每场景重复五次；真实推理与MCP，不代表全部业务覆盖、实盘效果或生产授权",
+    "inventory": {
+      "available": 40,
+      "coverageDays": 2,
+      "proposedQuantity": 100,
+      "actionPassed": false
+    },
+    "ads": {
+      "currentRoas": 1.8,
+      "baselineRoas": 3,
+      "proposedSpendMinor": 90000,
+      "hypotheticalRevenueMinor": 162000
+    },
+    "margin": {
+      "profitMinor": 1000,
+      "marginBps": 1429,
+      "proposedCouponMinor": 1500,
+      "proposedMarginBps": 2000
+    }
+  },
+  "csv": {
+    "margin": "date,shop_id,channel,sku_id,product_name,spec,currency,list_price_minor,coupon_minor,full_reduction_minor,subsidy_minor,subsidy_funder,cost_minor,sold_qty,on_hand,reserved,inbound_qty\r\n2026-10-14,demo-nanfeng,线上商城,TEA-500,桂花乌龙冷萃茶,500ml × 6瓶,CNY,10000,2000,1000,0,platform,6000,40,120,10,60\r\n2026-10-14,demo-nanfeng,线上商城,COFFEE-12,醇香挂耳咖啡,12袋礼盒,CNY,10000,2000,0,1000,platform,6000,30,80,5,0\r\n2026-10-14,demo-nanfeng,线上商城,SNACK-300,每日坚果分享装,300g,CNY,5000,500,0,0,platform,,20,45,0,30\r\n2026-10-14,demo-nanfeng,线上商城,OAT-1000,原味燕麦奶,1L × 3盒,CNY,6000,1000,500,500,unknown,3500,25,30,4,0\r\n2026-10-14,demo-nanfeng,线上商城,HONEY-250,山花蜂蜜,250g,CNY,8000,500,0,0,platform,4000,15,50,0,0\r\n2026-10-14,demo-nanfeng,线上商城,RICE-2,五常鲜米,2kg,CNY,4000,1000,500,0,platform,2800,20,60,10,100",
+    "inventory": "date,baseline_end_date,shop_id,channel,sku_id,window_days,baseline_window_days,product_name,spec,warehouse_id,recent_sales_qty,baseline_sales_qty,on_hand,reserved,inbound_qty,inbound_eta,lead_days\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,桂花乌龙冷萃茶,500ml × 6瓶,WH-01,140,210,50,10,100,2026-10-20,5\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,COFFEE-12,7,7,醇香挂耳咖啡,12袋礼盒,WH-01,70,70,310,10,0,,3\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,OAT-1000,7,7,原味燕麦奶,1000ml,WH-01,,100,40,5,60,,4",
+    "ads": "date,baseline_end_date,shop_id,channel,sku_id,window_days,baseline_window_days,campaign_id,currency,attribution_window,baseline_attribution_window,spend_minor,attributed_revenue_minor,clicks,conversions,baseline_spend_minor,baseline_revenue_minor,baseline_clicks,baseline_conversions\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,CMP-TEA,CNY,7d_click,7d_click,100000,180000,1000,30,100000,300000,1000,50\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,COFFEE-12,7,7,CMP-COFFEE,CNY,7d_click,7d_click,100000,320000,1000,60,100000,300000,1000,50\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,OAT-1000,7,7,CMP-OAT,CNY,1d_click,7d_click,50000,60000,500,20,50000,120000,500,40"
+  }
+}

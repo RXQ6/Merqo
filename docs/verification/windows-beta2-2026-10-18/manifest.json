@@ -1,0 +1,10 @@
+{
+  "files": {
+    "build-inputs.json": "78dd47498a921482ccc7f2406e09d7f30296703e52326eb96e2dc9a04b4f3cf8",
+    "installed-analysis.png": "5fec4b795f7e0044722b92b63152fe77c26c9ad592f543204f41b1177e832a39",
+    "legacy-smoke.json": "c8bfa3735268c773f743b94b585d38f5c21646107e969fc977d23a56dd0e324b",
+    "new-smoke.json": "8497f6ea34f27163735a1bba5d117919c8090034b6ff7a68e1f0a1cbba007ad8",
+    "report.json": "8004bd64aa293956987ea6c3e32e94afd419394306958d8e21e9bb300704ac06",
+    "SHA256SUMS.txt": "61665d656faca55a94c8e1cb2f0e23b20271f1029cd96c7912249cc1c192a15a"
+  }
+}

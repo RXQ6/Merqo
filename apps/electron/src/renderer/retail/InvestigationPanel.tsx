@@ -8,7 +8,7 @@ const scenarioOf = (e: Evidence): 'margin' | 'inventory' | 'ads' => 'kind' in e 
 const title = (e: Evidence) => 'product_name' in e.row ? e.row.product_name : e.row.sku_id;
 const detail = (e: Evidence) => 'spec' in e.row ? e.row.spec : 'campaign_id' in e.row ? e.row.campaign_id : '';
 const names = {margin:'促销毛利调查',inventory:'缺货风险调查',ads:'广告回报调查'};
-const states = { running: '调查中', completed: '分析完成', needs_evidence: '待补证 / 待复核', failed: '调查失败' };
+const states = { running: '调查中', paused: '已暂停', completed: '分析完成', needs_evidence: '待补证 / 待复核', failed: '调查失败' };
 const amount = (n: number | null) => n === null ? '待补证' : `¥${(n / 100).toFixed(2)}`;
 export function InvestigationPanel({ target, initialId, onBack, onDraft, onData }: { target: Evidence | null; initialId?: string | null; onData: () => void; onBack: () => void; onDraft: (run: AnyInvestigation) => void }) {
   const [runs, setRuns] = useState<AnyInvestigation[]>([]);
@@ -60,7 +60,7 @@ export function InvestigationPanel({ target, initialId, onBack, onDraft, onData 
       </aside>
       <article className="retail-investigation-body">
         {record && <><h2>{title(record)} · {record.row.sku_id}</h2><p className="retail-muted">{record.row.shop_id} / {record.row.channel} / {record.row.date} / {detail(record)}</p>
-          <div className="retail-inline-actions"><button onClick={onData}>更新或补充证据</button><button disabled={busy || selected?.state === 'running'} className="retail-primary" onClick={() => start('model')}>重新进行模型调查</button><button disabled={busy || selected?.state === 'running'} onClick={() => start('replay')}>运行离线规则演示</button></div></>}
+          <div className="retail-inline-actions"><button onClick={onData}>更新或补充证据</button>{selected?.state === 'running' && <button disabled={busy} onClick={() => void call({ op: 'investigation_pause', id: selected.id, expectedEpoch: selected.epoch ?? 0 }, true)}>暂停调查</button>}{selected && (selected.state === 'paused' || selected.state === 'failed' && selected.error?.startsWith('调查超时或应用已退出')) && <button disabled={busy} onClick={() => void call({ op: 'investigation_resume', id: selected.id, expectedEpoch: selected.epoch ?? 0 }, true)}>继续调查（新增5分钟，沿用剩余调用预算）</button>}<button disabled={busy || selected?.state === 'running'} className="retail-primary" onClick={() => start('model')}>重新进行模型调查</button><button disabled={busy || selected?.state === 'running'} onClick={() => start('replay')}>运行离线规则演示</button></div></>}
         {selected && <><p role="status" className="retail-investigation-status">{states[selected.state]} · {selected.mode === 'replay' ? '离线规则演示，未调用模型' : selected.model ?? (selected.state === 'running' ? '正在检查模型连接' : '未建立模型连接')}{selected.state === 'running' ? ' · 最长 5 分钟，最多 12 次决策与 1 次复核' : ''}</p>
           {selected.error && <div className="retail-alert error" role="alert">{selected.error}</div>}
           <p className="retail-muted">证据来自创建调查时的冻结快照。历史分析不代表当前实时状态；模型观点仍需人工核验。</p>

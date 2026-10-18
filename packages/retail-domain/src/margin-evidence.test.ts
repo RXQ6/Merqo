@@ -10,11 +10,22 @@ import { runInvestigation, runReadonlyReview } from './investigations';
 import { exportInvestigation } from './investigation-export';
 import type { EvidenceRecord } from './operations';
 import { marginReviewInput, MARGIN_REVIEW_SYSTEM } from './margin-review-evaluation';
+import { assessMarginEvidence } from './margin-evidence';
 import type { MarginReviewCase } from './margin-review-evaluation';
 let dir: string, data: RetailStore, runs: InvestigationStore, record: EvidenceRecord;
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'merqo-evidence-')); data = new RetailStore(join(dir, 'data.sqlite')); data.import(DEMO_CSV, undefined, 'demo'); record = data.snapshot().records.find(r => r.row.sku_id === 'TEA-500')!; runs = new InvestigationStore(join(dir, 'runs.sqlite')); });
 afterEach(() => { data.close(); runs.close(); rmSync(dir, { recursive: true, force: true }); });
 const input = (id: string) => marginReviewInput(record, cases.find(c => c.id === id) as MarginReviewCase);
+
+test('historical disclosure distinguishes empty and present Case context without manufacturing causal support', () => {
+  const audit = input('bounded-conditional').numericAudit;
+  for (const present of [false, true]) {
+    const assessment = assessMarginEvidence(audit, present);
+    const history = assessment.requirements.find(r => r.id === 'historical_comparison')!;
+    expect(history.detail).toContain(present ? '已有冻结历史 Case' : '冻结历史 Case 为空');
+    expect(history.status).toBe('missing'); expect(assessment.causalReady).toBe(false); expect(assessment.realExecutionReady).toBe(false);
+  }
+});
 
 test('complete snapshot supports arithmetic without manufacturing causal or execution evidence', () => {
   const context = input('bounded-conditional'), a = context.evidenceAssessment;

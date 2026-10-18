@@ -12,7 +12,8 @@ export async function requestRetailWorker(workspace: {rootPath:string;name:strin
     const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
     const child = spawn(process.env.CRAFT_BUN || 'bun', [worker, join(workspace.rootPath, 'retail', 'operations.sqlite'), workspace.name, workspaceId, operation === 'review_finalize' ? 'local-simulation-reviewer' : operation === 'approval_resolve' || operation === 'compensation_resolve' ? 'local-simulation-approver' : operation === 'simulation_execute' || operation === 'execution_reconcile' || operation === 'compensation_execute' || operation === 'compensation_reconcile' || operation === 'batch_run' || operation === 'batch_retry_item' || operation === 'batch_recover' ? 'local-simulation-executor' : 'local-analyst'], { cwd: root, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     let output = '', errorText = '', settled = false;
-    const timer = setTimeout(() => { settled = true; child.kill(); reject(new Error('经营数据请求超时，结果待确认；请刷新对应记录核对结果，不要连续重试')); }, 30000);
+    const timeoutMs = operation === 'import' || operation === 'signals_import' ? 120000 : 30000;
+    const timer = setTimeout(() => { settled = true; child.kill(); reject(new Error('经营数据请求超时，结果待确认；请刷新对应记录核对结果，不要连续重试')); }, timeoutMs);
     child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8');
     child.stdout.on('data', (chunk: string) => { output += chunk; if (output.length > 32_000_000) { child.kill(); } });
     child.stderr.on('data', (chunk: string) => { if (errorText.length < 2000) errorText += chunk; });

@@ -3,7 +3,9 @@ import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { calculate, DEMO_CSV, previewCsv, RowSchema, rowKey, RULE_VERSION } from './operations.ts';
+import { RetailQueries } from './retail-query';
+import type { RetailPageInput } from './retail-query';
+import { bundleIdentity, calculate, DEMO_CSV, previewCsv, RowSchema, rowKey, RULE_VERSION } from './operations.ts';
 import type { BatchSummary, EvidenceRecord, Preview, RetailReply, RetailRequest, Snapshot } from './operations.ts';
 
 const hash = (value: string): string => createHash('sha256').update(value).digest('hex');
@@ -11,6 +13,7 @@ interface StoredRow { id: string; row_json: string; batch_id: string; source: 'd
 interface StoredBatch { id: string; source: 'demo' | 'csv'; imported_at: string; accepted: number; rejected: number; hash: string; errors_json: string; rule_version: string }
 export class RetailStore {
   private readonly db: Database;
+  private queries?: RetailQueries;
   constructor(file: string, private readonly workspaceName = '当前 Workspace', private readonly readOnly = false) {
     if (!readOnly) mkdirSync(dirname(file), { recursive: true });
     this.db = new Database(file, readOnly ? { readonly: true, strict: true } : { create: true, strict: true });
@@ -40,15 +43,18 @@ export class RetailStore {
           batch_id TEXT PRIMARY KEY REFERENCES retail_batches(id), rule_version TEXT NOT NULL REFERENCES retail_rules(version)
         ) STRICT;
         PRAGMA user_version=2;`);
-        const definition = JSON.stringify({ threshold_bps: 2000, revenue: 'list_price-coupon-full_reduction+additional_platform_settlement', unknown_cost: 'block', unknown_subsidy: 'block', conflicting_spec: 'block' });
+        const definition = JSON.stringify({ threshold_bps: 2000, revenue: 'list_price-coupon-full_reduction+additional_platform_settlement', unknown_cost: 'block', unknown_subsidy: 'block', conflicting_spec: 'block', bundle: 'flat_explicit_components_unique_sku_spec_qty_CNY_cost_sum_equals_pack_cost;missing_or_conflict_block', gift: 'free_per_unit;additional_cost;zero_gift_revenue;discounts_on_main;unknown_or_conflict_block', membership: 'explicit_segment_status;business_date_[from,to);member_price;stackable_or_exclusive;unknown_or_conflict_block', offers: 'retail-offers-v1;exact_scope_date;public_available_only;unknown_blocks;reference_not_sales_price' });
         this.db.query('INSERT OR IGNORE INTO retail_rules (version,definition_json) VALUES (?,?)').run(RULE_VERSION, definition);
         const storedRule = this.db.query<{ definition_json: string }, [string]>('SELECT definition_json FROM retail_rules WHERE version=?').get(RULE_VERSION);
         if (storedRule?.definition_json !== definition) throw new Error('规则定义变化时必须提升规则版本');
         this.db.query('INSERT OR IGNORE INTO retail_batch_rules (batch_id,rule_version) SELECT id,? FROM retail_batches').run(RULE_VERSION);
       }).immediate();
+      this.queries = new RetailQueries(this.db, () => this.snapshot());
     } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
+  page(input: RetailPageInput = {}): Snapshot { if (!this.queries) throw new Error('只读连接不允许创建查询投影'); return this.queries.page(input); }
+  queryPlan(): unknown[] { if (!this.queries) throw new Error('只读连接不允许创建查询投影'); return this.queries.explain(); }
   snapshot(): Snapshot {
     const stored = this.db.query<StoredRow, []>(`SELECT r.id,r.row_json,r.batch_id,r.source,b.imported_at,b.hash AS snapshot_hash
       FROM retail_records r JOIN retail_batches b ON b.id=r.batch_id ORDER BY r.source,r.shop_id,r.date DESC,r.sku_id`).all();
@@ -57,7 +63,7 @@ export class RetailStore {
     for (const { record, row } of parsed) {
       const identity = JSON.stringify([record.source, row.shop_id, row.channel, row.sku_id]);
       if (!specs.has(identity)) specs.set(identity, new Set());
-      specs.get(identity)?.add(row.spec);
+      specs.get(identity)?.add(JSON.stringify([row.spec, bundleIdentity(row)]));
     }
     const records: EvidenceRecord[] = parsed.map(({ record, row }) => {
       const conflict = (specs.get(JSON.stringify([record.source, row.shop_id, row.channel, row.sku_id]))?.size ?? 0) > 1;
@@ -88,7 +94,7 @@ export class RetailStore {
         if(exists){const previous=preview.valid.map(row=>[rowKey(row),byKey.get(rowKey(row))?.batch_id??null]).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));digest=hash(JSON.stringify({contentHash:digest,previous}));id=`demo-${digest.slice(0,20)}`;}
       }
       const current = this.db.query<{ row_key: string }, [string]>('SELECT row_key FROM retail_records WHERE source=?').all(source);
-      if (new Set([...current.map(record => record.row_key), ...preview.valid.map(rowKey)]).size > 10000) throw new Error('每类数据最多保留 10,000 条当前记录，请缩小导入范围');
+      if (new Set([...current.map(record => record.row_key), ...preview.valid.map(rowKey)]).size > 100000) throw new Error('每类来源最多保留 100,000 条当前记录，请缩小导入范围');
       this.db.query('INSERT INTO retail_batches (id,source,imported_at,accepted,rejected,hash,errors_json) VALUES (?,?,?,?,?,?,?)').run(id, source, imported, preview.valid.length, preview.rejected.length, digest, JSON.stringify(preview.rejected));
       this.db.query('INSERT INTO retail_batch_rules (batch_id,rule_version) VALUES (?,?)').run(id, RULE_VERSION);
       const write = this.db.query(`INSERT INTO retail_records (id,source,row_key,shop_id,channel,date,sku_id,row_json,batch_id) VALUES (?,?,?,?,?,?,?,?,?)
@@ -100,14 +106,14 @@ export class RetailStore {
         history.run(rowId, id, json);
       }
     }).immediate();
-    if (duplicate) return { snapshot: this.snapshot(), notice: reloadDemo?'内置演示样例已就绪，内容相同，未重复写入；合成演示不受24小时限制':'此文件与映射已导入，未重复写入', preview };
-    return { snapshot: this.snapshot(), notice: `已导入 ${preview.valid.length} 条，隔离 ${preview.rejected.length} 条；同业务键的新快照替换当前视图，历史版本保留`, preview };
+    if (duplicate) return { snapshot: this.page(), notice: reloadDemo?'内置演示样例已就绪，内容相同，未重复写入；合成演示不受24小时限制':'此文件与映射已导入，未重复写入', preview };
+    return { snapshot: this.page(), notice: `已导入 ${preview.valid.length} 条，隔离 ${preview.rejected.length} 条；同业务键的新快照替换当前视图，历史版本保留`, preview };
   }
   request(request: RetailRequest): RetailReply {
     if (request.op === 'signals' || request.op === 'signals_demo' || request.op === 'signals_preview' || request.op === 'signals_import') throw new Error('库存与广告请求应由场景服务处理');
     if (request.op === 'investigate' || request.op === 'investigations') throw new Error('调查请求必须通过调查服务处理');
-    if (request.op === 'preview') return { ok: true, kind: 'preview', data: previewCsv(request.csv, request.mapping) };
-    if (request.op === 'snapshot') return { ok: true, kind: 'snapshot', data: this.snapshot() };
+    if (request.op === 'preview') { const preview = previewCsv(request.csv, request.mapping); return { ok: true, kind: 'preview', data: { ...preview, validCount: preview.valid.length, valid: preview.valid.slice(0, 30) } }; }
+    if (request.op === 'snapshot') { const { op: _op, ...input } = request; return { ok: true, kind: 'snapshot', data: this.page(input) }; }
     if (request.op !== 'demo' && request.op !== 'import') throw new Error('请求必须由调查或决策服务处理');
     const result = request.op === 'demo' ? this.import(DEMO_CSV, undefined, 'demo', true) : this.import(request.csv, request.mapping, 'csv');
     return { ok: true, kind: 'snapshot', data: result.snapshot, notice: result.notice };

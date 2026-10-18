@@ -31,10 +31,10 @@ test('fixed cases replay production rules and fault ledger, preserving release g
   const report = await runBusinessEvaluation();
   const failures = report.results.filter(r => r.status === 'failed');
   expect(failures).toEqual([]);
-  expect(report.summary).toEqual({ total: 48, passed: 36, failed: 0, unsupported: 12 });
+  expect(report.summary).toEqual({ total: 48, passed: 48, failed: 0, unsupported: 0 });
   expect(report.releaseReady).toBe(false);
   expect(report.datasetHash).toMatch(/^[a-f0-9]{64}$/);
   expect(report.results.filter(r => r.id.startsWith('fault.') && r.status === 'passed')).toHaveLength(12);
-  expect(report.warningConfusion).toEqual({ truePositive: 3, falsePositive: 0, falseNegative: 0, trueNegative: 5, excluded: 7 });
-  expect(Object.values(report.detectorMatrix).flatMap(row => Object.values(row)).reduce((a, b) => a + b, 0)).toBe(15);
+  expect(report.warningConfusion).toEqual({ truePositive: 5, falsePositive: 0, falseNegative: 0, trueNegative: 8, excluded: 11 });
+  expect(Object.values(report.detectorMatrix).flatMap(row => Object.values(row)).reduce((a, b) => a + b, 0)).toBe(24);
 }, 60000);

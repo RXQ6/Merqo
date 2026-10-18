@@ -1,0 +1,23 @@
+{
+  "batch": "2026-10-18T01-39-58-559Z-c6c3e3fd",
+  "files": {
+    "report.json": "a4e1f583662bf67b3927722abb6ed1589f3e5fa748639b88fb5ca09d971d1db3",
+    "report.md": "9705100e31e867a00c2f3870e279431275f3d3640ef3ccf60dba152481139e9c",
+    "dataset.json": "cfa220fa5fbfc036b5392ef707a2b3ce34baf2c7d0ccece5df907ed2a6de21cd",
+    "margin-1.json": "53b373e3080057e8ce7c8fc9d01928c4d5e068c503e8c29c72cdcff30fd01115",
+    "margin-2.json": "671cd323e473f80d4ed096ce8d4b7b9f627dc10c9787368b845a3de4c1de23f3",
+    "margin-3.json": "ee3fa109e8d2dc062b5bd16278aab31a154effda76b81bf3b9e74012257172ea",
+    "margin-4.json": "6965c56b2418bcfb5db0189e2fe64e774a9252be4d06265cb984e822d7b08185",
+    "margin-5.json": "5344a40d846996d12c56f05efd1470bbda01f4d11177222d02e3560b244d6e98",
+    "inventory-1.json": "5dd76f5f07b4ff8e20094dac947b8d8622069984435b46334a6446bb41b9edb0",
+    "inventory-2.json": "9cddc88c5dec4efbf0ba383ebe39f7f79ffc439d3057b245afc43212ed567da7",
+    "inventory-3.json": "edcd79e20cf965deddeafabc8d83c85fcf34c5b9741427ac9fb665d1b0c68077",
+    "inventory-4.json": "96ad5ac738fe31ca9cb50128e60e52a59c178cc7e4857a79992053359b925ca3",
+    "inventory-5.json": "91797c76801c25bd70da7fc3dc8735305f6be47b55fadcab065e217019231a1b",
+    "ads-1.json": "cc9b27cb94d89bac28c952c68505dd60f158f52b88a65aa715cbf1f2eef6c6f5",
+    "ads-2.json": "031dfd29958d8f8c2465505f93086c11222b92d6e69cca038341264d6fceca90",
+    "ads-3.json": "0f086321603d72ecf616e4c5a682636a693e03a39ddc7c6d71da31ec86dec0d2",
+    "ads-4.json": "ca8369d96c13000fff4436f74a03a68b2add08d9eb83bf59bede7fad416677b4",
+    "ads-5.json": "d88617cf43b39d0edbe30901cd4897718d9132fd0c1ca62bfdcc051d12b0a959"
+  }
+}

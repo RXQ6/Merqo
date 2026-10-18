@@ -4,11 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { Database } from 'bun:sqlite';
+import { selectOffers } from '../offers';
 import { RetailStore } from '../store';
 import { SignalStore } from '../signal-store';
 import { InvestigationStore } from '../investigation-store';
 import { DecisionStore } from '../decisions';
-import { DEMO_CSV, FIELDS, RetailRequestSchema, previewCsv, type EvidenceRecord } from '../operations';
+import { DEMO_CSV, IMPORT_FIELDS, RetailRequestSchema, previewCsv, type EvidenceRecord } from '../operations';
 import { ADS_FIELDS, INVENTORY_FIELDS, INVENTORY_EXECUTION_DEMO } from '../signals';
 import { readTool, simulate, runInvestigation, isSignalInvestigation } from '../investigations';
 import { runSignalInvestigation } from '../signal-investigations';
@@ -23,7 +24,7 @@ type CaseResult = {
 };
 const csv = (fields: readonly string[], rows: object[]): string => [fields.join(','), ...rows.map(row => fields.map(key => {
   const value = (row as Record<string, unknown>)[key];
-  return '"' + String(value ?? '').replaceAll('"', '""') + '"';
+  return '"' + (value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '')).replaceAll('"', '""') + '"';
 }).join(','))].join('\n');
 const TOOLS = ['retail_get_data_health', 'retail_get_sku_context', 'retail_get_promotions', 'retail_simulate_actions'] as const;
 function auditTrace(record: EvidenceRecord): Trace[] {
@@ -38,7 +39,7 @@ function protocolFixture(run: AnyInvestigation): ModelPort {
     const tools = ['retail_get_data_health', 'retail_get_sku_context', run.scenario === 'ads' ? 'retail_get_campaigns' : run.scenario === 'inventory' ? 'retail_get_inventory' : 'retail_get_promotions', 'retail_simulate_actions'];
     if (context.observations.length < 4) return JSON.stringify({ tool: tools[context.observations.length] });
     return JSON.stringify({ report: {
-      summary: '合成案例契约报告', observations: !isSignalInvestigation(run) ? [] : [{ text: '核对工具证据', evidenceIds: [`${run.recordId}:${tools[2]}`] }],
+      summary: '合成案例契约报告', observations: run.scenario !== 'inventory' ? [] : [{ text: '核对工具证据', evidenceIds: [`${run.recordId}:${tools[2]}`] }],
       hypotheses: [], unknowns: ['缺实时状态'], alternatives: ['可能存在口径差异'], options: [
         { kind: 'observe', rationale: '核验' },
         { kind: run.scenario === 'ads' ? 'reduce_budget' : run.scenario === 'inventory' ? 'replenish_draft' : 'reduce_coupon', rationale: '仅作条件测算' },
@@ -85,8 +86,19 @@ class Harness {
 
 function business(h: Harness, test: BusinessCase): { state: Expected; evidence: unknown } {
   const input = test.input;
+  if (input.kind === 'offer') {
+    const content = csv(IMPORT_FIELDS, [input.row]); const preview = previewCsv(content);
+    if (!preview.valid.length) return { state: 'rejected', evidence: preview.rejected };
+    h.data.import(content, undefined, 'demo'); const record = h.data.snapshot().records[0]!;
+    const selection = selectOffers(record.row);
+    if (test.expectedValues) for (const [key, value] of Object.entries(test.expectedValues)) assert.equal(selection[key as keyof typeof selection], value, key);
+    const trace = auditTrace(record); const numericAudit = auditMarginNumbers(record, simulate(record), trace);
+    if (selection.status === 'needs_evidence') assert.equal(record.calculation.profitMinor, null);
+    else assert.equal(record.calculation.revenueMinor, 8000, '参考报价不得替换成交收入');
+    return { state: selection.status === 'selected' ? 'accepted' : 'needs_evidence', evidence: { record, selection, trace, numericAudit } };
+  }
   if (input.kind === 'margin') {
-    const content = csv(FIELDS, input.rows); const preview = previewCsv(content);
+    const content = csv(IMPORT_FIELDS, input.rows); const preview = previewCsv(content);
     if (!preview.valid.length) return { state: 'rejected', evidence: preview.rejected };
     h.data.import(content, undefined, 'demo'); const records = h.data.snapshot().records;
     const r = records[0]!;
@@ -259,7 +271,7 @@ export async function runBusinessEvaluation() {
     datasetHash: createHash('sha256').update(JSON.stringify({ cases: [...BUSINESS_CASES, ...FAULT_CASES], protocolFixtures: PROTOCOL_FIXTURES })).digest('hex'),
     scope: '合成数据、领域规则及本地模拟账本；非真实模型质量、真实业务效果、安装或性能验收',
     summary, releaseReady: false,
-    remainingGates: ['四类未支持业务场景', '三主场景各五次真实模型运行及证据质量门禁', '真实模型禁止动作监测', '十万行三十次查询p95与分页', 'Windows安装/配置/重启/卸载', '调查暂停恢复及AgentBackend复用'],
+    remainingGates: ['固定48例与三场景真实模型第三批已通过，但SKU匹配/异常销量/延迟事件仍仅窄范围；会员价/赠品/报价及一层组合装保留业务边界', '完整真实模型安全对抗仍待扩展；第三批禁止动作事件为0，不代表完整安全证明', '毛利十万行30次查询已测；库存/广告同规模、冷缓存/并发及内部全量路径未验收', 'Windows本机beta.1到beta.2升级/重装/卸载已通过；干净环境及其他Windows版本仍待外部验收（用户确认暂无测试环境）'],
     detectorMatrix: matrix, warningConfusion: binary, results,
   };
 }

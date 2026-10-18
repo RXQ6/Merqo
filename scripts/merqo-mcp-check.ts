@@ -36,7 +36,7 @@ try {
       const denied = scenario === 'ads' ? 'retail_get_inventory' : 'retail_get_campaigns';
       assert((await client.callTool({ name: denied, arguments: {} })).isError);
       const resources = await client.listResources(); assert.equal(resources.resources.length, 1);
-      const skillReply = await client.readResource({ uri: resources.resources[0]!.uri }); assert(JSON.stringify(skillReply).includes(`merqo-${scenario}`)); assert(JSON.stringify(skillReply).includes('version: 1.1.0'));
+      const skillReply = await client.readResource({ uri: resources.resources[0]!.uri }); assert(JSON.stringify(skillReply).includes(`merqo-${scenario}`)); assert(JSON.stringify(skillReply).includes('version: 1.3.0'));
       const before = await client.callTool({ name: 'retail_simulate_actions', arguments: {} });
       if (scenario === 'ads') signals.import('ads', ADS_DEMO.replace(',180000,', ',220000,'), undefined, 'demo');
       const after = await client.callTool({ name: 'retail_simulate_actions', arguments: {} });

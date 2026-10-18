@@ -14,6 +14,9 @@
  */
 
 import { existsSync } from 'node:fs';
+import { prepareIsolatedCompletion } from './backend/isolated-completion.ts';
+import type { IsolatedCompletion } from './backend/isolated-completion.ts';
+import type { InferenceTelemetry } from './backend/isolated-telemetry.ts';
 import { join } from 'node:path';
 
 import type { AgentEvent } from '@craft-agent/core/types';
@@ -1136,6 +1139,11 @@ ${formattedMessages}
    * @returns The model's response text and optional token usage
    */
   abstract queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult>;
+
+  /** Explicitly isolated completion: same backend connection/auth, with no tools, files, hooks or chat dispatch. */
+  createIsolatedCompletion(deadline: string, onTelemetry?: (event: InferenceTelemetry) => void, signal?: AbortSignal): Promise<IsolatedCompletion> {
+    return prepareIsolatedCompletion(this.config.workspace.rootPath, deadline, onTelemetry, signal, this.config.connectionSlug);
+  }
 
   /**
    * Pre-execute a call_llm request: resolve attachments, validate model, run query.

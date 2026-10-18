@@ -8,21 +8,52 @@ import type { DecisionDraft } from './decisions';
 import type { AnyInvestigation } from './investigations';
 import type { SignalPreview, SignalSnapshot } from './signals';
 import { CheckConfigSchema } from './check-types';
+import { OfferSchema, selectOffers } from './offers';
 import type { ChecksView } from './check-types';
+import { RetailPageSchema } from './retail-query';
+import type { RetailPagination } from './retail-query';
 
-export const RULE_VERSION = 'retail-margin-v1';
+export const RULE_VERSION = 'retail-margin-v5';
 export const FIELDS = ['date', 'shop_id', 'channel', 'sku_id', 'product_name', 'spec', 'currency', 'list_price_minor', 'coupon_minor', 'full_reduction_minor', 'subsidy_minor', 'subsidy_funder', 'cost_minor', 'sold_qty', 'on_hand', 'reserved', 'inbound_qty'] as const;
 export type Field = typeof FIELDS[number];
-export const FIELD_LABELS: Record<Field, string> = {
+export const OPTIONAL_FIELDS = ['product_type', 'bundle_components', 'gift_policy', 'gift_cost_basis', 'gifts', 'membership', 'offers'] as const;
+export const IMPORT_FIELDS = [...FIELDS, ...OPTIONAL_FIELDS] as const;
+export const FIELD_LABELS: Record<typeof IMPORT_FIELDS[number], string> = {
+  product_type: '商品类型（可选：single / bundle）', bundle_components: '组合装子项（可选：JSON）',
+  gift_policy: '赠送规则（可选：none / free_per_unit / unknown）', gift_cost_basis: '赠品成本口径（可选：additional / included / unknown）', gifts: '赠品明细（可选：JSON）',
+  membership: '会员价格上下文（可选：JSON）',
+  offers: '参考报价（可选：JSON）',
   date: '经营日期', shop_id: '店铺', channel: '渠道', sku_id: 'SKU 编号', product_name: '商品名称', spec: '规格', currency: '币种', list_price_minor: '单价（分）', coupon_minor: '商家券（分/件）', full_reduction_minor: '商家满减（分/件）', subsidy_minor: '额外结算补贴（分/件）', subsidy_funder: '补贴承担方', cost_minor: '成本（分/件）', sold_qty: '净成交件数', on_hand: '现存件数', reserved: '占用件数', inbound_qty: '在途件数',
 };
 const money = z.number().int().min(0).max(100_000_000);
+const businessDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => { const date = new Date(value + 'T00:00:00Z'); return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value; }, '日期不存在');
+export const MembershipSchema = z.strictObject({
+  status: z.enum(['member', 'non_member', 'unknown']).optional(),
+  segment_id: z.string().trim().min(1).max(100).nullable().optional(),
+  price_minor: money.positive().nullable().optional(),
+  valid_from: businessDate.nullable().optional(),
+  valid_to: businessDate.nullable().optional(),
+  discount_policy: z.enum(['stackable', 'exclusive', 'unknown']).optional(),
+});
+export const BundleComponentSchema = z.strictObject({
+  sku_id: z.string().trim().min(1).max(100),
+  spec: z.string().trim().min(1).max(160),
+  quantity: z.number().int().min(1).max(10000),
+  unit_cost_minor: money.nullable(),
+});
 export const RowSchema = z.strictObject({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => { const date = new Date(value + 'T00:00:00Z'); return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value; }, '日期不存在'),
   shop_id: z.string().trim().min(1).max(100), channel: z.string().trim().min(1).max(80), sku_id: z.string().trim().min(1).max(100),
   product_name: z.string().trim().min(1).max(200), spec: z.string().trim().min(1).max(160), currency: z.literal('CNY'),
   list_price_minor: money.positive(), coupon_minor: money, full_reduction_minor: money, subsidy_minor: money,
   subsidy_funder: z.enum(['platform', 'merchant', 'unknown']), cost_minor: money.nullable(),
+  product_type: z.enum(['single', 'bundle']).optional(),
+  bundle_components: z.array(BundleComponentSchema).max(100).nullable().optional(),
+  gift_policy: z.enum(['none', 'free_per_unit', 'unknown']).optional(),
+  gift_cost_basis: z.enum(['additional', 'included', 'unknown']).optional(),
+  gifts: z.array(BundleComponentSchema).max(100).nullable().optional(),
+  membership: MembershipSchema.nullable().optional(),
+  offers: z.array(OfferSchema).max(100).nullable().optional(),
   sold_qty: z.number().int().min(0).max(1_000_000), on_hand: z.number().int().min(0).max(1_000_000), reserved: z.number().int().min(0).max(1_000_000), inbound_qty: z.number().int().min(0).max(1_000_000),
 }).superRefine((row, ctx) => {
   if (row.reserved > row.on_hand) ctx.addIssue({ code: 'custom', message: '占用库存不能超过现存库存' });
@@ -30,7 +61,7 @@ export const RowSchema = z.strictObject({
 });
 export type RetailRow = z.infer<typeof RowSchema>;
 export interface RejectedRow { line: number; reason: string }
-export interface Preview { headers: string[]; mapping: Record<string, string>; sample: string[][]; valid: RetailRow[]; rejected: RejectedRow[]; duplicateCount: number; total: number }
+export interface Preview { headers: string[]; mapping: Record<string, string>; sample: string[][]; valid: RetailRow[]; validCount?: number; rejected: RejectedRow[]; duplicateCount: number; total: number }
 export const MappingSchema = z.record(z.string(), z.string().max(200));
 export const RetailRequestSchema = z.discriminatedUnion('op', [
   z.strictObject({ op: z.literal('checks') }),
@@ -44,6 +75,8 @@ export const RetailRequestSchema = z.discriminatedUnion('op', [
   z.strictObject({ op: z.literal('signals_preview'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema.optional() }),
   z.strictObject({ op: z.literal('signals_import'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema }),
   z.strictObject({ op: z.literal('investigation_export'), id: z.string().uuid(), format: z.enum(['json', 'md']) }),
+  z.strictObject({ op: z.literal('investigation_pause'), id: z.string().uuid(), expectedEpoch: z.number().int().min(0).max(1000) }),
+  z.strictObject({ op: z.literal('investigation_resume'), id: z.string().uuid(), expectedEpoch: z.number().int().min(0).max(1000) }),
   z.strictObject({op:z.literal('review_followup'),id:z.string().uuid(),expectedCaseId:z.string().uuid(),mode:z.enum(['model','replay'])}),
   z.strictObject({op:z.literal('reviews')}),
   z.strictObject({op:z.literal('review_create'),jobId:z.string().regex(/^[a-f0-9]{64}$/)}),
@@ -74,21 +107,21 @@ export const RetailRequestSchema = z.discriminatedUnion('op', [
   z.strictObject({ op: z.literal('decision_history'), id: z.string().uuid() }),
   z.strictObject({ op: z.literal('investigations'), recordId: z.string().max(64).optional(), id: z.string().min(1).max(64).optional() }).refine(r => !r.id || !r.recordId, '调查ID与快照筛选不能同时提供'),
   z.strictObject({ op: z.literal('investigate'), recordId: z.string().min(1).max(64), mode: z.enum(['model', 'replay']), scenario: z.enum(['margin', 'inventory', 'ads']).optional(), retry: z.boolean().optional() }),
-  z.strictObject({ op: z.literal('snapshot') }),
+  RetailPageSchema.extend({ op: z.literal('snapshot') }),
   z.strictObject({ op: z.literal('demo') }),
-  z.strictObject({ op: z.literal('preview'), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema.optional() }),
-  z.strictObject({ op: z.literal('import'), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema }),
+  z.strictObject({ op: z.literal('preview'), csv: z.string().min(1).max(32_000_000), mapping: MappingSchema.optional() }),
+  z.strictObject({ op: z.literal('import'), csv: z.string().min(1).max(32_000_000), mapping: MappingSchema }),
 ]);
 export type RetailRequest = z.infer<typeof RetailRequestSchema>;
 
 /** RFC-style quoted fields, escaped quotes, BOM, CRLF and embedded newlines. */
 export function parseCsv(input: string): string[][] {
-  if (input.length > 2_000_000) throw new Error('CSV 超过 2 MB 限制');
+  if (input.length > 32_000_000) throw new Error('CSV 超过 32 MB 限制');
   const text = input.replace(/^\uFEFF/, '');
   const rows: string[][] = [];
   let row: string[] = [], field = '', quoted = false, endedQuote = false;
   const cell = () => { row.push(field); field = ''; endedQuote = false; };
-  const record = () => { cell(); if (row.some(value => value.trim())) rows.push(row); row = []; if (rows.length > 10001) throw new Error('最多导入 10,000 行'); };
+  const record = () => { cell(); if (row.some(value => value.trim())) rows.push(row); row = []; if (rows.length > 100001) throw new Error('最多导入 100,000 行'); };
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (quoted) {
@@ -113,11 +146,19 @@ export function previewCsv(csv: string, proposed?: Record<string, string>): Prev
   if (headers.length === 0 || new Set(headers).size !== headers.length || headers.some(header => !header)) throw new Error('表头不能为空或重复');
   if (headers.length > 64) throw new Error('CSV 最多支持 64 列，请移除无关字段');
   const mapping: Record<string, string> = {};
-  for (const key of FIELDS) mapping[key] = proposed?.[key] ?? (headers.includes(key) ? key : headers.includes(FIELD_LABELS[key]) ? FIELD_LABELS[key] : '');
+  for (const key of IMPORT_FIELDS) {
+    const column = proposed?.[key] ?? (headers.includes(key) ? key : headers.includes(FIELD_LABELS[key]) ? FIELD_LABELS[key] : '');
+    if (column || (FIELDS as readonly string[]).includes(key)) mapping[key] = column;
+  }
   if (proposed) {
-    const columns = FIELDS.map(key => mapping[key]);
-    if (columns.some(value => !value || !headers.includes(value))) throw new Error('请为每个字段选择有效的 CSV 列');
+    const columns = IMPORT_FIELDS.map(key => mapping[key]).filter((column): column is string => Boolean(column));
+    if (FIELDS.some(key => !mapping[key]) || columns.some(value => !headers.includes(value))) throw new Error('请为每个必填字段选择有效的 CSV 列');
     if (new Set(columns).size !== columns.length) throw new Error('同一 CSV 列不能映射到多个字段');
+  }
+  // A recognized business column must never silently disappear through a blank/custom mapping.
+  for (const key of OPTIONAL_FIELDS) {
+    const header = headers.includes(key) ? key : headers.includes(FIELD_LABELS[key]) ? FIELD_LABELS[key] : undefined;
+    if (header && mapping[key] !== header) throw new Error(`${key} 业务列必须保留原字段映射`);
   }
   const valid: RetailRow[] = [], rejected: RejectedRow[] = [];
   const seen = new Set<string>();
@@ -125,11 +166,17 @@ export function previewCsv(csv: string, proposed?: Record<string, string>): Prev
   for (const [index, cells] of records.entries()) {
     if (cells.length !== headers.length) { rejected.push({ line: index + 2, reason: '列数与表头不一致' }); continue; }
     const raw: Record<string, unknown> = {};
-    for (const key of FIELDS) {
+    let malformedBundle = false;
+    for (const key of IMPORT_FIELDS) {
       const value = cells[headers.indexOf(mapping[key] ?? '')]?.trim() ?? '';
-      if (key.endsWith('_minor') || ['sold_qty', 'on_hand', 'reserved', 'inbound_qty'].includes(key)) raw[key] = key === 'cost_minor' && !value ? null : /^\d+$/.test(value) ? Number(value) : Number.NaN;
+      if (key === 'product_type' || key === 'gift_policy' || key === 'gift_cost_basis') { if (value) raw[key] = value; }
+      else if (key === 'bundle_components' || key === 'gifts' || key === 'membership' || key === 'offers') {
+        if (value) { try { raw[key] = JSON.parse(value); } catch { malformedBundle = true; } }
+      }
+      else if (key.endsWith('_minor') || ['sold_qty', 'on_hand', 'reserved', 'inbound_qty'].includes(key)) raw[key] = key === 'cost_minor' && !value ? null : /^\d+$/.test(value) ? Number(value) : Number.NaN;
       else raw[key] = value;
     }
+    if (malformedBundle) { rejected.push({ line: index + 2, reason: 'bundle_components / gifts / membership / offers: 业务上下文必须是有效 JSON' }); continue; }
     const parsed = RowSchema.safeParse(raw);
     if (!parsed.success) { rejected.push({ line: index + 2, reason: parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('；') }); continue; }
     if (seen.has(rowKey(parsed.data))) { duplicateCount++; rejected.push({ line: index + 2, reason: '店铺、渠道、SKU、日期重复，保留第一行' }); continue; }
@@ -138,20 +185,103 @@ export function previewCsv(csv: string, proposed?: Record<string, string>): Prev
   return { headers, mapping, sample: records.slice(0, 4), valid, rejected, duplicateCount, total: records.length };
 }
 export interface Calculation { revenueMinor: number | null; profitMinor: number | null; marginBps: number | null; totalRevenueMinor: number | null; totalProfitMinor: number | null; available: number; issues: string[] }
-export function calculate(row: RetailRow, specConflict = false): Calculation {
+export function membershipIdentity(row: RetailRow): string | null {
+  if (row.membership === undefined) return null;
+  const m = row.membership;
+  return JSON.stringify([m?.status ?? null, m?.segment_id ?? null, m?.status === 'member' ? m.discount_policy ?? null : null]);
+}
+export function membershipIssues(row: RetailRow): string[] {
+  if (row.membership === undefined) return [];
+  const m = row.membership;
+  if (m?.status === 'non_member') return [];
+  if (m?.status !== 'member') return ['会员身份未知或未声明，不能选择会员价'];
   const issues: string[] = [];
+  if (!m.segment_id) issues.push('缺少会员分组，须补充身份范围');
+  if (m.price_minor == null) issues.push('缺少会员价');
+  else if (m.price_minor > row.list_price_minor) issues.push('会员价高于普通价，须核对报价口径');
+  if (!m.valid_from || !m.valid_to) issues.push('缺少会员价有效期');
+  else if (m.valid_from >= m.valid_to || row.date < m.valid_from || row.date >= m.valid_to) issues.push('会员价在业务日期无效，有效期为左闭右开');
+  if (!m.discount_policy || m.discount_policy === 'unknown') issues.push('会员价与优惠叠加规则未知');
+  if (m.discount_policy === 'exclusive' && (row.coupon_minor > 0 || row.full_reduction_minor > 0)) issues.push('会员价与券或满减互斥，不能同时计价');
+  if (m.price_minor != null && row.coupon_minor + row.full_reduction_minor > m.price_minor) issues.push('商家优惠合计超过会员价');
+  return issues;
+}
+export function effectivePrice(row: RetailRow): number | null {
+  if (membershipIssues(row).length) return null;
+  return row.membership?.status === 'member' ? row.membership.price_minor! : row.list_price_minor;
+}
+export function bundleIdentity(row: RetailRow): string | null {
+  if (row.product_type !== 'bundle') return null;
+  return JSON.stringify(row.bundle_components?.map(p => [p.sku_id, p.spec, p.quantity]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))) ?? null);
+}
+export function hasGiftFields(row: RetailRow): boolean {
+  return row.gift_policy !== undefined || row.gift_cost_basis !== undefined || row.gifts !== undefined;
+}
+export function giftIdentity(row: RetailRow): string | null {
+  if (!hasGiftFields(row) || (row.gift_policy === 'none' && !row.gifts?.length && row.gift_cost_basis === undefined)) return null;
+  return JSON.stringify([row.gift_policy ?? null, row.gift_cost_basis ?? null, row.gifts?.map(p => [p.sku_id, p.spec, p.quantity]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))) ?? null]);
+}
+export function giftIssues(row: RetailRow): string[] {
+  if (!hasGiftFields(row)) return [];
+  if (row.gift_policy === 'none') return row.gifts?.length || row.gift_cost_basis !== undefined ? ['无赠品声明与赠品明细或成本口径冲突'] : [];
+  const issues: string[] = [];
+  if (row.gift_policy !== 'free_per_unit') issues.push('赠送规则未知或未声明，须明确每销售件免费赠送');
+  if (row.gift_cost_basis !== 'additional') issues.push('赠品成本须明确不含在主商品成本中；已含或未知口径待补证');
+  if (!row.gifts?.length) issues.push('缺少赠品关联明细');
+  const seen = new Set<string>(); let total = 0;
+  for (const gift of row.gifts ?? []) {
+    if (gift.sku_id === row.sku_id) issues.push('同 SKU 自赠须另行核对成交与赠送数量，当前不支持');
+    if (seen.has(gift.sku_id)) issues.push('赠品 SKU 重复或规格映射冲突');
+    seen.add(gift.sku_id);
+    if (gift.unit_cost_minor === null) issues.push('缺少赠品单位成本');
+    else total += gift.quantity * gift.unit_cost_minor;
+  }
+  if (total > 100_000_000 || (row.cost_minor !== null && total + row.cost_minor > 100_000_000)) issues.push('主商品与赠品合计成本超过金额上限');
+  return [...new Set(issues)];
+}
+export function giftCost(row: RetailRow): number | null {
+  if (giftIssues(row).length) return null;
+  return (row.gifts ?? []).reduce((total, gift) => total + gift.quantity * gift.unit_cost_minor!, 0);
+}
+export function marginCost(row: RetailRow): number | null {
+  const extra = giftCost(row);
+  return row.cost_minor === null || extra === null ? null : row.cost_minor + extra;
+}
+/** Flat bundle, per sellable pack. Component costs are CNY and inherit the row's shop/channel/date. */
+export function bundleIssues(row: RetailRow): string[] {
+  const parts = row.bundle_components;
+  if (row.product_type !== 'bundle') return parts !== undefined ? ['组合装子项必须明确声明 product_type=bundle'] : [];
+  if (!parts?.length) return ['组合装缺少子项映射'];
+  const issues: string[] = [];
+  const seen = new Set<string>();
+  let sum = 0;
+  for (const part of parts) {
+    if (part.sku_id === row.sku_id) issues.push('组合装不能包含自身 SKU');
+    if (seen.has(part.sku_id)) issues.push('组合装子 SKU 重复或规格映射冲突');
+    seen.add(part.sku_id);
+    if (part.unit_cost_minor === null) issues.push('组合装缺少子项单位成本');
+    else sum += part.quantity * part.unit_cost_minor;
+  }
+  if (sum > 100_000_000) issues.push('组合装子项合计成本超过金额上限');
+  if (parts.every(part => part.unit_cost_minor !== null) && row.cost_minor !== null && sum !== row.cost_minor) issues.push('组合装子项合计与整包成本不一致');
+  return [...new Set(issues)];
+}
+export function calculate(row: RetailRow, specConflict = false): Calculation {
+  const issues: string[] = [...bundleIssues(row), ...giftIssues(row), ...membershipIssues(row), ...selectOffers(row).issues];
   if (row.cost_minor === null) issues.push('缺少商品成本');
   if (row.subsidy_minor > 0 && row.subsidy_funder !== 'platform') issues.push(row.subsidy_funder === 'unknown' ? '补贴承担方未知' : '商家承担的补贴须归入商家优惠，当前口径不支持');
   if (specConflict) issues.push('同店铺同渠道 SKU 出现多种规格，须人工核对映射');
-  const revenue = row.list_price_minor - row.coupon_minor - row.full_reduction_minor + row.subsidy_minor;
-  if (revenue <= 0) issues.push('商家商品收入不大于零');
+  const price = effectivePrice(row);
+  const revenue = (price ?? 0) - row.coupon_minor - row.full_reduction_minor + row.subsidy_minor;
+  if (price !== null && revenue <= 0) issues.push('商家商品收入不大于零');
   const ready = issues.length === 0;
-  const profit = ready && row.cost_minor !== null ? revenue - row.cost_minor : null;
+  const cost = marginCost(row);
+  const profit = ready && cost !== null ? revenue - cost : null;
   return { revenueMinor: ready ? revenue : null, profitMinor: profit, marginBps: profit === null ? null : Math.round(profit * 10000 / revenue), totalRevenueMinor: ready ? revenue * row.sold_qty : null, totalProfitMinor: profit === null ? null : profit * row.sold_qty, available: row.on_hand - row.reserved, issues };
 }
 export interface EvidenceRecord { id: string; batchId: string; source: 'demo' | 'csv'; importedAt: string; snapshotHash: string; ruleVersion: string; row: RetailRow; calculation: Calculation; status: 'normal' | 'low_margin' | 'needs_evidence'; reasons: string[]; thresholdBps: number }
 export interface BatchSummary { id: string; source: 'demo' | 'csv'; importedAt: string; accepted: number; rejected: number; hash: string; errors: RejectedRow[]; ruleVersion: string }
-export interface Snapshot { workspaceName: string; records: EvidenceRecord[]; batches: BatchSummary[]; dbVersion: number; ruleVersion: string; thresholdBps: number }
+export interface Snapshot { workspaceName: string; records: EvidenceRecord[]; batches: BatchSummary[]; dbVersion: number; ruleVersion: string; thresholdBps: number; pagination?: RetailPagination }
 export type RetailReply = { ok: true; kind: 'checks'; data: ChecksView } | {ok:true;kind:'reviews';data:ReviewView[];selectedId?:string} | {ok:true;kind:'review_preview';data:ObservationPreview} | {ok:true;kind:'execution_batches';data:BatchView[];selectedId?:string} | {ok:true;kind:'compensations';data:CompensationView[];selectedId?:string} | { ok: true; kind: 'executions'; data: ExecutionView[]; selectedId?: string } | { ok: true; kind: 'approvals'; data: ApprovalView[]; selectedId?: string } | { ok: true; kind: 'export'; filename: string; mime: string; content: string } | { ok: true; kind: 'decisions'; data: DecisionDraft[]; selectedId?: string; history?: DecisionDraft[] } | { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: AnyInvestigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
 
 const demoRows: RetailRow[] = [
@@ -162,8 +292,42 @@ const demoRows: RetailRow[] = [
   { date: '2026-10-14', shop_id: 'demo-nanfeng', channel: '线上商城', sku_id: 'HONEY-250', product_name: '山花蜂蜜', spec: '250g', currency: 'CNY', list_price_minor: 8000, coupon_minor: 500, full_reduction_minor: 0, subsidy_minor: 0, subsidy_funder: 'platform', cost_minor: 4000, sold_qty: 15, on_hand: 50, reserved: 0, inbound_qty: 0 },
   { date: '2026-10-14', shop_id: 'demo-nanfeng', channel: '线上商城', sku_id: 'RICE-2', product_name: '五常鲜米', spec: '2kg', currency: 'CNY', list_price_minor: 4000, coupon_minor: 1000, full_reduction_minor: 500, subsidy_minor: 0, subsidy_funder: 'platform', cost_minor: 2800, sold_qty: 20, on_hand: 60, reserved: 10, inbound_qty: 100 },
 ];
-function csvCell(value: unknown): string { const text = value === null ? '' : String(value); return /[,"\r\n]/.test(text) ? '"' + text.replaceAll('"', '""') + '"' : text; }
+function csvCell(value: unknown): string { const text = value == null ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value); return /[,"\r\n]/.test(text) ? '"' + text.replaceAll('"', '""') + '"' : text; }
+/** Preserve explicit unknown JSON contexts while numeric nulls keep the CSV blank convention. */
+export function snapshotCsv(row: object): string {
+  const entries = Object.entries(row);
+  return [entries.map(([key]) => key).join(','), entries.map(([key, value]) => csvCell(value === null && ['membership', 'bundle_components', 'gifts', 'offers'].includes(key) ? 'null' : value)).join(',')].join('\n');
+}
 export const DEMO_CSV = [FIELDS.join(','), ...demoRows.map(row => FIELDS.map(key => csvCell(row[key])).join(','))].join('\r\n');
+const bundleRow: RetailRow = { ...demoRows[0]!, sku_id: 'PACK-NORMAL', product_name: '组合装合成验收', spec: '茶饮×2+咖啡×4', coupon_minor: 1000, sold_qty: 10, product_type: 'bundle', bundle_components: [
+  { sku_id: 'TEA-UNIT', spec: '500ml', quantity: 2, unit_cost_minor: 1000 },
+  { sku_id: 'COFFEE-UNIT', spec: '250ml', quantity: 4, unit_cost_minor: 1000 },
+] };
+export const BUNDLE_DEMO_CSV = [IMPORT_FIELDS.join(','), ...[
+  bundleRow, { ...bundleRow, sku_id: 'PACK-CONFLICT', cost_minor: 1000 },
+  { ...bundleRow, sku_id: 'PACK-MISSING', bundle_components: null },
+].map(row => IMPORT_FIELDS.map(key => csvCell(row[key])).join(','))].join('\r\n');
+const giftRow: RetailRow = { ...demoRows[0]!, sku_id: 'GIFT-NORMAL', product_name: '买赠合成验收', spec: '主商品500ml', coupon_minor: 1000, sold_qty: 10, gift_policy: 'free_per_unit', gift_cost_basis: 'additional', gifts: [
+  { sku_id: 'GIFT-SAMPLE', spec: '30ml', quantity: 1, unit_cost_minor: 0 },
+] };
+export const GIFT_DEMO_CSV = [IMPORT_FIELDS.join(','), ...[
+  giftRow, { ...giftRow, sku_id: 'GIFT-WARNING', gifts: [{ ...giftRow.gifts![0]!, unit_cost_minor: 1500 }] },
+  { ...giftRow, sku_id: 'GIFT-MISSING', gifts: [{ ...giftRow.gifts![0]!, unit_cost_minor: null }] },
+].map(row => IMPORT_FIELDS.map(key => csvCell(row[key])).join(','))].join('\r\n');
+const memberRow: RetailRow = { ...demoRows[0]!, sku_id: 'MEMBER-NORMAL', product_name: '会员价合成验收', spec: '500ml', coupon_minor: 0, full_reduction_minor: 0, sold_qty: 10,
+  membership: { status: 'member', segment_id: 'gold', price_minor: 8000, valid_from: '2026-10-01', valid_to: '2026-11-01', discount_policy: 'exclusive' },
+};
+export const MEMBER_DEMO_CSV = [IMPORT_FIELDS.join(','), ...[
+  memberRow, { ...memberRow, sku_id: 'MEMBER-WARNING', coupon_minor: 500, membership: { ...memberRow.membership!, price_minor: 6500, discount_policy: 'stackable' as const } },
+  { ...memberRow, sku_id: 'MEMBER-MISSING', membership: { ...memberRow.membership!, status: 'unknown' as const } },
+].map(row => IMPORT_FIELDS.map(key => csvCell(row[key])).join(','))].join('\r\n');
+const offerRow: RetailRow = { ...demoRows[0]!, sku_id: 'OFFER-NORMAL', product_name: '可售报价合成验收', coupon_minor: 1000, sold_qty: 10 };
+const offer = (sku: string, id: string, price: number, available: boolean | null) => ({ offer_id: id, shop_id: offerRow.shop_id, channel: offerRow.channel, sku_id: sku, spec: offerRow.spec, currency: 'CNY' as const, observed_on: offerRow.date, audience: 'public' as const, price_minor: price, available });
+export const OFFER_DEMO_CSV = [IMPORT_FIELDS.join(','), ...[
+  { ...offerRow, offers: [offer('OFFER-NORMAL', 'public-a', 1000, true)] },
+  { ...offerRow, sku_id: 'OFFER-FILTERED', offers: [offer('OFFER-FILTERED', 'out-of-stock', 1000, false), offer('OFFER-FILTERED', 'available-b', 3000, true)] },
+  { ...offerRow, sku_id: 'OFFER-UNKNOWN', offers: [offer('OFFER-UNKNOWN', 'unknown-stock', 1000, null)] },
+].map(row => IMPORT_FIELDS.map(key => csvCell(row[key])).join(','))].join('\r\n');
 export function exportCsv(records: EvidenceRecord[]): string {
   const safe = (value: unknown) => { const text = String(value ?? ''); return csvCell(/^[=+\-@\t\r]/.test(text) ? "'" + text : text); };
   return '\uFEFF' + [['店铺', '渠道', '日期', 'SKU', '商品', '规格', '状态', '商家收入分每件', '毛利分每件', '毛利率基点', '证据ID', '快照SHA256', '规则版本'], ...records.map(record => [record.row.shop_id, record.row.channel, record.row.date, record.row.sku_id, record.row.product_name, record.row.spec, record.status, record.calculation.revenueMinor, record.calculation.profitMinor, record.calculation.marginBps, record.id, record.snapshotHash, record.ruleVersion])].map(row => row.map(safe).join(',')).join('\r\n');

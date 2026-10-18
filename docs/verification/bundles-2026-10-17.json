@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-17",
+  "scope": "source-only flat bundle extension; not included in published 0.1.0-beta.1 installer",
+  "domain": {
+    "command": "bun run retail:check",
+    "exitCode": 0,
+    "tests": 191,
+    "failed": 0,
+    "assertions": 1257,
+    "typecheck": "passed"
+  },
+  "electronTypecheck": {
+    "command": "bun run typecheck:electron",
+    "exitCode": 0
+  },
+  "build": {
+    "command": "bun run retail:build",
+    "exitCode": 0
+  },
+  "evaluation": {
+    "command": "bun run retail:eval --release-gate",
+    "exitCode": 1,
+    "total": 48,
+    "passed": 39,
+    "failed": 0,
+    "unsupported": 9,
+    "releaseReady": false,
+    "expectedExit": true,
+    "datasetHash": "5b1cefb0b049913d6f4316c8537114cce16ce7b949a920355289b8827b64c1e2",
+    "normalCommand": {
+      "command": "bun run retail:eval",
+      "exitCode": 0
+    }
+  },
+  "desktop": {
+    "command": "node scripts/merqo-bundle-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "bundles",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "optional bundle fields auto-map in actual renderer",
+        "bundle normal/conflict/missing states survive bundles",
+        "bundle pack totals and evidence gaps persist bundles",
+        "component identities and computed pack margin shown bundles"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\bundle-check-1792247047424",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "bundles-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "bundle normal/conflict/missing states survive bundles-restart",
+        "bundle pack totals and evidence gaps persist bundles-restart",
+        "component identities and computed pack margin shown bundles-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\bundle-check-1792247047424",
+      "error": null,
+      "failures": []
+    }
+  },
+  "limitations": [
+    "No external model calls; model protocol fixtures are not live inference evidence",
+    "No external platform writes or production authorization",
+    "No nested bundles, component revenue allocation, gifts, membership pricing or offer availability",
+    "Performance and full PRD release gates remain unmet"
+  ],
+  "mcp": {
+    "command": "bun run retail:check:mcp",
+    "exitCode": 0,
+    "scope": "three scenarios, frozen scope and Case; no external model requests"
+  }
+}

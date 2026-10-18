@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { DecisionStore } from '../packages/retail-domain/src/decisions';
 import { exportInvestigation } from '../packages/retail-domain/src/investigation-export';
 import { RetailStore } from '../packages/retail-domain/src/store.ts';
-import { RetailRequestSchema } from '../packages/retail-domain/src/operations.ts';
+import { RetailRequestSchema, snapshotCsv } from '../packages/retail-domain/src/operations.ts';
 import { InvestigationStore } from '../packages/retail-domain/src/investigation-store.ts';
 import { SignalStore } from '../packages/retail-domain/src/signal-store.ts';
 import { previewSignals, INVENTORY_EXECUTION_DEMO } from '../packages/retail-domain/src/signals.ts';
@@ -53,13 +53,16 @@ try {
     store = openStore(() => new RetailStore(file, process.argv[3] || '当前 Workspace'));
     investigations = openStore(() => new InvestigationStore(file + '.investigations.sqlite', false, workspaceId));
     // Internal worker protocol is not exposed by the renderer IPC whitelist.
-    const internal = z.strictObject({ op: z.literal('investigation_update'), id: z.string().uuid(), event: z.custom<Trace>().optional(), report: z.custom<InvestigationReport>().optional(), error: z.string().max(1000).optional(), model: z.string().max(200).optional() }).safeParse(input);
+    const internal = z.strictObject({ op: z.literal('investigation_update'), id: z.string().uuid(), expectedEpoch: z.number().int().min(0).optional(), event: z.custom<Trace>().optional(), report: z.custom<InvestigationReport>().optional(), error: z.string().max(1000).optional(), model: z.string().max(200).optional() }).safeParse(input);
     if (internal.success) {
-    const { id, event, report, error, model } = internal.data;
-    console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [investigations.update(id, { ...(event ? { event } : {}), ...(report ? { report } : {}), ...(error ? { error } : {}), ...(model ? { model } : {}) })] }));
+    const { id, event, report, error, model, expectedEpoch } = internal.data;
+    console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [investigations.update(id, { expectedEpoch, ...(event ? { event } : {}), ...(report ? { report } : {}), ...(error ? { error } : {}), ...(model ? { model } : {}) })] }));
   } else {
     const request = RetailRequestSchema.parse(input);
-    if (request.op === 'signals' || request.op === 'signals_demo' || request.op === 'signals_replenishment_demo' || request.op === 'signals_preview' || request.op === 'signals_import') {
+    if (request.op === 'investigation_pause' || request.op === 'investigation_resume') {
+      console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [investigations.control(request.id, request.expectedEpoch, request.op === 'investigation_pause' ? 'pause' : 'resume')], created: request.op === 'investigation_resume' }));
+    }
+    else if (request.op === 'signals' || request.op === 'signals_demo' || request.op === 'signals_replenishment_demo' || request.op === 'signals_preview' || request.op === 'signals_import') {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
       if (request.op === 'signals_preview') console.log(JSON.stringify({ ok: true, kind: 'signals_preview', data: previewSignals(request.kind, request.csv, request.mapping) }));
       else if (request.op === 'signals_import') { const result = signals.import(request.kind, request.csv, request.mapping, 'csv'); console.log(JSON.stringify({ ok: true, kind: 'signals', data: result.data, notice: result.notice })); }
@@ -74,7 +77,7 @@ try {
       if(request.op==='review_followup'){
         const view=decisions.review(request.id);const r=view.review;
         if(!view.case||view.case.id!==request.expectedCaseId||!r.final||r.observation?.origin!=='builtin_synthetic')throw new Error('仅已复核的内置合成观察可明确载入后续演示调查；请刷新核对Case');
-        const row=r.observation.row;const cells=(v:unknown)=>'"'+String(v??'').replaceAll('"','""')+'"';const csv=[Object.keys(row).join(','),Object.values(row).map(cells).join(',')].join('\n');
+        const row=r.observation.row;const csv=snapshotCsv(row);
         let result;
         if(r.job.scenario==='margin'){store.import(csv,undefined,'demo',true);const e=store.snapshot().records.find(e=>e.source==='demo'&&e.row.date===row.date&&e.row.shop_id===row.shop_id&&e.row.channel===row.channel&&e.row.sku_id===row.sku_id);if(!e)throw new Error('后续合成记录未载入');result=investigations.create(e,request.mode,true);}
         else {signals.import(r.job.scenario,csv,undefined,'demo',true);const e=signals.snapshot().records.find(e=>e.source==='demo'&&e.kind===r.job.scenario&&e.row.date===row.date&&e.row.shop_id===row.shop_id&&e.row.channel===row.channel&&e.row.sku_id===row.sku_id&&('warehouse_id' in e.row?e.row.warehouse_id===r.job.scope.warehouse:'campaign_id' in e.row&&e.row.campaign_id===r.job.scope.campaign));if(!e)throw new Error('后续合成记录未载入');result=investigations.createSignal(e,request.mode,true);}

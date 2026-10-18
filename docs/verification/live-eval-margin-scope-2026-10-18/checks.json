@@ -1,0 +1,264 @@
+{
+  "date": "2026-10-18",
+  "scope": "Local Windows 11 acceptance; full PRD release gate remains incomplete",
+  "tests": {
+    "passed": 232,
+    "failed": 0,
+    "assertions": 1725,
+    "files": 20,
+    "log": "artifacts/m5-remaining-final-tests.log",
+    "sha256": "658ad94dc4026e828c4e3ddd537ec738bee3b1f381a56c5b0599b61f25fd3584"
+  },
+  "fixedCases": {
+    "passed": 48,
+    "failed": 0,
+    "unsupported": 0,
+    "releaseReady": false,
+    "releaseGateExitCode": 1,
+    "report": "../business-eval-final-2026-10-18/report.json"
+  },
+  "live": {
+    "margin": "5/5",
+    "inventory": "5/5",
+    "ads": "5/5",
+    "forbiddenEvents": 0,
+    "requests": 91,
+    "sourceFingerprints": [
+      {
+        "file": "packages/retail-domain/src/operations.ts",
+        "expected": "9d298af95bac281284ef9125b6df5cb27fcd20e5f5aadbefbb141142c822e430",
+        "actual": "9d298af95bac281284ef9125b6df5cb27fcd20e5f5aadbefbb141142c822e430",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/signals.ts",
+        "expected": "79d0e2b2621c345e594746468bc0b12321d979160aaf1a92234ba1cd965f5107",
+        "actual": "79d0e2b2621c345e594746468bc0b12321d979160aaf1a92234ba1cd965f5107",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/offers.ts",
+        "expected": "84e8d11104c28ae5e84c94218a5dfcf0e6038353c4d9bd49e88c2b1ca29a453b",
+        "actual": "84e8d11104c28ae5e84c94218a5dfcf0e6038353c4d9bd49e88c2b1ca29a453b",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/readonly-tools.ts",
+        "expected": "92865bbc5a9e50d7e00c750ebad5772092e8b88da24c2b623dd868fdab3173a6",
+        "actual": "92865bbc5a9e50d7e00c750ebad5772092e8b88da24c2b623dd868fdab3173a6",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/store.ts",
+        "expected": "993bcd8ca9da3fc5f2d2e55c6131e013c04dbe1177cabb0f58cfb86187d4c6a1",
+        "actual": "993bcd8ca9da3fc5f2d2e55c6131e013c04dbe1177cabb0f58cfb86187d4c6a1",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/retail-query.ts",
+        "expected": "75f35a12b5307d8edf08d61422a9e30d75bf860e22558f6f293846536f0a67ae",
+        "actual": "75f35a12b5307d8edf08d61422a9e30d75bf860e22558f6f293846536f0a67ae",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/signal-store.ts",
+        "expected": "00b2563e1de360f2834bd23fd70192451fd0b74ab6a0468002a46d522eab31d2",
+        "actual": "00b2563e1de360f2834bd23fd70192451fd0b74ab6a0468002a46d522eab31d2",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/investigation-store.ts",
+        "expected": "e26995fc14ed41b347ba5a9d3f4fd56b113cdf0e1e1c574679f4f275fab5038d",
+        "actual": "e26995fc14ed41b347ba5a9d3f4fd56b113cdf0e1e1c574679f4f275fab5038d",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/investigations.ts",
+        "expected": "664a032e1596a8541a5c1708b86024e7cc25bc909045b19b08a4dcb9cb7c0cf2",
+        "actual": "664a032e1596a8541a5c1708b86024e7cc25bc909045b19b08a4dcb9cb7c0cf2",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/signal-investigations.ts",
+        "expected": "1f0b0710e29112d60a62e38435f9c6ca8ff894e92a20d8972f465781ddea1290",
+        "actual": "1f0b0710e29112d60a62e38435f9c6ca8ff894e92a20d8972f465781ddea1290",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/margin-numeric.ts",
+        "expected": "4274372258cd8d4436b06b60d25fae3d62eab25525c6aa6d1d9f6493bd0a45e8",
+        "actual": "4274372258cd8d4436b06b60d25fae3d62eab25525c6aa6d1d9f6493bd0a45e8",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/margin-evidence.ts",
+        "expected": "50f090919eff2b359609cab57d7302478c65bdcbca47ca22e349990462573a2a",
+        "actual": "50f090919eff2b359609cab57d7302478c65bdcbca47ca22e349990462573a2a",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/ads-numeric.ts",
+        "expected": "594d4f3cbd3934a9f439db01a57f56acf20c58f45cfd9a92ea05a11feff31689",
+        "actual": "594d4f3cbd3934a9f439db01a57f56acf20c58f45cfd9a92ea05a11feff31689",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/src/live-evaluation.ts",
+        "expected": "e49a191aa0a93662a2d5caed39bb3944efad30df13b10b249336077f1a52bdb8",
+        "actual": "e49a191aa0a93662a2d5caed39bb3944efad30df13b10b249336077f1a52bdb8",
+        "matches": true
+      },
+      {
+        "file": "packages/shared/src/agent/base-agent.ts",
+        "expected": "a9310323d1e1811cfe9128ad812a928aed9d803b3230e17120e1d03854b0aeb5",
+        "actual": "a9310323d1e1811cfe9128ad812a928aed9d803b3230e17120e1d03854b0aeb5",
+        "matches": true
+      },
+      {
+        "file": "packages/shared/src/agent/backend/types.ts",
+        "expected": "6ac6328c833e54ad0bfd94f0f851c9ce4ef438ed6ea7bf55fd7e2c7c1a2fc20b",
+        "actual": "6ac6328c833e54ad0bfd94f0f851c9ce4ef438ed6ea7bf55fd7e2c7c1a2fc20b",
+        "matches": true
+      },
+      {
+        "file": "packages/shared/src/agent/backend/factory.ts",
+        "expected": "ce16e73ab7ca29847a3c92eb67a939629ae5551f76cd3b2f3acb9ea678122cf9",
+        "actual": "ce16e73ab7ca29847a3c92eb67a939629ae5551f76cd3b2f3acb9ea678122cf9",
+        "matches": true
+      },
+      {
+        "file": "packages/shared/src/agent/backend/isolated-completion.ts",
+        "expected": "1f6855e83b713800fd92a5be058b16632beb5372e5ecfb1b5e929a453ee1e963",
+        "actual": "1f6855e83b713800fd92a5be058b16632beb5372e5ecfb1b5e929a453ee1e963",
+        "matches": true
+      },
+      {
+        "file": "packages/shared/src/agent/backend/isolated-telemetry.ts",
+        "expected": "55ce4ea8165f624a91a273952caefbd8d57dc8437c146135b5f562e1f83a803f",
+        "actual": "55ce4ea8165f624a91a273952caefbd8d57dc8437c146135b5f562e1f83a803f",
+        "matches": true
+      },
+      {
+        "file": "apps/electron/src/main/retail-investigation.ts",
+        "expected": "533320155e15632bf8f50572808a0b9e22675dc55259c706733a95349b8712db",
+        "actual": "533320155e15632bf8f50572808a0b9e22675dc55259c706733a95349b8712db",
+        "matches": true
+      },
+      {
+        "file": "apps/electron/src/main/retail-inference-telemetry.ts",
+        "expected": "2bc90de06f69339ac7d10dcf362234f96b291cf0ecaa39bcc4ce4df840f3fd84",
+        "actual": "2bc90de06f69339ac7d10dcf362234f96b291cf0ecaa39bcc4ce4df840f3fd84",
+        "matches": true
+      },
+      {
+        "file": "apps/electron/src/main/retail-mcp.ts",
+        "expected": "3cb16dd34a5814882308d88ca04daf247cb9ef84530110a98ce13a17df1b390c",
+        "actual": "3cb16dd34a5814882308d88ca04daf247cb9ef84530110a98ce13a17df1b390c",
+        "matches": true
+      },
+      {
+        "file": "scripts/merqo-retail-mcp.ts",
+        "expected": "7fd3d620fddd17b7b8551049b43643349ceeb61f22c1828fae1fc71fc066147a",
+        "actual": "7fd3d620fddd17b7b8551049b43643349ceeb61f22c1828fae1fc71fc066147a",
+        "matches": true
+      },
+      {
+        "file": "scripts/merqo-live-eval.ts",
+        "expected": "3c621c1374afa2f82a3a48ab5597fbb221f1b09704c337487abdecc44c62aed9",
+        "actual": "3c621c1374afa2f82a3a48ab5597fbb221f1b09704c337487abdecc44c62aed9",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/skills/margin/SKILL.md",
+        "expected": "73363fc39703fedddf42b8fdb8f1aeae88033604425b084b0d90e97f32b67228",
+        "actual": "73363fc39703fedddf42b8fdb8f1aeae88033604425b084b0d90e97f32b67228",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/skills/inventory/SKILL.md",
+        "expected": "a18338d50470a387e28d22ead2a6f8ae6a9e156ace8fa6d90779c65a6699e39f",
+        "actual": "a18338d50470a387e28d22ead2a6f8ae6a9e156ace8fa6d90779c65a6699e39f",
+        "matches": true
+      },
+      {
+        "file": "packages/retail-domain/skills/ads/SKILL.md",
+        "expected": "b9c0e27b328e79d68c2247b2e5c8d40c734ddaebaed6c1e8479d5238847f53a2",
+        "actual": "b9c0e27b328e79d68c2247b2e5c8d40c734ddaebaed6c1e8479d5238847f53a2",
+        "matches": true
+      }
+    ]
+  },
+  "performance": {
+    "report": "performance-final.json",
+    "rows": 100000,
+    "queries": 30,
+    "p95Ms": 899.3820999999953,
+    "scope": "margin page/status/scope totals, warm OS cache; fresh worker per query"
+  },
+  "validation": {
+    "domainTypecheck": "passed",
+    "electronTypecheck": "passed",
+    "realStdioMcp": "passed all three scenarios and frozen history checks",
+    "sharedQueryLlmTests": "5/5",
+    "electronBuild": "passed",
+    "gitDiffCheck": "passed; line-ending warnings only"
+  },
+  "windows": {
+    "report": "../windows-beta2-2026-10-18/report.json",
+    "upgrade": true,
+    "reinstall": true,
+    "uninstall": true,
+    "modelFixture": true,
+    "cleanVm": false,
+    "versions": [
+      "Windows 11 build 26200"
+    ]
+  },
+  "installer": {
+    "path": "artifacts/windows/0.1.0-beta.2/Merqo-Setup-0.1.0-beta.2-x64.exe",
+    "bytes": 204163047,
+    "sha256": "8e9f419114ff30f73daad5e5ccfb9f2edae2538fff79b08c1c66b3635dc2f504",
+    "signed": false,
+    "published": false,
+    "sourceDirty": true,
+    "bundleFingerprints": [
+      {
+        "file": "dist/main.cjs",
+        "expected": "303cca5d79a4772321b1d66d1b8716ec1144271d7a68c44626a63545475307a9",
+        "packaged": "303cca5d79a4772321b1d66d1b8716ec1144271d7a68c44626a63545475307a9",
+        "built": "303cca5d79a4772321b1d66d1b8716ec1144271d7a68c44626a63545475307a9",
+        "matches": true
+      },
+      {
+        "file": "dist/bootstrap-preload.cjs",
+        "expected": "f5c4091f0ec2dfb9e9ec9b9c610adf37c449defacf8f9b1fb1669120370f7d67",
+        "packaged": "f5c4091f0ec2dfb9e9ec9b9c610adf37c449defacf8f9b1fb1669120370f7d67",
+        "built": "f5c4091f0ec2dfb9e9ec9b9c610adf37c449defacf8f9b1fb1669120370f7d67",
+        "matches": true
+      },
+      {
+        "file": "scripts/retailpilot-data-worker.ts",
+        "expected": "44fdae96a2a2d87ed2e70d38314135e53f4bef2710105e501cb1a65813e01ead",
+        "packaged": "44fdae96a2a2d87ed2e70d38314135e53f4bef2710105e501cb1a65813e01ead",
+        "built": null,
+        "matches": true
+      },
+      {
+        "file": "scripts/merqo-retail-mcp.ts",
+        "expected": "d9eb37824721cdbf85fed6f9bf6714b8ccf48a1fae600c271bb0d2a609a897db",
+        "packaged": "d9eb37824721cdbf85fed6f9bf6714b8ccf48a1fae600c271bb0d2a609a897db",
+        "built": null,
+        "matches": true
+      }
+    ]
+  },
+  "externalGaps": [
+    "Clean Windows VM/new account",
+    "Other Windows versions"
+  ],
+  "scopeGaps": [
+    "Inventory/ads equivalent scale, cold cache and concurrent performance",
+    "Broader SKU/sales/event contracts and full adversarial safety",
+    "Real platform writes and multiuser authorization"
+  ]
+}

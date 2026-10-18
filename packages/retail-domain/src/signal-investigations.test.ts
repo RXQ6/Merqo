@@ -17,7 +17,7 @@ function fixture(run: SignalInvestigation, mutate?: (d: DraftReport) => void, ve
   return async system => {
     if (system.includes('串行只读 Reviewer')) return JSON.stringify({ verdict, notes: ['本地契约复核，非真实模型'] });
     const tool = SIGNAL_TOOLS[run.scenario][step++]; if (tool) return JSON.stringify({ tool });
-    const draft: DraftReport = { summary: '有界调查', observations: [{ text: '工具证据待人工核验', evidenceIds: [`${run.recordId}:${SIGNAL_TOOLS[run.scenario][2]}`] }], hypotheses: [], unknowns: ['实时数据未知'], alternatives: ['归因或口径变化'], options: [{ kind: 'observe', rationale: '核验' }, { kind: run.scenario === 'ads' ? 'reduce_budget' : 'replenish_draft', rationale: '条件方案' }] };
+    const draft: DraftReport = { summary: '有界调查', observations: run.scenario === 'ads' ? [] : [{ text: '工具证据待人工核验', evidenceIds: [`${run.recordId}:${SIGNAL_TOOLS[run.scenario][2]}`] }], hypotheses: [], unknowns: ['实时数据未知'], alternatives: ['归因或口径变化'], options: [{ kind: 'observe', rationale: '核验' }, { kind: run.scenario === 'ads' ? 'reduce_budget' : 'replenish_draft', rationale: '条件方案' }] };
     mutate?.(draft); return JSON.stringify({ report: draft });
   };
 }
@@ -31,8 +31,8 @@ for (const kind of ['inventory', 'ads'] as const) {
   test(`${kind}: model requires scoped evidence and correct options before serial review`, async () => {
     const run = create(kind, 'model'); const report = await runSignalInvestigation(run, fixture(run), async () => {});
     expect(report.reviewer.verdict).toBe('passed');
-    await expect(runSignalInvestigation(run, fixture(run, d => { d.observations[0]!.evidenceIds = ['fake']; }), async () => {})).rejects.toThrow('不存在');
-    await expect(runSignalInvestigation(run, fixture(run, d => { d.options[1]!.kind = 'reduce_coupon'; }), async () => {})).rejects.toThrow('场景');
+    await expect(runSignalInvestigation(run, fixture(run, d => { d.hypotheses = [{ text: '待验证解释', evidenceIds: ['fake'] }]; }), async () => {})).rejects.toThrow('不存在');
+    await expect(runSignalInvestigation(run, fixture(run, d => { d.options[1]!.kind = 'reduce_coupon'; }), async () => {})).rejects.toThrow(kind === 'ads' ? 'report.options' : '场景');
     expect((await runSignalInvestigation(run, fixture(run, undefined, 'rejected'), async () => {})).reviewer.verdict).toBe('rejected');
   });
   test(`${kind}: incomplete evidence blocks conditional quantities despite reviewer pass`, async () => {

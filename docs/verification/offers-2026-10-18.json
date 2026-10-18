@@ -1,0 +1,191 @@
+{
+  "date": "2026-10-18",
+  "scope": "source-only same-scope public quote selection; reference price separate from transaction revenue; published installer unchanged",
+  "domain": {
+    "command": "bun run retail:check",
+    "exitCode": 0,
+    "tests": 211,
+    "failed": 0,
+    "assertions": 1578,
+    "typecheck": "passed"
+  },
+  "electronTypecheck": {
+    "command": "bun run typecheck:electron",
+    "exitCode": 0
+  },
+  "build": {
+    "command": "bun run retail:build",
+    "exitCode": 0
+  },
+  "mcp": {
+    "command": "bun run retail:check:mcp",
+    "exitCode": 0,
+    "scope": "three real local stdio scenarios and frozen Case; no external model requests"
+  },
+  "evaluation": {
+    "command": "bun run retail:eval --release-gate",
+    "exitCode": 1,
+    "expectedExit": true,
+    "total": 48,
+    "passed": 48,
+    "failed": 0,
+    "unsupported": 0,
+    "releaseReady": false,
+    "datasetHash": "42763f80f3f9fcefabad6544f8b41815100a63565d54d9a181a594d4b78f1f4b"
+  },
+  "desktop": {
+    "command": "node scripts/merqo-offer-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "offers",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "offer scope and availability fields auto-map",
+        "offer valid/filtered/unknown states survive offers",
+        "reference price never overwrites revenue and unknown state persists offers",
+        "unavailable cheap offer excluded and reference limitation shown offers"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\offer-check-1792286372023",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "offers-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "offer valid/filtered/unknown states survive offers-restart",
+        "reference price never overwrites revenue and unknown state persists offers-restart",
+        "unavailable cheap offer excluded and reference limitation shown offers-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\offer-check-1792286372023",
+      "error": null,
+      "failures": []
+    }
+  },
+  "memberRegression": {
+    "command": "node scripts/merqo-member-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "members",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "member price context auto-maps",
+        "member normal/warning/unknown states survive members",
+        "member price and unknown-identity block persist members",
+        "member effective price, cohort and discount policy shown members"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\member-check-1792286565199",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "members-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "member normal/warning/unknown states survive members-restart",
+        "member price and unknown-identity block persist members-restart",
+        "member effective price, cohort and discount policy shown members-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\member-check-1792286565199",
+      "error": null,
+      "failures": []
+    }
+  },
+  "limitations": [
+    "Finite fixed contracts do not establish all business coverage",
+    "No external quote scraping, catalog matching or live inventory verification",
+    "No automatic price changes; CSV is still analysis-only",
+    "No live-model inference quality or measured real business effects",
+    "Performance, recovery/reuse and full release gates remain unmet"
+  ],
+  "giftRegression": {
+    "command": "node scripts/merqo-gift-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "gifts",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "gift association and cost-basis fields auto-map",
+        "gift normal/warning/unknown states survive gifts",
+        "gift-inclusive totals and unknown cost persist gifts",
+        "gift component cost and inclusive margin shown gifts"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\gift-check-1792286700873",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "gifts-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "gift normal/warning/unknown states survive gifts-restart",
+        "gift-inclusive totals and unknown cost persist gifts-restart",
+        "gift component cost and inclusive margin shown gifts-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\gift-check-1792286700873",
+      "error": null,
+      "failures": []
+    }
+  },
+  "bundleRegression": {
+    "command": "node scripts/merqo-bundle-desktop-check.cjs",
+    "exitCode": 0,
+    "initial": {
+      "ok": true,
+      "phase": "bundles",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "optional bundle fields auto-map in actual renderer",
+        "bundle normal/conflict/missing states survive bundles",
+        "bundle pack totals and evidence gaps persist bundles",
+        "component identities and computed pack margin shown bundles"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\bundle-check-1792286769160",
+      "error": null,
+      "failures": []
+    },
+    "restart": {
+      "ok": true,
+      "phase": "bundles-restart",
+      "checks": [
+        "analysis hides general sidebar and keeps three grouped sections",
+        "repeated entry keeps the original native window",
+        "navigation rejects renderer supplied workspace",
+        "analysis retains clean header and grouped navigation",
+        "bundle normal/conflict/missing states survive bundles-restart",
+        "bundle pack totals and evidence gaps persist bundles-restart",
+        "component identities and computed pack margin shown bundles-restart"
+      ],
+      "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\bundle-check-1792286769160",
+      "error": null,
+      "failures": []
+    }
+  }
+}

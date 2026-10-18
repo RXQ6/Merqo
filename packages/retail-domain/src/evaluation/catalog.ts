@@ -3,11 +3,12 @@ import type { AdsRow, InventoryRow } from '../signals';
 import { DEMO_CSV } from '../operations';
 import { ADS_DEMO, INVENTORY_EXECUTION_DEMO } from '../signals';
 
-export const EVAL_VERSION = 'retail-business-eval-v1';
+export const EVAL_VERSION = 'retail-business-eval-v5';
 export const FIXED_NOW = Date.parse('2026-10-17T04:00:00Z');
 export type Expected = 'normal' | 'warning' | 'needs_evidence' | 'rejected' | 'accepted' | 'blocked';
 export type BusinessInput =
   | { kind: 'margin'; rows: RetailRow[] }
+  | { kind: 'offer'; row: RetailRow }
   | { kind: 'inventory'; row: InventoryRow }
   | { kind: 'ads'; row: AdsRow }
   | { kind: 'freshness'; source: 'csv' | 'demo'; importedAt: string; now: number }
@@ -49,51 +50,62 @@ function group(category: string, rule: string, inputs: BusinessInput[], expected
 }
 const m = (patch: Partial<RetailRow> = {}): BusinessInput => ({ kind: 'margin', rows: [{ ...margin, ...patch }] });
 const audit = (mutation: Extract<BusinessInput, {kind:'audit'}>['mutation']): BusinessInput => ({ kind: 'audit', mutation });
-group('discount_stacking', 'retail-margin-v1：单件收入=标价-券-满减+额外平台结算；毛利率<2000bps预警',
+group('discount_stacking', 'retail-margin-v5：单件收入=标价-券-满减+额外平台结算；毛利率<2000bps预警',
   [m(), m({ coupon_minor: 2000 }), m({ cost_minor: null })], ['normal', 'warning', 'needs_evidence'],
   ['SKU规格', '标价/券/满减分每销售件', '成本分每销售件'], '仅判断当前销售件商品毛利，不预测优惠调整收益');
 cases[0]!.expectedValues = { revenueMinor: 8000, profitMinor: 2000, totalProfitMinor: 20000, marginBps: 2500 };
 cases[1]!.expectedValues = { revenueMinor: 7000, profitMinor: 1000, totalProfitMinor: 10000, marginBps: 1429 };
 cases[2]!.expectedValues = { revenueMinor: null, profitMinor: null, marginBps: null };
-group('multi_spec', 'retail-margin-v1：同店同渠道同SKU跨日期规格冲突必须补证',
+group('multi_spec', 'retail-margin-v5：同店同渠道同SKU跨日期规格冲突必须补证',
   [m(), { kind: 'margin', rows: [margin, { ...margin, date: '2026-10-13', spec: '1L' }] }, m({ spec: '' })],
   ['normal', 'needs_evidence', 'rejected'], ['SKU', '店铺/渠道', '规格与日期'], '只验证冻结快照内规格一致性；不证明跨平台目录匹配');
-for (const [category, gap, snapshots] of [
-  ['combination_pack', '缺少组合装子项、件数及成本分摊映射', [
-    { bundle_sku: 'PACK-A', components: [{ sku: 'SKU-A', qty: 6, cost_minor: 1000 }], pack_cost_minor: 6000 },
-    { bundle_sku: 'PACK-A', components: [{ sku: 'SKU-A', qty: 6, cost_minor: 1000 }], pack_cost_minor: 1000 },
-    { bundle_sku: 'PACK-A', components: null, pack_cost_minor: 6000 },
-  ]],
-  ['gift', '缺少赠品关联、赠品成本及优惠分摊契约', [
-    { sku_id: 'SKU-A', gift_sku_id: 'GIFT-A', revenue_minor: 8000, cost_minor: 6000, gift_cost_minor: 0 },
-    { sku_id: 'SKU-A', gift_sku_id: 'GIFT-A', revenue_minor: 8000, cost_minor: 6000, gift_cost_minor: 1500 },
-    { sku_id: 'SKU-A', gift_sku_id: 'GIFT-A', revenue_minor: 8000, cost_minor: 6000, gift_cost_minor: null },
-  ]],
-  ['member_price', '缺少会员身份、有效会员价及优惠互斥口径', [
-    { sku_id: 'SKU-A', is_member: true, member_price_minor: 8000, coupon_minor: 0, cost_minor: 6000 },
-    { sku_id: 'SKU-A', is_member: true, member_price_minor: 6500, coupon_minor: 500, cost_minor: 6000 },
-    { sku_id: 'SKU-A', is_member: null, member_price_minor: 6500, coupon_minor: 500, cost_minor: 6000 },
-  ]],
-  ['unavailable_price', '缺少报价可售状态、跨商品规格匹配及有效报价筛选', [
-    { sku_id: 'SKU-A', spec: '500ml', offers: [{ price_minor: 1000, available: true }] },
-    { sku_id: 'SKU-A', spec: '500ml', offers: [{ price_minor: 1000, available: false }, { price_minor: 3000, available: true }] },
-    { sku_id: 'SKU-A', spec: '500ml', offers: [{ price_minor: 1000, available: null }] },
-  ]],
-] as const) {
-  group(category, 'PRD 12.1目标：按明细验证组合装/赠品/会员毛利，报价只选同规格可售项；缺映射/身份/成本/可售状态必须补证',
-    variants.map((variant, index) => ({ kind: 'unsupported', gap, snapshot: { ...snapshots[index], variant } })),
-    category === 'unavailable_price' ? ['accepted', 'accepted', 'needs_evidence']
-      : category === 'combination_pack' ? ['normal', 'needs_evidence', 'needs_evidence']
-      : ['normal', 'warning', 'needs_evidence'],
-    [gap], category === 'unavailable_price' ? '目标：同规格最低可售报价；未知可售性待补证'
-      : category === 'combination_pack' ? '目标：子项合计与包成本核对，映射冲突待补证'
-      : '目标：纳入有效会员价或赠品成本后计算商品毛利，口径未知待补证');
-  if (category === 'unavailable_price') {
-    cases[cases.length - 3]!.expectedValues = { selectedPriceMinor: 1000 };
-    cases[cases.length - 2]!.expectedValues = { selectedPriceMinor: 3000 };
-  }
-}
-group('subsidy_funder', 'retail-margin-v1：仅明确额外平台结算补贴可加收入，商家或未知承担方补证',
+const bundle = { product_type: 'bundle' as const, sku_id: 'PACK-A', spec: 'A×2+B×4', bundle_components: [
+  { sku_id: 'SKU-A', spec: '500ml', quantity: 2, unit_cost_minor: 1000 },
+  { sku_id: 'SKU-B', spec: '250ml', quantity: 4, unit_cost_minor: 1000 },
+] };
+group('combination_pack', 'retail-margin-v5：显式一层子SKU/规格/数量/单位成本；子项合计须等于整包成本；缺失或冲突补证',
+  [m(bundle), m({ ...bundle, cost_minor: 1000 }), m({ ...bundle, bundle_components: null })],
+  ['normal', 'needs_evidence', 'needs_evidence'], ['整包SKU/规格', '子项SKU/规格/数量/单位成本', '整包成本与子项合计'],
+  '仅判断每销售包毛利；不分摊子项收入/优惠，不解析嵌套组合装，不证明外部目录匹配');
+cases[cases.length - 3]!.expectedValues = { revenueMinor: 8000, profitMinor: 2000, marginBps: 2500, totalProfitMinor: 20000 };
+for (const c of cases.slice(-2)) c.expectedValues = { revenueMinor: null, profitMinor: null, marginBps: null };
+
+const gift = { gift_policy: 'free_per_unit' as const, gift_cost_basis: 'additional' as const };
+const gifts = (unit_cost_minor: number | null): Partial<RetailRow> => ({ ...gift, gifts: [{ sku_id: 'GIFT-A', spec: '30ml', quantity: 1, unit_cost_minor }] });
+group('gift', 'retail-margin-v5：每销售件免费赠送；主成本不含赠品；赠品零收入；全部优惠计主商品；缺成本或未知口径补证',
+  [m(gifts(0)), m(gifts(1500)), m(gifts(null))], ['normal', 'warning', 'needs_evidence'],
+  ['主商品SKU/成本', '赠品SKU/规格/数量/单位成本', 'free_per_unit赠送规则', 'additional成本口径'],
+  '仅快照毛利；成本为主商品成本加赠品成本，不做订单门槛、逐单分摊或同SKU自赠');
+cases[cases.length - 3]!.expectedValues = { revenueMinor: 8000, profitMinor: 2000, marginBps: 2500, totalProfitMinor: 20000 };
+cases[cases.length - 2]!.expectedValues = { revenueMinor: 8000, profitMinor: 500, marginBps: 625, totalProfitMinor: 5000 };
+cases[cases.length - 1]!.expectedValues = { revenueMinor: null, profitMinor: null, marginBps: null };
+
+const membership = { status: 'member' as const, segment_id: 'gold', price_minor: 8000, valid_from: '2026-10-01', valid_to: '2026-11-01', discount_policy: 'exclusive' as const };
+group('member_price', 'retail-margin-v5：明确会员分组与身份；业务日期在[from,to)内；会员价替代普通价；互斥优惠同时存在须补证',
+  [m({ coupon_minor: 0, full_reduction_minor: 0, membership }),
+   m({ coupon_minor: 500, full_reduction_minor: 0, membership: { ...membership, price_minor: 6500, discount_policy: 'stackable' } }),
+   m({ coupon_minor: 0, full_reduction_minor: 0, membership: { ...membership, status: 'unknown' } })],
+  ['normal', 'warning', 'needs_evidence'], ['会员身份/分组', 'SKU规格/店铺/渠道', '价格及业务有效期', '叠加或互斥规则'],
+  '只核算单会员分组的业务日期快照；不证明真实会员认证，不混算分组，不自动选择冲突优惠');
+cases[cases.length - 3]!.expectedValues = { revenueMinor: 8000, profitMinor: 2000, marginBps: 2500, totalProfitMinor: 20000 };
+cases[cases.length - 2]!.expectedValues = { revenueMinor: 6000, profitMinor: 0, marginBps: 0, totalProfitMinor: 0 };
+cases[cases.length - 1]!.expectedValues = { revenueMinor: null, profitMinor: null, marginBps: null };
+
+const offer = (offer_id: string, price_minor: number, available: boolean | null) => ({
+  offer_id, shop_id: margin.shop_id, channel: margin.channel, sku_id: margin.sku_id, spec: margin.spec,
+  currency: 'CNY' as const, observed_on: margin.date, audience: 'public' as const, price_minor, available,
+});
+group('unavailable_price', 'retail-offers-v1：同范围/同规格/同业务日期公开报价；明确无货排除，可售或人群未知补证；不替换成交价',
+  [ { kind: 'offer', row: { ...margin, offers: [offer('a', 1000, true)] } },
+    { kind: 'offer', row: { ...margin, offers: [offer('a', 1000, false), offer('b', 3000, true)] } },
+    { kind: 'offer', row: { ...margin, offers: [offer('a', 1000, null)] } } ],
+  ['accepted', 'accepted', 'needs_evidence'], ['报价ID/范围/规格/币种', '业务日期与适用人群', '明确可售状态与标价', '冻结工具与选择结果'],
+  '仅在已提供的同口径公开报价中筛选；不证明全网最低价、实时可售或真实经营效果，不授权改价');
+cases[cases.length - 3]!.expectedValues = { selectedPriceMinor: 1000 };
+cases[cases.length - 2]!.expectedValues = { selectedPriceMinor: 3000 };
+cases[cases.length - 1]!.expectedValues = { selectedPriceMinor: null };
+
+group('subsidy_funder', 'retail-margin-v5：仅明确额外平台结算补贴可加收入，商家或未知承担方补证',
   [m({ subsidy_minor: 1000 }), m({ subsidy_minor: 1000, subsidy_funder: 'merchant' }), m({ subsidy_minor: 1000, subsidy_funder: 'unknown' })],
   ['normal', 'needs_evidence', 'needs_evidence'], ['补贴金额', '承担方', '额外结算口径'], '未知承担方不得计算确定毛利');
 group('data_delay', 'evidenceTimeIssue：CSV超过24小时阻断、无效时间阻断；不代表业务事件时间已验证',

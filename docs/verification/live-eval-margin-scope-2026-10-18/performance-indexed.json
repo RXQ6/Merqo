@@ -1,0 +1,70 @@
+{
+  "evaluatedAt": "2026-10-18T02:40:15.256Z",
+  "passed": true,
+  "rows": 100000,
+  "queries": 30,
+  "p95Ms": 528.1870000000054,
+  "importMs": 38213.0983,
+  "timings": [
+    525.6264999999985,
+    488.60859999999957,
+    465.9118000000017,
+    462.57800000000134,
+    448.78050000000076,
+    479.8761999999988,
+    528.1870000000054,
+    533.6429999999964,
+    523.562300000005,
+    515.6986000000034,
+    496.6232999999993,
+    489.6796000000031,
+    498.99529999999504,
+    526.3377000000037,
+    508.0731999999989,
+    477.1212000000014,
+    449.41429999999673,
+    458.18359999999666,
+    469.46070000000327,
+    488.8816000000006,
+    489.568299999999,
+    456.3652000000002,
+    455.44810000000143,
+    443.20380000000296,
+    473.4140999999945,
+    454.44340000000375,
+    469.50829999999405,
+    480.24320000000444,
+    470.34709999999905,
+    437.8554000000004
+  ],
+  "datasetHash": "0bb26b52d8b04c9253ee325637dc53160f46bd99df03df10ff8c36b1f8b3398d",
+  "sourceHashes": {
+    "operations": "920d693460e79c03776a391ab8879f0ca7f53d97aca817407a82abd83c946d0b",
+    "store": "993bcd8ca9da3fc5f2d2e55c6131e013c04dbe1177cabb0f58cfb86187d4c6a1",
+    "retail-query": "75f35a12b5307d8edf08d61422a9e30d75bf860e22558f6f293846536f0a67ae"
+  },
+  "queryPlan": [
+    {
+      "id": 5,
+      "parent": 0,
+      "notused": 61,
+      "detail": "SEARCH retail_query_records USING INDEX retail_query_order (source=? AND shop=?)"
+    }
+  ],
+  "expected": {
+    "known": 85714,
+    "revenueMinor": "26285680000",
+    "profitMinor": "5714320000"
+  },
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "osRelease": "10.0.26200",
+    "cpu": "AMD Ryzen 9 7945HX with Radeon Graphics        ",
+    "logicalCpus": 32,
+    "memoryBytes": 16844886016,
+    "bun": "1.4.2"
+  },
+  "cache": "OS/SQLite files warmed by import and projection build; fresh worker and SQLite connection per measured request; no model calls",
+  "scope": "margin common scope totals, status and first/deep offset pages; not signal-query performance, renderer paint, cold disk, concurrent writes or model latency"
+}

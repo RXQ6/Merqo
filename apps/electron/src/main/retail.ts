@@ -22,6 +22,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
   });
   const active = new Set<number>();
   const readers = new Map<number, number>();
+  const investigationTasks = new Map<string, AbortController>();
   ipcMain.handle('retail:request', async (event, input: unknown): Promise<RetailReply> => {
     try {
       // Only top-level contents belonging to a registered application window.
@@ -38,13 +39,15 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workerRequest = (payload: unknown) => requestRetailWorker(workspace, workspaceId!, payload, request.op);
       try {
         const reply = await workerRequest(request);
-        if ((request.op === 'investigate' || request.op === 'review_followup') && reply.ok && reply.kind === 'investigations' && reply.created) {
+        if (request.op === 'investigation_pause' && reply.ok) investigationTasks.get(`${workspaceId}:${request.id}`)?.abort('operator_pause');
+        if ((request.op === 'investigate' || request.op === 'review_followup' || request.op === 'investigation_resume') && reply.ok && reply.kind === 'investigations' && reply.created) {
           const run = reply.data[0];
           if (run) {
+            const key = `${workspaceId}:${run.id}`; const controller = new AbortController(); investigationTasks.set(key, controller);
             void executeRetailInvestigation(run, workspace.rootPath, async patch => {
-              const saved = await workerRequest({ op: 'investigation_update', id: run.id, ...patch });
+              const saved = await workerRequest({ op: 'investigation_update', id: run.id, expectedEpoch: run.epoch ?? 0, ...patch });
               if (!saved.ok) throw new Error(saved.error);
-            }).catch(() => { /* A failed persistence request remains recoverable by the deadline lease. */ });
+            }, controller.signal).catch(() => { /* Paused/stale epochs cannot publish late results. */ }).finally(() => { if (investigationTasks.get(key) === controller) investigationTasks.delete(key); });
           }
         }
         return reply;

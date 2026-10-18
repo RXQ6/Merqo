@@ -1,0 +1,4 @@
+date,shop_id,channel,sku_id,product_name,spec,currency,list_price_minor,coupon_minor,full_reduction_minor,subsidy_minor,subsidy_funder,cost_minor,sold_qty,on_hand,reserved,inbound_qty,product_type,bundle_components,gift_policy,gift_cost_basis,gifts
+2026-10-14,demo-nanfeng,线上商城,GIFT-NORMAL,买赠合成验收,主商品500ml,CNY,10000,1000,1000,0,platform,6000,10,120,10,60,,,free_per_unit,additional,"[{""sku_id"":""GIFT-SAMPLE"",""spec"":""30ml"",""quantity"":1,""unit_cost_minor"":0}]"
+2026-10-14,demo-nanfeng,线上商城,GIFT-WARNING,买赠合成验收,主商品500ml,CNY,10000,1000,1000,0,platform,6000,10,120,10,60,,,free_per_unit,additional,"[{""sku_id"":""GIFT-SAMPLE"",""spec"":""30ml"",""quantity"":1,""unit_cost_minor"":1500}]"
+2026-10-14,demo-nanfeng,线上商城,GIFT-MISSING,买赠合成验收,主商品500ml,CNY,10000,1000,1000,0,platform,6000,10,120,10,60,,,free_per_unit,additional,"[{""sku_id"":""GIFT-SAMPLE"",""spec"":""30ml"",""quantity"":1,""unit_cost_minor"":null}]"

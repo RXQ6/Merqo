@@ -77,7 +77,9 @@ async function main() {
       runAfterFinish: false, createDesktopShortcut: true, createStartMenuShortcut: true, shortcutName: 'Merqo', uninstallDisplayName: 'Merqo', artifactName: 'Merqo-Setup-${version}-${arch}.${ext}' },
   };
   fs.mkdirSync(output, { recursive: true });
-  fs.writeFileSync(path.join(output, 'build-inputs.json'), JSON.stringify({ ...release, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), bunSha256: hash(bun), stage, signed: false }, null, 2));
+  const sourceStatus = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' });
+  const bundleHashes = Object.fromEntries(['dist/main.cjs','dist/bootstrap-preload.cjs','scripts/retailpilot-data-worker.ts','scripts/merqo-retail-mcp.ts'].map(file => [file, hash(path.join(app,file))]));
+  fs.writeFileSync(path.join(output, 'build-inputs.json'), JSON.stringify({ ...release, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), sourceDirty: !!sourceStatus.trim(), sourceStatus, bundleHashes, bunSha256: hash(bun), stage, signed: false }, null, 2));
   await build({ targets: Platform.WINDOWS.createTarget(['nsis'], 1), config, publish: 'never' });
   const installer = `Merqo-Setup-${release.version}-x64.exe`;
   fs.writeFileSync(path.join(output, 'SHA256SUMS.txt'), `${hash(path.join(output, installer))}  ${installer}\n`);

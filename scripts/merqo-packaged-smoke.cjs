@@ -6,25 +6,28 @@ const path = require('node:path');
 const http = require('node:http');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
-const exe = path.resolve(process.argv[2] || 'artifacts/windows/0.1.0-beta.1/win-unpacked/Merqo.exe');
+const exe = path.resolve(process.argv[2] || 'artifacts/windows/0.1.0-beta.2/win-unpacked/Merqo.exe');
 const out = path.join(root, 'artifacts/windows/verification'); fs.mkdirSync(out, { recursive: true });
 const restoreProfile = process.argv[3] === '--restore-profile' ? path.resolve(process.argv[4]) : null;
 if (restoreProfile && !restoreProfile.startsWith(out + path.sep)) throw new Error('Restore profile must be an isolated verification directory');
 const profile = restoreProfile || fs.mkdtempSync(path.join(out, 'profile-'));
 let application; let page; let calls = 0; const checks = []; let runId; let receiptId;
+let holdOnce = !restoreProfile, held = false, releaseHeld;
 const server = http.createServer(async (req, res) => {
   try {
     let raw = ''; for await (const chunk of req) raw += chunk;
     const body = JSON.parse(raw); const system = body.messages[0].content; const context = JSON.parse(body.messages[1].content);
+    assert.ok(!body.tools && !body.functions, 'isolated AgentBackend must expose no native tools');
     let value; calls++;
     if (system.includes('串行只读 Reviewer')) value = { verdict: 'passed', notes: ['本地安装包协议夹具，不是真实模型评测'] };
     else {
       const scenario = context.scenario || 'margin';
+      if (holdOnce && scenario === 'margin' && context.observations.length === 1) { holdOnce = false; held = true; await new Promise(resolve => { releaseHeld = resolve; }); }
       const tools = ['retail_get_data_health', 'retail_get_sku_context', scenario === 'ads' ? 'retail_get_campaigns' : scenario === 'inventory' ? 'retail_get_inventory' : 'retail_get_promotions', 'retail_simulate_actions'];
       if (context.observations.length < 4) value = { tool: tools[context.observations.length] };
       else {
         const event = context.observations.find(t => t.tool === tools[2]);
-        value = { report: { summary: '安装包协议验证报告', observations: scenario === 'margin' ? [] : [{ text: '核对冻结证据', evidenceIds: [event.evidenceId] }], hypotheses: [], unknowns: ['缺实时状态'], alternatives: ['可能存在口径差异'], options: [{ kind: 'observe', rationale: '核验' }, { kind: scenario === 'ads' ? 'reduce_budget' : scenario === 'inventory' ? 'replenish_draft' : 'reduce_coupon', rationale: '仅作条件测算' }] } };
+        value = { report: { summary: '安装包协议验证报告', observations: scenario === 'inventory' ? [{ text: '核对冻结证据', evidenceIds: [event.evidenceId] }] : [], hypotheses: [], unknowns: ['缺实时状态'], alternatives: ['可能存在口径差异'], options: [{ kind: 'observe', rationale: '核验' }, { kind: scenario === 'ads' ? 'reduce_budget' : scenario === 'inventory' ? 'replenish_draft' : 'reduce_coupon', rationale: '仅作条件测算' }] } };
       }
     }
     res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(value) } }] }));
@@ -61,7 +64,7 @@ async function main() {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   await launch();
   if (restoreProfile) {
-    assert.equal((await request({ op: 'snapshot' })).data.records.length, 6);
+    assert.equal((await request({ op: 'snapshot', source: 'demo' })).data.records.length, 6);
     const executions = (await request({ op: 'executions' })).data;
     assert.ok(executions.some(e => e.receipt && e.status === 'succeeded'));
     assert.equal(JSON.parse(fs.readFileSync(path.join(profile, 'config/config.json'), 'utf8')).defaultLlmConnection, 'package-contract');
@@ -85,16 +88,31 @@ async function main() {
   for (const record of records) {
     const scenario = record.kind || 'margin';
     const created = await request({ op: 'investigate', recordId: record.id, scenario, mode: 'model', retry: true }); const id = created.data[0].id;
+    if (scenario === 'margin') {
+      await expect.poll(() => held, { timeout: 30000 }).toBe(true);
+      await page.getByRole('button', { name: '调查记录', exact: true }).click();
+      await page.getByRole('button', { name: '暂停调查', exact: true }).click();
+      await expect.poll(async () => (await request({ op: 'investigations', id })).data[0].state).toBe('paused');
+      releaseHeld();
+      await page.getByRole('button', { name: '返回会话', exact: true }).click();
+      await close('paused'); await launch();
+      assert.equal((await request({ op: 'investigations', id })).data[0].state, 'paused');
+      await page.getByRole('button', { name: '经营分析', exact: true }).click();
+      await page.getByRole('button', { name: '调查记录', exact: true }).click();
+      await page.getByRole('button', { name: /^继续调查（新增5分钟/ }).click();
+      checks.push('UI pause survives actual process restart; explicit resume preserves frozen evidence and remaining call budget');
+    }
     let completed;
     await expect.poll(async () => {
       completed = (await request({ op: 'investigations', id })).data[0]; return completed.state;
     }, { timeout: 90000, message: `packaged ${scenario} protocol: ${id}` }).toBe('completed');
     assert.equal(completed.report.reviewer.verdict, 'passed');
     assert.equal(completed.trace.filter(t => t.stage === 'investigate' && t.transport === 'mcp_stdio').length, 4);
+    assert.ok(completed.trace.filter(t => t.stage === 'budget' && t.tool === 'model_request').length <= 14);
     if (scenario === 'ads') adsRun = completed;
     checks.push(`packaged ${scenario} API protocol, bundled MCP, four scoped tools and Skill work`);
   }
-  assert.equal(calls, 18); assert.ok(adsRun); runId = adsRun.id;
+  assert.ok(calls >= 18 && calls <= 20); assert.ok(adsRun); runId = adsRun.id;
   const draft = (await request({ op: 'decision_create', investigationId: runId, kind: 'reduce_budget', note: '安装包协议验收，仅模拟' })).data[0];
   const pending = (await request({ op: 'decision_submit', id: draft.id, expectedVersion: 1 })).data.find(d => d.id === draft.id);
   const approval = pending.request;
@@ -104,12 +122,30 @@ async function main() {
   assert.ok(executed.receipt); assert.equal(executed.reconciliation.matched, true); receiptId = executed.receipt.id;
   assert.equal((await request({ op: 'simulation_execute', id: job.id, expectedVersion: 1, expectedActionHash: job.actionHash })).data[0].receipt.id, receiptId);
   checks.push('packaged approval, isolated execution, reread and receipt idempotency');
+  const sample = snap.data.records.find(r => r.row.sku_id === 'TEA-500').row;
+  const fields = Object.keys(sample);
+  const csvCell = value => '"' + String(value).replaceAll('"','""') + '"';
+  const pageCsv = [fields.join(','), ...Array.from({length:120},(_,i)=>fields.map(field=>csvCell(field==='sku_id'?`PAGE-${String(i).padStart(3,'0')}`:sample[field])).join(','))].join('\n');
+  await request({op:'import',csv:pageCsv,mapping:Object.fromEntries(fields.map(field=>[field,field]))});
+  await page.getByRole('button',{name:'经营总览',exact:true}).click();
+  await page.getByLabel('数据来源',{exact:true}).selectOption('csv');
+  await expect(page.getByRole('table').getByRole('row')).toHaveCount(31);
+  await expect(page.getByRole('table')).toContainText('PAGE-000');
+  const metricText = await page.getByLabel('经营指标').innerText();
+  await page.getByRole('button',{name:'下一页',exact:true}).click();
+  await expect(page.getByRole('table')).toContainText('PAGE-030');
+  assert.equal(await page.getByLabel('经营指标').innerText(),metricText);
+  await page.getByLabel('搜索商品或 SKU',{exact:true}).fill('PAGE-119');
+  await expect(page.getByRole('table').getByRole('row')).toHaveCount(2);
+  await expect(page.getByRole('table')).toContainText('PAGE-119');
+  assert.equal(await page.getByLabel('经营指标').innerText(),metricText);
+  checks.push('actual UI uses bounded server pages; next-page and search preserve full-scope exact metric totals');
   await page.screenshot({ path: path.join(out, 'installed-analysis.png') });
   await page.getByRole('button', { name: '返回会话', exact: true }).click();
   await expect(page.locator('[data-focus-zone="sidebar"]')).toBeVisible();
   checks.push('analysis and conversations round-trip in a single window');
   await close('initial'); await launch();
-  assert.equal((await request({ op: 'snapshot' })).data.records.length, 6);
+  assert.equal((await request({ op: 'snapshot', source: 'demo' })).data.records.length, 6);
   assert.equal((await request({ op: 'executions' })).data[0].receipt.id, receiptId);
   assert.equal((await request({ op: 'investigations', id: runId })).data[0].report.reviewer.verdict, 'passed');
   assert.equal(JSON.parse(fs.readFileSync(configPath, 'utf8')).defaultLlmConnection, 'package-contract');
@@ -119,6 +155,7 @@ async function main() {
   console.log(JSON.stringify({ ok: true, checks, calls })); server.close();
 }
 main().catch(async error => {
+  releaseHeld?.();
   console.error(error); if (page) await page.screenshot({ path: path.join(out, 'failure.png') }).catch(() => {});
   if (application) { await page.context().tracing.stop({ path: path.join(out, 'failure-trace.zip') }).catch(() => {}); await application.close().catch(() => {}); }
   fs.writeFileSync(path.join(out, 'packaged-smoke.json'), JSON.stringify({ ok: false, error: String(error), checks, calls, profile }, null, 2)); server.close(); process.exitCode = 1;

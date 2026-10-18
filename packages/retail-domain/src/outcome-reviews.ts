@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { Database } from 'bun:sqlite';
-import { calculate, previewCsv } from './operations';
+import { offerScope } from './offers';
+import { bundleIdentity, giftIdentity, membershipIdentity, calculate, previewCsv } from './operations';
 import type { EvidenceRecord, RetailRow } from './operations';
 import { calculateSignal, previewSignals, shiftDate } from './signals';
 import type { SignalRecord, SignalRow } from './signals';
@@ -19,7 +20,7 @@ export interface OutcomeReview {
   clockBasis: 'synthetic_business_date'; observation: ReviewObservation | null;
   final: { at: string; actor: 'local-simulation-reviewer'; conclusion: 'comparison_only' | 'inconclusive'; note: string; confounders: string; observationHash: string } | null;
 }
-export interface CaseMemory { id: string; reviewId: string; workspaceId: string; scenario: ExecutionJob['scenario']; shop: string; channel: string; sku: string; warehouse: string | null; campaign: string | null; spec: string | null; windowEnd: string; reviewedAt: string; source: 'synthetic'; summary: string; confounders: string; conclusion: 'comparison_only' | 'inconclusive'; metrics: ReviewMetric[]; refs: { runId: string; jobId: string; approvalId: string; receiptId: string; evidenceHash: string; observationHash: string }; warning: string }
+export interface CaseMemory { offerScope?: string | null; membershipIdentity?: string | null; giftIdentity?: string | null; bundleIdentity?: string | null; id: string; reviewId: string; workspaceId: string; scenario: ExecutionJob['scenario']; shop: string; channel: string; sku: string; warehouse: string | null; campaign: string | null; spec: string | null; windowEnd: string; reviewedAt: string; source: 'synthetic'; summary: string; confounders: string; conclusion: 'comparison_only' | 'inconclusive'; metrics: ReviewMetric[]; refs: { runId: string; jobId: string; approvalId: string; receiptId: string; evidenceHash: string; observationHash: string }; warning: string }
 export interface ReviewView { review: OutcomeReview; state: 'awaiting_window' | 'needs_evidence' | 'ready' | 'reviewed'; blockers: string[]; metrics: ReviewMetric[]; history: OutcomeReview[]; case: CaseMemory | null; compensations: {id:string;receiptId:string|null}[] }
 export interface ObservationPreview { row: Row; origin: 'uploaded_simulation'; hash: string; blockers: string[]; metrics: ReviewMetric[] }
 const today = (): string => new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
@@ -72,6 +73,10 @@ export class ReviewLedger {
     const add = (key:string,label:string,unit:ReviewMetric['unit'],before:number|null,after:number|null) => metrics.push({key,label,unit,before,after,delta:before===null||after===null?null:after-before});
     if (r.job.scenario === 'margin') {
       if (!('list_price_minor' in row) || !('list_price_minor' in b)) return {blockers:[...blockers,'观察记录不是日毛利口径'],metrics};
+      if (bundleIdentity(row) !== bundleIdentity(b)) blockers.push('组合装子项映射与原快照不一致');
+      if (membershipIdentity(row) !== membershipIdentity(b)) blockers.push('会员分组、身份或叠加规则与原快照不一致');
+      if (offerScope(row) !== offerScope(b)) blockers.push('参考报价上下文与原快照不一致，不能静默移除');
+      if (giftIdentity(row) !== giftIdentity(b)) blockers.push('赠品关联、数量或口径与原快照不一致');
       const x = calculate(b), y = calculate(row); blockers.push(...x.issues,...y.issues);
       add('revenue','商品收入 / 件','minor',x.revenueMinor,y.revenueMinor);add('profit','商品毛利 / 件','minor',x.profitMinor,y.profitMinor);add('margin','毛利率','bps',x.marginBps,y.marginBps);add('sales','净成交件数','number',b.sold_qty,row.sold_qty);
     } else {
@@ -114,6 +119,9 @@ export class ReviewLedger {
   }
   private demo(r:OutcomeReview):Row {
     const row=structuredClone(r.baseline.row);row.date=r.windowEnd;
+    if ('list_price_minor' in row) for (const offer of row.offers ?? []) {
+      if (offer.observed_on === r.baseline.row.date) offer.observed_on = r.windowEnd;
+    }
     if('window_days' in row){row.baseline_end_date=r.baseline.row.date;row.baseline_window_days=r.windowDays;if('warehouse_id' in row){row.baseline_sales_qty=row.recent_sales_qty;if(row.inbound_eta)row.inbound_eta=shiftDate(row.inbound_eta,r.windowDays);}else{row.baseline_spend_minor=row.spend_minor;row.baseline_revenue_minor=row.attributed_revenue_minor;row.baseline_clicks=row.clicks;row.baseline_conversions=row.conversions;row.baseline_attribution_window=row.attribution_window;}}
     // Deliberately unchanged business outcomes: a successful simulated write is not measured uplift.
     return row;
@@ -126,11 +134,11 @@ export class ReviewLedger {
     if(view.state==='awaiting_window'||!r.observation)throw new Error('观察窗口未结束或缺少观察记录');
     if(view.blockers.length&&conclusion!=='inconclusive')throw new Error('证据不完整，只能保存无法判断的Case');
     const at=new Date().toISOString();r.final={at,actor,conclusion,note,confounders,observationHash:hash};r.version++;r.updatedAt=at;this.save(r);
-    const c:CaseMemory={id:randomUUID(),reviewId:r.id,workspaceId:this.workspaceId,scenario:r.job.scenario,shop:r.job.scope.shop,channel:r.job.scope.channel,sku:r.job.scope.sku,warehouse:r.job.scope.warehouse,campaign:r.job.scope.campaign,spec:spec(r.baseline),windowEnd:r.windowEnd,reviewedAt:at,source:'synthetic',summary:note,confounders,conclusion,metrics:view.metrics,refs:{runId:r.investigationId,jobId:r.job.id,approvalId:r.job.resolutionId,receiptId:r.receipt.id,evidenceHash:r.job.evidenceHash,observationHash:hash},warning:'合成业务时间回放；人工复核只确认比较记录，不证明动作因果或真实经营收益，不授予批准或执行权限'};
+    const c:CaseMemory={id:randomUUID(),reviewId:r.id,workspaceId:this.workspaceId,scenario:r.job.scenario,shop:r.job.scope.shop,channel:r.job.scope.channel,sku:r.job.scope.sku,warehouse:r.job.scope.warehouse,campaign:r.job.scope.campaign,spec:spec(r.baseline),windowEnd:r.windowEnd,reviewedAt:at,source:'synthetic',summary:note,confounders,conclusion,metrics:view.metrics,refs:{runId:r.investigationId,jobId:r.job.id,approvalId:r.job.resolutionId,receiptId:r.receipt.id,evidenceHash:r.job.evidenceHash,observationHash:hash},offerScope:'list_price_minor' in r.observation!.row?offerScope(r.observation!.row):null,membershipIdentity:'list_price_minor' in r.observation!.row?membershipIdentity(r.observation!.row):null,giftIdentity:'list_price_minor' in r.observation!.row?giftIdentity(r.observation!.row):null,bundleIdentity:'list_price_minor' in r.observation!.row?bundleIdentity(r.observation!.row):null,warning:'合成业务时间回放；人工复核只确认比较记录，不证明动作因果或真实经营收益，不授予批准或执行权限'};
     this.db.query('INSERT INTO retail_cases VALUES(?,?,?,?,?,?,?,?,?,?)').run(c.id,c.reviewId,this.workspaceId,c.shop,c.channel,c.sku,c.scenario,c.windowEnd,c.reviewedAt,JSON.stringify(c));return this.view(id);
   }
   search(e:Evidence,scenario:ExecutionJob['scenario'],asOf:string):CaseMemory[]{
     if(e.source!=='demo')return [];
-    const row=e.row;return this.db.query<JsonRow,[string,string,string,string,string,string,string,string|null,string|null,string|null]>(`SELECT json FROM retail_cases WHERE workspace_id=? AND shop=? AND channel=? AND sku=? AND scenario=? AND window_end<=? AND reviewed_at<=? AND json_extract(json,'$.spec') IS ? AND json_extract(json,'$.warehouse') IS ? AND json_extract(json,'$.campaign') IS ? ORDER BY window_end DESC,reviewed_at DESC,id DESC LIMIT 5`).all(this.workspaceId,row.shop_id,row.channel,row.sku_id,scenario,row.date,asOf,spec(e),'warehouse_id' in row?row.warehouse_id:null,'campaign_id' in row?row.campaign_id:null).map(r=>JSON.parse(r.json) as CaseMemory);
+    const row=e.row;return this.db.query<JsonRow,[string,string,string,string,string,string,string,string|null,string|null,string|null,string|null,string|null,string|null,string|null]>(`SELECT json FROM retail_cases WHERE workspace_id=? AND shop=? AND channel=? AND sku=? AND scenario=? AND window_end<=? AND reviewed_at<=? AND json_extract(json,'$.spec') IS ? AND json_extract(json,'$.warehouse') IS ? AND json_extract(json,'$.campaign') IS ? AND json_extract(json,'$.bundleIdentity') IS ? AND json_extract(json,'$.giftIdentity') IS ? AND json_extract(json,'$.membershipIdentity') IS ? AND json_extract(json,'$.offerScope') IS ? ORDER BY window_end DESC,reviewed_at DESC,id DESC LIMIT 5`).all(this.workspaceId,row.shop_id,row.channel,row.sku_id,scenario,row.date,asOf,spec(e),'warehouse_id' in row?row.warehouse_id:null,'campaign_id' in row?row.campaign_id:null,'list_price_minor' in row?bundleIdentity(row):null,'list_price_minor' in row?giftIdentity(row):null,'list_price_minor' in row?membershipIdentity(row):null,'list_price_minor' in row?offerScope(row):null).map(r=>JSON.parse(r.json) as CaseMemory);
   }
 }

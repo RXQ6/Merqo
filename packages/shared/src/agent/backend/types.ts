@@ -13,6 +13,8 @@
  */
 
 import type { AgentEvent } from '@craft-agent/core/types';
+import type { IsolatedCompletion } from './isolated-completion.ts';
+import type { InferenceTelemetry } from './isolated-telemetry.ts';
 import type { FileAttachment } from '../../utils/files.ts';
 import type { ThinkingLevel } from '../thinking-levels.ts';
 import type { PermissionMode } from '../mode-manager.ts';
@@ -335,6 +337,8 @@ export type SdkMcpServerConfig =
  * 4. Allow capability-based UI adaptation
  */
 export interface AgentBackend {
+  /** Optional tool-free text inference capability. It never dispatches the chat/tool execution loop. */
+  createIsolatedCompletion?(deadline: string, onTelemetry?: (event: InferenceTelemetry) => void, signal?: AbortSignal): Promise<IsolatedCompletion>;
   // ============================================================
   // Chat & Lifecycle
   // ============================================================

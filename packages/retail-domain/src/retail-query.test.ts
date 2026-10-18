@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Database } from 'bun:sqlite';
 import { RetailStore } from './store';
 import { DEMO_CSV, RetailRequestSchema } from './operations';
 import { RetailPageSchema } from './retail-query';
@@ -41,4 +42,23 @@ test('bounded typed query rejects untrusted SQL, huge pages and out-of-range off
   expect(RetailRequestSchema.safeParse({ op: 'snapshot', source: 'csv', limit: 30, offset: 30 }).success).toBe(true);
   const preview = store.request({ op: 'preview', csv: DEMO_CSV });
   expect(preview.ok && preview.kind === 'preview' && preview.data.validCount).toBe(store.snapshot().records.length);
+});
+
+test('batch metadata invalidates evidence and history, including an already-stale legacy projection', () => {
+  store.page({ source: 'demo' });
+  const db = new Database(join(dir, 'data.sqlite'));
+  try {
+    db.query("UPDATE retail_batches SET imported_at=? WHERE source='demo'").run('2000-01-01T00:00:00Z');
+    const page = store.page({ source: 'demo' });
+    expect(page.records.every(r => r.importedAt === '2000-01-01T00:00:00Z')).toBe(true);
+    expect(page.batches.every(b => b.importedAt === '2000-01-01T00:00:00Z')).toBe(true);
+    // Simulate a cache created by the earlier version, which had no batch UPDATE invalidation.
+    db.exec('DROP TRIGGER retail_query_retail_batches_update');
+    db.query("UPDATE retail_batches SET imported_at=? WHERE source='demo'").run('2001-01-01T00:00:00Z');
+    store.close(); store = new RetailStore(join(dir, 'data.sqlite'));
+    const upgraded = store.page({ source: 'demo' });
+    expect(upgraded.records.every(r => r.importedAt === '2001-01-01T00:00:00Z')).toBe(true);
+    expect(upgraded.batches.every(b => b.importedAt === '2001-01-01T00:00:00Z')).toBe(true);
+    expect(upgraded.records).toEqual(store.snapshot().records.sort((a, b) => a.row.shop_id.localeCompare(b.row.shop_id) || b.row.date.localeCompare(a.row.date) || a.row.sku_id.localeCompare(b.row.sku_id) || a.id.localeCompare(b.id)));
+  } finally { db.close(); }
 });

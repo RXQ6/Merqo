@@ -17,6 +17,7 @@ export interface RetailPagination {
 /** Rebuildable read projection. Source/history remain authoritative; triggers fence every source mutation. */
 export class RetailQueries {
   constructor(private readonly db: Database, private readonly load: () => Snapshot) {
+    const hadBatchInvalidation = !!db.query('SELECT 1 FROM sqlite_master WHERE type=? AND name=?').get('trigger', 'retail_query_retail_batches_update');
     db.exec(`CREATE TABLE IF NOT EXISTS retail_query_meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1),dirty INTEGER NOT NULL,base_json TEXT);
       INSERT OR IGNORE INTO retail_query_meta VALUES(1,1,NULL);
       CREATE TABLE IF NOT EXISTS retail_query_records(id TEXT PRIMARY KEY,source TEXT NOT NULL,shop TEXT NOT NULL,channel TEXT NOT NULL,date TEXT NOT NULL,sku TEXT NOT NULL,status TEXT NOT NULL,search TEXT NOT NULL,revenue TEXT,profit TEXT,evidence_json TEXT NOT NULL);
@@ -26,6 +27,12 @@ export class RetailQueries {
       CREATE TRIGGER IF NOT EXISTS retail_query_insert AFTER INSERT ON retail_records BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;
       CREATE TRIGGER IF NOT EXISTS retail_query_update AFTER UPDATE ON retail_records BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;
       CREATE TRIGGER IF NOT EXISTS retail_query_delete AFTER DELETE ON retail_records BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;`);
+    // Both evidence JSON and base batch history depend on these tables, not only retail_records.
+    for (const table of ['retail_batches', 'retail_batch_rules'] as const) for (const event of ['INSERT', 'UPDATE', 'DELETE'] as const) {
+      db.exec(`CREATE TRIGGER IF NOT EXISTS retail_query_${table}_${event.toLowerCase()} AFTER ${event} ON ${table} BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;`);
+    }
+    // A projection created by the earlier version may already be stale; invalidate it once on upgrade.
+    if (!hadBatchInvalidation) db.query('UPDATE retail_query_meta SET dirty=1 WHERE singleton=1').run();
   }
   private ready(): Omit<Snapshot, 'records'> {
     return this.db.transaction(() => {

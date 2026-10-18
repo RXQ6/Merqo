@@ -54,6 +54,7 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: {
   } : null, [selected, active]));
   const detailRef = useRef<HTMLElement>(null);
   const [busy, setBusy] = useState(false); const pending = useRef(false);
+  const requestQueue = useRef<Promise<void>>(Promise.resolve());
   const [error, setError] = useState(''); const [notice, setNotice] = useState('');
   const [csv, setCsv] = useState(''); const [fileName, setFileName] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null); const [mapping, setMapping] = useState<Record<string, string>>({});
@@ -61,9 +62,13 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: {
   const queryGeneration = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const request = useCallback(async (input: RetailRequest): Promise<RetailReply | undefined> => {
-    if (pending.current) return;
-    pending.current = true; setBusy(true); setError(''); setNotice('');
     const generation = queryGeneration.current;
+    const previous = requestQueue.current;
+    let release!: () => void;
+    requestQueue.current = new Promise<void>(resolve => { release = resolve; });
+    await previous;
+    pending.current = true; setBusy(true); setError('');
+    if (input.op !== 'snapshot' && input.op !== 'signals') setNotice('');
     try {
       const reply = await window.electronAPI.retailRequest(input);
       if (!reply.ok) throw new Error(reply.error);
@@ -71,10 +76,11 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: {
       if (reply.kind === 'snapshot' && (input.op !== 'snapshot' || generation === queryGeneration.current)) { setSnapshot(reply.data); if (reply.signals) setSignals(reply.signals); if (reply.notice) setNotice(reply.notice); }
       return reply;
     } catch (cause) { setError(cause instanceof Error ? cause.message : '请求失败，请重试'); return; }
-    finally { pending.current = false; setBusy(false); }
+    finally { pending.current = false; setBusy(false); release(); }
   }, []);
   useEffect(() => {
     queryGeneration.current++;
+    if (page !== 'overview' && page !== 'anomalies' && page !== 'data') return;
     let disposed = false; let timer: ReturnType<typeof setTimeout>;
     const load = () => {
       if (disposed) return;

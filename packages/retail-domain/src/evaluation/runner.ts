@@ -39,7 +39,7 @@ function protocolFixture(run: AnyInvestigation): ModelPort {
     const tools = ['retail_get_data_health', 'retail_get_sku_context', run.scenario === 'ads' ? 'retail_get_campaigns' : run.scenario === 'inventory' ? 'retail_get_inventory' : 'retail_get_promotions', 'retail_simulate_actions'];
     if (context.observations.length < 4) return JSON.stringify({ tool: tools[context.observations.length] });
     return JSON.stringify({ report: {
-      summary: '合成案例契约报告', observations: run.scenario !== 'inventory' ? [] : [{ text: '核对工具证据', evidenceIds: [`${run.recordId}:${tools[2]}`] }],
+      summary: '合成案例契约报告', observations: [],
       hypotheses: [], unknowns: ['缺实时状态'], alternatives: ['可能存在口径差异'], options: [
         { kind: 'observe', rationale: '核验' },
         { kind: run.scenario === 'ads' ? 'reduce_budget' : run.scenario === 'inventory' ? 'replenish_draft' : 'reduce_coupon', rationale: '仅作条件测算' },

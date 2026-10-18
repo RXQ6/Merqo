@@ -24,7 +24,7 @@ for (const scenario of ['margin', 'inventory', 'ads'] as const) test(`${scenario
       calls++;
       if (system.includes('串行只读 Reviewer')) { reviewed = JSON.parse(prompt).context.draft; return JSON.stringify({ verdict: 'passed', notes: ['unit fixture'] }); }
       const tool = liveTools(scenario)[step++]; if (tool) return JSON.stringify({ tool });
-      const draft: DraftReport = { summary: '待核验的经营异常', observations: scenario === 'inventory' ? [{ text: '静态证据待核验', evidenceIds: [`${run.recordId}:${liveTools(scenario)[2]}`] }] : [], hypotheses: [], unknowns: ['缺少实时状态'], alternatives: ['口径变化'], options: [{ kind: 'observe', rationale: '补证' }, { kind: scenario === 'margin' ? 'reduce_coupon' : scenario === 'inventory' ? 'replenish_draft' : 'reduce_budget', rationale: '条件方案' }] };
+      const draft: DraftReport = { summary: '待核验的经营异常', observations: [], hypotheses: [], unknowns: ['缺少实时状态'], alternatives: ['口径变化'], options: [{ kind: 'observe', rationale: '补证' }, { kind: scenario === 'margin' ? 'reduce_coupon' : scenario === 'inventory' ? 'replenish_draft' : 'reduce_budget', rationale: '条件方案' }] };
       return JSON.stringify({ report: draft });
     };
     const emit = async (event: Parameters<Parameters<typeof runInvestigation>[2]>[0]) => { runs.update(run.id, { event }); };
@@ -39,6 +39,10 @@ for (const scenario of ['margin', 'inventory', 'ads'] as const) test(`${scenario
     expect(assessLiveRun(stale, calls, 100, [], reviewed).failures).toContain('frozenEvidence');
     const forged = structuredClone(saved); forged.report!.observations[0]!.evidenceIds = ['fabricated'];
     expect(assessLiveRun(forged, calls, 100, [], reviewed).failures).toContain('referencesResolve');
+    if (scenario === 'inventory') {
+      const badNumber = structuredClone(saved); badNumber.report!.inventoryNumericAudit!.facts[0]!.value = 999;
+      expect(assessLiveRun(badNumber, calls, 100, [], reviewed).failures).toContain('inventoryNumericContract');
+    }
   } finally { runs.close(); signals.close(); data.close(); rmSync(dir, { recursive: true, force: true }); }
 });
 

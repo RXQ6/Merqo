@@ -649,6 +649,8 @@
   "onboarding.gitBash.installTitle": "安装 Git for Windows",
   "onboarding.gitBash.pathPlaceholder": "C:\\Program Files\\Git\\bin\\bash.exe",
   "onboarding.gitBash.recheck": "重新检查",
+  "onboarding.gitBash.retailContinue": "仅使用经营分析",
+  "onboarding.gitBash.retailOptional": "经营分析不需要 Git Bash；通用 Agent 的 Shell 工具仍需另行安装 Git for Windows。",
   "onboarding.gitBash.title": "需要 Git Bash",
   "onboarding.gitBash.useThisPath": "使用此路径",
   "onboarding.localModel.description": "连接到 Ollama 或任何 OpenAI 兼容的本地服务器。",

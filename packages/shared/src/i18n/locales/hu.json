@@ -649,6 +649,8 @@
   "onboarding.gitBash.installTitle": "Git telepítése Windows-ra",
   "onboarding.gitBash.pathPlaceholder": "C:\\Program Files\\Git\\bin\\bash.exe",
   "onboarding.gitBash.recheck": "Újraellenőrzés",
+  "onboarding.gitBash.retailContinue": "Folytatás csak kereskedelmi elemzéssel",
+  "onboarding.gitBash.retailOptional": "A kereskedelmi elemzéshez nem szükséges Git Bash. Az általános Agent parancssori eszközeihez külön telepítsd a Git for Windows programot.",
   "onboarding.gitBash.title": "Git Bash szükséges",
   "onboarding.gitBash.useThisPath": "Ezt az útvonalat használd",
   "onboarding.localModel.description": "Csatlakozz az Ollama-hoz vagy bármely OpenAI-kompatibilis helyi szerverhez.",

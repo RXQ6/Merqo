@@ -43,3 +43,9 @@ jobs:
 
       - name: Run validation suite
         run: bun run validate:ci
+
+      - name: Retail domain and isolated inference regression
+        run: |
+          bun run retail:check
+          bun test apps/electron/src/main/__tests__/retail-inference-telemetry.test.ts scripts/i18n-coverage.test.ts
+          bun run retail:check:mcp

@@ -22,6 +22,7 @@ const narrative = text.regex(/^(?![\s\S]*[0-9０-９])(?![\s\S]*[零〇一二两
 const qualitativeCitation = citation.extend({text:narrative});
 export const MarginModelReportSchema = ReportSchema.extend({summary:narrative,observations:z.array(qualitativeCitation).length(0),hypotheses:z.array(qualitativeCitation).max(8),unknowns:z.array(narrative).max(12),alternatives:z.array(narrative).min(1).max(8),options:z.array(z.strictObject({kind:z.enum(['observe','reduce_coupon']),rationale:narrative})).length(2)});
 export const AdsModelReportSchema = MarginModelReportSchema.extend({ options: z.array(z.strictObject({ kind: z.enum(['observe', 'reduce_budget']), rationale: narrative })).length(2) });
+export const InventoryModelReportSchema = MarginModelReportSchema.extend({ options: z.array(z.strictObject({ kind: z.enum(['observe', 'replenish_draft']), rationale: narrative })).length(2) });
 export type DraftReport = z.infer<typeof ReportSchema>;
 export interface Scenario {
   kind: 'observe' | 'reduce_coupon' | 'replenish_draft' | 'reduce_budget'; title: string; rationale: string;
@@ -32,6 +33,7 @@ export interface Scenario {
 export interface InvestigationReport extends DraftReport {
   numericAudit?: MarginNumericAudit;
   adsNumericAudit?: import('./ads-numeric').AdsNumericAudit;
+  inventoryNumericAudit?: import('./inventory-numeric').InventoryNumericAudit;
   evidenceAssessment?: MarginEvidenceAssessment;
   scenarios: Scenario[];
   reviewer: { verdict: 'passed' | 'needs_evidence' | 'rejected'; notes: string[]; mode: 'model' | 'replay' };
@@ -136,10 +138,9 @@ export async function runReadonlyReview(model: ModelPort, system: string, contex
 }
 /** Contract feedback never grants tools or executes malformed model requests. */
 export function decisionContract(option: 'reduce_coupon' | 'replenish_draft' | 'reduce_budget', remainingTools: readonly string[], feedback: string | null) {
-  const codeFacts = option !== 'replenish_draft';
-  return { remainingTools, feedback, ...(codeFacts?{numericPolicy:'observations必须是空数组，代码生成数值与数据质量观察；只写定性解释，不填写数字、SKU、日期、金额、比例或数量。'}:{}), ...(remainingTools.length === 0 ? { reportSchema: z.toJSONSchema(option==='reduce_coupon'?MarginModelReportSchema:option==='reduce_budget'?AdsModelReportSchema:ReportSchema) } : {}), instruction: '严格输出一个JSON对象。工具请求只有tool一个字段，不含scope、arguments、params。范围由服务器冻结。工具已齐时输出report。简短报告：summary最多200字，观察最多4条，每条最多120字，observations和hypotheses必须是{text,evidenceIds}对象数组（无假设用空数组），unknowns和alternatives必须是字符串数组而非对象数组。',
+  return { remainingTools, feedback, numericPolicy:'observations必须是空数组，代码生成数值与数据质量观察；只写定性解释，不填写数字、SKU、日期、金额、比例或数量。', ...(remainingTools.length === 0 ? { reportSchema: z.toJSONSchema(option==='reduce_coupon'?MarginModelReportSchema:option==='reduce_budget'?AdsModelReportSchema:InventoryModelReportSchema) } : {}), instruction: '严格输出一个JSON对象。工具请求只有tool一个字段，不含scope、arguments、params。范围由服务器冻结。工具已齐时输出report。简短报告：summary最多200字，observations必须为空数组，hypotheses必须是{text,evidenceIds}对象数组（无假设用空数组），unknowns和alternatives必须是字符串数组而非对象数组。',
     toolExample: { tool: remainingTools[0] ?? 'retail_get_data_health' },
-    reportExample: { report: { summary: '简短摘要', observations: codeFacts?[]:[{ text: '证据支持的观察', evidenceIds: ['已返回的ID'] }], hypotheses: [{ text: '尚未证实的假设', evidenceIds: ['已返回的ID'] }], unknowns: ['待补证'], alternatives: ['替代解释'], options: [{ kind: 'observe', rationale: '核验' }, { kind: option, rationale: '条件测算' }] } } };
+    reportExample: { report: { summary: '简短摘要', observations: [], hypotheses: [{ text: '尚未证实的假设', evidenceIds: ['已返回的ID'] }], unknowns: ['待补证'], alternatives: ['替代解释'], options: [{ kind: 'observe', rationale: '核验' }, { kind: option, rationale: '条件测算' }] } } };
 }
 export function contractFeedback(error: unknown): string {
   if (!(error instanceof z.ZodError) && !(error instanceof SyntaxError)) throw error;

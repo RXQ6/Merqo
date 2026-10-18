@@ -649,6 +649,8 @@
   "onboarding.gitBash.installTitle": "Git for Windowsをインストール",
   "onboarding.gitBash.pathPlaceholder": "C:\\Program Files\\Git\\bin\\bash.exe",
   "onboarding.gitBash.recheck": "再確認",
+  "onboarding.gitBash.retailContinue": "経営分析のみを使用",
+  "onboarding.gitBash.retailOptional": "経営分析に Git Bash は不要です。汎用 Agent のシェルツールを使うには、Git for Windows を別途インストールしてください。",
   "onboarding.gitBash.title": "Git Bashが必要です",
   "onboarding.gitBash.useThisPath": "このパスを使用",
   "onboarding.localModel.description": "OllamaまたはOpenAI互換のローカルサーバーに接続します。",

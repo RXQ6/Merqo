@@ -649,6 +649,8 @@
   "onboarding.gitBash.installTitle": "Install Git for Windows",
   "onboarding.gitBash.pathPlaceholder": "C:\\Program Files\\Git\\bin\\bash.exe",
   "onboarding.gitBash.recheck": "Re-check",
+  "onboarding.gitBash.retailContinue": "Continue with retail analysis only",
+  "onboarding.gitBash.retailOptional": "Retail analysis does not require Git Bash. Install Git for Windows separately to use the general Agent shell tools.",
   "onboarding.gitBash.title": "Git Bash Required",
   "onboarding.gitBash.useThisPath": "Use this path",
   "onboarding.localModel.description": "Connect to Ollama or any OpenAI-compatible local server.",

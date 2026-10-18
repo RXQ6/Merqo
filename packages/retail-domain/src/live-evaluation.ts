@@ -1,13 +1,14 @@
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
-import { AdsModelReportSchema, isSignalInvestigation, parseJson, readTool, simulate } from './investigations';
+import { InventoryModelReportSchema, AdsModelReportSchema, isSignalInvestigation, parseJson, readTool, simulate } from './investigations';
 import { auditAdsNumbers, adsNumericObservations } from './ads-numeric';
+import { auditInventoryNumbers, inventoryNumericObservations } from './inventory-numeric';
 import type { AnyInvestigation, InvestigationReport } from './investigations';
 import { readSignalTool, SIGNAL_TOOLS, simulateSignal } from './signal-investigations';
 
 export type LiveScenario = 'margin' | 'inventory' | 'ads';
 export const LIVE_CONTRACT = {
-  version: 'retail-live-eval-v3', scenarios: ['margin', 'inventory', 'ads'] as LiveScenario[],
+  version: 'retail-live-eval-v4', scenarios: ['margin', 'inventory', 'ads'] as LiveScenario[],
   runsPerScenario: 5, minimumPasses: 4, maxModelCallsPerRun: 14, maxRunMs: 300000,
   scope: '单个固定合成异常每场景重复五次；真实推理与MCP，不代表全部业务覆盖、实盘效果或生产授权',
   inventory: { available: 40, coverageDays: 2, proposedQuantity: 100, actionPassed: false },
@@ -69,6 +70,12 @@ export function assessLiveRun(run: AnyInvestigation, modelCalls: number, elapsed
         const audit = auditAdsNumbers(run.evidence, scenarios, tools, run.caseContext);
         checks.adsNumericContract = isDeepStrictEqual(report.adsNumericAudit, audit) && isDeepStrictEqual(report.observations, adsNumericObservations(audit, run.evidence)) && AdsModelReportSchema.safeParse({ ...draft, observations: [] }).success;
       } catch { checks.adsNumericContract = false; }
+    }
+    if (isSignalInvestigation(run) && run.scenario === 'inventory') {
+      try {
+        const audit = auditInventoryNumbers(run.evidence, scenarios, tools, run.caseContext);
+        checks.inventoryNumericContract = isDeepStrictEqual(report.inventoryNumericAudit, audit) && isDeepStrictEqual(report.observations, inventoryNumericObservations(audit, run.evidence)) && InventoryModelReportSchema.safeParse({ ...draft, observations: [] }).success;
+      } catch { checks.inventoryNumericContract = false; }
     }
     const action = report.scenarios[1];
     checks.goldenScenario = scenario === 'margin' ? !isSignalInvestigation(run) && run.evidence.calculation.profitMinor === 1000 && run.evidence.calculation.marginBps === 1429 && action?.couponMinor === 1500 && action.marginBps === 2000 && report.numericAudit?.calculationFieldsComplete === true

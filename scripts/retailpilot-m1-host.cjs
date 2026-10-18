@@ -318,7 +318,7 @@ app.on('web-contents-created', (_event, contents) => {
             let output;
             if (system.includes('串行只读 Reviewer')) output = {verdict:reviewVerdict, notes:['本地协议测试复核，非真实模型质量验证；复核意见标记 '+reviewVerdict]};
             else if (context.observations.length < 4) output = {tool:toolNames[context.observations.length]};
-            else output = {report:{summary:'本地协议测试报告，非真实模型生成的业务结论',observations:context.scenario === 'inventory'?[{text:'本地场景协议检查，经营事实以工具证据为准',evidenceIds:[context.observations[2].evidenceId]}]:[],hypotheses:[],unknowns:['缺少实时数据'],alternatives:['成本或优惠分摊口径可能错误'],options:[{kind:'observe',rationale:'补证后再决定'},{kind:context.scenario === 'inventory' ? 'replenish_draft' : context.scenario === 'ads' ? 'reduce_budget' : 'reduce_coupon',rationale:'仅作条件测算'}]}};
+            else output = {report:{summary:'本地协议测试报告，非真实模型生成的业务结论',observations:[],hypotheses:[],unknowns:['缺少实时数据'],alternatives:['成本或优惠分摊口径可能错误'],options:[{kind:'observe',rationale:'补证后再决定'},{kind:context.scenario === 'inventory' ? 'replenish_draft' : context.scenario === 'ads' ? 'reduce_budget' : 'reduce_coupon',rationale:'仅作条件测算'}]}};
             res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({choices:[{message:{content:JSON.stringify(output)}}]}));
           } catch(e) { failures.push(e.message); res.statusCode=500; res.end('{}'); }
         });

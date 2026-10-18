@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-18",
+  "scope": "Post beta.2 inventory numeric guard, CI repair, metadata cache and UI feedback regression",
+  "baseCommit": "d619635401b3afe832eb13d0a2c0de8d36f3b8c2",
+  "workingChangesAtVerification": true,
+  "regression": {
+    "passed": 242,
+    "failed": 0,
+    "assertions": 1815,
+    "files": 22
+  },
+  "sharedConfig": {
+    "passed": 84,
+    "failed": 0,
+    "assertions": 199,
+    "timeoutMs": 30000,
+    "normalTempDirectory": true,
+    "earlierSandboxAndDefaultTimeoutFailuresRetained": true
+  },
+  "domainTypes": "passed",
+  "electronTypes": "passed",
+  "mcp": "all three scenarios and frozen Case checks passed",
+  "build": "full desktop then final main and renderer builds passed",
+  "desktop": {
+    "initialChecks": 56,
+    "restartChecks": 16,
+    "model": "local protocol fixture; no new real-model quality claim"
+  },
+  "performance": {
+    "rows": 100000,
+    "queries": 30,
+    "p95Ms": 793.3317999999999,
+    "importMs": 47821.1172,
+    "scope": "margin common scope totals, status and first/deep offset pages; not signal-query performance, renderer paint, cold disk, concurrent writes or model latency",
+    "cache": "OS/SQLite files warmed by import and projection build; fresh worker and SQLite connection per measured request; no model calls",
+    "background": "Other development tasks were active; no causal comparison to previous timings"
+  },
+  "ci": {
+    "runId": 39109306429,
+    "commit": "d619635401b3afe832eb13d0a2c0de8d36f3b8c2",
+    "conclusion": "success",
+    "scope": "Inventory numeric + CI + cache/UI correction",
+    "url": "https://github.com/RXQ6/Merqo/actions/runs/39109306429"
+  },
+  "modelGate": {
+    "currentContract": "retail-live-eval-v4",
+    "newLiveBatchRun": true,
+    "margin": "5/5",
+    "inventory": "4/5",
+    "ads": "5/5",
+    "forbiddenEvents": 0,
+    "passedGate": true,
+    "inventoryFirstNeedsEvidenceRetained": true
+  },
+  "installer": {
+    "beta2Retained": true,
+    "newSourceNotRepackaged": true
+  },
+  "sourceHashes": {
+    "packages/retail-domain/src/inventory-numeric.ts": "ef5d3b1d188315d39bb99627cd51a19f6768e45d8f33407e78d725ee9da13578",
+    "packages/retail-domain/src/signal-investigations.ts": "7d9b6f5d9cf5071a1a9e28a760b53aea695cc252e97d4784850fbdb51acbe2c8",
+    "packages/retail-domain/src/investigations.ts": "613f8365756784ef19f2ae7a83577b28ff1f699c7bae4c21b752d59fbb6412dd",
+    "packages/retail-domain/src/retail-query.ts": "b9368967ca4a8dacdc99b7131b01b8afdbe8a9fd827e6c88d2f26898c3226c37",
+    "packages/retail-domain/src/live-evaluation.ts": "116ce5247a35730428947f4f15d77f4678286c2f9be8139c0189015159bbaaa8",
+    "apps/electron/src/renderer/retail/RetailWorkspace.tsx": "509aba454a5e45e5bb7c6fe99476159fd6aa30f406fce01bddec823ba1c7cec8",
+    "packages/retail-domain/skills/margin/SKILL.md": "6d48e391c53865a4621a90d0466f0432ffba3a6e1f5ce11716770e040b62894b",
+    "packages/retail-domain/skills/inventory/SKILL.md": "a054ce8315411320c975388e3e2edd64541e3ac3e2faefbc6b8a434f3c4370e9",
+    "packages/retail-domain/skills/ads/SKILL.md": "8fa1b0fbae8d1f25248898303894d8198335568098788589ce7a39a0a0f4d639"
+  },
+  "testHarnessSha256": "0bcd1cd6060fb187f6cbfcfae8eda008c442114da5aa1a7dbf727a2352abdb61",
+  "builtMainSha256": "dad94f1b86ae23f7cbeeb1278ee057feef35f952dca7883c402a5497e23d36bc",
+  "fullPrdReleaseReady": false
+}

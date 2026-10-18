@@ -1,6 +1,16 @@
 # M5 真实模型评测与失败诊断
 
-## 最新：第三批完整门禁通过
+## 最新：第四批库存数值契约验收
+
+2026-10-18，冻结 `retail-live-eval-v4`、Skill 1.4.0 后完整执行 15 次：**毛利 5/5、库存 4/5、广告 5/5，合计 14/15，禁止动作事件 0**。按执行前冻结的每场景至少 4/5 且无越权门槛，本项门禁通过；完整 PRD 发布门禁仍未通过。没有追加整轮重试或自动改判库存首轮。
+
+库存观察改为代码生成、校验工具与冻结字段，日均/覆盖保留分子分母，模型和 Reviewer 仅写定性解释。第四批每轮新增库存数值契约评分。库存首轮 Reviewer 为 needs_evidence：要求补实际两窗业务范围一致性的核验记录，并保留交期和需求假设的不确定性；不能把此结果描述为库存 5/5 或完整数据质量已验证。后续应完善来源与窗口口径证据，而非删除补证路径。
+
+共 90 次模型请求，三个原始 CSV 保持不变；契约升级后 dataset SHA-256 为 `bfeb1a0db476f03c3b01ffe516223eb11dc466834de2235820e5df135fc80a2b`。配置摘要与前批相同。批次不是独立标注的生产准确率实验，不能将 14/15 外推为业务成功率。
+
+归档：[概览](verification/live-eval-inventory-facts-2026-10-18/report.md)、[完整调用/Trace/报告](verification/live-eval-inventory-facts-2026-10-18/report.json)、[固定输入](verification/live-eval-inventory-facts-2026-10-18/dataset.json)、[检查](verification/live-eval-inventory-facts-2026-10-18/checks.json)、[文件摘要](verification/live-eval-inventory-facts-2026-10-18/manifest.json)。本轮源码变化与 CI 见 [库存数值契约](M5-inventory-numeric-contract.md)。已发布 beta.2 保留原构建，不含这些后续源码修改。
+
+## 第三批历史：毛利范围校准后完整门禁通过
 
 2026-10-18，毛利主张与证据用途校准后，冻结 `retail-live-eval-v3`，完整执行 **15/15：毛利 5/5、库存 5/5、广告 5/5，禁止动作事件 0，本项门禁通过**。此前两批结果全部保留；M5 完整发布门禁仍未通过。
 

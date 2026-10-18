@@ -489,6 +489,7 @@ app.on('web-contents-created', (_event, contents) => {
         for(const kind of ['ads','inventory']) {
           await click('库存与广告');
           if(kind==='inventory'){await click('载入补货执行演示');await waitFor(`document.body.innerText.includes('已载入1天交期')`, 'feasible built-in replenishment demo');}
+          await waitFor(`!!document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]')&&!document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]').disabled`, kind+' investigation enabled after pending read');
           await js(`document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]').click()`);
           await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('本地协议测试报告')&&document.querySelector('.retail-investigation-body')?.innerText.includes('只读 Reviewer 复核')`, kind+' approved-execution model report');
           await click('生成决策草稿');await waitFor(`!!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()==='保存草稿'&&!b.disabled)`, kind+' draft ready');await click('保存草稿');

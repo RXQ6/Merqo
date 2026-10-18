@@ -1,0 +1,478 @@
+validate	Run validation suite	﻿2026-10-18T07:26:45.8215512Z ##[group]Run bun run validate:ci
+validate	Run validation suite	2026-10-18T07:26:45.8215850Z ^[[36;1mbun run validate:ci^[[0m
+validate	Run validation suite	2026-10-18T07:26:45.8281954Z shell: /usr/bin/bash -e {0}
+validate	Run validation suite	2026-10-18T07:26:45.8282286Z env:
+validate	Run validation suite	2026-10-18T07:26:45.8282598Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+validate	Run validation suite	2026-10-18T07:26:45.8283007Z ##[endgroup]
+validate	Run validation suite	2026-10-18T07:26:45.8414765Z $ bun run validate:dev && bun run lint:i18n:parity && bun run lint:i18n:sorted && bun run lint:i18n:coverage
+validate	Run validation suite	2026-10-18T07:26:45.8435438Z $ bun run typecheck:all && bun run test:shared:all && bun run test:doc-tools
+validate	Run validation suite	2026-10-18T07:26:45.8478491Z $ cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit
+validate	Run validation suite	2026-10-18T07:27:16.8780169Z $ tsc --noEmit -p tsconfig.typecheck.json
+validate	Run validation suite	2026-10-18T07:27:25.8839100Z $ tsc --noEmit
+validate	Run validation suite	2026-10-18T07:28:02.6240849Z $ bun run test:shared:llm-connections && bun run test:shared:models-pi && bun run test:shared:config
+validate	Run validation suite	2026-10-18T07:28:02.6280412Z $ cd packages/shared && bun test tests/llm-connections.test.ts
+validate	Run validation suite	2026-10-18T07:28:02.6306975Z bun test v1.4.2 (744846f84)
+validate	Run validation suite	2026-10-18T07:28:02.6340362Z 
+validate	Run validation suite	2026-10-18T07:28:02.6341580Z ##[group]tests/llm-connections.test.ts:
+validate	Run validation suite	2026-10-18T07:28:02.6406023Z (pass) getMiniModel() > finds haiku for anthropic provider [0.26ms]
+validate	Run validation suite	2026-10-18T07:28:02.6406849Z (pass) getMiniModel() > finds mini for pi provider [0.07ms]
+validate	Run validation suite	2026-10-18T07:28:02.6407784Z (pass) getMiniModel() > skips denied codex-mini-latest alias for pi provider [0.04ms]
+validate	Run validation suite	2026-10-18T07:28:02.6408720Z (pass) getMiniModel() > skips denied pi/codex-mini-latest alias for pi provider [0.04ms]
+validate	Run validation suite	2026-10-18T07:28:02.6409562Z (pass) getMiniModel() > finds mini for pi_compat provider [0.03ms]
+validate	Run validation suite	2026-10-18T07:28:02.6410327Z (pass) getMiniModel() > finds mini for Pi list with mixed models [0.03ms]
+validate	Run validation suite	2026-10-18T07:28:02.6411235Z (pass) getMiniModel() > finds mini even when model name has "mini" in different position [0.03ms]
+validate	Run validation suite	2026-10-18T07:28:02.6412683Z (pass) getMiniModel() > falls back to last model when Pi list has no mini/flash model [0.05ms]
+validate	Run validation suite	2026-10-18T07:28:02.6413765Z (pass) getMiniModel() > returns undefined for empty model list [0.03ms]
+validate	Run validation suite	2026-10-18T07:28:02.6414600Z (pass) getMiniModel() > returns undefined for undefined models [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.6415330Z (pass) getMiniModel() > falls back to last model when no keyword match [0.03ms]
+validate	Run validation suite	2026-10-18T07:28:02.6415888Z (pass) getMiniModel() > fallback ignores denied alias and returns last allowed model [0.10ms]
+validate	Run validation suite	2026-10-18T07:28:02.6416595Z (pass) getMiniModel() > handles single-model list [0.04ms]
+validate	Run validation suite	2026-10-18T07:28:02.6417153Z (pass) getSummarizationModel() > returns same result as getMiniModel (shared implementation) [0.27ms]
+validate	Run validation suite	2026-10-18T07:28:02.6420402Z (pass) getMiniModel() — auth-flavor awareness > skips *codex-mini* variants under openai-codex auth [0.14ms]
+validate	Run validation suite	2026-10-18T07:28:02.6421587Z (pass) getMiniModel() — auth-flavor awareness > still returns *codex-mini* variants under regular openai (API-key) auth [0.08ms]
+validate	Run validation suite	2026-10-18T07:28:02.6422996Z (pass) getMiniModel() — auth-flavor awareness > falls back to last allowed model when every mini candidate is denied [0.07ms]
+validate	Run validation suite	2026-10-18T07:28:02.6424010Z (pass) isDeniedMiniModelId() > always denies codex-mini-latest [0.03ms]
+validate	Run validation suite	2026-10-18T07:28:02.6424609Z (pass) isDeniedMiniModelId() > denies *codex-mini* variants only under openai-codex auth [0.04ms]
+validate	Run validation suite	2026-10-18T07:28:02.6425559Z (pass) isDeniedMiniModelId() > does not deny non-codex-mini models [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.6426121Z 
+validate	Run validation suite	2026-10-18T07:28:02.6426610Z ##[endgroup]
+validate	Run validation suite	2026-10-18T07:28:02.6426811Z 
+validate	Run validation suite	2026-10-18T07:28:02.6426941Z  20 pass
+validate	Run validation suite	2026-10-18T07:28:02.6427240Z  0 fail
+validate	Run validation suite	2026-10-18T07:28:02.6427545Z  27 expect() calls
+validate	Run validation suite	2026-10-18T07:28:02.6427976Z Ran 20 tests across 1 file. [11.00ms]
+validate	Run validation suite	2026-10-18T07:28:02.6452298Z $ cd packages/shared && bun test tests/models-pi.test.ts
+validate	Run validation suite	2026-10-18T07:28:02.6479140Z bun test v1.4.2 (744846f84)
+validate	Run validation suite	2026-10-18T07:28:02.6513285Z 
+validate	Run validation suite	2026-10-18T07:28:02.6514392Z ##[group]tests/models-pi.test.ts:
+validate	Run validation suite	2026-10-18T07:28:02.7616724Z (pass) models-pi filtering > excludes codex-mini-latest for openai models [0.57ms]
+validate	Run validation suite	2026-10-18T07:28:02.7618284Z (pass) models-pi filtering > excludes all gpt-4* models for openai models [0.22ms]
+validate	Run validation suite	2026-10-18T07:28:02.7628683Z (pass) models-pi filtering > keeps Claude Opus 4.6 models in Anthropic catalogs [0.53ms]
+validate	Run validation suite	2026-10-18T07:28:02.7634946Z (pass) models-pi filtering > includes DeepSeek in the Pi API key provider list with a human-readable label [1.06ms]
+validate	Run validation suite	2026-10-18T07:28:02.7636168Z (pass) models-pi filtering > returns current DeepSeek models from the Pi SDK catalog [0.06ms]
+validate	Run validation suite	2026-10-18T07:28:02.7636598Z 
+validate	Run validation suite	2026-10-18T07:28:02.7637092Z ##[endgroup]
+validate	Run validation suite	2026-10-18T07:28:02.7637229Z 
+validate	Run validation suite	2026-10-18T07:28:02.7637322Z  5 pass
+validate	Run validation suite	2026-10-18T07:28:02.7637525Z  0 fail
+validate	Run validation suite	2026-10-18T07:28:02.7637724Z  7 expect() calls
+validate	Run validation suite	2026-10-18T07:28:02.7638003Z Ran 5 tests across 1 file. [115.00ms]
+validate	Run validation suite	2026-10-18T07:28:02.7705199Z $ cd packages/shared && bun test src/config/__tests__/llm-connections.test.ts src/config/__tests__/storage-migrations.test.ts src/config/__tests__/storage-startup-migration.test.ts src/config/__tests__/default-thinking-level.test.ts
+validate	Run validation suite	2026-10-18T07:28:02.7726398Z bun test v1.4.2 (744846f84)
+validate	Run validation suite	2026-10-18T07:28:02.7765798Z 
+validate	Run validation suite	2026-10-18T07:28:02.7795864Z ##[group]src/config/__tests__/llm-connections.test.ts:
+validate	Run validation suite	2026-10-18T07:28:02.8732760Z (pass) getDefaultModelsForConnection > anthropic returns ANTHROPIC_MODELS (ModelDefinition[]) [0.08ms]
+validate	Run validation suite	2026-10-18T07:28:02.8742255Z (pass) getDefaultModelsForConnection > pi with piAuthProvider returns filtered models including Opus 4.6 [1.00ms]
+validate	Run validation suite	2026-10-18T07:28:02.8760774Z (pass) getDefaultModelsForConnection > pi without piAuthProvider returns all Pi models [1.87ms]
+validate	Run validation suite	2026-10-18T07:28:02.8762060Z (pass) getDefaultModelForConnection > returns first model ID for anthropic [0.07ms]
+validate	Run validation suite	2026-10-18T07:28:02.8768079Z (pass) getDefaultModelForConnection > regression: Pi anthropic default is in its own model list [0.38ms]
+validate	Run validation suite	2026-10-18T07:28:02.8771838Z (pass) getDefaultModelForConnection > Pi openai default is in its own model list [0.69ms]
+validate	Run validation suite	2026-10-18T07:28:02.8773340Z (pass) getDefaultModelForConnection > Pi deepseek default is in its own model list [0.10ms]
+validate	Run validation suite	2026-10-18T07:28:02.8774980Z (pass) getDefaultModelForConnection > returns empty string for pi_compat (dynamic provider) [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8775978Z (pass) isCompatProvider > returns true for pi_compat [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8776707Z (pass) isCompatProvider > returns false for anthropic [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8777373Z (pass) isCompatProvider > returns false for pi
+validate	Run validation suite	2026-10-18T07:28:02.8778040Z (pass) isAnthropicProvider > returns true for anthropic [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8778785Z (pass) isAnthropicProvider > returns false for pi
+validate	Run validation suite	2026-10-18T07:28:02.8779415Z (pass) isPiProvider > returns true for pi [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8780048Z (pass) isPiProvider > returns true for pi_compat
+validate	Run validation suite	2026-10-18T07:28:02.8780698Z (pass) isPiProvider > returns false for anthropic
+validate	Run validation suite	2026-10-18T07:28:02.8781318Z (pass) toBedrockNativeId > maps bare Anthropic IDs to US inference profile IDs [0.07ms]
+validate	Run validation suite	2026-10-18T07:28:02.8782620Z (pass) toBedrockNativeId > keeps Opus 4.7 mapped and selectable [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8783211Z (pass) toBedrockNativeId > maps Sonnet 5 forward and reverse across regions and base IDs [0.05ms]
+validate	Run validation suite	2026-10-18T07:28:02.8784442Z (pass) toBedrockNativeId > normalizes deprecated Opus IDs to Opus 4.8 before mapping, keeping Opus 4.6 [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8785119Z (pass) toBedrockNativeId > maps base Bedrock IDs to US inference profile IDs [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8785669Z (pass) toBedrockNativeId > passes through already US-prefixed IDs
+validate	Run validation suite	2026-10-18T07:28:02.8786117Z (pass) toBedrockNativeId > passes through unknown IDs [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8786618Z (pass) toBedrockNativeId > maps to EU inference profiles when regionPrefix is eu [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8787424Z (pass) toBedrockNativeId > defaults to US when regionPrefix is omitted or us [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8787987Z (pass) toBedrockNativeId > passes through unknown IDs regardless of regionPrefix
+validate	Run validation suite	2026-10-18T07:28:02.8788678Z (pass) deriveBedrockRegionPrefix > returns us for US regions [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8789564Z (pass) deriveBedrockRegionPrefix > returns eu for EU regions [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8790532Z (pass) deriveBedrockRegionPrefix > returns us for other regions (fallback) [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8791324Z (pass) deriveBedrockRegionPrefix > returns us when undefined
+validate	Run validation suite	2026-10-18T07:28:02.8794396Z (pass) Bedrock preferred defaults ordering > sorts preferred models first for amazon-bedrock [1.64ms]
+validate	Run validation suite	2026-10-18T07:28:02.8795807Z (pass) fromBedrockNativeId > maps US inference profile IDs back to bare Anthropic [0.06ms]
+validate	Run validation suite	2026-10-18T07:28:02.8797045Z (pass) fromBedrockNativeId > maps EU/Global inference profile IDs back to bare [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8798038Z (pass) fromBedrockNativeId > maps base Bedrock IDs back to bare [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8798551Z (pass) fromBedrockNativeId > passes through bare IDs [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8799449Z (pass) fromBedrockNativeId > maps Opus 4.6 native IDs back to the bare ID [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8800498Z (pass) normalizeBedrockModelId > strips pi/ prefix and maps to US inference profile [0.08ms]
+validate	Run validation suite	2026-10-18T07:28:02.8801535Z (pass) normalizeBedrockModelId > maps bare IDs to US inference profile [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8802497Z (pass) normalizeBedrockModelId > maps Opus 4.6 IDs to their own native IDs [0.03ms]
+validate	Run validation suite	2026-10-18T07:28:02.8803687Z (pass) normalizeBedrockModelId > maps base Bedrock IDs to US inference profile [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8804726Z (pass) normalizeBedrockModelId > is idempotent for already US-prefixed IDs [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8805463Z (pass) normalizeBedrockModelId > handles empty/undefined [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8805925Z (pass) normalizeBedrockModelId > respects regionPrefix for EU [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:02.8806517Z (pass) Bedrock-native model display > getModelDisplayName resolves US inference profile IDs [0.16ms]
+validate	Run validation suite	2026-10-18T07:28:02.8807193Z (pass) Bedrock-native model display > getModelDisplayName resolves EU/base Bedrock IDs [0.05ms]
+validate	Run validation suite	2026-10-18T07:28:02.8808230Z (pass) Bedrock-native model display > getModelShortName resolves Bedrock IDs [0.08ms]
+validate	Run validation suite	2026-10-18T07:28:02.8809636Z (pass) Bedrock-native model display > getModelContextWindow resolves Bedrock IDs [0.05ms]
+validate	Run validation suite	2026-10-18T07:28:02.8810596Z (pass) Bedrock-native model display > isClaudeModel recognizes Bedrock IDs [0.05ms]
+validate	Run validation suite	2026-10-18T07:28:02.8811200Z (pass) Claude Fable 5 > is registered as an Anthropic model with the expected metadata [0.07ms]
+validate	Run validation suite	2026-10-18T07:28:02.8811833Z (pass) Claude Fable 5 > resolves display/short name, context window, and Claude detection [0.04ms]
+validate	Run validation suite	2026-10-18T07:28:02.8812439Z (pass) Claude Fable 5 > does NOT become the Anthropic default (Opus 4.8 stays default) [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:02.8813045Z (pass) Claude Fable 5 > round-trips through the Bedrock inference-profile mapping [0.05ms]
+validate	Run validation suite	2026-10-18T07:28:02.8813390Z 
+validate	Run validation suite	2026-10-18T07:28:02.8814308Z ##[endgroup]
+validate	Run validation suite	2026-10-18T07:28:02.8814447Z 
+validate	Run validation suite	2026-10-18T07:28:02.8814779Z ##[group]src/config/__tests__/storage-migrations.test.ts:
+validate	Run validation suite	2026-10-18T07:28:03.1591925Z (pass) shouldMigratePiOpenAiProvider > migrates legacy Pi OAuth OpenAI connections to openai-codex [0.05ms]
+validate	Run validation suite	2026-10-18T07:28:03.1593860Z (pass) shouldMigratePiOpenAiProvider > does not migrate Pi API key OpenAI connections [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:03.1595069Z (pass) shouldMigratePiOpenAiProvider > does not migrate Pi custom endpoint connections [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:03.1596293Z (pass) shouldMigratePiOpenAiProvider > does not migrate already-correct openai-codex connections [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:03.1597727Z (pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key connections that were incorrectly set to openai-codex [0.05ms]
+validate	Run validation suite	2026-10-18T07:28:03.1599436Z (pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key with endpoint connections that were incorrectly set to openai-codex [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:03.1601419Z (pass) shouldRepairPiApiKeyCodexProvider > does not repair OAuth openai-codex connections [0.02ms]
+validate	Run validation suite	2026-10-18T07:28:03.1602655Z (pass) shouldRepairPiApiKeyCodexProvider > does not repair non-OpenAI-Codex providers [0.01ms]
+validate	Run validation suite	2026-10-18T07:28:03.1604331Z (pass) inferModelSelectionMode > infers automaticallySyncedFromProvider when model list equals provider defaults [0.15ms]
+validate	Run validation suite	2026-10-18T07:28:03.1605729Z (pass) inferModelSelectionMode > infers userDefined3Tier when model list is a custom subset [0.04ms]
+validate	Run validation suite	2026-10-18T07:28:03.1606976Z (pass) inferModelSelectionMode > infers automaticallySyncedFromProvider for empty model lists [0.06ms]
+validate	Run validation suite	2026-10-18T07:28:03.1607716Z 
+validate	Run validation suite	2026-10-18T07:28:03.1608244Z ##[endgroup]
+validate	Run validation suite	2026-10-18T07:28:03.1608451Z 
+validate	Run validation suite	2026-10-18T07:28:03.1609013Z ##[group]src/config/__tests__/storage-startup-migration.test.ts:
+validate	Run validation suite	2026-10-18T07:28:03.5201980Z (pass) startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration [358.42ms]
+validate	Run validation suite	2026-10-18T07:28:03.8554341Z (pass) startup migration (integration) > preserves userDefined3Tier model subsets during startup migration [335.17ms]
+validate	Run validation suite	2026-10-18T07:28:04.1916399Z (pass) startup migration (integration) > normalizes auto mode model set back to provider defaults [336.23ms]
+validate	Run validation suite	2026-10-18T07:28:04.5283288Z (pass) startup migration (integration) > repairs userDefined3Tier lists by removing invalid IDs and fixing default model [336.65ms]
+validate	Run validation suite	2026-10-18T07:28:04.8669076Z (pass) startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering [338.56ms]
+validate	Run validation suite	2026-10-18T07:28:05.1985962Z (pass) startup migration (integration) > normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting [331.71ms]
+validate	Run validation suite	2026-10-18T07:28:05.5310640Z (pass) legacy Opus migration to default Opus (integration) > keeps direct Anthropic Opus 4.6 default/model entries intact [332.41ms]
+validate	Run validation suite	2026-10-18T07:28:06.1890312Z (pass) legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal [657.99ms]
+validate	Run validation suite	2026-10-18T07:28:06.5201437Z (pass) legacy Opus migration to default Opus (integration) > migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8 [331.05ms]
+validate	Run validation suite	2026-10-18T07:28:06.8497973Z (pass) legacy Opus migration to default Opus (integration) > migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable [329.64ms]
+validate	Run validation suite	2026-10-18T07:28:07.1786222Z (pass) legacy Opus migration to default Opus (integration) > keeps workspace default Opus 4.6 unchanged [328.86ms]
+validate	Run validation suite	2026-10-18T07:28:07.5105267Z (pass) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [331.87ms]
+validate	Run validation suite	2026-10-18T07:28:07.8464972Z (pass) legacy Opus migration to default Opus (integration) > keeps Pi Anthropic Opus 4.6 IDs unchanged [335.94ms]
+validate	Run validation suite	2026-10-18T07:28:08.2037229Z (pass) legacy Opus migration to default Opus (integration) > keeps Pi Bedrock Opus 4.6 native IDs unchanged [357.20ms]
+validate	Run validation suite	2026-10-18T07:28:08.5376697Z (pass) legacy Opus migration to default Opus (integration) > migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6 [333.86ms]
+validate	Run validation suite	2026-10-18T07:28:08.8750340Z (pass) legacy Opus migration to default Opus (integration) > migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs [337.39ms]
+validate	Run validation suite	2026-10-18T07:28:08.8751266Z 
+validate	Run validation suite	2026-10-18T07:28:08.8751731Z ##[endgroup]
+validate	Run validation suite	2026-10-18T07:28:08.8751900Z 
+validate	Run validation suite	2026-10-18T07:28:08.8752353Z ##[group]src/config/__tests__/default-thinking-level.test.ts:
+validate	Run validation suite	2026-10-18T07:28:09.0954881Z (pass) default thinking level storage > falls back to bundled default when no app-level default is set [218.25ms]
+validate	Run validation suite	2026-10-18T07:28:09.3129982Z (pass) default thinking level storage > persists defaultThinkingLevel to config.json [217.56ms]
+validate	Run validation suite	2026-10-18T07:28:09.7417149Z (pass) default thinking level storage > round-trips persisted value across processes [428.70ms]
+validate	Run validation suite	2026-10-18T07:28:12.3074121Z (pass) default thinking level storage > supports every thinking level [2565.60ms]
+validate	Run validation suite	2026-10-18T07:28:12.5192517Z (pass) default thinking level storage > migrates legacy "think" value to "medium" [211.90ms]
+validate	Run validation suite	2026-10-18T07:28:12.5193289Z 
+validate	Run validation suite	2026-10-18T07:28:12.5194454Z ##[endgroup]
+validate	Run validation suite	2026-10-18T07:28:12.5194608Z 
+validate	Run validation suite	2026-10-18T07:28:12.5194699Z  84 pass
+validate	Run validation suite	2026-10-18T07:28:12.5194893Z  0 fail
+validate	Run validation suite	2026-10-18T07:28:12.5195095Z  199 expect() calls
+validate	Run validation suite	2026-10-18T07:28:12.5195341Z Ran 84 tests across 4 files. [9.75s]
+validate	Run validation suite	2026-10-18T07:28:12.5285462Z $ python3 -m unittest apps.electron.resources.scripts.tests.test_pdf_tool_smoke apps.electron.resources.scripts.tests.test_xlsx_tool_smoke apps.electron.resources.scripts.tests.test_docx_tool_smoke apps.electron.resources.scripts.tests.test_pptx_tool_smoke apps.electron.resources.scripts.tests.test_img_tool_smoke apps.electron.resources.scripts.tests.test_ical_tool_smoke apps.electron.resources.scripts.tests.test_doc_diff_smoke apps.electron.resources.scripts.tests.test_markitdown_smoke
+validate	Run validation suite	2026-10-18T07:28:12.6280551Z EEEEEEEEEEEEEE
+validate	Run validation suite	2026-10-18T07:28:12.6281349Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6282528Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_pdf_tool_smoke.PdfToolSmokeTests)
+validate	Run validation suite	2026-10-18T07:28:12.6284367Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6287206Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6295721Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_pdf_tool_smoke.py", line 35, in setUpClass
+validate	Run validation suite	2026-10-18T07:28:12.6296411Z     resized = run_tool(
+validate	Run validation suite	2026-10-18T07:28:12.6296650Z               ^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6297249Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6297864Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6298111Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6298522Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6298917Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6299240Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6299612Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6300054Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6300557Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6301058Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6301700Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/img-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6302182Z 
+validate	Run validation suite	2026-10-18T07:28:12.6302309Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6302862Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_xlsx_tool_smoke.XlsxToolSmokeTests)
+validate	Run validation suite	2026-10-18T07:28:12.6303724Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6304129Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6305034Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_xlsx_tool_smoke.py", line 18, in setUpClass
+validate	Run validation suite	2026-10-18T07:28:12.6305626Z     bootstrap = run_tool(
+validate	Run validation suite	2026-10-18T07:28:12.6305851Z                 ^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6306379Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6306933Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6307161Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6307490Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6307855Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6308151Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6308505Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6309075Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6309542Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6310011Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6310597Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/xlsx-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6311039Z 
+validate	Run validation suite	2026-10-18T07:28:12.6311148Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6311904Z ERROR: test_create_extract_template_and_replace (apps.electron.resources.scripts.tests.test_docx_tool_smoke.DocxToolSmokeTests.test_create_extract_template_and_replace)
+validate	Run validation suite	2026-10-18T07:28:12.6312685Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6313017Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6313930Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_docx_tool_smoke.py", line 26, in test_create_extract_template_and_replace
+validate	Run validation suite	2026-10-18T07:28:12.6314634Z     create = self.run_tool(
+validate	Run validation suite	2026-10-18T07:28:12.6314863Z              ^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6315412Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_docx_tool_smoke.py", line 22, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6316007Z     return run_tool("docx-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6316315Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6316872Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6317418Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6317641Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6317935Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6318294Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6318593Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6318936Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6319358Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6319812Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6320271Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6320866Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/docx-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6321308Z 
+validate	Run validation suite	2026-10-18T07:28:12.6321425Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6322123Z ERROR: test_template_invalid_json_fails (apps.electron.resources.scripts.tests.test_docx_tool_smoke.DocxToolSmokeTests.test_template_invalid_json_fails)
+validate	Run validation suite	2026-10-18T07:28:12.6322846Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6323180Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6324126Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_docx_tool_smoke.py", line 80, in test_template_invalid_json_fails
+validate	Run validation suite	2026-10-18T07:28:12.6325079Z     create = self.run_tool("create", "--text", "Hello {{name}}", "-o", str(template_doc))
+validate	Run validation suite	2026-10-18T07:28:12.6325530Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6326164Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_docx_tool_smoke.py", line 22, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6326764Z     return run_tool("docx-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6327071Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6327635Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6328188Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6328413Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6328719Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6329268Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6329566Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6329924Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6330337Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6330784Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6331242Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6331828Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/docx-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6332260Z 
+validate	Run validation suite	2026-10-18T07:28:12.6332377Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6333027Z ERROR: test_create_info_extract (apps.electron.resources.scripts.tests.test_pptx_tool_smoke.PptxToolSmokeTests.test_create_info_extract)
+validate	Run validation suite	2026-10-18T07:28:12.6333941Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6334287Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6334923Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_pptx_tool_smoke.py", line 27, in test_create_info_extract
+validate	Run validation suite	2026-10-18T07:28:12.6335535Z     create = self.run_tool(
+validate	Run validation suite	2026-10-18T07:28:12.6335763Z              ^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6336302Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_pptx_tool_smoke.py", line 23, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6336891Z     return run_tool("pptx-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6337198Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6337757Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6338310Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6338536Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6338830Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6339192Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6339485Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6339829Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6340246Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6340705Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6341173Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6341765Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/pptx-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6342200Z 
+validate	Run validation suite	2026-10-18T07:28:12.6342318Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6343017Z ERROR: test_extract_invalid_slide_fails (apps.electron.resources.scripts.tests.test_pptx_tool_smoke.PptxToolSmokeTests.test_extract_invalid_slide_fails)
+validate	Run validation suite	2026-10-18T07:28:12.6343992Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6344332Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6345225Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_pptx_tool_smoke.py", line 51, in test_extract_invalid_slide_fails
+validate	Run validation suite	2026-10-18T07:28:12.6345938Z     create = self.run_tool("create", "--title", "One", "-o", str(deck))
+validate	Run validation suite	2026-10-18T07:28:12.6346315Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6346909Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_pptx_tool_smoke.py", line 23, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6347500Z     return run_tool("pptx-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6347813Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6348373Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6349031Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6349258Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6349557Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6349918Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6350210Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6350550Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6350975Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6351429Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6351932Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6352531Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/pptx-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6352977Z 
+validate	Run validation suite	2026-10-18T07:28:12.6353107Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6354230Z ERROR: test_info_resize_convert (apps.electron.resources.scripts.tests.test_img_tool_smoke.ImgToolSmokeTests.test_info_resize_convert)
+validate	Run validation suite	2026-10-18T07:28:12.6354921Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6355255Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6355896Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_img_tool_smoke.py", line 33, in test_info_resize_convert
+validate	Run validation suite	2026-10-18T07:28:12.6356539Z     info = self.run_tool("info", str(self.input_png))
+validate	Run validation suite	2026-10-18T07:28:12.6356847Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6357408Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_img_tool_smoke.py", line 30, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6357991Z     return run_tool("img-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6358290Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6358846Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6359406Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6359639Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6359945Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6360342Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6360635Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6360980Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6361397Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6361846Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6362304Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6362891Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/img-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6363329Z 
+validate	Run validation suite	2026-10-18T07:28:12.6363603Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6364255Z ERROR: test_invalid_resize_fails (apps.electron.resources.scripts.tests.test_img_tool_smoke.ImgToolSmokeTests.test_invalid_resize_fails)
+validate	Run validation suite	2026-10-18T07:28:12.6365218Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6365834Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6366969Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_img_tool_smoke.py", line 50, in test_invalid_resize_fails
+validate	Run validation suite	2026-10-18T07:28:12.6368253Z     result = self.run_tool("resize", str(self.input_png), "--scale", "0", "-o", str(bad))
+validate	Run validation suite	2026-10-18T07:28:12.6369062Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6370148Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_img_tool_smoke.py", line 30, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6371209Z     return run_tool("img-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6371978Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6372994Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6374201Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6374591Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6375090Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6375710Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6376153Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6376547Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6376971Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6377429Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6377893Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6378482Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/img-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6378964Z 
+validate	Run validation suite	2026-10-18T07:28:12.6379092Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6380184Z ERROR: test_create_read_filter (apps.electron.resources.scripts.tests.test_ical_tool_smoke.IcalToolSmokeTests.test_create_read_filter)
+validate	Run validation suite	2026-10-18T07:28:12.6381365Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6381731Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6382378Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_ical_tool_smoke.py", line 36, in test_create_read_filter
+validate	Run validation suite	2026-10-18T07:28:12.6383151Z     create = self.run_tool("create", "--data", data, "--cal-name", "Smoke", "-o", str(calendar))
+validate	Run validation suite	2026-10-18T07:28:12.6383990Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6384833Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_ical_tool_smoke.py", line 23, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6385445Z     return run_tool("ical-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6385762Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6386333Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6386884Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6387115Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6387417Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6387779Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6388072Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6388415Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6388839Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6389285Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6389753Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6390516Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/ical-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6390958Z 
+validate	Run validation suite	2026-10-18T07:28:12.6391069Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6391720Z ERROR: test_read_malformed_fails (apps.electron.resources.scripts.tests.test_ical_tool_smoke.IcalToolSmokeTests.test_read_malformed_fails)
+validate	Run validation suite	2026-10-18T07:28:12.6392407Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6392751Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6393385Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_ical_tool_smoke.py", line 64, in test_read_malformed_fails
+validate	Run validation suite	2026-10-18T07:28:12.6394312Z     result = self.run_tool("read", str(bad))
+validate	Run validation suite	2026-10-18T07:28:12.6394600Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6395336Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_ical_tool_smoke.py", line 23, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6395937Z     return run_tool("ical-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6396248Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6396822Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6397371Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6397595Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6397896Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6398252Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6398547Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6398893Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6399317Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6399773Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6400235Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6400825Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/ical-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6401269Z 
+validate	Run validation suite	2026-10-18T07:28:12.6401381Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6402016Z ERROR: test_diff_summary_works (apps.electron.resources.scripts.tests.test_doc_diff_smoke.DocDiffSmokeTests.test_diff_summary_works)
+validate	Run validation suite	2026-10-18T07:28:12.6402675Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6403011Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6403990Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_doc_diff_smoke.py", line 30, in test_diff_summary_works
+validate	Run validation suite	2026-10-18T07:28:12.6404693Z     result = self.run_tool(str(f1), str(f2), "--format", "summary")
+validate	Run validation suite	2026-10-18T07:28:12.6405063Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6405657Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_doc_diff_smoke.py", line 22, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6406253Z     return run_tool("doc-diff", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6406561Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6407120Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6407669Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6407896Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6408197Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6408559Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6408856Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6409198Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6409613Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6410062Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6410663Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6411248Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/doc-diff'
+validate	Run validation suite	2026-10-18T07:28:12.6411686Z 
+validate	Run validation suite	2026-10-18T07:28:12.6411802Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6412428Z ERROR: test_missing_file_fails (apps.electron.resources.scripts.tests.test_doc_diff_smoke.DocDiffSmokeTests.test_missing_file_fails)
+validate	Run validation suite	2026-10-18T07:28:12.6413078Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6413583Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6414246Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_doc_diff_smoke.py", line 40, in test_missing_file_fails
+validate	Run validation suite	2026-10-18T07:28:12.6415044Z     result = self.run_tool(str(f1), str(missing))
+validate	Run validation suite	2026-10-18T07:28:12.6415350Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6415925Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_doc_diff_smoke.py", line 22, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6416511Z     return run_tool("doc-diff", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6416812Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6417367Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6417912Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6418135Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6418441Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6418792Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6419080Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6419430Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6419839Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6420287Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6420748Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6421336Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/doc-diff'
+validate	Run validation suite	2026-10-18T07:28:12.6421769Z 
+validate	Run validation suite	2026-10-18T07:28:12.6421882Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6422530Z ERROR: test_docx_fallback_path (apps.electron.resources.scripts.tests.test_markitdown_smoke.MarkitdownSmokeTests.test_docx_fallback_path)
+validate	Run validation suite	2026-10-18T07:28:12.6423200Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6423730Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6424360Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_markitdown_smoke.py", line 37, in test_docx_fallback_path
+validate	Run validation suite	2026-10-18T07:28:12.6425096Z     create = self.run_docx("create", "--text", "Hello from docx", "-o", str(docx))
+validate	Run validation suite	2026-10-18T07:28:12.6425511Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6426131Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_markitdown_smoke.py", line 25, in run_docx
+validate	Run validation suite	2026-10-18T07:28:12.6426725Z     return run_tool("docx-tool", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6427030Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6427585Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6428133Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6428353Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6428645Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6429003Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6429289Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6429801Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6430238Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6430698Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6431159Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6431743Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/docx-tool'
+validate	Run validation suite	2026-10-18T07:28:12.6432187Z 
+validate	Run validation suite	2026-10-18T07:28:12.6432297Z ======================================================================
+validate	Run validation suite	2026-10-18T07:28:12.6432981Z ERROR: test_plain_text_passthrough (apps.electron.resources.scripts.tests.test_markitdown_smoke.MarkitdownSmokeTests.test_plain_text_passthrough)
+validate	Run validation suite	2026-10-18T07:28:12.6433964Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6434660Z Traceback (most recent call last):
+validate	Run validation suite	2026-10-18T07:28:12.6435313Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_markitdown_smoke.py", line 31, in test_plain_text_passthrough
+validate	Run validation suite	2026-10-18T07:28:12.6435955Z     result = self.run_markitdown(str(txt))
+validate	Run validation suite	2026-10-18T07:28:12.6436227Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6436808Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/test_markitdown_smoke.py", line 22, in run_markitdown
+validate	Run validation suite	2026-10-18T07:28:12.6437435Z     return run_tool("markitdown", *args, env=self.env)
+validate	Run validation suite	2026-10-18T07:28:12.6437754Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6438316Z   File "/home/runner/work/Merqo/Merqo/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 75, in run_tool
+validate	Run validation suite	2026-10-18T07:28:12.6438863Z     return subprocess.run(
+validate	Run validation suite	2026-10-18T07:28:12.6439088Z            ^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6439390Z   File "/usr/lib/python3.12/subprocess.py", line 548, in run
+validate	Run validation suite	2026-10-18T07:28:12.6439746Z     with Popen(*popenargs, **kwargs) as process:
+validate	Run validation suite	2026-10-18T07:28:12.6440039Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+validate	Run validation suite	2026-10-18T07:28:12.6440411Z   File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+validate	Run validation suite	2026-10-18T07:28:12.6440831Z     self._execute_child(args, executable, preexec_fn, close_fds,
+validate	Run validation suite	2026-10-18T07:28:12.6441313Z   File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+validate	Run validation suite	2026-10-18T07:28:12.6441774Z     raise child_exception_type(errno_num, err_msg, err_filename)
+validate	Run validation suite	2026-10-18T07:28:12.6442360Z PermissionError: [Errno 13] Permission denied: '/home/runner/work/Merqo/Merqo/apps/electron/resources/bin/markitdown'
+validate	Run validation suite	2026-10-18T07:28:12.6442809Z 
+validate	Run validation suite	2026-10-18T07:28:12.6442952Z ----------------------------------------------------------------------
+validate	Run validation suite	2026-10-18T07:28:12.6443280Z Ran 12 tests in 0.017s
+validate	Run validation suite	2026-10-18T07:28:12.6443600Z 
+validate	Run validation suite	2026-10-18T07:28:12.6443708Z FAILED (errors=14)
+validate	Run validation suite	2026-10-18T07:28:12.6443981Z error: script "test:doc-tools" exited with code 1
+validate	Run validation suite	2026-10-18T07:28:12.6444316Z error: script "validate:dev" exited with code 1
+validate	Run validation suite	2026-10-18T07:28:12.6444644Z error: script "validate:ci" exited with code 1
+validate	Run validation suite	2026-10-18T07:28:12.6447857Z ##[error]Process completed with exit code 1.

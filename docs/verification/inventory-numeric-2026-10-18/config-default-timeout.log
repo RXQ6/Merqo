@@ -1,0 +1,163 @@
+$ bun run test:shared:llm-connections && bun run test:shared:models-pi && bun run test:shared:config
+$ cd packages/shared && bun test tests/llm-connections.test.ts
+bun test v1.4.2 (744846f84)
+
+tests\llm-connections.test.ts:
+(pass) getMiniModel() > finds haiku for anthropic provider [0.22ms]
+(pass) getMiniModel() > finds mini for pi provider [0.04ms]
+(pass) getMiniModel() > skips denied codex-mini-latest alias for pi provider [0.02ms]
+(pass) getMiniModel() > skips denied pi/codex-mini-latest alias for pi provider [0.01ms]
+(pass) getMiniModel() > finds mini for pi_compat provider [0.01ms]
+(pass) getMiniModel() > finds mini for Pi list with mixed models [0.02ms]
+(pass) getMiniModel() > finds mini even when model name has "mini" in different position [0.08ms]
+(pass) getMiniModel() > falls back to last model when Pi list has no mini/flash model [0.04ms]
+(pass) getMiniModel() > returns undefined for empty model list [0.03ms]
+(pass) getMiniModel() > returns undefined for undefined models [0.02ms]
+(pass) getMiniModel() > falls back to last model when no keyword match [0.02ms]
+(pass) getMiniModel() > fallback ignores denied alias and returns last allowed model [1.66ms]
+(pass) getMiniModel() > handles single-model list [0.05ms]
+(pass) getSummarizationModel() > returns same result as getMiniModel (shared implementation) [0.08ms]
+(pass) getMiniModel() — auth-flavor awareness > skips *codex-mini* variants under openai-codex auth [1.29ms]
+(pass) getMiniModel() — auth-flavor awareness > still returns *codex-mini* variants under regular openai (API-key) auth [0.11ms]
+(pass) getMiniModel() — auth-flavor awareness > falls back to last allowed model when every mini candidate is denied [0.06ms]
+(pass) isDeniedMiniModelId() > always denies codex-mini-latest [0.03ms]
+(pass) isDeniedMiniModelId() > denies *codex-mini* variants only under openai-codex auth [0.03ms]
+(pass) isDeniedMiniModelId() > does not deny non-codex-mini models [0.03ms]
+
+ 20 pass
+ 0 fail
+ 27 expect() calls
+Ran 20 tests across 1 file. [199.00ms]
+$ cd packages/shared && bun test tests/models-pi.test.ts
+bun test v1.4.2 (744846f84)
+
+tests\models-pi.test.ts:
+(pass) models-pi filtering > excludes codex-mini-latest for openai models [0.85ms]
+(pass) models-pi filtering > excludes all gpt-4* models for openai models [0.19ms]
+(pass) models-pi filtering > keeps Claude Opus 4.6 models in Anthropic catalogs [0.48ms]
+(pass) models-pi filtering > includes DeepSeek in the Pi API key provider list with a human-readable label [2.66ms]
+(pass) models-pi filtering > returns current DeepSeek models from the Pi SDK catalog [0.08ms]
+
+ 5 pass
+ 0 fail
+ 7 expect() calls
+Ran 5 tests across 1 file. [374.00ms]
+$ cd packages/shared && bun test src/config/__tests__/llm-connections.test.ts src/config/__tests__/storage-migrations.test.ts src/config/__tests__/storage-startup-migration.test.ts src/config/__tests__/default-thinking-level.test.ts
+bun test v1.4.2 (744846f84)
+
+src\config\__tests__\default-thinking-level.test.ts:
+(pass) default thinking level storage > falls back to bundled default when no app-level default is set [657.91ms]
+(pass) default thinking level storage > persists defaultThinkingLevel to config.json [589.31ms]
+(pass) default thinking level storage > round-trips persisted value across processes [1153.92ms]
+killed 1 dangling process
+73 |     stdout: 'pipe',
+74 |     stderr: 'pipe',
+75 |   })
+76 | 
+77 |   if (run.exitCode !== 0) {
+78 |     throw new Error(`subprocess failed (exit ${run.exitCode})\nstderr:\n${run.stderr.toString()}`)
+                                                                                                      ^
+error: subprocess failed (exit null)
+stderr:
+
+      at runEval (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\__tests__\default-thinking-level.test.ts:78:98)
+      at <anonymous> (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\__tests__\default-thinking-level.test.ts:110:7)
+(fail) default thinking level storage > supports every thinking level [6013.06ms]
+  ^ this test timed out after 5000ms.
+(pass) default thinking level storage > migrates legacy "think" value to "medium" [496.65ms]
+
+src\config\__tests__\llm-connections.test.ts:
+(pass) getDefaultModelsForConnection > anthropic returns ANTHROPIC_MODELS (ModelDefinition[]) [0.13ms]
+(pass) getDefaultModelsForConnection > pi with piAuthProvider returns filtered models including Opus 4.6 [1.65ms]
+(pass) getDefaultModelsForConnection > pi without piAuthProvider returns all Pi models [2.40ms]
+(pass) getDefaultModelForConnection > returns first model ID for anthropic [0.09ms]
+(pass) getDefaultModelForConnection > regression: Pi anthropic default is in its own model list [0.44ms]
+(pass) getDefaultModelForConnection > Pi openai default is in its own model list [1.02ms]
+(pass) getDefaultModelForConnection > Pi deepseek default is in its own model list [0.12ms]
+(pass) getDefaultModelForConnection > returns empty string for pi_compat (dynamic provider) [0.02ms]
+(pass) isCompatProvider > returns true for pi_compat [0.03ms]
+(pass) isCompatProvider > returns false for anthropic [0.01ms]
+(pass) isCompatProvider > returns false for pi [0.01ms]
+(pass) isAnthropicProvider > returns true for anthropic [0.02ms]
+(pass) isAnthropicProvider > returns false for pi [0.01ms]
+(pass) isPiProvider > returns true for pi [0.02ms]
+(pass) isPiProvider > returns true for pi_compat [0.01ms]
+(pass) isPiProvider > returns false for anthropic
+(pass) toBedrockNativeId > maps bare Anthropic IDs to US inference profile IDs [0.08ms]
+(pass) toBedrockNativeId > keeps Opus 4.7 mapped and selectable [0.03ms]
+(pass) toBedrockNativeId > maps Sonnet 5 forward and reverse across regions and base IDs [0.10ms]
+(pass) toBedrockNativeId > normalizes deprecated Opus IDs to Opus 4.8 before mapping, keeping Opus 4.6 [0.04ms]
+(pass) toBedrockNativeId > maps base Bedrock IDs to US inference profile IDs [0.05ms]
+(pass) toBedrockNativeId > passes through already US-prefixed IDs [0.01ms]
+(pass) toBedrockNativeId > passes through unknown IDs [0.01ms]
+(pass) toBedrockNativeId > maps to EU inference profiles when regionPrefix is eu [0.02ms]
+(pass) toBedrockNativeId > defaults to US when regionPrefix is omitted or us [0.02ms]
+(pass) toBedrockNativeId > passes through unknown IDs regardless of regionPrefix
+(pass) deriveBedrockRegionPrefix > returns us for US regions [0.03ms]
+(pass) deriveBedrockRegionPrefix > returns eu for EU regions [0.02ms]
+(pass) deriveBedrockRegionPrefix > returns us for other regions (fallback) [0.01ms]
+(pass) deriveBedrockRegionPrefix > returns us when undefined [0.01ms]
+(pass) Bedrock preferred defaults ordering > sorts preferred models first for amazon-bedrock [1.83ms]
+(pass) fromBedrockNativeId > maps US inference profile IDs back to bare Anthropic [0.05ms]
+(pass) fromBedrockNativeId > maps EU/Global inference profile IDs back to bare [0.02ms]
+(pass) fromBedrockNativeId > maps base Bedrock IDs back to bare [0.01ms]
+(pass) fromBedrockNativeId > passes through bare IDs [0.02ms]
+(pass) fromBedrockNativeId > maps Opus 4.6 native IDs back to the bare ID [0.01ms]
+(pass) normalizeBedrockModelId > strips pi/ prefix and maps to US inference profile [0.05ms]
+(pass) normalizeBedrockModelId > maps bare IDs to US inference profile [0.02ms]
+(pass) normalizeBedrockModelId > maps Opus 4.6 IDs to their own native IDs [0.02ms]
+(pass) normalizeBedrockModelId > maps base Bedrock IDs to US inference profile [0.01ms]
+(pass) normalizeBedrockModelId > is idempotent for already US-prefixed IDs [0.01ms]
+(pass) normalizeBedrockModelId > handles empty/undefined [0.02ms]
+(pass) normalizeBedrockModelId > respects regionPrefix for EU [0.03ms]
+(pass) Bedrock-native model display > getModelDisplayName resolves US inference profile IDs [0.18ms]
+(pass) Bedrock-native model display > getModelDisplayName resolves EU/base Bedrock IDs [0.04ms]
+(pass) Bedrock-native model display > getModelShortName resolves Bedrock IDs [0.12ms]
+(pass) Bedrock-native model display > getModelContextWindow resolves Bedrock IDs [0.05ms]
+(pass) Bedrock-native model display > isClaudeModel recognizes Bedrock IDs [0.06ms]
+(pass) Claude Fable 5 > is registered as an Anthropic model with the expected metadata [0.08ms]
+(pass) Claude Fable 5 > resolves display/short name, context window, and Claude detection [0.03ms]
+(pass) Claude Fable 5 > does NOT become the Anthropic default (Opus 4.8 stays default) [0.02ms]
+(pass) Claude Fable 5 > round-trips through the Bedrock inference-profile mapping [0.07ms]
+
+src\config\__tests__\storage-migrations.test.ts:
+(pass) shouldMigratePiOpenAiProvider > migrates legacy Pi OAuth OpenAI connections to openai-codex [0.11ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate Pi API key OpenAI connections [0.04ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate Pi custom endpoint connections [0.03ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate already-correct openai-codex connections [0.12ms]
+(pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key connections that were incorrectly set to openai-codex [0.11ms]
+(pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key with endpoint connections that were incorrectly set to openai-codex [0.04ms]
+(pass) shouldRepairPiApiKeyCodexProvider > does not repair OAuth openai-codex connections [0.03ms]
+(pass) shouldRepairPiApiKeyCodexProvider > does not repair non-OpenAI-Codex providers [0.02ms]
+(pass) inferModelSelectionMode > infers automaticallySyncedFromProvider when model list equals provider defaults [0.25ms]
+(pass) inferModelSelectionMode > infers userDefined3Tier when model list is a custom subset [0.04ms]
+(pass) inferModelSelectionMode > infers automaticallySyncedFromProvider for empty model lists [0.03ms]
+
+src\config\__tests__\storage-startup-migration.test.ts:
+(pass) startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration [1028.34ms]
+(pass) startup migration (integration) > preserves userDefined3Tier model subsets during startup migration [937.14ms]
+(pass) startup migration (integration) > normalizes auto mode model set back to provider defaults [925.64ms]
+(pass) startup migration (integration) > repairs userDefined3Tier lists by removing invalid IDs and fixing default model [889.03ms]
+(pass) startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering [866.01ms]
+(pass) startup migration (integration) > normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting [849.64ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps direct Anthropic Opus 4.6 default/model entries intact [818.72ms]
+(pass) legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal [1672.37ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8 [993.86ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable [1030.04ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps workspace default Opus 4.6 unchanged [1165.61ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [954.73ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Anthropic Opus 4.6 IDs unchanged [1025.89ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Bedrock Opus 4.6 native IDs unchanged [995.04ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6 [908.66ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs [825.38ms]
+
+1 tests failed:
+(fail) default thinking level storage > supports every thinking level [6013.06ms]
+  ^ this test timed out after 5000ms.
+
+ 83 pass
+ 1 fail
+ 198 expect() calls
+Ran 84 tests across 4 files. [25.80s]
+error: script "test:shared:config" exited with code 1
+error: script "test:shared:all" exited with code 1

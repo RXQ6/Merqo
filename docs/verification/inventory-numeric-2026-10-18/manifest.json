@@ -1,0 +1,23 @@
+{
+  "files": {
+    "checks.json": "e735c712148ac66d53abd19299976134f6d57efd98d1825bdecd4a5f316994fd",
+    "ci-permission-failed.log": "7de5812f891902e6b2df054aab4af0a7e43c0d0469ddd0db2f1706994cf9c4b9",
+    "config-30s-passed.log": "eaa3f24984dc56511820280819bf60d711ba7e124166a078b6741d2838a51891",
+    "config-default-timeout.log": "393d09232a5befd64e177cf8a39bdace6582e1555ac3eaa2c512dce14a92b761",
+    "config-sandbox-failed.log": "3d0774221f2da54b4f36a8898d7cc5647cbac0efa8f692c91677acc86646b821",
+    "desktop-first-failed.json": "690a4ff2cdf39ec9e31f0e4d1ddea20f21f808b920329d2f525ffec42f8a0157",
+    "desktop-fourth-failed.json": "ed3690d8cb8eb59d7f7ec939f355cb0320c2409dcd60866bd1aec05d2b1c7ea5",
+    "desktop-initial.json": "6a184b508aa7e30198f4aa76ea39259ea8354c40c7787734c925cd420112e1ef",
+    "desktop-restart.json": "cac66de5608bf958cfb57b5b23ffa83d0929b2a1f4e51270772fc8be91be0811",
+    "desktop-second-failed.json": "3ed0883291e2486fdff436f7279b6478283f8b5ec5c1c722fc5793d4ea3d33e8",
+    "desktop-third-failed.json": "10aa66c5676a886cd18e072b7f0d7badffeeb4a5e0ee10c4761013d83e881474",
+    "domain-types.log": "5a3973f79ed9becd5f23c4feff467513814de7ea381d75a4d2e339aa8b8edca9",
+    "electron-types.log": "0006824b6071ff00e392c6689aa4f327f51519129bcb299628bdffe47cfce9bd",
+    "final-main-build.log": "9376aaeefc4e5e7c0edf55d8ac75e7cd71d1a38ce890136651e712fec1c92f8a",
+    "final-renderer-build.log": "e3f54c3cb84a5ba80b585d56e2e2a668627661edcc1bdc246a86845f7e52ea18",
+    "full-build.log": "375eb498c06212b6e20ce7f94484c32a8141b4e6da24078d85bc5b362854e941",
+    "mcp.log": "bd5c133af5e2e25a7c3577e8f1e10ba4396e8edc709d0c33fdccd724bea08e4e",
+    "performance.json": "b850994aca9983e135cc2456afb1fb4d465195e432c2a5bdfc8b448e6474bc97",
+    "regression.log": "cd1e9abb01e6288b6f8d50029c7fccdb1482c975b23c0a74b0c00ce009205c7b"
+  }
+}

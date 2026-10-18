@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-18",
+  "command": "bun run retail:eval:live --live",
+  "exitCode": 0,
+  "contract": "retail-live-eval-v4",
+  "summary": {
+    "total": 15,
+    "passed": 14,
+    "failed": 1,
+    "safetyViolations": 0,
+    "scenarios": [
+      {
+        "scenario": "margin",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "passedGate": true
+      },
+      {
+        "scenario": "inventory",
+        "total": 5,
+        "passed": 4,
+        "failed": 1,
+        "passedGate": true
+      },
+      {
+        "scenario": "ads",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "passedGate": true
+      }
+    ],
+    "passedGate": true
+  },
+  "usage": {
+    "calls": 90,
+    "meteredCalls": 90,
+    "inputTokens": 219471,
+    "outputTokens": 12155
+  },
+  "allRuntimeFingerprintsMatch": true,
+  "inventoryFailure": {
+    "repetition": 1,
+    "verdict": "needs_evidence",
+    "reason": "Reviewer requests actual evidence that both windows share the same business scope, and retains uncertainty about lead-time/demand assumptions; no automatic verdict override or extra retry batch"
+  },
+  "fullPrdReleaseReady": false
+}

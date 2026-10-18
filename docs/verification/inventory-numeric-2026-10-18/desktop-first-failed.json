@@ -1,0 +1,13 @@
+{
+  "ok": false,
+  "phase": "initial",
+  "checks": [
+    "analysis hides general sidebar and keeps three grouped sections",
+    "repeated entry keeps the original native window",
+    "navigation rejects renderer supplied workspace",
+    "analysis retains clean header and grouped navigation"
+  ],
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\m1-e2e-1792309015038",
+  "error": "Error: old demo reload preserves true import history and explains its age exemption\n    at assert (D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\scripts\\retailpilot-m1-host.cjs:45:107)\n    at async WebContents.<anonymous> (D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\scripts\\retailpilot-m1-host.cjs:274:9)",
+  "failures": []
+}

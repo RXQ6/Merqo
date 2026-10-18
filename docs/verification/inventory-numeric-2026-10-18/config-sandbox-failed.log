@@ -1,0 +1,59 @@
+bun test v1.4.2 (744846f84)
+
+packages\shared\src\config\__tests__\storage-startup-migration.test.ts:
+(pass) startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration [1089.67ms]
+(pass) startup migration (integration) > preserves userDefined3Tier model subsets during startup migration [1004.86ms]
+(pass) startup migration (integration) > normalizes auto mode model set back to provider defaults [921.44ms]
+(pass) startup migration (integration) > repairs userDefined3Tier lists by removing invalid IDs and fixing default model [982.80ms]
+(pass) startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering [833.88ms]
+(pass) startup migration (integration) > normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting [882.13ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps direct Anthropic Opus 4.6 default/model entries intact [1006.95ms]
+(pass) legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal [1819.23ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8 [953.45ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable [964.78ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps workspace default Opus 4.6 unchanged [1009.89ms]
+77 |   })
+78 | 
+79 |   if (run.exitCode !== 0) {
+80 |     throw new Error(
+81 |       `migration subprocess failed (exit ${run.exitCode})\nstdout:\n${run.stdout.toString()}\nstderr:\n${run.stderr.toString()}`,
+82 |     )
+         ^
+error: migration subprocess failed (exit 1)
+stdout:
+
+stderr:
+35 |  */
+36 | export function atomicWriteFileSync(filePath: string, data: string): void {
+37 |   const tmpPath = filePath + '.tmp';
+38 |   try {
+39 |     writeFileSync(tmpPath, data);
+40 |     renameSync(tmpPath, filePath);
+         ^
+EPERM: operation not permitted, rename 'C:\Users\29486\AppData\Local\Packages\sandbox.{21e08486-a12c-4f84-b08e-273e50765072}\AC\Temp\craft-agent-config-F1WgCp\workspaces\my-workspace\config.json.tmp' -> 'C:\Users\29486\AppData\Local\Packages\sandbox.{21e08486-a12c-4f84-b08e-273e50765072}\AC\Temp\craft-agent-config-F1WgCp\workspaces\my-workspace\config.json'
+    path: "C:\\Users\\29486\\AppData\\Local\\Packages\\sandbox.{21e08486-a12c-4f84-b08e-273e50765072}\\AC\\Temp\\craft-agent-config-F1WgCp\\workspaces\\my-workspace\\config.json.tmp",
+    dest: "C:\\Users\\29486\\AppData\\Local\\Packages\\sandbox.{21e08486-a12c-4f84-b08e-273e50765072}\\AC\\Temp\\craft-agent-config-F1WgCp\\workspaces\\my-workspace\\config.json",
+ syscall: "rename",
+   errno: -4048,
+    code: "EPERM"
+
+      at atomicWriteFileSync (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\utils\files.ts:40:5)
+      at saveWorkspaceConfig (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\workspaces\storage.ts:163:3)
+      at migrateWorkspaceLegacyOpusToDefaultOpus (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\storage.ts:2136:7)
+      at migrateLegacyLlmConnectionsConfig (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\storage.ts:2403:5)
+      at D:\helson-skills\craft-agents-oss-main\retailpilot-agent\[eval]:1:290
+
+Bun v1.4.2 (Windows x64)
+
+      at runMigration (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\__tests__\storage-startup-migration.test.ts:82:5)
+      at <anonymous> (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\__tests__\storage-startup-migration.test.ts:464:5)
+(fail) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [1144.74ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Anthropic Opus 4.6 IDs unchanged [1238.99ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Bedrock Opus 4.6 native IDs unchanged [1083.40ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6 [1147.27ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs [1173.97ms]
+
+ 15 pass
+ 1 fail
+ 59 expect() calls
+Ran 16 tests across 1 file. [18.31s]

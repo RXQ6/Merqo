@@ -1,0 +1,29 @@
+Bundled 191 modules in 57ms
+
+  retailpilot-data-worker.ts  0.57 MB  (entry point)
+
+Bundled 480 modules in 103ms
+
+  merqo-retail-mcp.ts  1.41 MB  (entry point)
+
+  • electron-builder  version=26.4.0 os=10.0.26200
+  • skipped dependencies rebuild  reason=npmRebuild is set to false
+  • packaging       platform=win32 arch=x64 electron=39.2.7 appOutDir=artifacts\windows\0.1.0-beta.3\win-unpacked
+  • using custom unpacked Electron distribution  electronDist=node_modules\electron\dist
+  • copying unpacked Electron  source=D:\helson-skills\craft-agents-oss-main\retailpilot-agent\node_modules\electron\dist destination=D:\helson-skills\craft-agents-oss-main\retailpilot-agent\artifacts\windows\0.1.0-beta.3\win-unpacked
+  • asar usage is disabled — this is strongly not recommended  solution=enable asar and use asarUnpack to unpack files that must be externally available
+  • detected workspace root for project using lock file  pm=bun config=undefined resolved=D:\helson-skills\craft-agents-oss-main\retailpilot-agent projectDir=D:\helson-skills\craft-agents-oss-main\retailpilot-agent
+  • note: bun does not support any CLI for dependency tree extraction, utilizing NPM node module collector instead
+  • no node modules found in collection, trying next search directory  searchDir=D:\helson-skills\craft-agents-oss-main\retailpilot-agent\artifacts\windows\stage-0.1.0-beta.3-1792421762538\app attempt=0
+  • note: bun does not support any CLI for dependency tree extraction, utilizing NPM node module collector instead
+  • cannot find path for dependency  name=undefined reference=undefined
+  • signing with signtool.exe  path=artifacts\windows\0.1.0-beta.3\win-unpacked\resources\app\node_modules\@vscode\ripgrep\bin\rg.exe
+  • signing with signtool.exe  path=artifacts\windows\0.1.0-beta.3\win-unpacked\resources\app\node_modules\@anthropic-ai\claude-agent-sdk-binary\claude.exe
+  • asar usage is disabled — this is strongly not recommended  solution=enable asar and use asarUnpack to unpack files that must be externally available
+  • signing with signtool.exe  path=artifacts\windows\0.1.0-beta.3\win-unpacked\Merqo.exe
+  • building        target=nsis file=artifacts\windows\0.1.0-beta.3\Merqo-Setup-0.1.0-beta.3-x64.exe archs=x64 oneClick=false perMachine=false
+  • signing with signtool.exe  path=artifacts\windows\0.1.0-beta.3\win-unpacked\resources\elevate.exe
+  • signing with signtool.exe  path=artifacts\windows\0.1.0-beta.3\Merqo-Setup-0.1.0-beta.3-x64.__uninstaller.exe
+  • signing with signtool.exe  path=artifacts\windows\0.1.0-beta.3\Merqo-Setup-0.1.0-beta.3-x64.exe
+  • building block map  blockMapFile=artifacts\windows\0.1.0-beta.3\Merqo-Setup-0.1.0-beta.3-x64.exe.blockmap
+Installer ready: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\artifacts\windows\0.1.0-beta.3\Merqo-Setup-0.1.0-beta.3-x64.exe

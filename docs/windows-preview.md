@@ -1,21 +1,21 @@
 # Windows 桌面预览版
 
-当前预览发布版本：`0.1.0-beta.2`。Windows x64，本机 Windows 11 build 26200。beta.2 的升级、重装、暂停重启恢复和卸载已通过，见 [本机验收与完整缺口](M5-local-acceptance.md) 和 [机器记录](verification/windows-beta2-2026-10-18/report.json)。这不代表 M5 全部门禁通过。
+当前预览版本：`0.1.0-beta.3`，Windows x64，未签名。本机Windows11 build26200安装、三场景随包运行时、暂停/重启/恢复、重装与卸载通过；复制beta.2隔离profile的数据迁移通过。跨版本NSIS升级、干净Windows及其他Windows版本未在本轮测试。详见[本轮验收](verification/route-final-2026-10-19/report.md)。全PRD不标记100%。
 
 ## 下载与运行
 
-- [Windows x64 安装包](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.2/Merqo-Setup-0.1.0-beta.2-x64.exe)
-- [SHA-256 校验文件](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.2/SHA256SUMS.txt)
-- [发布说明](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.2)
+- [Windows x64 安装包](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.3/Merqo-Setup-0.1.0-beta.3-x64.exe)
+- [SHA-256 校验文件](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.3/SHA256SUMS.txt)
+- [发布说明](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.3)
 
-下载后运行安装向导，选择安装目录。经营分析所需的 Bun、数据工作进程、MCP 和三个场景 Skill 已内置，无需安装 Node.js 或 Bun。通用 Agent 的 Shell 功能仍需 Git for Windows；未安装时可点击“仅使用经营分析”，有 Git Bash 时也可在模型选择页点击“稍后设置”。
+下载后运行安装向导，选择安装目录。经营分析所需的 Bun、数据工作进程、MCP 和三个场景 Skill 已内置，无需安装 Node.js 或 Bun。经营空间通用会话强制只读；普通代码工作区的 Shell 功能仍需 Git for Windows；未安装时可点击“仅使用经营分析”，有 Git Bash 时也可在模型选择页点击“稍后设置”。
 
-启动后点击“经营分析”，进入“数据与导入”载入演示数据，再查看“经营总览”“异常中心”“库存与广告”。“返回会话”在同一窗口切回会话。基础规则与离线演示无需 API Key；真实模型调查仍需在设置中配置自己的兼容模型连接。
+启动后点击“经营分析”，进入“数据与导入”载入演示数据，再查看“经营总览”“异常中心”“库存与广告”。新增功能入口为“交易与退款”“商品映射”“经营规则”；联合证据与补证位于“调查记录”。“返回会话”在同一窗口切回会话。基础规则与离线演示无需 API Key；真实模型调查仍需在设置中配置自己的兼容模型连接。
 
 安装包没有代码签名证书，Windows 可能显示未知发布者或 SmartScreen 提示。请核对下载来源和 SHA-256；本预览没有自动更新服务，后续版本通过 Releases 下载。
 
 ```powershell
-Get-FileHash .\Merqo-Setup-0.1.0-beta.2-x64.exe -Algorithm SHA256
+Get-FileHash .\Merqo-Setup-0.1.0-beta.3-x64.exe -Algorithm SHA256
 ```
 
 普通安装数据保存在用户目录下的 `.retailpilot`，Chromium 状态使用 `%APPDATA%\RetailPilot`，不写入程序目录。开发启动的 `.runtime` 数据不自动迁入安装版。卸载保留用户数据；清理或迁移数据前应另行备份。
@@ -28,7 +28,7 @@ Get-FileHash .\Merqo-Setup-0.1.0-beta.2-x64.exe -Algorithm SHA256
 bun run retail:dist:win
 ```
 
-脚本使用 `packaging/windows-release.json` 固定应用、Electron 和 Bun 版本。Bun 使用官方 baseline x64 二进制并核对官方 SHA-256。只从明确列出的源码构建产物与依赖暂存，不复制 `.runtime`、用户配置或凭据；存在 `.env` 时拒绝公开打包。当前产物位于 `artifacts/windows/0.1.0-beta.2/`，同时生成 `SHA256SUMS.txt`。下载依赖时可在当前终端配置 `HTTPS_PROXY`，无需更改系统或 Git 配置。
+脚本使用 `packaging/windows-release.json` 固定应用、Electron 和 Bun 版本。Bun 使用官方 baseline x64 二进制并核对官方 SHA-256。只从明确列出的源码构建产物与依赖暂存，不复制 `.runtime`、用户配置或凭据；存在 `.env` 时拒绝公开打包。当前产物位于 `artifacts/windows/0.1.0-beta.3/`，同时生成 `SHA256SUMS.txt`。下载依赖时可在当前终端配置 `HTTPS_PROXY`，无需更改系统或 Git 配置。
 
 `scripts/merqo-packaged-smoke.cjs` 使用 Playwright 的 Electron 支持测试真实打包可执行文件。开发主机须提供 Playwright，可通过 `MERQO_PLAYWRIGHT_MODULE` 指定模块路径。`scripts/merqo-installer-check.cjs` 对 NSIS 执行隔离安装、打包程序验收、同版本重装、持久化验证和卸载。
 

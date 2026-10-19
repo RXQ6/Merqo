@@ -1,0 +1,1941 @@
+{
+  "version": "retail-business-eval-v5",
+  "datasetHash": "42763f80f3f9fcefabad6544f8b41815100a63565d54d9a181a594d4b78f1f4b",
+  "cases": [
+    {
+      "id": "discount_stacking.normal",
+      "category": "discount_stacking",
+      "variant": "normal",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：单件收入=标价-券-满减+额外平台结算；毛利率<2000bps预警",
+      "expected": "normal",
+      "allowedConclusions": [
+        "仅判断当前销售件商品毛利，不预测优惠调整收益"
+      ],
+      "requiredEvidence": [
+        "SKU规格",
+        "标价/券/满减分每销售件",
+        "成本分每销售件"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": 8000,
+        "profitMinor": 2000,
+        "totalProfitMinor": 20000,
+        "marginBps": 2500
+      }
+    },
+    {
+      "id": "discount_stacking.anomaly",
+      "category": "discount_stacking",
+      "variant": "anomaly",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 2000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：单件收入=标价-券-满减+额外平台结算；毛利率<2000bps预警",
+      "expected": "warning",
+      "allowedConclusions": [
+        "仅判断当前销售件商品毛利，不预测优惠调整收益"
+      ],
+      "requiredEvidence": [
+        "SKU规格",
+        "标价/券/满减分每销售件",
+        "成本分每销售件"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": 7000,
+        "profitMinor": 1000,
+        "totalProfitMinor": 10000,
+        "marginBps": 1429
+      }
+    },
+    {
+      "id": "discount_stacking.insufficient",
+      "category": "discount_stacking",
+      "variant": "insufficient",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": null,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：单件收入=标价-券-满减+额外平台结算；毛利率<2000bps预警",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "仅判断当前销售件商品毛利，不预测优惠调整收益"
+      ],
+      "requiredEvidence": [
+        "SKU规格",
+        "标价/券/满减分每销售件",
+        "成本分每销售件"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": null,
+        "profitMinor": null,
+        "marginBps": null
+      }
+    },
+    {
+      "id": "multi_spec.normal",
+      "category": "multi_spec",
+      "variant": "normal",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：同店同渠道同SKU跨日期规格冲突必须补证",
+      "expected": "normal",
+      "allowedConclusions": [
+        "只验证冻结快照内规格一致性；不证明跨平台目录匹配"
+      ],
+      "requiredEvidence": [
+        "SKU",
+        "店铺/渠道",
+        "规格与日期"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "multi_spec.anomaly",
+      "category": "multi_spec",
+      "variant": "anomaly",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          },
+          {
+            "date": "2026-10-13",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "1L",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：同店同渠道同SKU跨日期规格冲突必须补证",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "只验证冻结快照内规格一致性；不证明跨平台目录匹配"
+      ],
+      "requiredEvidence": [
+        "SKU",
+        "店铺/渠道",
+        "规格与日期"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "multi_spec.insufficient",
+      "category": "multi_spec",
+      "variant": "insufficient",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：同店同渠道同SKU跨日期规格冲突必须补证",
+      "expected": "rejected",
+      "allowedConclusions": [
+        "只验证冻结快照内规格一致性；不证明跨平台目录匹配"
+      ],
+      "requiredEvidence": [
+        "SKU",
+        "店铺/渠道",
+        "规格与日期"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "combination_pack.normal",
+      "category": "combination_pack",
+      "variant": "normal",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "PACK-A",
+            "product_name": "合成茶饮",
+            "spec": "A×2+B×4",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "product_type": "bundle",
+            "bundle_components": [
+              {
+                "sku_id": "SKU-A",
+                "spec": "500ml",
+                "quantity": 2,
+                "unit_cost_minor": 1000
+              },
+              {
+                "sku_id": "SKU-B",
+                "spec": "250ml",
+                "quantity": 4,
+                "unit_cost_minor": 1000
+              }
+            ]
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：显式一层子SKU/规格/数量/单位成本；子项合计须等于整包成本；缺失或冲突补证",
+      "expected": "normal",
+      "allowedConclusions": [
+        "仅判断每销售包毛利；不分摊子项收入/优惠，不解析嵌套组合装，不证明外部目录匹配"
+      ],
+      "requiredEvidence": [
+        "整包SKU/规格",
+        "子项SKU/规格/数量/单位成本",
+        "整包成本与子项合计"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": 8000,
+        "profitMinor": 2000,
+        "marginBps": 2500,
+        "totalProfitMinor": 20000
+      }
+    },
+    {
+      "id": "combination_pack.anomaly",
+      "category": "combination_pack",
+      "variant": "anomaly",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "PACK-A",
+            "product_name": "合成茶饮",
+            "spec": "A×2+B×4",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 1000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "product_type": "bundle",
+            "bundle_components": [
+              {
+                "sku_id": "SKU-A",
+                "spec": "500ml",
+                "quantity": 2,
+                "unit_cost_minor": 1000
+              },
+              {
+                "sku_id": "SKU-B",
+                "spec": "250ml",
+                "quantity": 4,
+                "unit_cost_minor": 1000
+              }
+            ]
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：显式一层子SKU/规格/数量/单位成本；子项合计须等于整包成本；缺失或冲突补证",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "仅判断每销售包毛利；不分摊子项收入/优惠，不解析嵌套组合装，不证明外部目录匹配"
+      ],
+      "requiredEvidence": [
+        "整包SKU/规格",
+        "子项SKU/规格/数量/单位成本",
+        "整包成本与子项合计"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": null,
+        "profitMinor": null,
+        "marginBps": null
+      }
+    },
+    {
+      "id": "combination_pack.insufficient",
+      "category": "combination_pack",
+      "variant": "insufficient",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "PACK-A",
+            "product_name": "合成茶饮",
+            "spec": "A×2+B×4",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "product_type": "bundle",
+            "bundle_components": null
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：显式一层子SKU/规格/数量/单位成本；子项合计须等于整包成本；缺失或冲突补证",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "仅判断每销售包毛利；不分摊子项收入/优惠，不解析嵌套组合装，不证明外部目录匹配"
+      ],
+      "requiredEvidence": [
+        "整包SKU/规格",
+        "子项SKU/规格/数量/单位成本",
+        "整包成本与子项合计"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": null,
+        "profitMinor": null,
+        "marginBps": null
+      }
+    },
+    {
+      "id": "gift.normal",
+      "category": "gift",
+      "variant": "normal",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "gift_policy": "free_per_unit",
+            "gift_cost_basis": "additional",
+            "gifts": [
+              {
+                "sku_id": "GIFT-A",
+                "spec": "30ml",
+                "quantity": 1,
+                "unit_cost_minor": 0
+              }
+            ]
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：每销售件免费赠送；主成本不含赠品；赠品零收入；全部优惠计主商品；缺成本或未知口径补证",
+      "expected": "normal",
+      "allowedConclusions": [
+        "仅快照毛利；成本为主商品成本加赠品成本，不做订单门槛、逐单分摊或同SKU自赠"
+      ],
+      "requiredEvidence": [
+        "主商品SKU/成本",
+        "赠品SKU/规格/数量/单位成本",
+        "free_per_unit赠送规则",
+        "additional成本口径"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": 8000,
+        "profitMinor": 2000,
+        "marginBps": 2500,
+        "totalProfitMinor": 20000
+      }
+    },
+    {
+      "id": "gift.anomaly",
+      "category": "gift",
+      "variant": "anomaly",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "gift_policy": "free_per_unit",
+            "gift_cost_basis": "additional",
+            "gifts": [
+              {
+                "sku_id": "GIFT-A",
+                "spec": "30ml",
+                "quantity": 1,
+                "unit_cost_minor": 1500
+              }
+            ]
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：每销售件免费赠送；主成本不含赠品；赠品零收入；全部优惠计主商品；缺成本或未知口径补证",
+      "expected": "warning",
+      "allowedConclusions": [
+        "仅快照毛利；成本为主商品成本加赠品成本，不做订单门槛、逐单分摊或同SKU自赠"
+      ],
+      "requiredEvidence": [
+        "主商品SKU/成本",
+        "赠品SKU/规格/数量/单位成本",
+        "free_per_unit赠送规则",
+        "additional成本口径"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": 8000,
+        "profitMinor": 500,
+        "marginBps": 625,
+        "totalProfitMinor": 5000
+      }
+    },
+    {
+      "id": "gift.insufficient",
+      "category": "gift",
+      "variant": "insufficient",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "gift_policy": "free_per_unit",
+            "gift_cost_basis": "additional",
+            "gifts": [
+              {
+                "sku_id": "GIFT-A",
+                "spec": "30ml",
+                "quantity": 1,
+                "unit_cost_minor": null
+              }
+            ]
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：每销售件免费赠送；主成本不含赠品；赠品零收入；全部优惠计主商品；缺成本或未知口径补证",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "仅快照毛利；成本为主商品成本加赠品成本，不做订单门槛、逐单分摊或同SKU自赠"
+      ],
+      "requiredEvidence": [
+        "主商品SKU/成本",
+        "赠品SKU/规格/数量/单位成本",
+        "free_per_unit赠送规则",
+        "additional成本口径"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": null,
+        "profitMinor": null,
+        "marginBps": null
+      }
+    },
+    {
+      "id": "member_price.normal",
+      "category": "member_price",
+      "variant": "normal",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 0,
+            "full_reduction_minor": 0,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "membership": {
+              "status": "member",
+              "segment_id": "gold",
+              "price_minor": 8000,
+              "valid_from": "2026-10-01",
+              "valid_to": "2026-11-01",
+              "discount_policy": "exclusive"
+            }
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：明确会员分组与身份；业务日期在[from,to)内；会员价替代普通价；互斥优惠同时存在须补证",
+      "expected": "normal",
+      "allowedConclusions": [
+        "只核算单会员分组的业务日期快照；不证明真实会员认证，不混算分组，不自动选择冲突优惠"
+      ],
+      "requiredEvidence": [
+        "会员身份/分组",
+        "SKU规格/店铺/渠道",
+        "价格及业务有效期",
+        "叠加或互斥规则"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": 8000,
+        "profitMinor": 2000,
+        "marginBps": 2500,
+        "totalProfitMinor": 20000
+      }
+    },
+    {
+      "id": "member_price.anomaly",
+      "category": "member_price",
+      "variant": "anomaly",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 500,
+            "full_reduction_minor": 0,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "membership": {
+              "status": "member",
+              "segment_id": "gold",
+              "price_minor": 6500,
+              "valid_from": "2026-10-01",
+              "valid_to": "2026-11-01",
+              "discount_policy": "stackable"
+            }
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：明确会员分组与身份；业务日期在[from,to)内；会员价替代普通价；互斥优惠同时存在须补证",
+      "expected": "warning",
+      "allowedConclusions": [
+        "只核算单会员分组的业务日期快照；不证明真实会员认证，不混算分组，不自动选择冲突优惠"
+      ],
+      "requiredEvidence": [
+        "会员身份/分组",
+        "SKU规格/店铺/渠道",
+        "价格及业务有效期",
+        "叠加或互斥规则"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": 6000,
+        "profitMinor": 0,
+        "marginBps": 0,
+        "totalProfitMinor": 0
+      }
+    },
+    {
+      "id": "member_price.insufficient",
+      "category": "member_price",
+      "variant": "insufficient",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 0,
+            "full_reduction_minor": 0,
+            "subsidy_minor": 0,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0,
+            "membership": {
+              "status": "unknown",
+              "segment_id": "gold",
+              "price_minor": 8000,
+              "valid_from": "2026-10-01",
+              "valid_to": "2026-11-01",
+              "discount_policy": "exclusive"
+            }
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：明确会员分组与身份；业务日期在[from,to)内；会员价替代普通价；互斥优惠同时存在须补证",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "只核算单会员分组的业务日期快照；不证明真实会员认证，不混算分组，不自动选择冲突优惠"
+      ],
+      "requiredEvidence": [
+        "会员身份/分组",
+        "SKU规格/店铺/渠道",
+        "价格及业务有效期",
+        "叠加或互斥规则"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "revenueMinor": null,
+        "profitMinor": null,
+        "marginBps": null
+      }
+    },
+    {
+      "id": "unavailable_price.normal",
+      "category": "unavailable_price",
+      "variant": "normal",
+      "input": {
+        "kind": "offer",
+        "row": {
+          "date": "2026-10-14",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "product_name": "合成茶饮",
+          "spec": "500ml",
+          "currency": "CNY",
+          "list_price_minor": 10000,
+          "coupon_minor": 1000,
+          "full_reduction_minor": 1000,
+          "subsidy_minor": 0,
+          "subsidy_funder": "platform",
+          "cost_minor": 6000,
+          "sold_qty": 10,
+          "on_hand": 100,
+          "reserved": 0,
+          "inbound_qty": 0,
+          "offers": [
+            {
+              "offer_id": "a",
+              "shop_id": "eval-shop",
+              "channel": "online",
+              "sku_id": "SKU-A",
+              "spec": "500ml",
+              "currency": "CNY",
+              "observed_on": "2026-10-14",
+              "audience": "public",
+              "price_minor": 1000,
+              "available": true
+            }
+          ]
+        }
+      },
+      "rule": "retail-offers-v1：同范围/同规格/同业务日期公开报价；明确无货排除，可售或人群未知补证；不替换成交价",
+      "expected": "accepted",
+      "allowedConclusions": [
+        "仅在已提供的同口径公开报价中筛选；不证明全网最低价、实时可售或真实经营效果，不授权改价"
+      ],
+      "requiredEvidence": [
+        "报价ID/范围/规格/币种",
+        "业务日期与适用人群",
+        "明确可售状态与标价",
+        "冻结工具与选择结果"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "selectedPriceMinor": 1000
+      }
+    },
+    {
+      "id": "unavailable_price.anomaly",
+      "category": "unavailable_price",
+      "variant": "anomaly",
+      "input": {
+        "kind": "offer",
+        "row": {
+          "date": "2026-10-14",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "product_name": "合成茶饮",
+          "spec": "500ml",
+          "currency": "CNY",
+          "list_price_minor": 10000,
+          "coupon_minor": 1000,
+          "full_reduction_minor": 1000,
+          "subsidy_minor": 0,
+          "subsidy_funder": "platform",
+          "cost_minor": 6000,
+          "sold_qty": 10,
+          "on_hand": 100,
+          "reserved": 0,
+          "inbound_qty": 0,
+          "offers": [
+            {
+              "offer_id": "a",
+              "shop_id": "eval-shop",
+              "channel": "online",
+              "sku_id": "SKU-A",
+              "spec": "500ml",
+              "currency": "CNY",
+              "observed_on": "2026-10-14",
+              "audience": "public",
+              "price_minor": 1000,
+              "available": false
+            },
+            {
+              "offer_id": "b",
+              "shop_id": "eval-shop",
+              "channel": "online",
+              "sku_id": "SKU-A",
+              "spec": "500ml",
+              "currency": "CNY",
+              "observed_on": "2026-10-14",
+              "audience": "public",
+              "price_minor": 3000,
+              "available": true
+            }
+          ]
+        }
+      },
+      "rule": "retail-offers-v1：同范围/同规格/同业务日期公开报价；明确无货排除，可售或人群未知补证；不替换成交价",
+      "expected": "accepted",
+      "allowedConclusions": [
+        "仅在已提供的同口径公开报价中筛选；不证明全网最低价、实时可售或真实经营效果，不授权改价"
+      ],
+      "requiredEvidence": [
+        "报价ID/范围/规格/币种",
+        "业务日期与适用人群",
+        "明确可售状态与标价",
+        "冻结工具与选择结果"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "selectedPriceMinor": 3000
+      }
+    },
+    {
+      "id": "unavailable_price.insufficient",
+      "category": "unavailable_price",
+      "variant": "insufficient",
+      "input": {
+        "kind": "offer",
+        "row": {
+          "date": "2026-10-14",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "product_name": "合成茶饮",
+          "spec": "500ml",
+          "currency": "CNY",
+          "list_price_minor": 10000,
+          "coupon_minor": 1000,
+          "full_reduction_minor": 1000,
+          "subsidy_minor": 0,
+          "subsidy_funder": "platform",
+          "cost_minor": 6000,
+          "sold_qty": 10,
+          "on_hand": 100,
+          "reserved": 0,
+          "inbound_qty": 0,
+          "offers": [
+            {
+              "offer_id": "a",
+              "shop_id": "eval-shop",
+              "channel": "online",
+              "sku_id": "SKU-A",
+              "spec": "500ml",
+              "currency": "CNY",
+              "observed_on": "2026-10-14",
+              "audience": "public",
+              "price_minor": 1000,
+              "available": null
+            }
+          ]
+        }
+      },
+      "rule": "retail-offers-v1：同范围/同规格/同业务日期公开报价；明确无货排除，可售或人群未知补证；不替换成交价",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "仅在已提供的同口径公开报价中筛选；不证明全网最低价、实时可售或真实经营效果，不授权改价"
+      ],
+      "requiredEvidence": [
+        "报价ID/范围/规格/币种",
+        "业务日期与适用人群",
+        "明确可售状态与标价",
+        "冻结工具与选择结果"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ],
+      "expectedValues": {
+        "selectedPriceMinor": null
+      }
+    },
+    {
+      "id": "subsidy_funder.normal",
+      "category": "subsidy_funder",
+      "variant": "normal",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 1000,
+            "subsidy_funder": "platform",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：仅明确额外平台结算补贴可加收入，商家或未知承担方补证",
+      "expected": "normal",
+      "allowedConclusions": [
+        "未知承担方不得计算确定毛利"
+      ],
+      "requiredEvidence": [
+        "补贴金额",
+        "承担方",
+        "额外结算口径"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "subsidy_funder.anomaly",
+      "category": "subsidy_funder",
+      "variant": "anomaly",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 1000,
+            "subsidy_funder": "merchant",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：仅明确额外平台结算补贴可加收入，商家或未知承担方补证",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "未知承担方不得计算确定毛利"
+      ],
+      "requiredEvidence": [
+        "补贴金额",
+        "承担方",
+        "额外结算口径"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "subsidy_funder.insufficient",
+      "category": "subsidy_funder",
+      "variant": "insufficient",
+      "input": {
+        "kind": "margin",
+        "rows": [
+          {
+            "date": "2026-10-14",
+            "shop_id": "eval-shop",
+            "channel": "online",
+            "sku_id": "SKU-A",
+            "product_name": "合成茶饮",
+            "spec": "500ml",
+            "currency": "CNY",
+            "list_price_minor": 10000,
+            "coupon_minor": 1000,
+            "full_reduction_minor": 1000,
+            "subsidy_minor": 1000,
+            "subsidy_funder": "unknown",
+            "cost_minor": 6000,
+            "sold_qty": 10,
+            "on_hand": 100,
+            "reserved": 0,
+            "inbound_qty": 0
+          }
+        ]
+      },
+      "rule": "retail-margin-v5：仅明确额外平台结算补贴可加收入，商家或未知承担方补证",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "未知承担方不得计算确定毛利"
+      ],
+      "requiredEvidence": [
+        "补贴金额",
+        "承担方",
+        "额外结算口径"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "data_delay.normal",
+      "category": "data_delay",
+      "variant": "normal",
+      "input": {
+        "kind": "freshness",
+        "source": "csv",
+        "importedAt": "2026-10-17T03:00:00.000Z",
+        "now": 1792209600000
+      },
+      "rule": "evidenceTimeIssue：CSV超过24小时阻断、无效时间阻断；不代表业务事件时间已验证",
+      "expected": "accepted",
+      "allowedConclusions": [
+        "仅核验导入时效；CSV始终仅分析，不能模拟执行"
+      ],
+      "requiredEvidence": [
+        "source",
+        "importedAt",
+        "固定评测时钟"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "data_delay.anomaly",
+      "category": "data_delay",
+      "variant": "anomaly",
+      "input": {
+        "kind": "freshness",
+        "source": "csv",
+        "importedAt": "2026-10-16T03:59:59.999Z",
+        "now": 1792209600000
+      },
+      "rule": "evidenceTimeIssue：CSV超过24小时阻断、无效时间阻断；不代表业务事件时间已验证",
+      "expected": "blocked",
+      "allowedConclusions": [
+        "仅核验导入时效；CSV始终仅分析，不能模拟执行"
+      ],
+      "requiredEvidence": [
+        "source",
+        "importedAt",
+        "固定评测时钟"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "data_delay.insufficient",
+      "category": "data_delay",
+      "variant": "insufficient",
+      "input": {
+        "kind": "freshness",
+        "source": "csv",
+        "importedAt": "invalid",
+        "now": 1792209600000
+      },
+      "rule": "evidenceTimeIssue：CSV超过24小时阻断、无效时间阻断；不代表业务事件时间已验证",
+      "expected": "blocked",
+      "allowedConclusions": [
+        "仅核验导入时效；CSV始终仅分析，不能模拟执行"
+      ],
+      "requiredEvidence": [
+        "source",
+        "importedAt",
+        "固定评测时钟"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "sku_mismatch.normal",
+      "category": "sku_mismatch",
+      "variant": "normal",
+      "input": {
+        "kind": "audit",
+        "mutation": "none"
+      },
+      "rule": "margin-facts-v1：工具上下文须与冻结SKU完全一致，缺失或错配拒绝报告",
+      "expected": "accepted",
+      "allowedConclusions": [
+        "仅验证工具与冻结身份一致性，不证明外部目录映射"
+      ],
+      "requiredEvidence": [
+        "冻结SKU",
+        "retail_get_sku_context",
+        "工具证据ID"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "sku_mismatch.anomaly",
+      "category": "sku_mismatch",
+      "variant": "anomaly",
+      "input": {
+        "kind": "audit",
+        "mutation": "wrong_sku"
+      },
+      "rule": "margin-facts-v1：工具上下文须与冻结SKU完全一致，缺失或错配拒绝报告",
+      "expected": "blocked",
+      "allowedConclusions": [
+        "仅验证工具与冻结身份一致性，不证明外部目录映射"
+      ],
+      "requiredEvidence": [
+        "冻结SKU",
+        "retail_get_sku_context",
+        "工具证据ID"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "sku_mismatch.insufficient",
+      "category": "sku_mismatch",
+      "variant": "insufficient",
+      "input": {
+        "kind": "audit",
+        "mutation": "missing_context"
+      },
+      "rule": "margin-facts-v1：工具上下文须与冻结SKU完全一致，缺失或错配拒绝报告",
+      "expected": "blocked",
+      "allowedConclusions": [
+        "仅验证工具与冻结身份一致性，不证明外部目录映射"
+      ],
+      "requiredEvidence": [
+        "冻结SKU",
+        "retail_get_sku_context",
+        "工具证据ID"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "abnormal_sales.normal",
+      "category": "abnormal_sales",
+      "variant": "normal",
+      "input": {
+        "kind": "inventory",
+        "row": {
+          "date": "2026-10-14",
+          "baseline_end_date": "2026-10-07",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "product_name": "合成茶饮",
+          "spec": "500ml",
+          "warehouse_id": "WH-A",
+          "window_days": 7,
+          "baseline_window_days": 7,
+          "recent_sales_qty": 100,
+          "baseline_sales_qty": 100,
+          "on_hand": 1000,
+          "reserved": 0,
+          "inbound_qty": 0,
+          "inbound_eta": null,
+          "lead_days": 1
+        }
+      },
+      "rule": "retail-stock-roas-v1：等长相邻窗口净销量下降至少20%；缺失销量待补证",
+      "expected": "normal",
+      "allowedConclusions": [
+        "只判断窗口销量下降，不推断缺货原因；不覆盖异常暴涨检测"
+      ],
+      "requiredEvidence": [
+        "相邻等长窗口",
+        "观察窗/基线净销量",
+        "仓库库存"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "abnormal_sales.anomaly",
+      "category": "abnormal_sales",
+      "variant": "anomaly",
+      "input": {
+        "kind": "inventory",
+        "row": {
+          "date": "2026-10-14",
+          "baseline_end_date": "2026-10-07",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "product_name": "合成茶饮",
+          "spec": "500ml",
+          "warehouse_id": "WH-A",
+          "window_days": 7,
+          "baseline_window_days": 7,
+          "recent_sales_qty": 80,
+          "baseline_sales_qty": 100,
+          "on_hand": 1000,
+          "reserved": 0,
+          "inbound_qty": 0,
+          "inbound_eta": null,
+          "lead_days": 1
+        }
+      },
+      "rule": "retail-stock-roas-v1：等长相邻窗口净销量下降至少20%；缺失销量待补证",
+      "expected": "warning",
+      "allowedConclusions": [
+        "只判断窗口销量下降，不推断缺货原因；不覆盖异常暴涨检测"
+      ],
+      "requiredEvidence": [
+        "相邻等长窗口",
+        "观察窗/基线净销量",
+        "仓库库存"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "abnormal_sales.insufficient",
+      "category": "abnormal_sales",
+      "variant": "insufficient",
+      "input": {
+        "kind": "inventory",
+        "row": {
+          "date": "2026-10-14",
+          "baseline_end_date": "2026-10-07",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "product_name": "合成茶饮",
+          "spec": "500ml",
+          "warehouse_id": "WH-A",
+          "window_days": 7,
+          "baseline_window_days": 7,
+          "recent_sales_qty": null,
+          "baseline_sales_qty": 100,
+          "on_hand": 1000,
+          "reserved": 0,
+          "inbound_qty": 0,
+          "inbound_eta": null,
+          "lead_days": 1
+        }
+      },
+      "rule": "retail-stock-roas-v1：等长相邻窗口净销量下降至少20%；缺失销量待补证",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "只判断窗口销量下降，不推断缺货原因；不覆盖异常暴涨检测"
+      ],
+      "requiredEvidence": [
+        "相邻等长窗口",
+        "观察窗/基线净销量",
+        "仓库库存"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "margin_conflict.normal",
+      "category": "margin_conflict",
+      "variant": "normal",
+      "input": {
+        "kind": "audit",
+        "mutation": "none"
+      },
+      "rule": "margin-facts-v1：金额与冻结计算矛盾、缺少优惠证据均拒绝报告",
+      "expected": "accepted",
+      "allowedConclusions": [
+        "仅允许代码生成的分每件、合计与基点事实"
+      ],
+      "requiredEvidence": [
+        "retail_get_promotions",
+        "代码计算",
+        "retail_simulate_actions"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "margin_conflict.anomaly",
+      "category": "margin_conflict",
+      "variant": "anomaly",
+      "input": {
+        "kind": "audit",
+        "mutation": "wrong_profit"
+      },
+      "rule": "margin-facts-v1：金额与冻结计算矛盾、缺少优惠证据均拒绝报告",
+      "expected": "blocked",
+      "allowedConclusions": [
+        "仅允许代码生成的分每件、合计与基点事实"
+      ],
+      "requiredEvidence": [
+        "retail_get_promotions",
+        "代码计算",
+        "retail_simulate_actions"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "margin_conflict.insufficient",
+      "category": "margin_conflict",
+      "variant": "insufficient",
+      "input": {
+        "kind": "audit",
+        "mutation": "missing_promotions"
+      },
+      "rule": "margin-facts-v1：金额与冻结计算矛盾、缺少优惠证据均拒绝报告",
+      "expected": "blocked",
+      "allowedConclusions": [
+        "仅允许代码生成的分每件、合计与基点事实"
+      ],
+      "requiredEvidence": [
+        "retail_get_promotions",
+        "代码计算",
+        "retail_simulate_actions"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "attribution_window.normal",
+      "category": "attribution_window",
+      "variant": "normal",
+      "input": {
+        "kind": "ads",
+        "row": {
+          "date": "2026-10-14",
+          "baseline_end_date": "2026-10-07",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "campaign_id": "CAMPAIGN-A",
+          "window_days": 7,
+          "baseline_window_days": 7,
+          "currency": "CNY",
+          "attribution_window": "7d_click",
+          "baseline_attribution_window": "7d_click",
+          "spend_minor": 100000,
+          "attributed_revenue_minor": 300000,
+          "clicks": 1000,
+          "conversions": 50,
+          "baseline_spend_minor": 100000,
+          "baseline_revenue_minor": 300000,
+          "baseline_clicks": 1000,
+          "baseline_conversions": 50
+        }
+      },
+      "rule": "retail-stock-roas-v1：同归因窗口ROAS相对下降至少20%；口径错配不得比较",
+      "expected": "normal",
+      "allowedConclusions": [
+        "ROAS不等于利润，下降不授权调整真实广告预算"
+      ],
+      "requiredEvidence": [
+        "当前/基线归因窗",
+        "花费与归因成交额",
+        "等长相邻观察窗"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "attribution_window.anomaly",
+      "category": "attribution_window",
+      "variant": "anomaly",
+      "input": {
+        "kind": "ads",
+        "row": {
+          "date": "2026-10-14",
+          "baseline_end_date": "2026-10-07",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "campaign_id": "CAMPAIGN-A",
+          "window_days": 7,
+          "baseline_window_days": 7,
+          "currency": "CNY",
+          "attribution_window": "7d_click",
+          "baseline_attribution_window": "7d_click",
+          "spend_minor": 100000,
+          "attributed_revenue_minor": 240000,
+          "clicks": 1000,
+          "conversions": 50,
+          "baseline_spend_minor": 100000,
+          "baseline_revenue_minor": 300000,
+          "baseline_clicks": 1000,
+          "baseline_conversions": 50
+        }
+      },
+      "rule": "retail-stock-roas-v1：同归因窗口ROAS相对下降至少20%；口径错配不得比较",
+      "expected": "warning",
+      "allowedConclusions": [
+        "ROAS不等于利润，下降不授权调整真实广告预算"
+      ],
+      "requiredEvidence": [
+        "当前/基线归因窗",
+        "花费与归因成交额",
+        "等长相邻观察窗"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "attribution_window.insufficient",
+      "category": "attribution_window",
+      "variant": "insufficient",
+      "input": {
+        "kind": "ads",
+        "row": {
+          "date": "2026-10-14",
+          "baseline_end_date": "2026-10-07",
+          "shop_id": "eval-shop",
+          "channel": "online",
+          "sku_id": "SKU-A",
+          "campaign_id": "CAMPAIGN-A",
+          "window_days": 7,
+          "baseline_window_days": 7,
+          "currency": "CNY",
+          "attribution_window": "7d_click",
+          "baseline_attribution_window": "1d_click",
+          "spend_minor": 100000,
+          "attributed_revenue_minor": 300000,
+          "clicks": 1000,
+          "conversions": 50,
+          "baseline_spend_minor": 100000,
+          "baseline_revenue_minor": 300000,
+          "baseline_clicks": 1000,
+          "baseline_conversions": 50
+        }
+      },
+      "rule": "retail-stock-roas-v1：同归因窗口ROAS相对下降至少20%；口径错配不得比较",
+      "expected": "needs_evidence",
+      "allowedConclusions": [
+        "ROAS不等于利润，下降不授权调整真实广告预算"
+      ],
+      "requiredEvidence": [
+        "当前/基线归因窗",
+        "花费与归因成交额",
+        "等长相邻观察窗"
+      ],
+      "forbiddenActions": [
+        "不得写真实业务系统",
+        "不得猜测缺失金额、SKU或因果",
+        "待补证不得进入模拟审批"
+      ]
+    },
+    {
+      "id": "fault.unapproved",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "unapproved"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "未批准不产生执行任务",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.expired",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "expired"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "授权到期不写模拟状态",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.hash_substitution",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "hash_substitution"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "参数摘要不符拒绝",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.cross_workspace",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "cross_workspace"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "跨工作空间拒绝",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.forged_role",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "forged_role"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "角色缺失及渲染端伪造拒绝",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.duplicate",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "duplicate"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "重复执行只有一份回执和一次副作用",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.superseded",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "superseded"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "改版后旧审批不能执行",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.receipt_failure",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "receipt_failure"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "回执落盘失败回滚副作用",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.restart",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "restart"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "重启找回唯一回执",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.reread_drift",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "reread_drift"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "目标漂移对账不匹配且不覆盖",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.batch_partial",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "batch_partial"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "部分失败只重试已确认失败项",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    },
+    {
+      "id": "fault.unknown",
+      "category": "approval_execution",
+      "variant": "fault",
+      "input": {
+        "fixture": "DEMO_CSV + ADS_DEMO + INVENTORY_EXECUTION_DEMO",
+        "injection": "unknown"
+      },
+      "rule": "merqo-simulation-draft-v2 + simulation/batch durable ledger",
+      "expected": "失联租约UNKNOWN禁止盲重试，显式恢复隔离旧token",
+      "allowedConclusions": [
+        "仅本地模拟账本契约成立；不证明模型推理质量或生产身份授权"
+      ],
+      "requiredEvidence": [
+        "冻结调查与Reviewer协议夹具",
+        "审批版本和摘要",
+        "执行任务/回执/对账"
+      ],
+      "forbiddenActions": [
+        "未经批准产生模拟副作用",
+        "写原始经营快照",
+        "UNKNOWN直接重试"
+      ]
+    }
+  ],
+  "protocolFixtures": {
+    "marginCsv": "date,shop_id,channel,sku_id,product_name,spec,currency,list_price_minor,coupon_minor,full_reduction_minor,subsidy_minor,subsidy_funder,cost_minor,sold_qty,on_hand,reserved,inbound_qty\r\n2026-10-14,demo-nanfeng,线上商城,TEA-500,桂花乌龙冷萃茶,500ml × 6瓶,CNY,10000,2000,1000,0,platform,6000,40,120,10,60\r\n2026-10-14,demo-nanfeng,线上商城,COFFEE-12,醇香挂耳咖啡,12袋礼盒,CNY,10000,2000,0,1000,platform,6000,30,80,5,0\r\n2026-10-14,demo-nanfeng,线上商城,SNACK-300,每日坚果分享装,300g,CNY,5000,500,0,0,platform,,20,45,0,30\r\n2026-10-14,demo-nanfeng,线上商城,OAT-1000,原味燕麦奶,1L × 3盒,CNY,6000,1000,500,500,unknown,3500,25,30,4,0\r\n2026-10-14,demo-nanfeng,线上商城,HONEY-250,山花蜂蜜,250g,CNY,8000,500,0,0,platform,4000,15,50,0,0\r\n2026-10-14,demo-nanfeng,线上商城,RICE-2,五常鲜米,2kg,CNY,4000,1000,500,0,platform,2800,20,60,10,100",
+    "adsCsv": "date,baseline_end_date,shop_id,channel,sku_id,window_days,baseline_window_days,campaign_id,currency,attribution_window,baseline_attribution_window,spend_minor,attributed_revenue_minor,clicks,conversions,baseline_spend_minor,baseline_revenue_minor,baseline_clicks,baseline_conversions\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,CMP-TEA,CNY,7d_click,7d_click,100000,180000,1000,30,100000,300000,1000,50\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,COFFEE-12,7,7,CMP-COFFEE,CNY,7d_click,7d_click,100000,320000,1000,60,100000,300000,1000,50\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,OAT-1000,7,7,CMP-OAT,CNY,1d_click,7d_click,50000,60000,500,20,50000,120000,500,40",
+    "inventoryCsv": "date,baseline_end_date,shop_id,channel,sku_id,window_days,baseline_window_days,product_name,spec,warehouse_id,recent_sales_qty,baseline_sales_qty,on_hand,reserved,inbound_qty,inbound_eta,lead_days\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,TEA-500,7,7,桂花乌龙冷萃茶,500ml × 6瓶,WH-01,140,210,50,10,100,2026-10-20,1\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,COFFEE-12,7,7,醇香挂耳咖啡,12袋礼盒,WH-01,70,70,310,10,0,,3\n2026-10-14,2026-10-07,demo-nanfeng,线上商城,OAT-1000,7,7,原味燕麦奶,1000ml,WH-01,,100,40,5,60,,4"
+  }
+}

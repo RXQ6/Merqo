@@ -1,0 +1,21 @@
+bun test v1.4.2 (744846f84)
+
+packages\shared\src\agent\__tests__\mode-manager-bash-hints.test.ts:
+(pass) mode-manager blocked command hints > adds deterministic command-specific guidance for blocked printf [22.99ms]
+(pass) mode-manager blocked command hints > applies sed hint when command is not in print-only mode [2.00ms]
+(pass) mode-manager blocked command hints > does not reject sed -n read-only command [1.65ms]
+
+packages\shared\src\agent\__tests__\mode-manager-path-boundary.test.ts:
+(pass) mode-manager path containment for plans/data exceptions > allows Write inside plans folder [9.97ms]
+(pass) mode-manager path containment for plans/data exceptions > blocks Write to sibling path with plans prefix [6.27ms]
+(pass) mode-manager path containment for plans/data exceptions > blocks Bash redirect to sibling path with data prefix [2373.84ms]
+(pass) mode-manager path containment for plans/data exceptions > allows Bash redirect inside data folder [1284.45ms]
+(pass) mode-manager path containment for plans/data exceptions > blocks Write via symlink escape from plans folder [5.88ms]
+(pass) mode-manager path containment for plans/data exceptions > blocks Bash redirect via symlink escape from data folder [5.75ms]
+(pass) mode-manager path containment for plans/data exceptions > does not treat JavaScript arrow syntax (=>) as a bash write redirect target [5.82ms]
+(pass) mode-manager path containment for plans/data exceptions > keeps allowlist mismatch messaging for node -e arrow command (no write-path error) [7.68ms]
+
+ 11 pass
+ 0 fail
+ 20 expect() calls
+Ran 11 tests across 2 files. [4.69s]

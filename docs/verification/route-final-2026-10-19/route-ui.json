@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\route-ui-vy2cCe",
+  "checks": [
+    "native transaction UI shows cross-period negative event totals and independent original-order cohort",
+    "native CSV event-chain import succeeds and excessive refund preview cannot commit",
+    "native explicit advertising SKU mapping saves an audited version and renderer cannot self-assign admin",
+    "native frozen joint assessment exposes mismatched daily/seven-day windows instead of manufacturing aligned evidence",
+    "native supplementation previews changed mapping, starts a distinct linked investigation and preserves parent evidence",
+    "actual restart preserves transaction ledger, mapping revisions and supplemental lineage"
+  ],
+  "modelCalls": 0
+}

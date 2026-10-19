@@ -1,3 +1,14 @@
+import {parseCsv} from './csv';
+export {parseCsv} from './csv';
+import {CatalogUpdateSchema} from './catalog';
+import type {SupplementPreview} from './supplement';
+import type {CatalogView} from './catalog';
+import {TransactionPreviewRequest,TransactionImportRequest,TransactionPageRequest} from './transactions';
+import type {TransactionPage,TransactionPreview} from './transactions';
+import {SourceMetadataInputSchema} from './source-metadata';
+import type {EvidenceProvenance} from './source-metadata';
+import {PolicyUpdateSchema} from './business-policy';
+import type {RuleSettings,FrozenPolicy,PolicyView} from './business-policy';
 import type { ReviewView, ObservationPreview } from './outcome-reviews';
 import type { BatchView } from './execution-batches';
 import type { CompensationView } from './compensation';
@@ -7,6 +18,8 @@ import type { ApprovalView } from './approval-types';
 import type { DecisionDraft } from './decisions';
 import type { AnyInvestigation } from './investigations';
 import type { SignalPreview, SignalSnapshot } from './signals';
+import { SignalPageSchema } from './signal-page';
+import type { SignalPage } from './signal-page';
 import { CheckConfigSchema } from './check-types';
 import { OfferSchema, selectOffers } from './offers';
 import type { ChecksView } from './check-types';
@@ -63,17 +76,18 @@ export type RetailRow = z.infer<typeof RowSchema>;
 export interface RejectedRow { line: number; reason: string }
 export interface Preview { headers: string[]; mapping: Record<string, string>; sample: string[][]; valid: RetailRow[]; validCount?: number; rejected: RejectedRow[]; duplicateCount: number; total: number }
 export const MappingSchema = z.record(z.string(), z.string().max(200));
-export const RetailRequestSchema = z.discriminatedUnion('op', [
+export const RetailRequestSchema = z.discriminatedUnion('op', [z.strictObject({op:z.literal('investigation_supplement_preview'),id:z.string().uuid()}),z.strictObject({op:z.literal('investigation_supplement'),id:z.string().uuid(),expectedEpoch:z.number().int().min(0),previewHash:z.string().regex(/^[a-f0-9]{64}$/)}),CatalogUpdateSchema,z.strictObject({op:z.literal('catalog')}),TransactionPreviewRequest,TransactionImportRequest,TransactionPageRequest,z.strictObject({op:z.literal('transactions_demo')}),z.strictObject({op:z.literal('policy')}),PolicyUpdateSchema,
   z.strictObject({ op: z.literal('checks') }),
   z.strictObject({ op: z.literal('check_configure'), expectedRevision: z.number().int().min(1), config: CheckConfigSchema }),
   z.strictObject({ op: z.literal('check_run') }),
   z.strictObject({ op: z.literal('check_catchup') }),
   z.strictObject({ op: z.literal('check_retry'), id: z.string().uuid() }),
   z.strictObject({ op: z.literal('signals') }),
+  SignalPageSchema.extend({ op: z.literal('signals_page') }),
   z.strictObject({ op: z.literal('signals_demo') }),
   z.strictObject({ op: z.literal('signals_replenishment_demo') }),
-  z.strictObject({ op: z.literal('signals_preview'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema.optional() }),
-  z.strictObject({ op: z.literal('signals_import'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(2_000_000), mapping: MappingSchema }),
+  z.strictObject({ op: z.literal('signals_preview'), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(32_000_000), mapping: MappingSchema.optional() }),
+  z.strictObject({ op: z.literal('signals_import'), sourceMetadata:SourceMetadataInputSchema.optional(), kind: z.enum(['inventory', 'ads']), csv: z.string().min(1).max(32_000_000), mapping: MappingSchema }),
   z.strictObject({ op: z.literal('investigation_export'), id: z.string().uuid(), format: z.enum(['json', 'md']) }),
   z.strictObject({ op: z.literal('investigation_pause'), id: z.string().uuid(), expectedEpoch: z.number().int().min(0).max(1000) }),
   z.strictObject({ op: z.literal('investigation_resume'), id: z.string().uuid(), expectedEpoch: z.number().int().min(0).max(1000) }),
@@ -101,44 +115,19 @@ export const RetailRequestSchema = z.discriminatedUnion('op', [
   z.strictObject({ op: z.literal('approvals') }),
   z.strictObject({ op: z.literal('approval_resolve'), requestId: z.string().uuid(), expectedVersion: z.number().int().min(1).max(100000), expectedActionHash: z.string().regex(/^[a-f0-9]{64}$/), choice: z.enum(['approve', 'reject']), reason: z.string().trim().min(1).max(2000) }),
   z.strictObject({ op: z.literal('decisions') }),
-  z.strictObject({ op: z.literal('decision_create'), investigationId: z.string().uuid(), kind: z.enum(['observe', 'reduce_coupon', 'replenish_draft', 'reduce_budget']), note: z.string().trim().max(2000) }),
-  z.strictObject({ op: z.literal('decision_revise'), id: z.string().uuid(), expectedVersion: z.number().int().min(1).max(100000), kind: z.enum(['observe', 'reduce_coupon', 'replenish_draft', 'reduce_budget']), note: z.string().trim().max(2000) }),
+  z.strictObject({ op: z.literal('decision_create'), investigationId: z.string().uuid(), kind: z.enum(['observe', 'reduce_coupon', 'set_price', 'replenish_draft', 'reduce_budget']), note: z.string().trim().max(2000) }),
+  z.strictObject({ op: z.literal('decision_revise'), id: z.string().uuid(), expectedVersion: z.number().int().min(1).max(100000), kind: z.enum(['observe', 'reduce_coupon', 'set_price', 'replenish_draft', 'reduce_budget']), note: z.string().trim().max(2000) }),
   z.strictObject({ op: z.literal('decision_submit'), id: z.string().uuid(), expectedVersion: z.number().int().min(1).max(100000) }),
   z.strictObject({ op: z.literal('decision_history'), id: z.string().uuid() }),
   z.strictObject({ op: z.literal('investigations'), recordId: z.string().max(64).optional(), id: z.string().min(1).max(64).optional() }).refine(r => !r.id || !r.recordId, '调查ID与快照筛选不能同时提供'),
-  z.strictObject({ op: z.literal('investigate'), recordId: z.string().min(1).max(64), mode: z.enum(['model', 'replay']), scenario: z.enum(['margin', 'inventory', 'ads']).optional(), retry: z.boolean().optional() }),
+  z.strictObject({ op: z.literal('investigate'), recordId: z.string().min(1).max(64), mode: z.enum(['model', 'replay']), marginAction:z.enum(['reduce_coupon','set_price']).optional(), scenario: z.enum(['margin', 'inventory', 'ads']).optional(), retry: z.boolean().optional() }),
   RetailPageSchema.extend({ op: z.literal('snapshot') }),
   z.strictObject({ op: z.literal('demo') }),
   z.strictObject({ op: z.literal('preview'), csv: z.string().min(1).max(32_000_000), mapping: MappingSchema.optional() }),
-  z.strictObject({ op: z.literal('import'), csv: z.string().min(1).max(32_000_000), mapping: MappingSchema }),
+  z.strictObject({ op: z.literal('import'), sourceMetadata:SourceMetadataInputSchema.optional(), csv: z.string().min(1).max(32_000_000), mapping: MappingSchema }),
 ]);
 export type RetailRequest = z.infer<typeof RetailRequestSchema>;
 
-/** RFC-style quoted fields, escaped quotes, BOM, CRLF and embedded newlines. */
-export function parseCsv(input: string): string[][] {
-  if (input.length > 32_000_000) throw new Error('CSV 超过 32 MB 限制');
-  const text = input.replace(/^\uFEFF/, '');
-  const rows: string[][] = [];
-  let row: string[] = [], field = '', quoted = false, endedQuote = false;
-  const cell = () => { row.push(field); field = ''; endedQuote = false; };
-  const record = () => { cell(); if (row.some(value => value.trim())) rows.push(row); row = []; if (rows.length > 100001) throw new Error('最多导入 100,000 行'); };
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (quoted) {
-      if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; }
-      else if (ch === '"') { quoted = false; endedQuote = true; }
-      else field += ch;
-    } else if (ch === '"') {
-      if (field.length || endedQuote) throw new Error('CSV 引号格式错误');
-      quoted = true;
-    } else if (ch === ',') cell();
-    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; record(); }
-    else { if (endedQuote) throw new Error('CSV 引号后只能出现分隔符'); field += ch; }
-  }
-  if (quoted) throw new Error('CSV 存在未闭合的引号');
-  if (field || row.length || endedQuote) record();
-  return rows;
-}
 export function rowKey(row: RetailRow): string { return JSON.stringify([row.shop_id, row.channel, row.sku_id, row.date]); }
 export function previewCsv(csv: string, proposed?: Record<string, string>): Preview {
   const records = parseCsv(csv);
@@ -266,8 +255,9 @@ export function bundleIssues(row: RetailRow): string[] {
   if (parts.every(part => part.unit_cost_minor !== null) && row.cost_minor !== null && sum !== row.cost_minor) issues.push('组合装子项合计与整包成本不一致');
   return [...new Set(issues)];
 }
-export function calculate(row: RetailRow, specConflict = false): Calculation {
+export function calculate(row: RetailRow, specConflict = false, rules?:RuleSettings): Calculation {
   const issues: string[] = [...bundleIssues(row), ...giftIssues(row), ...membershipIssues(row), ...selectOffers(row).issues];
+  if(rules&&row.sold_qty<rules.marginMinUnits)issues.push('净成交件数低于配置的最小样本要求');
   if (row.cost_minor === null) issues.push('缺少商品成本');
   if (row.subsidy_minor > 0 && row.subsidy_funder !== 'platform') issues.push(row.subsidy_funder === 'unknown' ? '补贴承担方未知' : '商家承担的补贴须归入商家优惠，当前口径不支持');
   if (specConflict) issues.push('同店铺同渠道 SKU 出现多种规格，须人工核对映射');
@@ -279,10 +269,10 @@ export function calculate(row: RetailRow, specConflict = false): Calculation {
   const profit = ready && cost !== null ? revenue - cost : null;
   return { revenueMinor: ready ? revenue : null, profitMinor: profit, marginBps: profit === null ? null : Math.round(profit * 10000 / revenue), totalRevenueMinor: ready ? revenue * row.sold_qty : null, totalProfitMinor: profit === null ? null : profit * row.sold_qty, available: row.on_hand - row.reserved, issues };
 }
-export interface EvidenceRecord { id: string; batchId: string; source: 'demo' | 'csv'; importedAt: string; snapshotHash: string; ruleVersion: string; row: RetailRow; calculation: Calculation; status: 'normal' | 'low_margin' | 'needs_evidence'; reasons: string[]; thresholdBps: number }
-export interface BatchSummary { id: string; source: 'demo' | 'csv'; importedAt: string; accepted: number; rejected: number; hash: string; errors: RejectedRow[]; ruleVersion: string }
+export interface EvidenceRecord { provenance?:EvidenceProvenance; policy?:FrozenPolicy; id: string; batchId: string; source: 'demo' | 'csv'; importedAt: string; snapshotHash: string; ruleVersion: string; row: RetailRow; calculation: Calculation; status: 'normal' | 'low_margin' | 'needs_evidence'; reasons: string[]; thresholdBps: number }
+export interface BatchSummary { provenance?:EvidenceProvenance; id: string; source: 'demo' | 'csv'; importedAt: string; accepted: number; rejected: number; hash: string; errors: RejectedRow[]; ruleVersion: string }
 export interface Snapshot { workspaceName: string; records: EvidenceRecord[]; batches: BatchSummary[]; dbVersion: number; ruleVersion: string; thresholdBps: number; pagination?: RetailPagination }
-export type RetailReply = { ok: true; kind: 'checks'; data: ChecksView } | {ok:true;kind:'reviews';data:ReviewView[];selectedId?:string} | {ok:true;kind:'review_preview';data:ObservationPreview} | {ok:true;kind:'execution_batches';data:BatchView[];selectedId?:string} | {ok:true;kind:'compensations';data:CompensationView[];selectedId?:string} | { ok: true; kind: 'executions'; data: ExecutionView[]; selectedId?: string } | { ok: true; kind: 'approvals'; data: ApprovalView[]; selectedId?: string } | { ok: true; kind: 'export'; filename: string; mime: string; content: string } | { ok: true; kind: 'decisions'; data: DecisionDraft[]; selectedId?: string; history?: DecisionDraft[] } | { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: AnyInvestigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
+export type RetailReply = {ok:true;kind:'supplement_preview';data:SupplementPreview}| {ok:true;kind:'catalog';data:CatalogView}| {ok:true;kind:'transactions_preview';data:TransactionPreview}|{ok:true;kind:'transactions';data:TransactionPage;notice?:string}|{ok:true;kind:'transactions_import';data:{accepted:number;duplicateCount:number;batchId:string}}| {ok:true;kind:'policy';data:PolicyView} | { ok: true; kind: 'signals_page'; data: SignalPage } | { ok: true; kind: 'checks'; data: ChecksView } | {ok:true;kind:'reviews';data:ReviewView[];selectedId?:string} | {ok:true;kind:'review_preview';data:ObservationPreview} | {ok:true;kind:'execution_batches';data:BatchView[];selectedId?:string} | {ok:true;kind:'compensations';data:CompensationView[];selectedId?:string} | { ok: true; kind: 'executions'; data: ExecutionView[]; selectedId?: string } | { ok: true; kind: 'approvals'; data: ApprovalView[]; selectedId?: string } | { ok: true; kind: 'export'; filename: string; mime: string; content: string } | { ok: true; kind: 'decisions'; data: DecisionDraft[]; selectedId?: string; history?: DecisionDraft[] } | { ok: true; kind: 'snapshot'; data: Snapshot; signals?: SignalSnapshot; notice?: string } | { ok: true; kind: 'preview'; data: Preview } | { ok: true; kind: 'investigations'; data: AnyInvestigation[]; created?: boolean } | { ok: true; kind: 'signals'; data: SignalSnapshot; notice?: string } | { ok: true; kind: 'signals_preview'; data: SignalPreview } | { ok: false; error: string };
 
 const demoRows: RetailRow[] = [
   { date: '2026-10-14', shop_id: 'demo-nanfeng', channel: '线上商城', sku_id: 'TEA-500', product_name: '桂花乌龙冷萃茶', spec: '500ml × 6瓶', currency: 'CNY', list_price_minor: 10000, coupon_minor: 2000, full_reduction_minor: 1000, subsidy_minor: 0, subsidy_funder: 'platform', cost_minor: 6000, sold_qty: 40, on_hand: 120, reserved: 10, inbound_qty: 60 },

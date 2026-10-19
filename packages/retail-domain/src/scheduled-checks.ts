@@ -4,19 +4,20 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { CheckConfigSchema } from './check-types';
+import { evidenceTimeIssue } from './evidence-policy';
 import type { CheckConfig, CheckConfigInput, CheckFinding, CheckRun, ChecksView, CheckResult } from './check-types';
 import type { EvidenceRecord } from './operations';
 import type { SignalRecord } from './signals';
-type Records = Array<EvidenceRecord | SignalRecord>;
+type Records = Iterable<EvidenceRecord | SignalRecord>;
 const iso = (time: number) => new Date(time).toISOString();
 const floorSlot = (time: number, interval: number) => Math.floor(time / (interval * 60000)) * interval * 60000;
 export class ScheduledChecks {
   private db: Database;
-  constructor(file: string, private workspaceId: string, private readRecords: () => Records, private clock: () => number = Date.now) {
+  constructor(file: string, private workspaceId: string, private readRecords: (source: 'demo' | 'csv') => Records, private clock: () => number = Date.now) {
     mkdirSync(dirname(file), { recursive: true });
     this.db = new Database(file, { create: true, strict: true });
     try {
-      this.db.exec('PRAGMA busy_timeout=5000');
+      this.db.exec('PRAGMA busy_timeout=5000; PRAGMA cache_size=-65536');
       const version = this.db.query<{ user_version: number }, []>('PRAGMA user_version').get()!.user_version;
       if (version > 1) throw new Error('巡检数据库版本高于当前程序，请更新应用');
       this.db.exec(`PRAGMA journal_mode=WAL;
@@ -105,27 +106,33 @@ export class ScheduledChecks {
     }).immediate();
     if (!claimed) return false;
     try {
-      const records = this.readRecords().filter(r => r.source === config.source);
+      this.db.exec('CREATE TEMP TABLE IF NOT EXISTS check_candidates(key TEXT NOT NULL,json TEXT NOT NULL); DELETE FROM check_candidates;');
+      const records = this.readRecords(config.source);
       const byScenario = { margin: 0, inventory: 0, ads: 0 };
-      const findings: CheckFinding[] = [];
-      for (const record of records) {
+      let checked = 0, anomalies = 0, stale = false;
+      // Stage in SQLite rather than retain every source record and finding in JS arrays.
+      // No findings enter the durable ledger until the original lease is revalidated.
+      const stage = this.db.query('INSERT INTO check_candidates VALUES(?,?)');
+      this.db.transaction(() => { for (const record of records) {
+        if (record.source !== config.source) continue;
+        checked++;
+        if (config.source === 'csv' && evidenceTimeIssue(record, this.clock())) stale = true;
         const scenario = 'kind' in record ? record.kind : 'margin'; byScenario[scenario]++;
         if (record.status === 'normal') continue;
         // Batch/import IDs can change when an unrelated row is corrected; unchanged business content must not re-alert.
         const key = createHash('sha256').update(JSON.stringify([this.workspaceId, scenario, record.source, record.row, record.ruleVersion, record.status, 'kind' in record ? record.metrics : record.calculation])).digest('hex');
-        findings.push({ key, scenario, record });
-      }
+        stage.run(key, JSON.stringify({ key, scenario, record } satisfies CheckFinding)); anomalies++;
+      } }).deferred();
       const warnings = Object.entries(byScenario).filter(([, count]) => !count).map(([name]) => `${name === 'margin' ? '毛利' : name === 'inventory' ? '库存' : '广告'}没有该来源的可检查快照`);
-      if (records.some(r => config.source === 'csv' && (this.clock() - Date.parse(r.importedAt) > 86400000 || Date.parse(r.importedAt) > this.clock() + 300000))) warnings.push('存在导入超过24小时或时间异常的CSV快照；结果仅作历史检查，请更新数据。');
+      if (stale) warnings.push('存在导入或业务日期超过24小时历史容限、或时间异常的CSV快照；结果仅作历史检查，重新导入不代表业务数据更新。');
       // Findings and final result commit atomically; expired workers cannot overwrite a retried lease.
       this.db.transaction(() => {
         const current = this.db.query<{ json: string }, [string]>('SELECT json FROM check_runs WHERE id=?').get(claimed.id);
         const saved = current ? JSON.parse(current.json) as CheckRun : null;
         if (!saved || saved.status !== 'running' || saved.attempt !== claimed.attempt) throw new Error('巡检租约已失效，未保存过期结果');
-        let added = 0;
-        const insert = this.db.query('INSERT OR IGNORE INTO check_findings VALUES(?,?,?)');
-        for (const finding of findings) added += insert.run(finding.key, claimed.id, JSON.stringify(finding)).changes;
-        const result: CheckResult = { checked: records.length, byScenario, anomalies: findings.length, newFindings: added, repeatedFindings: findings.length - added, findings: findings.slice(0, 200), truncated: findings.length > 200, warnings, observedAt: iso(this.clock()) };
+        const added = this.db.query('INSERT OR IGNORE INTO check_findings SELECT key,?,json FROM check_candidates').run(claimed.id).changes;
+        const findings = this.db.query<{ json: string }, []>('SELECT json FROM check_candidates ORDER BY rowid LIMIT 200').all().map(row => JSON.parse(row.json) as CheckFinding);
+        const result: CheckResult = { checked, byScenario, anomalies, newFindings: added, repeatedFindings: anomalies - added, findings, truncated: anomalies > 200, warnings, observedAt: iso(this.clock()) };
         this.save({ ...claimed, status: 'succeeded', finishedAt: iso(this.clock()), result });
       }).immediate();
     } catch (error) {
@@ -134,7 +141,7 @@ export class ScheduledChecks {
         const saved = current ? JSON.parse(current.json) as CheckRun : null;
         if (saved?.status === 'running' && saved.attempt === claimed.attempt) this.save({ ...claimed, status: 'failed', finishedAt: iso(this.clock()), error: error instanceof Error ? error.message.slice(0, 1000) : '巡检失败' });
       }).immediate();
-    }
+    } finally { this.db.exec('DELETE FROM check_candidates'); }
     return true;
   }
 }

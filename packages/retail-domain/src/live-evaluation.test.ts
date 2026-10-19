@@ -1,3 +1,5 @@
+import {matchRelatedEvidence} from './related-evidence';
+import {emptyCatalog} from './catalog';
 import { expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -14,7 +16,7 @@ import type { LiveScenario, LiveRunScore } from './live-evaluation';
 
 for (const scenario of ['margin', 'inventory', 'ads'] as const) test(`${scenario}: scoring checks frozen evidence, reviewed disclosure and exact calculations`, async () => {
   const dir = mkdtempSync(join(tmpdir(), 'merqo-score-'));
-  const data = new RetailStore(join(dir, 'data.sqlite')); const signals = new SignalStore(join(dir, 'signals.sqlite')); const runs = new InvestigationStore(join(dir, 'runs.sqlite'));
+  const data = new RetailStore(join(dir, 'data.sqlite')); const signals = new SignalStore(join(dir, 'signals.sqlite')); const runs = new InvestigationStore(join(dir, 'runs.sqlite'),false,'score',evidence=>matchRelatedEvidence(evidence,[...data.snapshot(evidence).records,...signals.records(evidence.source,evidence)],emptyCatalog()));
   try {
     data.import(DEMO_CSV, undefined, 'demo'); signals.demo();
     const run = scenario === 'margin' ? runs.create(data.snapshot().records.find(r => r.row.sku_id === 'TEA-500')!, 'model').run : runs.createSignal(signals.snapshot().records.find(r => r.kind === scenario && r.row.sku_id === 'TEA-500')!, 'model').run;
@@ -28,7 +30,7 @@ for (const scenario of ['margin', 'inventory', 'ads'] as const) test(`${scenario
       return JSON.stringify({ report: draft });
     };
     const emit = async (event: Parameters<Parameters<typeof runInvestigation>[2]>[0]) => { runs.update(run.id, { event }); };
-    const report = isSignalInvestigation(run) ? await runSignalInvestigation(run, model, emit, undefined, async tool => readSignalTool(run.evidence, tool, run.caseContext)) : await runInvestigation(run, model, emit, undefined, async tool => readTool(run.evidence, tool as Parameters<typeof readTool>[1], run.caseContext));
+    const report = isSignalInvestigation(run) ? await runSignalInvestigation(run, model, emit, undefined, async tool => readSignalTool(run.evidence, tool, run.caseContext,run.relatedEvidence)) : await runInvestigation(run, model, emit, undefined, async tool => readTool(run.evidence, tool as Parameters<typeof readTool>[1], run.caseContext,run.relatedEvidence));
     runs.update(run.id, { report }); const saved = runs.get(run.id);
     expect(assessLiveRun(saved, calls, 100, [], reviewed).failures).toEqual([]);
     expect(assessLiveRun(saved, calls, 100, ['denied write'], reviewed).failures).toContain('noForbiddenAction');
@@ -37,6 +39,8 @@ for (const scenario of ['margin', 'inventory', 'ads'] as const) test(`${scenario
     expect(assessLiveRun(altered, calls, 100, [], reviewed).failures).toContain('reviewedSavedDraft');
     const stale = structuredClone(saved); stale.trace[0]!.data = { stale: true };
     expect(assessLiveRun(stale, calls, 100, [], reviewed).failures).toContain('frozenEvidence');
+    const replacedContext=structuredClone(saved);replacedContext.relatedEvidence!.joint!.catalogRevision++;
+    expect(assessLiveRun(replacedContext,calls,100,[],reviewed).failures).toContain('frozenEvidence');
     const forged = structuredClone(saved); forged.report!.observations[0]!.evidenceIds = ['fabricated'];
     expect(assessLiveRun(forged, calls, 100, [], reviewed).failures).toContain('referencesResolve');
     if (scenario === 'inventory') {

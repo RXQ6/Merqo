@@ -42,7 +42,7 @@ export class SimulationLedger {
   }
   private resource(d:DecisionDraft):string { return hash({workspace:this.workspaceId,scenario:d.scenario,source:d.scope.source,shop:d.scope.shop,channel:d.scope.channel,sku:d.scope.sku,warehouse:d.scope.warehouse,campaign:d.scope.campaign}); }
   private parameters(d: DecisionDraft): {before:Record<string,number>;after:Record<string,number>;explanation:string} {
-    const pair = d.scenario === 'margin' ? {before:{couponMinor:d.before.couponMinor},after:{couponMinor:d.after.couponMinor},explanation:'仅调整模拟商家券，原经营快照不变。'}
+    const pair = d.selectedKind==='set_price'?{before:{priceMinor:d.before.priceMinor,couponMinor:d.before.couponMinor},after:{priceMinor:d.after.priceMinor,couponMinor:d.after.couponMinor},explanation:'仅调整本地模拟SKU标价；商家券保持不变，与券动作共享商品版本；原经营快照不变。'}:d.scenario === 'margin' ? {before:{couponMinor:d.before.couponMinor},after:{couponMinor:d.after.couponMinor},explanation:'仅调整模拟商家券，原经营快照不变。'}
       : d.scenario === 'ads' ? {before:{budgetMinor:d.before.spendMinor},after:{budgetMinor:d.after.spendMinor},explanation:'历史花费仅作为模拟预算初值，不代表平台真实预算，也不预测收入变化。'}
       : {before:{pendingPurchaseQuantity:0,leadDays:0},after:{pendingPurchaseQuantity:d.after.proposedQuantity,leadDays:d.after.leadDays},explanation:'仅创建模拟补货请求，待受理数量不计入现存、在途或立即可售库存。'};
     const checked=(values:Record<string,number|null|undefined>):Record<string,number>=>{const result:Record<string,number>={};for(const [key,value] of Object.entries(values)){if(value===null||value===undefined||!Number.isSafeInteger(value)||value<0)throw new Error('模拟动作缺少有效整数参数');result[key]=value;}return result;};
@@ -74,9 +74,13 @@ export class SimulationLedger {
     this.db.query('INSERT INTO simulation_attempts(job_id,json) VALUES(?,?)').run(id,JSON.stringify({jobId:id,at:new Date().toISOString(),status,reason,actor}));
   }
   fail(id: string, reason: string, actor: SimulationExecutor): ExecutionView { this.job(id); this.attempt(id,'failed',reason,actor); return this.view(id); }
+  private valuesBefore(job:ExecutionJob,stored:SimulationState):Record<string,number>{
+    // Old coupon-only states predate price actions; seed the unchanged frozen price without resetting the version.
+    return job.scenario==='margin'&&job.expectedBefore.priceMinor!==undefined&&Object.keys(stored.values).length===1&&stored.values.couponMinor!==undefined?{priceMinor:job.expectedBefore.priceMinor,...stored.values}:stored.values;
+  }
   targetConflict(job:ExecutionJob):string|null {
     const stored=this.state(job.resourceKey);
-    if((stored?.version??0)!==job.expectedStateVersion||(stored?hash(stored):null)!==job.expectedStateHash||(stored&&JSON.stringify(stored.values)!==JSON.stringify(job.expectedBefore)))return '模拟目标版本或前值冲突，旧批准不能覆盖当前状态；请重新调查并审批';
+    if((stored?.version??0)!==job.expectedStateVersion||(stored?hash(stored):null)!==job.expectedStateHash||(stored&&JSON.stringify(this.valuesBefore(job,stored))!==JSON.stringify(job.expectedBefore)))return '模拟目标版本或前值冲突，旧批准不能覆盖当前状态；请重新调查并审批';
     return null;
   }
   execute(id: string, actor: SimulationExecutor): ExecutionView {
@@ -84,7 +88,7 @@ export class SimulationLedger {
     this.db.exec('SAVEPOINT simulation_effect');
     try {
       const stored=this.state(job.resourceKey);
-      const before: SimulationState=stored??{resourceKey:job.resourceKey,version:0,evidenceHash:job.evidenceHash,values:job.expectedBefore,updatedAt:job.createdAt};
+      const before: SimulationState=stored?{...stored,values:this.valuesBefore(job,stored)}:{resourceKey:job.resourceKey,version:0,evidenceHash:job.evidenceHash,values:job.expectedBefore,updatedAt:job.createdAt};
       if(before.version!==job.expectedStateVersion||(stored?hash(stored):null)!==job.expectedStateHash||JSON.stringify(before.values)!==JSON.stringify(job.expectedBefore)) throw new Error('模拟目标版本或前值冲突，未写入；请重新调查并核对当前模拟状态');
       const after: SimulationState={...before,evidenceHash:job.evidenceHash,version:before.version+1,values:job.expectedAfter,...(job.scenario==='inventory'?{purchaseRequestStatus:'pending' as const}:{}),updatedAt:new Date().toISOString()};
       this.db.query('INSERT INTO simulation_states VALUES(?,?) ON CONFLICT(resource_key) DO UPDATE SET json=excluded.json').run(job.resourceKey,JSON.stringify(after));

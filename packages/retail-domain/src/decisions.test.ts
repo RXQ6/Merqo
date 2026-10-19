@@ -85,7 +85,7 @@ test('JSON and Markdown exports retain all evidence and contain untrusted text s
 });
 
 test('future decision schema refuses downgrade before creating new business tables',()=>{
- const db=new Database(file+'.investigations.sqlite');db.exec('DELETE FROM decision_schema;INSERT INTO decision_schema VALUES(7)');
+ const db=new Database(file+'.investigations.sqlite');db.exec('DELETE FROM decision_schema;INSERT INTO decision_schema VALUES(10000)');
  expect(()=>new DecisionStore(file,'test-workspace',current)).toThrow('版本高于');db.close();
 });
 
@@ -101,6 +101,7 @@ test('approved exact-version resolution and audit survive restart and never chan
  const d=await pendingApproval();const before=data.snapshot();const r=d.request!;
  const approved=decisions.resolveApproval(r.id,1,r.actionHash,'approve','演示约束已核对',approver);
  expect(approved.status).toBe('approved');expect(approved.resolution?.actor).toEqual(approver);expect(approved.resolution?.evidenceHash).toBe(d.evidenceHash);expect(approved.audit.at(-1)?.event).toBe('approval_approved');
+ expect(approved.evidence?.timeContext?.sourceObservedAtStatus).toBe('builtin_synthetic');expect(approved.evidence?.timeContext?.sourceObservedAt).toBe(approved.evidence?.timeContext?.sourceMetadata?.completeThroughExclusive);expect(approved.evidence?.timeContext?.precision).toBe('business_day_only');
  const repeated=decisions.resolveApproval(r.id,1,r.actionHash,'approve','演示约束已核对',approver);expect(repeated.resolution?.id).toBe(approved.resolution?.id);expect(repeated.audit.filter(e=>e.event==='approval_approved')).toHaveLength(1);
  decisions.close();decisions=new DecisionStore(file,'test-workspace',current);expect(decisions.approvals()[0]?.status).toBe('approved');expect(decisions.list()[0]?.state).toBe('approved');expect(data.snapshot()).toEqual(before);
 });

@@ -1,0 +1,197 @@
+
+2026-10-19T05:09:00.034Z INFO  [main] [i18n] startup hydration {"persistedUiLanguage":null,"resolvedLanguageAfterHydration":"en"}
+2026-10-19T05:09:00.055Z WARN  [main] Bundled uv binary missing, CLI document tools may fail unless uv is available on PATH. {"expectedUvPath":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\apps\\electron\\resources\\bin\\win32-x64\\uv.exe","usingCraftUv":"uv"}
+2026-10-19T05:09:00.058Z INFO  [main] CLI tools configured: {"uvBinary":"uv","binDir":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\apps\\electron\\resources\\bin","scriptsDir":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\apps\\electron\\resources\\scripts","bundledUvExists":false}
+2026-10-19T05:09:00.061Z INFO   [proxy] Applying proxy settings: {"enabled":false,"hasHttpProxy":false,"hasHttpsProxy":false,"hasNoProxy":false}
+2026-10-19T05:09:01.599Z INFO   2026-10-19T05:09:01.599Z [PowerShellValidator] Root set to: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\apps\electron\dist\resources
+2026-10-19T05:09:01.599Z [PowerShellValidator] Root set to: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\apps\electron\dist\resources
+2026-10-19T05:09:01.661Z INFO   2026-10-19T05:09:01.661Z [docs] Synced 17 docs
+2026-10-19T05:09:01.661Z [docs] Synced 17 docs
+2026-10-19T05:09:01.879Z INFO   2026-10-19T05:09:01.878Z [release-notes] Synced 69 release notes
+2026-10-19T05:09:01.878Z [release-notes] Synced 69 release notes
+2026-10-19T05:09:01.889Z INFO   2026-10-19T05:09:01.889Z [Permissions] Installed default.json
+2026-10-19T05:09:01.889Z [Permissions] Installed default.json
+2026-10-19T05:09:02.500Z INFO  [main] Registered thumbnail:// protocol handler
+2026-10-19T05:09:02.504Z INFO   [proxy] Applying proxy settings: {"enabled":false,"hasHttpProxy":false,"hasHttpsProxy":false,"hasNoProxy":false}
+2026-10-19T05:09:02.530Z INFO  [main] [browser-pane] Toolbar IPC handlers registered
+2026-10-19T05:09:02.534Z INFO  [main] [browser-pane] Capability IPC handler registered
+2026-10-19T05:09:02.542Z INFO  [main] [vcredist] Found vcruntime140.dll at C:\WINDOWS\System32\vcruntime140.dll
+2026-10-19T05:09:02.556Z INFO   2026-10-19T05:09:02.556Z [config] Synced config-defaults.json from bundled assets
+2026-10-19T05:09:02.556Z [config] Synced config-defaults.json from bundled assets
+2026-10-19T05:09:02.630Z INFO   [bootstrap] Config artifacts initialized
+2026-10-19T05:09:02.635Z INFO   [bootstrap] Initialized missing global config
+2026-10-19T05:09:02.651Z INFO   [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-19T05:09:02.658Z INFO  [main] [messaging-gateway] messaging bootstrap created {"timestamp":"2026-10-19T05:09:02.654Z","level":"info","scope":"messaging-gateway","component":"bootstrap","event":"messaging_bootstrap_created","workerEntry":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\packages\\messaging-whatsapp-worker\\dist\\worker.cjs","nodeBin":"(host default)","pairingMode":"qr","message":"messaging bootstrap created"}
+2026-10-19T05:09:02.676Z INFO   2026-10-19T05:09:02.676Z [CredentialManager] Backend available: secure-storage (priority 100)
+2026-10-19T05:09:02.676Z [CredentialManager] Backend available: secure-storage (priority 100)
+2026-10-19T05:09:02.679Z INFO   2026-10-19T05:09:02.679Z [CredentialManager] Using backend: secure-storage
+2026-10-19T05:09:02.679Z [CredentialManager] Using backend: secure-storage
+2026-10-19T05:09:02.685Z WARN   [session] No LLM connection slug available for reinitializeAuth
+2026-10-19T05:09:02.688Z ERROR  [session] No LLM connection found for slug: null
+2026-10-19T05:09:02.690Z INFO   2026-10-19T05:09:02.690Z [summarize] resetSummarizationClient called (no-op)
+2026-10-19T05:09:02.690Z [summarize] resetSummarizationClient called (no-op)
+2026-10-19T05:09:02.697Z INFO   [session] Loaded 0 sessions from disk (metadata only)
+2026-10-19T05:09:02.702Z INFO   Craft Agent server listening on ws://127.0.0.1:61368
+2026-10-19T05:09:02.784Z INFO  [main] Created default workspace on first run
+2026-10-19T05:09:02.788Z INFO  [window] Windows 11 detected (build 26200), using Mica
+2026-10-19T05:09:02.909Z INFO  [window] Created window for workspace 5c2b6348-5dce-d4ca-3da4-559ef19691e3 (focused: false)
+2026-10-19T05:09:02.912Z INFO  [main] Created window for first workspace: My Workspace
+2026-10-19T05:09:02.925Z INFO  [main] [power] Power manager initialized {"settingEnabled":false}
+2026-10-19T05:09:02.941Z INFO  [main] [auto-update] Skipping auto-update in dev mode
+2026-10-19T05:09:02.944Z INFO  [main] App initialized successfully
+2026-10-19T05:09:02.946Z INFO  [main] Debug mode enabled - logs at: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\logs\main.log
+2026-10-19T05:09:02.949Z INFO  [main] Messaging gateway log path: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\logs\messaging-gateway.log
+2026-10-19T05:09:03.352Z INFO   2026-10-19T05:09:03.351Z [ws-rpc-server] INFO  Client connected {"clientId":"a2dbd31a-56ca-4f42-b172-55ab68022a8a","webContentsId":1,"workspaceId":"5c2b6348-5dce-d4ca-3da4-559ef19691e3"}
+2026-10-19T05:09:03.351Z [ws-rpc-server] INFO  Client connected {"clientId":"a2dbd31a-56ca-4f42-b172-55ab68022a8a","webContentsId":1,"workspaceId":"5c2b6348-5dce-d4ca-3da4-559ef19691e3"}
+2026-10-19T05:09:03.721Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"zh-Hans","previousResolved":"en","newResolved":"zh-Hans"}
+2026-10-19T05:09:03.767Z INFO   [session] Setting up ConfigWatcher for workspace: 5c2b6348-5dce-d4ca-3da4-559ef19691e3 (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace)
+2026-10-19T05:09:03.771Z INFO   2026-10-19T05:09:03.771Z [ConfigWatcher] Starting for workspace: my-workspace
+2026-10-19T05:09:03.771Z [ConfigWatcher] Starting for workspace: my-workspace
+2026-10-19T05:09:03.780Z INFO   2026-10-19T05:09:03.780Z [ConfigWatcher] Watching global configs: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config
+2026-10-19T05:09:03.780Z [ConfigWatcher] Watching global configs: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config
+2026-10-19T05:09:03.782Z INFO   2026-10-19T05:09:03.782Z [ConfigWatcher] Setting up workspace watcher for: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace
+2026-10-19T05:09:03.782Z [ConfigWatcher] Setting up workspace watcher for: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace
+2026-10-19T05:09:03.790Z INFO   2026-10-19T05:09:03.790Z [ConfigWatcher] Watching workspace recursively: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace
+2026-10-19T05:09:03.790Z [ConfigWatcher] Watching workspace recursively: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace
+2026-10-19T05:09:03.800Z INFO   2026-10-19T05:09:03.800Z [ConfigWatcher] Watching app themes directory: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\themes
+2026-10-19T05:09:03.800Z [ConfigWatcher] Watching app themes directory: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\themes
+2026-10-19T05:09:03.808Z INFO   2026-10-19T05:09:03.808Z [ConfigWatcher] Watching app permissions directory: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\permissions
+2026-10-19T05:09:03.808Z [ConfigWatcher] Watching app permissions directory: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\permissions
+2026-10-19T05:09:03.812Z INFO   2026-10-19T05:09:03.812Z [ConfigWatcher] Known sources: []
+2026-10-19T05:09:03.812Z [ConfigWatcher] Known sources: []
+2026-10-19T05:09:03.817Z INFO   2026-10-19T05:09:03.817Z [ConfigWatcher] Known skills: []
+2026-10-19T05:09:03.817Z [ConfigWatcher] Known skills: []
+2026-10-19T05:09:03.822Z INFO   2026-10-19T05:09:03.822Z [ConfigWatcher] Known themes: ["catppuccin","default","dracula","ghostty","github","gruvbox","haze","night-owl","nord","one-dark-pro","pierre","rose-pine","solarized","tokyo-night","vitesse"]
+2026-10-19T05:09:03.822Z [ConfigWatcher] Known themes: ["catppuccin","default","dracula","ghostty","github","gruvbox","haze","night-owl","nord","one-dark-pro","pierre","rose-pine","solarized","tokyo-night","vitesse"]
+2026-10-19T05:09:03.827Z INFO   2026-10-19T05:09:03.827Z [ConfigWatcher] Started watching files
+2026-10-19T05:09:03.827Z [ConfigWatcher] Started watching files
+2026-10-19T05:09:03.829Z [PERF] configWatcher.start: 58.50ms (ensureDir:4.0ms → watchGlobalConfigs:11.8ms → watchWorkspaceDir:22.4ms → watchAppThemesDir:32.3ms → watchAppPermissionsDir:40.0ms → scanSources:44.6ms → scanSkills:49.0ms → scanAppThemes:53.7ms → initLlmConnectionsHash:56.1ms) {"workspaceId":"my-workspace"}
+2026-10-19T05:09:03.830Z INFO   2026-10-19T05:09:03.830Z [event-bus] DEBUG [EventBus] Created for workspace: 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:03.830Z [event-bus] DEBUG [EventBus] Created for workspace: 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:03.833Z INFO   2026-10-19T05:09:03.833Z [automation-system] DEBUG [AutomationSystem] No automations config found at D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace\automations.json
+2026-10-19T05:09:03.833Z [automation-system] DEBUG [AutomationSystem] No automations config found at D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace\automations.json
+2026-10-19T05:09:03.835Z INFO   2026-10-19T05:09:03.835Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-19T05:09:03.835Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-19T05:09:03.838Z INFO   2026-10-19T05:09:03.838Z [prompt-handler] DEBUG [PromptHandler] Subscribed to event bus
+2026-10-19T05:09:03.838Z [prompt-handler] DEBUG [PromptHandler] Subscribed to event bus
+2026-10-19T05:09:03.841Z INFO   2026-10-19T05:09:03.841Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-19T05:09:03.841Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-19T05:09:03.843Z INFO   2026-10-19T05:09:03.843Z [retry-scheduler] DEBUG [RetryScheduler] Started
+2026-10-19T05:09:03.843Z [retry-scheduler] DEBUG [RetryScheduler] Started
+2026-10-19T05:09:03.846Z INFO   2026-10-19T05:09:03.846Z [webhook-handler] DEBUG [WebhookHandler] Subscribed to event bus
+2026-10-19T05:09:03.846Z [webhook-handler] DEBUG [WebhookHandler] Subscribed to event bus
+2026-10-19T05:09:03.848Z INFO   2026-10-19T05:09:03.848Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-19T05:09:03.848Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-19T05:09:03.851Z INFO   2026-10-19T05:09:03.851Z [event-log-handler] DEBUG [EventLogHandler] Subscribed to event bus, logging to D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace\events.jsonl
+2026-10-19T05:09:03.851Z [event-log-handler] DEBUG [EventLogHandler] Subscribed to event bus, logging to D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace\events.jsonl
+2026-10-19T05:09:03.853Z INFO   2026-10-19T05:09:03.853Z [automation-system] DEBUG [AutomationSystem] Handlers created and subscribed
+2026-10-19T05:09:03.853Z [automation-system] DEBUG [AutomationSystem] Handlers created and subscribed
+2026-10-19T05:09:03.856Z INFO   2026-10-19T05:09:03.856Z [automation-system] DEBUG [AutomationSystem] Scheduler started
+2026-10-19T05:09:03.856Z [automation-system] DEBUG [AutomationSystem] Scheduler started
+2026-10-19T05:09:03.859Z INFO   2026-10-19T05:09:03.859Z [automation-system] DEBUG [AutomationSystem] Created for workspace: 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:03.859Z [automation-system] DEBUG [AutomationSystem] Created for workspace: 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:03.861Z INFO   [session] Initialized AutomationSystem for workspace 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:04.077Z INFO   2026-10-19T05:09:04.077Z [ConfigWatcher] config.json changed
+2026-10-19T05:09:04.077Z [ConfigWatcher] config.json changed
+2026-10-19T05:09:05.892Z INFO   [Onboarding] User deferred setup
+2026-10-19T05:09:05.921Z INFO  [window] Updated window 1 from workspace 5c2b6348-5dce-d4ca-3da4-559ef19691e3 to 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:05.934Z [PERF] ipc.switchWorkspace: 12.50ms {"workspaceId":"5c2b6348-5dce-d4ca-3da4-559ef19691e3"}
+2026-10-19T05:09:06.012Z INFO   2026-10-19T05:09:06.012Z [ConfigWatcher] config.json changed
+2026-10-19T05:09:06.012Z [ConfigWatcher] config.json changed
+2026-10-19T05:09:06.063Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:06.133Z INFO   SKILLS_GET: Loading skills for workspace: 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:06.182Z [PERF] rpc.getSessions: 0.06ms
+2026-10-19T05:09:06.182Z INFO   [sessions:get] result {"ctxWorkspaceId":"5c2b6348-5dce-d4ca-3da4-559ef19691e3","webContentsId":1,"windowWorkspaceId":"5c2b6348-5dce-d4ca-3da4-559ef19691e3","resolvedWorkspaceId":"5c2b6348-5dce-d4ca-3da4-559ef19691e3","returnedCount":0,"returnedWorkspaceIds":{},"returnedIds":{"count":0,"ids":[],"truncated":false}}
+2026-10-19T05:09:06.185Z INFO   AUTOMATIONS_GET: Reading config from: D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace\automations.json
+2026-10-19T05:09:06.210Z INFO   2026-10-19T05:09:06.210Z [loadViewsConfig] No config found, seeding with default views
+2026-10-19T05:09:06.210Z [loadViewsConfig] No config found, seeding with default views
+2026-10-19T05:09:06.218Z INFO   SKILLS_GET: Loaded 0 skills from D:\helson-skills\craft-agents-oss-main\retailpilot-agent\.runtime\m1-e2e-1792386537739\config\workspaces\my-workspace
+2026-10-19T05:09:06.232Z INFO   AUTOMATIONS_GET: No automations.json found for workspace 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+RETAIL_CHECK analysis hides general sidebar and keeps three grouped sections
+RETAIL_CHECK navigation rejects renderer supplied workspace
+RETAIL_CHECK analysis retains clean header and grouped navigation
+RETAIL_CHECK old demo reload preserves true import history and explains its age exemption
+RETAIL_CHECK demo totals match independently calculated revenue and gross profit
+RETAIL_CHECK retail analysis keeps its requested neutral light surface independent of Agent theme
+RETAIL_CHECK evidence drawer shows formula, margin and source hash
+2026-10-19T05:09:17.871Z INFO   2026-10-19T05:09:17.871Z [ConfigWatcher] config.json changed
+2026-10-19T05:09:17.871Z [ConfigWatcher] config.json changed
+2026-10-19T05:09:17.882Z INFO   2026-10-19T05:09:17.882Z [ConfigWatcher] LLM connections changed
+2026-10-19T05:09:17.882Z [ConfigWatcher] LLM connections changed
+2026-10-19T05:09:17.885Z INFO   [session] LLM connections changed in 5c2b6348-5dce-d4ca-3da4-559ef19691e3
+2026-10-19T05:09:17.887Z INFO   [session] Broadcasting LLM connections changed
+RETAIL_CHECK margin numeric audit distinguishes unit, total and five-yuan coupon reduction
+RETAIL_CHECK desktop investigation uses four actual MCP stdio tool calls
+RETAIL_CHECK duplicate simulated approval requests are idempotent
+RETAIL_CHECK approval requires an explicit reason
+RETAIL_CHECK approval actor comes from server, forged identity rejects and retries remain idempotent
+RETAIL_CHECK explicit local simulation confirmation is required
+RETAIL_CHECK execution is server-scoped, idempotent and isolated from source snapshots
+RETAIL_CHECK two deterministic scenarios and evidence are displayed
+[SchedulerService] TICK at 13:10 UTC: 2026-10-19T05:10:00.010Z
+[SchedulerService] TICK callback completed
+[SchedulerService] TICK at 13:10 UTC: 2026-10-19T05:10:00.020Z
+2026-10-19T05:10:00.020Z INFO   2026-10-19T05:10:00.020Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-19T05:10:00.020Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-19T05:10:00.024Z INFO   2026-10-19T05:10:00.024Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-19T05:10:00.024Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-19T05:10:00.026Z INFO   2026-10-19T05:10:00.026Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 3 any-handlers)
+2026-10-19T05:10:00.026Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 3 any-handlers)
+[SchedulerService] TICK callback completed
+RETAIL_CHECK renderer cannot forge investigation completion
+RETAIL_CHECK inventory model conditional plans
+RETAIL_CHECK inventory plan does not erase pre-arrival gap
+RETAIL_CHECK ads model conditional plans
+RETAIL_CHECK ads budget scales revenue at unchanged ROAS
+RETAIL_CHECK all three scenarios and offline replay consume actual MCP evidence
+RETAIL_CHECK offline draft cannot submit simulation approval
+RETAIL_CHECK draft recovery opens the original offline record
+RETAIL_CHECK exact run read works through renderer IPC
+RETAIL_CHECK needs_evidence cannot submit approval
+[SchedulerService] TICK at 13:11 UTC: 2026-10-19T05:11:00.082Z
+[SchedulerService] TICK callback completed
+[SchedulerService] TICK at 13:11 UTC: 2026-10-19T05:11:00.092Z
+2026-10-19T05:11:00.092Z INFO   2026-10-19T05:11:00.092Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-19T05:11:00.092Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-19T05:11:00.095Z INFO   2026-10-19T05:11:00.095Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-19T05:11:00.095Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-19T05:11:00.098Z INFO   2026-10-19T05:11:00.098Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 3 any-handlers)
+2026-10-19T05:11:00.098Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 3 any-handlers)
+[SchedulerService] TICK callback completed
+RETAIL_CHECK rejected cannot submit approval
+RETAIL_CHECK IPC rejects renderer-supplied workspace scope
+RETAIL_CHECK IPC rejects business execution operations
+RETAIL_CHECK inventory coverage and ROAS decline match independent arithmetic
+RETAIL_CHECK scenario evidence shows rule, formula and immutable source hash
+RETAIL_CHECK concurrent read refreshes do not block page remounts
+[SchedulerService] TICK at 13:12 UTC: 2026-10-19T05:12:00.124Z
+[SchedulerService] TICK callback completed
+[SchedulerService] TICK at 13:12 UTC: 2026-10-19T05:12:00.134Z
+2026-10-19T05:12:00.134Z INFO   2026-10-19T05:12:00.134Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-19T05:12:00.134Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-19T05:12:00.137Z INFO   2026-10-19T05:12:00.137Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-19T05:12:00.137Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-19T05:12:00.140Z INFO   2026-10-19T05:12:00.140Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 3 any-handlers)
+2026-10-19T05:12:00.140Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 3 any-handlers)
+[SchedulerService] TICK callback completed
+RETAIL_CHECK all three UI workflows execute only isolated simulation and inventory is not received as sellable stock
+RETAIL_CHECK pending replenishment compensation cancels request instead of receiving inventory
+RETAIL_CHECK compensation is newly approved, idempotent, exportable, server scoped and isolated from source stock
+RETAIL_CHECK unsafe compensation has no approval or execute action
+RETAIL_CHECK unknown outcome disables resubmission
+[SchedulerService] TICK at 13:13 UTC: 2026-10-19T05:13:00.196Z
+[SchedulerService] TICK callback completed
+[SchedulerService] TICK at 13:13 UTC: 2026-10-19T05:13:00.205Z
+2026-10-19T05:13:00.205Z INFO   2026-10-19T05:13:00.205Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-19T05:13:00.205Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-19T05:13:00.208Z INFO   2026-10-19T05:13:00.208Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-19T05:13:00.208Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-19T05:13:00.210Z INFO   2026-10-19T05:13:00.210Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 3 any-handlers)
+2026-10-19T05:13:00.210Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 3 any-handlers)
+[SchedulerService] TICK callback completed
+RETAIL_CHECK batch recovery fences old intent and retry never duplicates successful item
+RETAIL_CHECK review export retains Case evidence and rejects renderer role injection
+RETAIL_CHECK Case retrieval is scoped, frozen and actually passed through desktop MCP
+RETAIL_CHECK inventory review follows its business window and requires explicit confirmation
+M1_E2E {"ok":true,"phase":"initial","checks":["analysis hides general sidebar and keeps three grouped sections","repeated entry keeps the original native window","navigation rejects renderer supplied workspace","analysis retains clean header and grouped navigation","old demo reload preserves true import history and explains its age exemption","demo totals match independently calculated revenue and gross profit","retail analysis keeps its requested neutral light surface independent of Agent theme","conversation round trip preserves analysis state and original workspace scope","evidence drawer shows formula, margin and source hash","evidence participates in native dismissible layer stack","start investigation is visible and missing model is not simulated as success","margin numeric audit distinguishes unit, total and five-yuan coupon reduction","real inference adapter executes six local HTTP contract calls with no native tool authority","desktop investigation uses four actual MCP stdio tool calls","JSON and Markdown download through native desktop and retain frozen evidence index","duplicate simulated approval requests are idempotent","approval requires an explicit reason","approval actor comes from server, forged identity rejects and retries remain idempotent","explicit local simulation confirmation is required","execution is server-scoped, idempotent and isolated from source snapshots","decision draft, exact-version simulation submission, revision and superseded request work in desktop","approve, execute isolated simulation, supersede old approval, reject revision and preserve history without real business writes","report export includes decision history, superseded request and execution receipt","two deterministic scenarios and evidence are displayed","renderer cannot forge investigation completion","explicit offline replay remains distinct from model investigation","inventory model conditional plans","inventory plan does not erase pre-arrival gap","ads model conditional plans","ads budget scales revenue at unchanged ROAS","all three scenarios and offline replay consume actual MCP evidence","inventory and ads model contracts, readonly Reviewer and explicit offline plans passed","offline draft cannot submit simulation approval","draft recovery opens the original offline record","exact run read works through renderer IPC","needs_evidence cannot submit approval","rejected cannot submit approval","offline, needs-evidence and rejected drafts expose exact origin without automatic model calls or approval bypass","unified anomaly center excludes all four normal rows across three scenarios","repeat file is idempotent","correction changes current SKU to 33.33% while retaining source separation","IPC rejects renderer-supplied workspace scope","IPC rejects business execution operations","inventory coverage and ROAS decline match independent arithmetic","scenario evidence shows rule, formula and immutable source hash","two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center","concurrent read refreshes do not block page remounts","all three UI workflows execute only isolated simulation and inventory is not received as sellable stock","pending replenishment compensation cancels request instead of receiving inventory","compensation is newly approved, idempotent, exportable, server scoped and isolated from source stock","unsafe compensation has no approval or execute action","unknown outcome disables resubmission","batch recovery fences old intent and retry never duplicates successful item","review export retains Case evidence and rejects renderer role injection","Case retrieval is scoped, frozen and actually passed through desktop MCP","inventory review follows its business window and requires explicit confirmation"],"profile":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\m1-e2e-1792386537739","error":null,"failures":[]}
+2026-10-19T05:13:25.821Z INFO  [window] Window closed for workspace 5c2b6348-5dce-d4ca-3da4-559ef19691e3

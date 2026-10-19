@@ -6,7 +6,7 @@ const path = require('node:path');
 const http = require('node:http');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
-const exe = path.resolve(process.argv[2] || 'artifacts/windows/0.1.0-beta.2/win-unpacked/Merqo.exe');
+const exe = path.resolve(process.argv[2] || `artifacts/windows/${require('../packaging/windows-release.json').version}/win-unpacked/Merqo.exe`);
 const out = path.join(root, 'artifacts/windows/verification'); fs.mkdirSync(out, { recursive: true });
 const restoreProfile = process.argv[3] === '--restore-profile' ? path.resolve(process.argv[4]) : null;
 if (restoreProfile && !restoreProfile.startsWith(out + path.sep)) throw new Error('Restore profile must be an isolated verification directory');
@@ -27,7 +27,7 @@ const server = http.createServer(async (req, res) => {
       if (context.observations.length < 4) value = { tool: tools[context.observations.length] };
       else {
         const event = context.observations.find(t => t.tool === tools[2]);
-        value = { report: { summary: '安装包协议验证报告', observations: scenario === 'inventory' ? [{ text: '核对冻结证据', evidenceIds: [event.evidenceId] }] : [], hypotheses: [], unknowns: ['缺实时状态'], alternatives: ['可能存在口径差异'], options: [{ kind: 'observe', rationale: '核验' }, { kind: scenario === 'ads' ? 'reduce_budget' : scenario === 'inventory' ? 'replenish_draft' : 'reduce_coupon', rationale: '仅作条件测算' }] } };
+        value = { report: { summary: '安装包协议验证报告', observations: [], hypotheses: [], unknowns: ['缺实时状态'], alternatives: ['可能存在口径差异'], options: [{ kind: 'observe', rationale: '核验' }, { kind: scenario === 'ads' ? 'reduce_budget' : scenario === 'inventory' ? 'replenish_draft' : 'reduce_coupon', rationale: '仅作条件测算' }] } };
       }
     }
     res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(value) } }] }));

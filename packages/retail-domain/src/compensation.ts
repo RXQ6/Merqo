@@ -42,7 +42,7 @@ export function installCompensationSchema(db:Database):void {
 /** Owner provides an IMMEDIATE transaction, trusted Workspace, and fresh attached source reads. */
 export class CompensationLedger {
  private simulation:SimulationLedger;
- constructor(private db:Database,private workspaceId:string,private current:()=>DraftEvidence[]){this.simulation=new SimulationLedger(db,workspaceId);}
+ constructor(private db:Database,private workspaceId:string,private current:()=>DraftEvidence[],private approvalMinutes:(shop:string)=>number=()=>30){this.simulation=new SimulationLedger(db,workspaceId);}
  private parse<T>(row:JsonRow|null):T|null{return row?JSON.parse(row.json) as T:null;}
  private head(id:string):CompensationRequest{const r=this.parse<CompensationRequest>(this.db.query<JsonRow,[string]>('SELECT json FROM compensation_heads WHERE id=?').get(id));if(!r||r.workspaceId!==this.workspaceId)throw new Error('补偿申请不存在或不属于当前工作空间');return r;}
  private event(id:string,event:string,reason:string,actor:string):void{this.db.query('INSERT INTO compensation_events(id,json) VALUES(?,?)').run(id,JSON.stringify({version:this.head(id).version,at:new Date().toISOString(),event,reason,actor}));}
@@ -52,24 +52,24 @@ export class CompensationLedger {
  private reason(value:string):string{value=value.trim();if(!value||value.length>2000)throw new Error('请填写1至2000字的理由');return value;}
  create(jobId:string,reason:string):CompensationView{
   reason=this.reason(reason);const origin=this.origin(jobId);const found=this.db.query<{id:string},[string]>('SELECT id FROM compensation_heads WHERE source_job_id=?').get(jobId);if(found)return this.view(found.id);
-  const now=new Date().toISOString();const r:CompensationRequest={id:randomUUID(),version:1,workspaceId:this.workspaceId,sourceJobId:jobId,sourceReceiptId:origin.receipt.id,sourceReceiptHash:digest(origin.receipt),scenario:origin.job.scenario,scope:origin.job.scope,resourceKey:origin.job.resourceKey,before:this.simulation.state(origin.job.resourceKey),target:origin.receipt.before.values,evidence:this.capture(origin.job),policyVersion:POLICY,reason,createdAt:now,expiresAt:new Date(Date.now()+1800000).toISOString(),actionHash:''};r.actionHash=actionHash(r);this.save(r);this.event(r.id,'created',reason,'local-analyst');return this.view(r.id);
+  const now=new Date().toISOString();const r:CompensationRequest={id:randomUUID(),version:1,workspaceId:this.workspaceId,sourceJobId:jobId,sourceReceiptId:origin.receipt.id,sourceReceiptHash:digest(origin.receipt),scenario:origin.job.scenario,scope:origin.job.scope,resourceKey:origin.job.resourceKey,before:this.simulation.state(origin.job.resourceKey),target:origin.receipt.before.values,evidence:this.capture(origin.job),policyVersion:POLICY,reason,createdAt:now,expiresAt:new Date(Date.now()+this.approvalMinutes(origin.job.scope.shop)*60000).toISOString(),actionHash:''};r.actionHash=actionHash(r);this.save(r);this.event(r.id,'created',reason,'local-analyst');return this.view(r.id);
  }
  private save(r:CompensationRequest):void{this.db.query('INSERT INTO compensation_heads VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json').run(r.id,r.sourceJobId,JSON.stringify(r));this.db.query('INSERT INTO compensation_versions VALUES(?,?,?)').run(r.id,r.version,JSON.stringify(r));}
  revise(id:string,expectedVersion:number,reason:string):CompensationView{
   const prior=this.head(id);if(prior.version!==expectedVersion)throw new Error('补偿申请版本冲突，请刷新');if(this.receipt(id))throw new Error('补偿已经完成，不能重新申请或再次执行');reason=this.reason(reason);const origin=this.origin(prior.sourceJobId);
-  const r={...prior,version:prior.version+1,before:this.simulation.state(prior.resourceKey),evidence:this.capture(origin.job),reason,createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+1800000).toISOString(),actionHash:''};r.actionHash=actionHash(r);this.save(r);this.event(id,'revised',reason,'local-analyst');return this.view(id);
+  const r={...prior,version:prior.version+1,before:this.simulation.state(prior.resourceKey),evidence:this.capture(origin.job),reason,createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+this.approvalMinutes(origin.job.scope.shop)*60000).toISOString(),actionHash:''};r.actionHash=actionHash(r);this.save(r);this.event(id,'revised',reason,'local-analyst');return this.view(id);
  }
  private receipt(id:string):CompensationReceipt|null{return this.parse(this.db.query<JsonRow,[string]>('SELECT json FROM compensation_receipts WHERE id=?').get(id));}
  private blockers(r:CompensationRequest):string[]{
   const reasons:string[]=[];let origin:ReturnType<CompensationLedger['origin']>;try{origin=this.origin(r.sourceJobId);}catch{return ['原执行回执无法核验'];}
   if(r.policyVersion!==POLICY||r.actionHash!==actionHash(r)||r.workspaceId!==this.workspaceId||r.scope.source!=='demo'||r.sourceReceiptId!==origin.receipt.id||r.sourceReceiptHash!==digest(origin.receipt)||r.resourceKey!==origin.job.resourceKey||r.scenario!==origin.job.scenario||JSON.stringify(r.scope)!==JSON.stringify(origin.job.scope)||JSON.stringify(r.target)!==JSON.stringify(origin.receipt.before.values))reasons.push('补偿动作、原回执或策略绑定不一致');
-  const now=Date.now();if(!Number.isFinite(Date.parse(r.expiresAt))||now>=Date.parse(r.expiresAt))reasons.push('补偿申请30分钟有效期已过，请重新申请');
+  const now=Date.now();if(!Number.isFinite(Date.parse(r.expiresAt))||now>=Date.parse(r.expiresAt))reasons.push('补偿申请有效期已过，请重新申请');
   const state=this.simulation.state(origin.job.resourceKey);
   if(!state||!r.before||digest(state)!==digest(r.before)||digest(r.before)!==digest(origin.receipt.after))reasons.push('模拟目标已被后续动作修改或状态不明，不能覆盖；请人工核查');
   const e=this.evidence(origin.job);if(!e||!r.evidence||JSON.stringify(this.capture(origin.job))!==JSON.stringify(r.evidence))reasons.push('当前演示证据或规则已变化，请重新申请并核验');
   if(e){const timeIssue=evidenceTimeIssue(e,now);if(timeIssue)reasons.push(timeIssue);
    if(r.scenario==='margin'){
-    if('metrics'in e)reasons.push('毛利证据类型不符');else{const coupon=r.target.couponMinor;if(coupon===undefined||!Number.isSafeInteger(coupon)||coupon<0)reasons.push('恢复商家券参数无效');else{const calc=calculate({...e.row,coupon_minor:coupon},e.calculation.issues.includes('同店铺同渠道 SKU 出现多种规格，须人工核对映射'));if(calc.issues.length)reasons.push(...calc.issues);if(calc.marginBps===null||calc.marginBps<e.thresholdBps)reasons.push('恢复原商家券会低于当前毛利下限，补偿不能绕过硬约束；请人工制定新方案');}}
+    if('metrics'in e)reasons.push('毛利证据类型不符');else{const coupon=r.target.couponMinor;if(coupon===undefined||!Number.isSafeInteger(coupon)||coupon<0)reasons.push('恢复商家券参数无效');else{const price=r.target.priceMinor??e.row.list_price_minor;if(!Number.isSafeInteger(price)||price<=0||price>100000000)reasons.push('恢复SKU价格参数无效');const calc=calculate({...e.row,list_price_minor:price,coupon_minor:coupon},e.calculation.issues.includes('同店铺同渠道 SKU 出现多种规格，须人工核对映射'),e.policy?.settings);if(calc.issues.length)reasons.push(...calc.issues);if(calc.marginBps===null||calc.marginBps<e.thresholdBps)reasons.push(r.target.priceMinor===undefined?'恢复原商家券会低于当前毛利下限，补偿不能绕过硬约束；请人工制定新方案':'恢复原SKU价格会低于当前毛利下限，补偿不能绕过硬约束；请人工制定新方案');}}
    }else if('metrics'in e&&e.metrics.issues.length)reasons.push(...e.metrics.issues);
   }
   if(r.scenario==='inventory'&&(state?.purchaseRequestStatus==='accepted'||state?.purchaseRequestStatus==='cancelled'||(state?.purchaseRequestStatus!==undefined&&state.purchaseRequestStatus!=='pending')))reasons.push('补货请求已受理、取消或状态不明，不能直接取消；请人工处理');

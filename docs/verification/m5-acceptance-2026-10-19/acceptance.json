@@ -1,0 +1,641 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-19T05:14:05.792Z",
+  "source": {
+    "baseCommit": "a4018de72bb9355c45a2e2d01e24fb04f1ca672c",
+    "dirty": true,
+    "inputHash": "3d0e023f67da52c94bdaf767a04fe06f552333c4bf6449b5ff7d0a7c20acb157",
+    "inputs": [
+      {
+        "path": "apps/electron/src/main/retail-check-scheduler.ts",
+        "sha256": "d81cf6485e8e09fb47df982cfcced8ae05032982d03f7473c3079c229d1d9291"
+      },
+      {
+        "path": "apps/electron/src/main/retail-inference-telemetry.ts",
+        "sha256": "2bc90de06f69339ac7d10dcf362234f96b291cf0ecaa39bcc4ce4df840f3fd84"
+      },
+      {
+        "path": "apps/electron/src/main/retail-investigation.ts",
+        "sha256": "533320155e15632bf8f50572808a0b9e22675dc55259c706733a95349b8712db"
+      },
+      {
+        "path": "apps/electron/src/main/retail-mcp.ts",
+        "sha256": "3f76e0fba38304dc80a365eb33570ac446ea3c1560d2bffc7f641e1780d7e28a"
+      },
+      {
+        "path": "apps/electron/src/main/retail-worker.ts",
+        "sha256": "67c7a3760cb342be2519dd790c14cd92e6d76d41c6dfd10a51c3d635a7d1c2d8"
+      },
+      {
+        "path": "apps/electron/src/main/retail.ts",
+        "sha256": "a41acd278d5c24f2e23eaaa3e37a15bdd08c9a0b5a61d2ebbe640aa84b7e35e9"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/ApprovalsPanel.tsx",
+        "sha256": "376c35bc4d409d347c3122c50cae9a249a4448abe5ea8214b5422d383e56b939"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/ChecksPanel.tsx",
+        "sha256": "745e348ac4f67ec17fd4f91666e411aa9aeb4b27e78d767ef0861737505bc8e3"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/CompensationsPanel.tsx",
+        "sha256": "db1a00c75bbd789ae75dff5d0b2cee48e158a2ed747bc36f0cf6982b40c50652"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/DecisionValues.tsx",
+        "sha256": "a65be62e04e96de82705949e7b0c7940a4796fce3ee4a0bf5044952d48c5d11c"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/DecisionsPanel.tsx",
+        "sha256": "db147e882f642b35cd9e42ce79f0c43a2ba1e26ada41e3b776990f2ec28e85fa"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/ExecutionBatchesPanel.tsx",
+        "sha256": "73915af44dcec03033d348884c041edbe3b3c26b8e3b8ff07ce96bae581a0be8"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/ExecutionsPanel.tsx",
+        "sha256": "cc0aab31d7acbcac3cec46618c1cd6bb7603cdb5803cee33ee5758b5a87b7405"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/InvestigationPanel.tsx",
+        "sha256": "5ce08ecbf0cec894a4972af2d4793d43ecffc77db90b83af3de3431333d9749a"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/RetailWorkspace.tsx",
+        "sha256": "2fb8c5b60e4840ffc4dede6dd6e7da8661d5770e7141e32b7e255bef4574e4ac"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/ReviewsPanel.tsx",
+        "sha256": "e54967d4e97cf44b6723333804a6aeba33115960be006ed30e4fa3c398c44bcb"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/SignalsPanel.tsx",
+        "sha256": "cd1f85520b982b304c8514848bb1e5e22ff677301425d65d5a6c4f31cd6ab207"
+      },
+      {
+        "path": "apps/electron/src/renderer/retail/retail.css",
+        "sha256": "eb668abf36d6cd858c1bd49c899d0debbbfe60ab90938ecac38484921ad898c0"
+      },
+      {
+        "path": "bun.lock",
+        "sha256": "251158c1cd72a68e5ba9cd67faae9869b8fdb6f2025faf79448b4fd7282b4844"
+      },
+      {
+        "path": "package.json",
+        "sha256": "2ede1833dd16e5c0c1385f5017cc2c73d0f4c7ce37df6d00876861b07066a116"
+      },
+      {
+        "path": "packages/retail-domain/skills/ads/SKILL.md",
+        "sha256": "8adb3c07a71cd26fc556a447188107f96b9bebbc8329c11ea212d817e011a427"
+      },
+      {
+        "path": "packages/retail-domain/skills/inventory/SKILL.md",
+        "sha256": "18d7eb7c166fa1b38261473be62e5caed28446c9570cae986d6aa14aef5e1a68"
+      },
+      {
+        "path": "packages/retail-domain/skills/margin/SKILL.md",
+        "sha256": "1568fa9c2411857b745964cdcc07dd9a5515049fb597662dce415d906aea8868"
+      },
+      {
+        "path": "packages/retail-domain/src/ads-numeric.test.ts",
+        "sha256": "55b26f6084c4dc455d87c9d2b3754912e0d98ab93ea6ba11311038c319487f51"
+      },
+      {
+        "path": "packages/retail-domain/src/ads-numeric.ts",
+        "sha256": "c959166092710e26c13e3673165b54340df27aa4c251c70e6549c288e93aedc5"
+      },
+      {
+        "path": "packages/retail-domain/src/approval-types.ts",
+        "sha256": "c2510bc2565d5cfa751249947f57392de4bf7fbdafa3585a4706ed036d3601e4"
+      },
+      {
+        "path": "packages/retail-domain/src/bundles.test.ts",
+        "sha256": "b67467f858939353fd960139e239967e987928bc525b46b8d1adcaf1ee028500"
+      },
+      {
+        "path": "packages/retail-domain/src/check-types.ts",
+        "sha256": "91c7c00865d4e030b0fb9ff4f59a1c12aab8e232b7ad94b7ccab5dc168fba09b"
+      },
+      {
+        "path": "packages/retail-domain/src/compensation.ts",
+        "sha256": "b6a361952fa8321c26af26884127791577f140902a2a2c34cfc2ea708e980783"
+      },
+      {
+        "path": "packages/retail-domain/src/contracts.test.ts",
+        "sha256": "ee7a2e8c6a6a051c96793591131c5c9eb9169b6ec1d13ab0582ec96232e303a7"
+      },
+      {
+        "path": "packages/retail-domain/src/decisions.test.ts",
+        "sha256": "09d5b66358a9f3aff748de4927a3371dbb1e48b4f361ee3d03beef66b55e2472"
+      },
+      {
+        "path": "packages/retail-domain/src/decisions.ts",
+        "sha256": "590efaf9afbb81d887b2e0d59c88745b30ee776d2324a06aacf8e99870b9a472"
+      },
+      {
+        "path": "packages/retail-domain/src/evaluation/catalog.ts",
+        "sha256": "58442ca5dc09f0ad024a74881303d1b92b28fb0e8809e0167c17f651b3c317b1"
+      },
+      {
+        "path": "packages/retail-domain/src/evaluation/evaluation.test.ts",
+        "sha256": "534babf9b003520339d34eec9c1a670ffabb26872b42745987d1ce36a3d8eae5"
+      },
+      {
+        "path": "packages/retail-domain/src/evaluation/runner.ts",
+        "sha256": "5864c50b8f9348e4114674fee552ee977eba999c132ff568990a5b8daa0c4a9b"
+      },
+      {
+        "path": "packages/retail-domain/src/evidence-policy.test.ts",
+        "sha256": "37af282cae2f24be0791e43d4e3e1c316169bdcf433ed7039720bd1eb310bdfa"
+      },
+      {
+        "path": "packages/retail-domain/src/evidence-policy.ts",
+        "sha256": "d4781cc15969998150ac1c6e0341dbdb71a6e9c274e2f31f9178c6a7c036f782"
+      },
+      {
+        "path": "packages/retail-domain/src/evidence-time-integration.test.ts",
+        "sha256": "1ff0d2486b9d8765a80d51b24d9cdeffd0b22e0c508fc5eed19d642a42f0cd44"
+      },
+      {
+        "path": "packages/retail-domain/src/execution-batches.ts",
+        "sha256": "c73d8e9434e04b4a48d0896eac26b41c479ecb224d8f14c4631281e99027c60d"
+      },
+      {
+        "path": "packages/retail-domain/src/gifts.test.ts",
+        "sha256": "6dba70c2724bf5831ed05a396695e6fc52da0c847b0679bed64033cf179a52d8"
+      },
+      {
+        "path": "packages/retail-domain/src/index.ts",
+        "sha256": "c7a056a822e1d945a7177dde67db3a96821a8b711d212e4672b4243e4a1c2d4c"
+      },
+      {
+        "path": "packages/retail-domain/src/inventory-numeric.test.ts",
+        "sha256": "4dd54213b3e589e441d83eebd23945f73958d427696f1095684bff173495ff7c"
+      },
+      {
+        "path": "packages/retail-domain/src/inventory-numeric.ts",
+        "sha256": "d04fc532aa290b79ae129c3384dfda12ea5856e4f7eb3aaceabfc219e5434b86"
+      },
+      {
+        "path": "packages/retail-domain/src/investigation-export.ts",
+        "sha256": "fce541df92e7fc0dc29a23d3ad8107f14780bf0a480791a6dbf6700f7d171c20"
+      },
+      {
+        "path": "packages/retail-domain/src/investigation-resume.test.ts",
+        "sha256": "05df5100254cc7faddc02002b1ebc392276968efbeebc8aca513f1f12372c27e"
+      },
+      {
+        "path": "packages/retail-domain/src/investigation-store.ts",
+        "sha256": "c44ed377defff8573c3c2759f1f8636c8a0c423c386f526836ddc2ec472c3605"
+      },
+      {
+        "path": "packages/retail-domain/src/investigations.test.ts",
+        "sha256": "7d6784fed620481811eca4df86319fc261fdc4f9757a2f270cb600be6d33fa76"
+      },
+      {
+        "path": "packages/retail-domain/src/investigations.ts",
+        "sha256": "8304e3babd40dd199603f7c0726726ff62b9a2786cef7f4936b9eab8d5593638"
+      },
+      {
+        "path": "packages/retail-domain/src/live-evaluation.test.ts",
+        "sha256": "edc9951858f08826ee434338c21c9a1b4f7b318df50f861959749643ba5652c6"
+      },
+      {
+        "path": "packages/retail-domain/src/live-evaluation.ts",
+        "sha256": "116ce5247a35730428947f4f15d77f4678286c2f9be8139c0189015159bbaaa8"
+      },
+      {
+        "path": "packages/retail-domain/src/margin-evidence.test.ts",
+        "sha256": "4e21c7f4e9ef50f30afece5c631ee13b7ff2afbaa7d0720985c625e421b65af2"
+      },
+      {
+        "path": "packages/retail-domain/src/margin-evidence.ts",
+        "sha256": "50f090919eff2b359609cab57d7302478c65bdcbca47ca22e349990462573a2a"
+      },
+      {
+        "path": "packages/retail-domain/src/margin-numeric.test.ts",
+        "sha256": "8984c487bdc4ac2886d8cb2ace2fc020127f13d5a5e6e512805ea342b1257f49"
+      },
+      {
+        "path": "packages/retail-domain/src/margin-numeric.ts",
+        "sha256": "8631b0925f8ddaad4212fc06f948488fd46e971575708adafce12f031c7fdbc3"
+      },
+      {
+        "path": "packages/retail-domain/src/margin-review-evaluation.ts",
+        "sha256": "a365512ab615b528ec31f31eaa59f5913beaca2b70adb8784c25d9b915c8a733"
+      },
+      {
+        "path": "packages/retail-domain/src/membership.test.ts",
+        "sha256": "68d78d0edc7aca156f1e130e27651425d202d8428c38470b7f1590125f74c90f"
+      },
+      {
+        "path": "packages/retail-domain/src/offers.test.ts",
+        "sha256": "8231a9a9c5271ac834253282a11fd59d49c48a970024abba5fd0e971f42c00f4"
+      },
+      {
+        "path": "packages/retail-domain/src/offers.ts",
+        "sha256": "84e8d11104c28ae5e84c94218a5dfcf0e6038353c4d9bd49e88c2b1ca29a453b"
+      },
+      {
+        "path": "packages/retail-domain/src/operations.test.ts",
+        "sha256": "25d6c14aaa3224b48e0c577a29f62555b17cf122a6a7178849f23656a49381b3"
+      },
+      {
+        "path": "packages/retail-domain/src/operations.ts",
+        "sha256": "c9eda1a6c88066e49c8b5263c3b63c45fa47d2836ee3f1d2822fa718c0d4a91f"
+      },
+      {
+        "path": "packages/retail-domain/src/outcome-reviews.ts",
+        "sha256": "d23a11ccb54c31467849e185e52edd85616b1944c3d14b1f85f56c2498b8c62d"
+      },
+      {
+        "path": "packages/retail-domain/src/readonly-tools.ts",
+        "sha256": "7e99847817c7dd8e0e1b66c4c11b7a1d975cdc958897d5c904afa9755c31fa96"
+      },
+      {
+        "path": "packages/retail-domain/src/related-evidence.test.ts",
+        "sha256": "b06321258efcde1f083e2df818365625c279366ecc981bb69ad8ed9b81b197b8"
+      },
+      {
+        "path": "packages/retail-domain/src/related-evidence.ts",
+        "sha256": "2b951a401fad53421f36cae96bd8c626ce640ae3a7fd1fca5b6bc71668066e3f"
+      },
+      {
+        "path": "packages/retail-domain/src/retail-query.test.ts",
+        "sha256": "21d7db13ec4cdad5ecd02c38c0897dcd2c89d5e8c9ef65b5c1ba06c39300e82a"
+      },
+      {
+        "path": "packages/retail-domain/src/retail-query.ts",
+        "sha256": "b9368967ca4a8dacdc99b7131b01b8afdbe8a9fd827e6c88d2f26898c3226c37"
+      },
+      {
+        "path": "packages/retail-domain/src/scheduled-checks.test.ts",
+        "sha256": "4c645d18c11e10e9c8a5d83a061d2bbcafe8e0b36922cacc5caca287a9e15463"
+      },
+      {
+        "path": "packages/retail-domain/src/scheduled-checks.ts",
+        "sha256": "d957c3952d95e67f3ef0d6e21ad413f2114d987b18b7d0c74185e2e8824929bf"
+      },
+      {
+        "path": "packages/retail-domain/src/signal-investigations.test.ts",
+        "sha256": "68aa6febf8f530e203b11df1c3f4b4e2303440489682689cb7ec4fcae61138ba"
+      },
+      {
+        "path": "packages/retail-domain/src/signal-investigations.ts",
+        "sha256": "4bdba69481838ed28eb39dae8ae4177aa6e3a94bbd33bda72ca4517ec1278889"
+      },
+      {
+        "path": "packages/retail-domain/src/signal-page.ts",
+        "sha256": "f4c2204c53338fa4ac3f7693a33f5b1875315cd11750faba158cfd0c7243f093"
+      },
+      {
+        "path": "packages/retail-domain/src/signal-query.test.ts",
+        "sha256": "14a0e9985e1ce1072c359bbb3b7f6e2e84f901ba39b1095c59a4b0eda4e8f8d4"
+      },
+      {
+        "path": "packages/retail-domain/src/signal-query.ts",
+        "sha256": "c98be26983049c36c0a4e83aae5eaf9b3444f0c7ad38df2c6b77c58a98167911"
+      },
+      {
+        "path": "packages/retail-domain/src/signal-store.ts",
+        "sha256": "a52d3c021120687a16215cced57bd50306565eaa1a710c14ef1ce23285593f0b"
+      },
+      {
+        "path": "packages/retail-domain/src/signals.test.ts",
+        "sha256": "ab4cba49908e7bfdedf0972d7f13538984fe4ffbb4319538dc38b2a0f5ae3682"
+      },
+      {
+        "path": "packages/retail-domain/src/signals.ts",
+        "sha256": "6a1fbb79bd3b8a5986ed3eadc77901c205a224e50548cd967b35ea0aab310d36"
+      },
+      {
+        "path": "packages/retail-domain/src/simulation.ts",
+        "sha256": "03fe86819db2ca77cf63fcafb9ee35b28c23048862778204c57a7e39063504d6"
+      },
+      {
+        "path": "packages/retail-domain/src/store.ts",
+        "sha256": "a0353219929b042122fb4d641cf3f46a57edcbc95c34d699f002a41a2ab75c50"
+      },
+      {
+        "path": "packaging/windows-release.json",
+        "sha256": "df1162976921c4957c9761d12b7921c9b7612d2a29c81aad137299d1f0b8e5fc"
+      },
+      {
+        "path": "scripts/merqo-bundle-desktop-check.cjs",
+        "sha256": "d5cfcb94de57fd9ab9753c53c005268426a23d6435277f66ead192c421ea6687"
+      },
+      {
+        "path": "scripts/merqo-business-eval.ts",
+        "sha256": "25a821697ae68bb7fbd8c575ac2e06f48282f8257013f51e56fa2b4d6f9a99de"
+      },
+      {
+        "path": "scripts/merqo-gift-desktop-check.cjs",
+        "sha256": "87bc213385e6907c6cccd4daa991d9938999c442d80b61c30a356b4129ff7644"
+      },
+      {
+        "path": "scripts/merqo-installer-check.cjs",
+        "sha256": "ba3cbf9924c2545bd86e7b9aed7c658914d96a0fd1707976c729e6a3dafb4798"
+      },
+      {
+        "path": "scripts/merqo-legacy-packaged-smoke.cjs",
+        "sha256": "750997f9605009b648a6182231c76e688a7b440076f6e7c0dc766eee1791149a"
+      },
+      {
+        "path": "scripts/merqo-live-eval.ts",
+        "sha256": "23132d010b778e0ad313a568c77bd8be6c477bac9af3028d665b77df844a57cb"
+      },
+      {
+        "path": "scripts/merqo-margin-review-eval.ts",
+        "sha256": "4d6741161c61b65e7f2d8a7d82877f842c524f7ed17da8c61c780dacc7469641"
+      },
+      {
+        "path": "scripts/merqo-mcp-check.ts",
+        "sha256": "d2c51c7d69152a235ec63f59a374bd1c69391ae260f396b8ea5c56ab868b58d0"
+      },
+      {
+        "path": "scripts/merqo-member-desktop-check.cjs",
+        "sha256": "31a4588de4bb23d93c40841921a481a80aea4b5820fc5634b0449dbe0eff5f73"
+      },
+      {
+        "path": "scripts/merqo-model-check.ts",
+        "sha256": "eeebb399c956aeb653e9722168f96a089db1a301f1dd9201a48c75c4f8f18a3e"
+      },
+      {
+        "path": "scripts/merqo-offer-desktop-check.cjs",
+        "sha256": "186d81021b54a3e9d8ed61af26abd172ef188e042c2c4a5fde8e1976ed415aeb"
+      },
+      {
+        "path": "scripts/merqo-package-win.cjs",
+        "sha256": "d054ee0cd12704d40bb8d9dde5f9a3492d0ef6901f4cc29d5f422479deb20752"
+      },
+      {
+        "path": "scripts/merqo-packaged-smoke.cjs",
+        "sha256": "31e6cb8adf68bdd04613348e8aed0a8e90da5be126fae5b6e1c0a8f64cc1eedb"
+      },
+      {
+        "path": "scripts/merqo-performance-eval.ts",
+        "sha256": "3d58b9f53be6b3f445946304c30b0407c29505515c83edd41d85a2df57f6aa84"
+      },
+      {
+        "path": "scripts/merqo-retail-mcp.ts",
+        "sha256": "7fd3d620fddd17b7b8551049b43643349ceeb61f22c1828fae1fc71fc066147a"
+      },
+      {
+        "path": "scripts/merqo-signal-pagination-ui.cjs",
+        "sha256": "82c183d2e58e7e5cced10a8e6db757d327d4953cf9bd32f344f19ceeae06ff6b"
+      },
+      {
+        "path": "scripts/merqo-signal-pagination.test.ts",
+        "sha256": "e775b06abb0ebb128b68fed2c756d9ee7825799127ecc5a639c9adc0b12a869e"
+      },
+      {
+        "path": "scripts/merqo-signal-performance-eval.ts",
+        "sha256": "5ab5ec0cd05c2d36e034899531baa8b9240c54bc716fa859d9ab9f040d72fda4"
+      },
+      {
+        "path": "scripts/merqo-upgrade-check.cjs",
+        "sha256": "c340e67e46769a1073d30784c92b877ee9446a765f1a824c8c82dd572484ce8a"
+      },
+      {
+        "path": "scripts/merqo-write-skills.ts",
+        "sha256": "7758d5b7bb3e30f7b4b7309b4bcd99771a280ca6881c3e2625c6b1880f907592"
+      },
+      {
+        "path": "scripts/retailpilot-data-worker.ts",
+        "sha256": "576a1d8b506ff5e1c56fc63512be2809e7571dca15c39839c73337a3d6ec51d7"
+      },
+      {
+        "path": "scripts/retailpilot-desktop-smoke.cjs",
+        "sha256": "e4af71b482034e51bad020b3365d8f9ee510c66db0a3ca5ed10237783d9d504f"
+      },
+      {
+        "path": "scripts/retailpilot-icons.cjs",
+        "sha256": "2c3556ebbbe8c4c5d2086129c3db38027c0f77421316e7b45efe0187755237db"
+      },
+      {
+        "path": "scripts/retailpilot-launch.ts",
+        "sha256": "fa865206a9bbdef3b3d0670aeb8ea58f461cd94f54fd3b5dd60619a59f0c6073"
+      },
+      {
+        "path": "scripts/retailpilot-m1-e2e.cjs",
+        "sha256": "9afbd06d5e9253d1340721392d447bec123c596a31a914cfc0312f833cd90ff8"
+      },
+      {
+        "path": "scripts/retailpilot-m1-host.cjs",
+        "sha256": "5a3b9541bc5192dc82898525d95a08c6de0b3fd3fac9435fdf48c95772009bcc"
+      },
+      {
+        "path": "scripts/retailpilot-persistence-host.cjs",
+        "sha256": "1ed25fde5fff2aaeeb710e48a3ea222779869b9130e77f062074f9b52b4992f0"
+      },
+      {
+        "path": "scripts/retailpilot-run-desktop-smoke.cjs",
+        "sha256": "d36293aa8f3e1c9eaa320ce1c5987fa6e0da4ca4045b63d5b59c7288f92a7934"
+      },
+      {
+        "path": "scripts/retailpilot-sqlite-probe.ts",
+        "sha256": "d0f5c2c7f8e70f039d8ea13274997c296e13ea02f1e515bc7ce1044212f0c6f7"
+      },
+      {
+        "path": "scripts/retailpilot-verify-baseline.cjs",
+        "sha256": "0526b8897ebfd6219244b414bac9af26af55fe2f870f9f5c929394e58ab5e8f3"
+      },
+      {
+        "path": "scripts/retailpilot-window-lifecycle.cjs",
+        "sha256": "15857f4f439d683660e51eb2797a427eb75b61fe7be7200cae8585c7de0d8d6f"
+      },
+      {
+        "path": "scripts/retailpilot-write-fixtures.ts",
+        "sha256": "aba79085500940c6881dd940cc8256dc8f4c5d127c6bf0ea4751ff1f5b2dc2ce"
+      },
+      {
+        "path": "scripts/retailpilot-write-signal-fixtures.ts",
+        "sha256": "a2868ea2811730bb134275de497f52e0b4a3989c3622585bb7adc69dc4542b95"
+      }
+    ]
+  },
+  "runtime": {
+    "bun": "1.4.2",
+    "platform": "win32",
+    "osRelease": "10.0.26200",
+    "arch": "x64",
+    "cpu": "AMD Ryzen 9 7945HX with Radeon Graphics        ",
+    "totalMemoryBytes": 16844886016
+  },
+  "checks": [
+    {
+      "id": "domain",
+      "status": "passed",
+      "tests": 254,
+      "assertions": 1904,
+      "exitCode": 0,
+      "log": "domain.log"
+    },
+    {
+      "id": "evaluation-metadata",
+      "status": "passed",
+      "tests": 3,
+      "assertions": 228,
+      "exitCode": 0,
+      "log": "evaluation-metadata.log"
+    },
+    {
+      "id": "business-release-gate",
+      "status": "blocked_as_expected",
+      "exitCode": 1,
+      "summary": {
+        "total": 48,
+        "passed": 48,
+        "failed": 0,
+        "unsupported": 0
+      },
+      "releaseReady": false
+    },
+    {
+      "id": "mcp",
+      "status": "passed",
+      "exitCode": 0,
+      "log": "mcp.log"
+    },
+    {
+      "id": "electron-types",
+      "status": "passed",
+      "exitCode": 0,
+      "log": "electron-types.log"
+    },
+    {
+      "id": "native-initial",
+      "status": "passed_after_harness_fix",
+      "checks": 56,
+      "exitCode": 0
+    },
+    {
+      "id": "native-restart",
+      "status": "passed",
+      "checks": 16,
+      "exitCode": 0
+    }
+  ],
+  "gateGroups": [
+    {
+      "id": "source-and-joint-evidence",
+      "status": "failed",
+      "open": [
+        "F02",
+        "D04-D07",
+        "B1"
+      ]
+    },
+    {
+      "id": "actions-rules-and-transactions",
+      "status": "failed",
+      "open": [
+        "D01",
+        "D02",
+        "D03",
+        "C04",
+        "W02"
+      ]
+    },
+    {
+      "id": "ui-and-security",
+      "status": "partial",
+      "open": [
+        "A5",
+        "G02",
+        "G07",
+        "W03",
+        "W08"
+      ]
+    },
+    {
+      "id": "new-package",
+      "status": "not_accepted",
+      "open": [
+        "G09"
+      ]
+    }
+  ],
+  "externalAcceptance": {
+    "status": "not_run",
+    "blocksLocalAcceptance": false,
+    "items": [
+      "clean Windows environment",
+      "other Windows versions"
+    ]
+  },
+  "historicalEvidence": {
+    "liveModel": "v4: margin 5/5, inventory 4/5, ads 5/5; not rerun for current source",
+    "performance": "three scene 100k/30 query runs recorded previously; not rerun for current source"
+  },
+  "releaseReady": false,
+  "published": false,
+  "logs": [
+    {
+      "path": "business-dataset.json",
+      "sha256": "a288eb2258b58ed331e99dffb8cd732e292080b2cb93a58a530c1f53717d34b5"
+    },
+    {
+      "path": "business-first-report.json",
+      "sha256": "d591effb9397f5cbf0968b225c0dd08b18952d78261675653ccfc0bdf0ca5fce"
+    },
+    {
+      "path": "business-gate.log",
+      "sha256": "d9a8e055697070bc0751fb402db7022af16fdea4fe3521fb1952e17cb5a4c2b5"
+    },
+    {
+      "path": "business-report.json",
+      "sha256": "bd940606cae596573831abca521d874cf1b419da54e64eac654cb7eccb47aab5"
+    },
+    {
+      "path": "domain.log",
+      "sha256": "841d3114079e8111682f60d3f902028f9e87452f160d9657fe0083e5e8f32219"
+    },
+    {
+      "path": "electron-types.log",
+      "sha256": "0006824b6071ff00e392c6689aa4f327f51519129bcb299628bdffe47cfce9bd"
+    },
+    {
+      "path": "evaluation-metadata.log",
+      "sha256": "7b6b98ce4931a466ff375959a118fbb61878e05b43a76ad3f64479387189ee63"
+    },
+    {
+      "path": "mcp.log",
+      "sha256": "500b2b18e91e477e0b6c3f5cf689db43943be85f0e23724dd373621b81ccfc7f"
+    },
+    {
+      "path": "native-first-failure.json",
+      "sha256": "73d392cc299cb6f366284b56ad54466f7c461d1b6cdc214710ce17be0796c758"
+    },
+    {
+      "path": "native-first-process.log",
+      "sha256": "f076f03582cb0bc8128303055464e2cb47ac7b514e4e1e51662e99463db280c6"
+    },
+    {
+      "path": "native-first.log",
+      "sha256": "33d986227660aa537ed9ed747ee245810971d6dc2b631ff65ccaf6e4ac4310e1"
+    },
+    {
+      "path": "native-initial-process.log",
+      "sha256": "67eb7bf3fce2520111fa77736e48b6b038b7010439d8d64882b4733333c92c59"
+    },
+    {
+      "path": "native-initial.json",
+      "sha256": "7e38506181e4989bc1d70290acb59bbaaed7fdf3a941ccc50a3d2f64d2b9ca6e"
+    },
+    {
+      "path": "native-restart-process.log",
+      "sha256": "24820afcd467a9a7487490b72475e8d9c830893b9a8e514b9cab190816970d6a"
+    },
+    {
+      "path": "native-restart.json",
+      "sha256": "97efef53956cf66638e540086cd01096a5d67fa0c5ae27068ed9808eaf643bcb"
+    },
+    {
+      "path": "native.log",
+      "sha256": "849d864bbc444cb025050c10cce91d79fc198ce1fd736b34f1265d831936a59e"
+    }
+  ]
+}

@@ -1,0 +1,239 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\decisions.test.ts:
+(pass) deterministic draft binds amounts, scope, evidence and digest; create is idempotent [258.53ms]
+(pass) submission is idempotent, does not mutate business values, revisions supersede exact old requests [199.67ms]
+(pass) two connections enforce optimistic revision version and durable restart history [229.02ms]
+(pass) inventory: evidence gaps block submission even if a draft is saved [190.94ms]
+(pass) ads: evidence gaps block submission even if a draft is saved [186.83ms]
+(pass) late replenishment, offline replay and reviewer refusal never enter pending approval [198.58ms]
+(pass) cross-scenario action, incomplete investigation and no-op observation fail safely [169.24ms]
+(pass) current snapshot replacement and quality conflicts block a previously valid draft [152.03ms]
+(pass) CSV is analysis only and cannot use demo simulation exception [132.16ms]
+(pass) expired draft, invalid import time and tampered action digest block submission [155.69ms]
+(pass) workspace mismatch and renderer-supplied actor, amounts, approval and paths reject [168.03ms]
+(pass) JSON and Markdown exports retain all evidence and contain untrusted text safely [176.43ms]
+84 |  const md=exportInvestigation(run,'md').content;expect(md).toContain('&lt;script&gt;');expect(md).toContain('````json');expect(md).toContain(run.recordId);expect(exportInvestigation({...run,report:null,error:'failed'},'json').content).toContain('failed');
+85 | });
+86 | 
+87 | test('future decision schema refuses downgrade before creating new business tables',()=>{
+88 |  const db=new Database(file+'.investigations.sqlite');db.exec('DELETE FROM decision_schema;INSERT INTO decision_schema VALUES(7)');
+89 |  expect(()=>new DecisionStore(file,'test-workspace',current)).toThrow('版本高于');db.close();
+                                                                   ^
+error: expect(received).toThrow(expected)
+
+Expected substring: "版本高于"
+
+Received function did not throw
+Received value: DecisionStore {
+  workspaceId: "test-workspace",
+  current: [Function: current],
+  db: Database {
+    filename: "C:\\Users\\29486\\AppData\\Local\\Packages\\sandbox.{1b41c158-82d3-4a4c-81a9-16dce517718a}\\AC\\Temp\\merqo-decisions-xMsQHR\\operations.sqlite.investigations.sqlite",
+    handle: [Getter],
+    inTransaction: [Getter],
+    loadExtension: [Function: loadExtension],
+    serialize: [Function: serialize],
+    fileControl: [Function: fileControl],
+    close: [Function: close],
+    clearQueryCache: [Function: clearQueryCache],
+    run: [Function: run],
+    prepare: [Function: prepare],
+    query: [Function: query],
+    transaction: [Function: transaction],
+    exec: [Function: run],
+    [Symbol(Symbol.dispose)]: [Function],
+    [Symbol(prepareOwned)]: [Function],
+    [Symbol(Bun.Database.cache.count)]: [Getter],
+  },
+  close: [Function: close],
+  run: [Function: run],
+  raw: [Function: raw],
+  make: [Function: make],
+  blockers: [Function: blockers],
+  requestFor: [Function: requestFor],
+  projection: [Function: projection],
+  view: [Function: view],
+  list: [Function: list],
+  forInvestigation: [Function: forInvestigation],
+  history: [Function: history],
+  approvalView: [Function: approvalView],
+  approvals: [Function: approvals],
+  resolveApproval: [Function: resolveApproval],
+  executions: [Function: executions],
+  executeSimulation: [Function: executeSimulation],
+  reconcileExecution: [Function: reconcileExecution],
+  decorateBatch: [Function: decorateBatch],
+  executionBatches: [Function: executionBatches],
+  executionBatch: [Function: executionBatch],
+  createExecutionBatch: [Function: createExecutionBatch],
+  claimBatchItem: [Function: claimBatchItem],
+  settleBatchItem: [Function: settleBatchItem],
+  recoverExecutionBatch: [Function: recoverExecutionBatch],
+  runExecutionBatch: [Function: runExecutionBatch],
+  review: [Function: review],
+  reviews: [Function: reviews],
+  createReview: [Function: createReview],
+  previewObservation: [Function: previewObservation],
+  observeReview: [Function: observeReview],
+  finalizeReview: [Function: finalizeReview],
+  searchCases: [Function: searchCases],
+  compensations: [Function: compensations],
+  createCompensation: [Function: createCompensation],
+  reviseCompensation: [Function: reviseCompensation],
+  resolveCompensation: [Function: resolveCompensation],
+  executeCompensation: [Function: executeCompensation],
+  reconcileCompensation: [Function: reconcileCompensation],
+  save: [Function: save],
+  create: [Function: create],
+  revise: [Function: revise],
+  submit: [Function: submit],
+}
+
+      at <anonymous> (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\retail-domain\src\decisions.test.ts:89:63)
+19 | import type { SimulationApprover } from './approval-types';
+20 | import type { AnyInvestigation, ModelPort, Scenario } from './investigations';
+21 | let dir: string; let file: string; let data: RetailStore; let signals: SignalStore; let runs: InvestigationStore; let decisions: DecisionStore;
+22 | const current=()=>[...data.snapshot().records,...signals.snapshot().records];
+23 | beforeEach(()=>{dir=mkdtempSync(join(tmpdir(),'merqo-decisions-'));file=join(dir,'operations.sqlite');data=new RetailStore(file);data.import(DEMO_CSV,undefined,'demo');signals=new SignalStore(file+'.signals.sqlite');signals.demo();runs=new InvestigationStore(file+'.investigations.sqlite');decisions=new DecisionStore(file,'test-workspace',current);});
+24 | afterEach(()=>{setSystemTime();decisions.close();runs.close();signals.close();data.close();rmSync(dir,{recursive:true,force:true});});
+                                                                                                ^
+error: EBUSY: resource busy or locked, rm 'C:\Users\29486\AppData\Local\Packages\sandbox.{1b41c158-82d3-4a4c-81a9-16dce517718a}\AC\Temp\merqo-decisions-xMsQHR'
+      at <anonymous> (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\retail-domain\src\decisions.test.ts:24:92)
+(fail) future decision schema refuses downgrade before creating new business tables [228.27ms]
+(pass) calculation changes require a new reviewed investigation rather than only a fresh draft revision [202.68ms]
+(pass) approved exact-version resolution and audit survive restart and never change source business values [228.38ms]
+(pass) rejection requires reason, is immutable, and cannot be overwritten by another connection [237.58ms]
+(pass) new revision supersedes an already approved request and preserves its original conclusion [200.69ms]
+(pass) evidence changes invalidate pending request and persist even when attempted approval returns an error [234.59ms]
+(pass) invalidated approval cannot resurrect when evidence callback later reports original values again [263.49ms]
+(pass) expired application latches expiry and never creates a resolution [358.74ms]
+(pass) stale expected version or hash, missing server role and forged renderer identity reject [212.04ms]
+(pass) report changes invalidate an existing approval and retain the original report digest [206.02ms]
+(pass) v1 migration creates a readable consistent backup and retains existing pending requests [263.81ms]
+(pass) approved authorization expires at the exact deadline and remains expired after clock restoration [234.59ms]
+(pass) pending old version cannot be approved from a stale open page after revision [203.37ms]
+(pass) two independent worker processes racing approval and rejection produce one durable conclusion [663.22ms]
+(pass) margin: approved action writes isolated simulation state and immutable reconciled receipt [226.31ms]
+(pass) inventory: approved action writes isolated simulation state and immutable reconciled receipt [208.22ms]
+(pass) ads: approved action writes isolated simulation state and immutable reconciled receipt [205.60ms]
+(pass) simulation execution denies forged role, version/hash, scope and renderer amounts [225.82ms]
+(pass) expired, superseded and replaced evidence stop approved execution and persist failed attempts [260.66ms]
+(pass) two approved actions for one resource detect target version conflict rather than overwrite [223.56ms]
+(pass) receipt insert failure rolls back effects while failure attempt persists and retry succeeds once [224.18ms]
+(pass) lost response and restart recover exact receipt; repeated success after expiry never executes twice [237.37ms]
+(pass) reread reconciliation reports later drift, preserves original receipt and never overwrites state [235.88ms]
+(pass) two independent worker execution requests return one receipt and one side effect [706.76ms]
+(pass) v2 migration backs up approvals and queues legacy valid approved decisions without effects [264.12ms]
+(pass) tampered execution amounts cannot diverge from approved deterministic action [233.23ms]
+(pass) abandoned uncommitted local write rolls back on process exit and ready job can recover [605.86ms]
+(pass) later reviewed evidence can start from the current simulated value without overwriting unrelated state [256.92ms]
+(pass) built-in replenishment variant only changes demo lead time and preserves the blocked risk example [175.06ms]
+(pass) approval and ready item commit together; queue failure cannot leave an executable orphan approval [225.88ms]
+(pass) compensation requires new approval, restores ads baseline, rereads and preserves original history and sources [224.44ms]
+(pass) margin restoration below floor blocks, corrected fresh evidence can be reviewed without bypassing rules [216.12ms]
+(pass) pending replenishment cancellation does not receive stock and legacy pending receipts remain cancellable [204.77ms]
+(pass) accepted replenishment or unknown state cannot be cancelled by compensation [213.34ms]
+(pass) compensation denies roles, stale version/hash, forged payload and cross-workspace access [269.20ms]
+(pass) compensation rejection and revisions retain immutable conclusions and invalidate the approved old version [250.26ms]
+(pass) compensation approval and execution expire independently, invalidation persists after clock restoration [215.89ms]
+(pass) compensation is a new grant and can restore historical success after original approval expiry [235.68ms]
+(pass) source changes invalidate compensation approval even when failed resolve returns an error [221.51ms]
+(pass) later target modification including ABA cannot be overwritten or bypassed with a compensation revision [230.78ms]
+(pass) compensation receipt failure rolls back effect and audit; retry preserves failed attempt and succeeds once [223.71ms]
+(pass) compensation pending approval and lost-response success survive restart, repeated success never applies twice [250.39ms]
+(pass) compensation reread detects drift while retaining original execution and compensation receipts [220.26ms]
+(pass) independent workers racing compensation execution produce one restoration and one receipt [592.81ms]
+(pass) v3 migration backs up original execution ledger and supports legacy pending inventory compensation [259.43ms]
+(pass) compensation initial reread mismatch cannot be recorded as successful restoration [216.37ms]
+(pass) batch freezes individually approved actions; successful run remains idempotent and source isolated [239.13ms]
+(pass) batch partial success retains first receipt; only confirmed failed item may be retried [243.53ms]
+(pass) unknown after abandoned claim blocks retries; local proof fences old token and permits explicit continue [224.71ms]
+(pass) committed action with lost checkpoint recovers from exact receipt without applying it again [462.64ms]
+(pass) partial batch still revalidates evidence and current approval on each action [218.51ms]
+(pass) batch rejects unapproved, cross-workspace, repeated resource, malformed and forged-role requests [273.84ms]
+(pass) batch lease and failed work survive restart; recovery never trusts an unbound receipt [222.90ms]
+(pass) actual worker process exit after claiming leaves durable unknown intent and no business effect [479.86ms]
+(pass) independent batch runners never duplicate success even when one sees a busy claim [623.19ms]
+(pass) v4 migration preserves compensation receipts and adds batch tables with a consistent backup [286.26ms]
+(pass) forward simulation reread mismatch rolls back the effect and success receipt [189.41ms]
+(pass) margin: outcome replay freezes source, compares actual input values and persists reviewed Case [204.77ms]
+(pass) inventory: outcome replay freezes source, compares actual input values and persists reviewed Case [232.35ms]
+(pass) ads: outcome replay freezes source, compares actual input values and persists reviewed Case [216.13ms]
+(pass) future window and missing observation cannot be finalized; waiting state survives clock changes [207.77ms]
+(pass) observation preview checks exact scope, window, baseline values, attribution and checksum [209.13ms]
+(pass) missing costs remain unknown, require inconclusive result and preserve earlier versions [207.90ms]
+(pass) review role, version, observation hash and unexecuted job are enforced server-side [210.03ms]
+(pass) reviewed cases are scoped by source, business date, review time, dimensions and frozen at investigation creation [224.44ms]
+(pass) concurrent reviewers preserve a single immutable Case and cannot overwrite each other [604.46ms]
+(pass) v5 migration backs up a real execution batch and receipt before adding reviews [292.74ms]
+(pass) inventory: historical Case filters exact warehouse or Campaign and workspace [230.84ms]
+(pass) ads: historical Case filters exact warehouse or Campaign and workspace [363.54ms]
+(pass) explicit follow-up loads only reviewed built-in synthetic observation and freezes Case without execution [833.38ms]
+(pass) margin: old synthetic import remains eligible while new draft and approval gates still apply [198.57ms]
+(pass) inventory: old synthetic import remains eligible while new draft and approval gates still apply [187.68ms]
+(pass) ads: old synthetic import remains eligible while new draft and approval gates still apply [185.70ms]
+(pass) explicit sample restore creates a new evidence revision and never revives prior approval after a round trip [172.49ms]
+(pass) draft blockers distinguish offline, needs-evidence and rejection without granting approval [176.78ms]
+(pass) bundle evidence gaps cannot enter approval even with a protocol Reviewer pass [182.93ms]
+(pass) bundle simulation, observation identity and Case matching preserve the component contract [189.91ms]
+(pass) gift uncertainty and CSV origin cannot enter approval despite a protocol Reviewer pass [197.16ms]
+(pass) gift-inclusive coupon target executes once and keeps observation/Case/follow-up association [502.35ms]
+(pass) membership unknown/expired/conflicting policy and CSV origin cannot enter approval [234.61ms]
+(pass) membership coupon simulation preserves cohort, effective price and frozen Case through a real worker [549.18ms]
+(pass) changed membership evidence invalidates an approval before any simulation side effect [199.86ms]
+(pass) unknown or unavailable reference offers block approval and CSV cannot gain execution privileges [247.97ms]
+(pass) offer reference never becomes sale price, survives synthetic observation and freezes scoped Case through worker [596.22ms]
+(pass) changed reference availability invalidates exact approval before any simulation side effect [209.94ms]
+
+packages\retail-domain\src\investigation-resume.test.ts:
+(pass) pause is durable, exact-epoch resume fences all late writes and preserves frozen evidence [90.68ms]
+(pass) resume never resets call budget or duplicates an active investigation [77.03ms]
+(pass) interrupted lease can explicitly continue with a new deadline, while completed reports cannot resume [83.53ms]
+
+packages\retail-domain\src\investigations.test.ts:
+(pass) bounded retail investigation > offline replay is labeled and scenarios independently recover 20% margin [65.12ms]
+(pass) bounded retail investigation > model chooses four scoped tools then produces cited report and sequential review [64.53ms]
+(pass) bounded retail investigation > rejects nonexistent citations and refuses unsupported tools [129.24ms]
+(pass) bounded retail investigation > requires all evidence tools and two distinct plans [65.51ms]
+(pass) bounded retail investigation > tool loops and expired investigations terminate explicitly [67.85ms]
+(pass) bounded retail investigation > missing costs remain unknown, all calculated options fail closed [65.59ms]
+(pass) bounded retail investigation > coupon limits cannot manufacture a feasible plan [60.97ms]
+(pass) bounded retail investigation > no model is never silently converted to replay [63.20ms]
+(pass) bounded retail investigation > duplicates reuse one run; retries create history and immutable evidence survives restart [84.22ms]
+(pass) bounded retail investigation > expired lease recovers as failed and late completion cannot overwrite it [79.86ms]
+(pass) bounded retail investigation > renderer cannot forge worker updates or workspace paths [57.43ms]
+(pass) bounded retail investigation > workspace concurrency limit is enforced across independent store connections [66.99ms]
+(pass) exact investigation lookup remains available beyond recent-list limits [125.22ms]
+(pass) Reviewer receives analysis-only scope and may still request evidence or reject [63.48ms]
+(pass) margin tools state per-sales-unit versus snapshot totals without altering arithmetic [58.05ms]
+(pass) contradictory MCP amounts terminate before Reviewer and preserve tool trace [66.66ms]
+(pass) numeric audit survives report storage and legacy reports are not backfilled [92.50ms]
+(pass) model numeric prose is corrected within the existing budget, not silently accepted [65.37ms]
+
+packages\retail-domain\src\margin-numeric.test.ts:
+(pass) numeric audit separates unit, total and coupon delta with exact frozen citations [40.29ms]
+(pass) contradictory money, unit, quantity, threshold and computed action are refused [38.20ms]
+(pass) missing, duplicate and cross-record citations never receive numeric audit [37.23ms]
+(pass) business-time metadata cannot be replaced with a claimed source timestamp [32.74ms]
+(pass) unknown values remain null, zero totals remain zero and negative margin is retained [36.63ms]
+(pass) model prose cannot smuggle digits or business numerals outside code facts [36.14ms]
+
+packages\retail-domain\src\price-action.test.ts:
+(pass) integer price target changes no discounts and rejects unsupported, excessive or no-op prices [148.25ms]
+(pass) reviewed price binds independent values, approval, idempotent execution/readback and unsafe compensation refusal [175.69ms]
+(pass) coupon and direct price share the resource version; later approved action cannot overwrite the first [183.54ms]
+(pass) safe price reduction supports separately approved compensation and original coupon remains unchanged [174.26ms]
+(pass) price investigation cannot reuse a coupon report, tamper tools or use CSV/offline approval [477.51ms]
+
+packages\retail-domain\src\related-evidence.test.ts:
+(pass) cross-scenario boundary, unknown spec, period mismatch, ambiguity and truncation remain explicit [79.75ms]
+(pass) worker-created bundle survives source correction, restart, MCP scope and exports; all three audits consume frozen context [1089.46ms]
+
+1 tests failed:
+(fail) future decision schema refuses downgrade before creating new business tables [228.27ms]
+
+ 130 pass
+ 1 fail
+ 830 expect() calls
+Ran 131 tests across 6 files. [30.91s]

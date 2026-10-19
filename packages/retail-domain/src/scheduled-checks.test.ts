@@ -115,3 +115,37 @@ test('unsupported future ledger versions are rejected without overwriting result
   expect(() => new ScheduledChecks(file, 'a', () => [])).toThrow('数据库版本');
   expect(checks.view().runs).toHaveLength(1);
 });
+
+test('one-shot source failure discards staged findings and retry commits exactly once', () => {
+  checks.close(); let fail = true;
+  const base = data.snapshot().records.find(row => row.status !== 'normal')!;
+  checks = new ScheduledChecks(file, 'a', function* () {
+    yield base;
+    if (fail) throw new Error('源游标中断');
+    yield { ...base, row: { ...base.row, sku_id: 'stream-second' } };
+  }, () => now);
+  const failed = checks.run('manual').runs[0]!;
+  expect(failed.status).toBe('failed');
+  const db = new Database(file);
+  try { expect(db.query<{ n: number }, []>('SELECT count(*) AS n FROM check_findings').get()!.n).toBe(0); } finally { db.close(); }
+  fail = false;
+  const retried = checks.retry(failed.id).runs[0]!;
+  expect(retried.result).toMatchObject({ checked: 2, anomalies: 2, newFindings: 2 });
+  now += 3600000;
+  expect(checks.run('manual').runs[0]!.result).toMatchObject({ checked: 2, anomalies: 2, newFindings: 0, repeatedFindings: 2 });
+});
+
+test('staging a lazy source does not block lease recovery or publish the expired attempt', () => {
+  checks.close(); let replaced=false;
+  const base = data.snapshot().records[0]!;
+  checks = new ScheduledChecks(file,'a',function* () {
+    yield base;
+    if(!replaced) {
+      replaced=true; now+=121000;
+      const other=new ScheduledChecks(file,'a',()=>[],()=>now);
+      try {const run=other.view().runs[0]!; other.retry(run.id);} finally {other.close();}
+    }
+  },()=>now);
+  const run=checks.run('manual').runs[0]!;
+  expect(run.attempt).toBe(2); expect(run.status).toBe('succeeded'); expect(run.result!.checked).toBe(0);
+});

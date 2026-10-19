@@ -282,6 +282,7 @@ export abstract class BaseAgent implements AgentBackend {
     // Initialize core modules
     // PermissionManager: handles permission evaluation, mode management, and command whitelisting
     this.permissionManager = new PermissionManager({
+      workspaceRootPath:config.workspace.rootPath,
       workspaceId: config.workspace.id,
       sessionId: this._sessionId,
       workingDirectory: this.workingDirectory,

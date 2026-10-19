@@ -397,6 +397,7 @@ app.on('web-contents-created', (_event, contents) => {
         await click('返回经营总览');
         await click('库存与广告');
         for (const kind of ['inventory', 'ads']) {
+          await waitFor(`!!document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]:not(:disabled)')`, kind+' paged evidence ready');
           await js(`document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]').click()`);
           await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('本地协议测试报告') && document.querySelector('.retail-investigation-body')?.innerText.includes('只读 Reviewer 复核')`, kind+' model report');
           await assert(`document.querySelectorAll('table[aria-label="调查方案比较"] tbody tr').length===2`, kind+' model conditional plans');

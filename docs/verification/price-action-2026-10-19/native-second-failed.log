@@ -1,0 +1,247 @@
+ExpectError: expect(locator).toContainText(expected) failed
+
+Locator: getByRole('table', { name: '毛利数值事实' })
+Expected substring: "方案SKU标价"
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "to.have.text" with timeout 5000ms
+  - waiting for getByRole('table', { name: '毛利数值事实' })
+
+    at captureRawStack (C:\Users\29486\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright-core\lib\coreBundle.js:9681:17)
+    at callMatcherAsStep (C:\Users\29486\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\lib\matchers\expect.js:13310:57)
+    at Object.toContainText (C:\Users\29486\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\lib\matchers\expect.js:13300:23)
+    at main (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-price-desktop-check.cjs:30:137) {
+  matcherResult: {
+    name: 'toContainText',
+    expected: '方案SKU标价',
+    message: 'expect(locator).toContainText(expected) failed\n' +
+      '\n' +
+      "Locator: getByRole('table', { name: '毛利数值事实' })\n" +
+      'Expected substring: "方案SKU标价"\n' +
+      'Timeout: 5000ms\n' +
+      'Error: element(s) not found\n' +
+      '\n' +
+      'Call log:\n' +
+      '  - Expect "to.have.text" with timeout 5000ms\n' +
+      "  - waiting for getByRole('table', { name: '毛利数值事实' })\n",
+    pass: false,
+    actual: undefined,
+    log: [
+      '  - Expect "to.have.text" with timeout 5000ms',
+      "  - waiting for getByRole('table', { name: '毛利数值事实' })"
+    ],
+    timeout: 5000,
+    ariaSnapshot: '- banner:\n' +
+      '  - strong: Merqo\n' +
+      '  - text: 经营分析 My Workspace\n' +
+      '  - button "返回会话"\n' +
+      '- complementary:\n' +
+      '  - navigation "经营导航":\n' +
+      '    - paragraph: 经营洞察\n' +
+      '    - button "经营总览"\n' +
+      '    - button "异常中心 8"\n' +
+      '    - button "库存与广告"\n' +
+      '    - button "调查记录"\n' +
+      '    - button "经营巡检"\n' +
+      '    - paragraph: 决策执行\n' +
+      '    - button "决策草稿"\n' +
+      '    - button "审批中心"\n' +
+      '    - button "执行记录"\n' +
+      '    - button "补偿记录"\n' +
+      '    - paragraph: 数据管理\n' +
+      '    - button "数据与导入"\n' +
+      '  - paragraph: 本地经营工作台 分析与模拟执行\n' +
+      '- main:\n' +
+      '  - heading "促销毛利调查" [level=2]\n' +
+      '  - paragraph: 只读调查 → 证据归纳 → 条件测算 → 复核。复核通过后可生成草稿并进入本地模拟审批；不改写真实平台。\n' +
+      '  - button "返回经营总览"\n' +
+      '  - complementary "调查记录":\n' +
+      '    - strong: 最近调查\n' +
+      '    - button "刷新"\n' +
+      '    - button "桂花乌龙冷萃茶 SKU直接改价调查 · TEA-500 · 模型调查 分析完成 · 2026/10/19 13:34:25":\n' +
+      '      - strong: 桂花乌龙冷萃茶\n' +
+      '      - text: SKU直接改价调查 · TEA-500 · 模型调查 分析完成 · 2026/10/19 13:34:25\n' +
+      '    - button "桂花乌龙冷萃茶 促销毛利调查 · TEA-500 · 模型调查 分析完成 · 2026/10/19 13:34:18":\n' +
+      '      - strong: 桂花乌龙冷萃茶\n' +
+      '      - text: 促销毛利调查 · TEA-500 · 模型调查 分析完成 · 2026/10/19 13:34:18\n' +
+      '  - article:\n' +
+      '    - heading "桂花乌龙冷萃茶 · TEA-500" [level=2]\n' +
+      '    - paragraph: demo-nanfeng / 线上商城 / 2026-10-14 / 500ml × 6瓶\n' +
+      '    - button "切换为减券调查"\n' +
+      '    - button "更新或补充证据"\n' +
+      '    - button "重新进行模型调查"\n' +
+      '    - button "运行离线规则演示"\n' +
+      '    - status: 分析完成 · 本地改价协议夹具 / deepseek-v4-flash\n' +
+      '    - paragraph: 证据来自创建调查时的冻结快照。历史分析不代表当前实时状态；模型观点仍需人工核验。\n' +
+      '    - button "导出 Markdown"\n' +
+      '    - button "导出报告与证据 JSON"\n' +
+      '    - button "生成决策草稿"\n' +
+      '    - heading "调查摘要" [level=3]\n' +
+      '    - paragraph: 冻结价格与经营约束核验\n' +
+      '    - group "毛利数值核验": 数值与引用核验 · 本次计算字段齐全\n' +
+      '    - region "毛利证据清单":\n' +
+      '      - heading "证据与补证清单" [level=3]\n' +
+      '      - paragraph: 本次范围：冻结快照与条件测算。计算字段可核对。原因归因和真实执行证据尚未齐备；清单不代表 Reviewer 通过。\n' +
+      '      - table "毛利补证要求":\n' +
+      '        - rowgroup:\n' +
+      '          - row "用途与要求 当前证据 下一步":\n' +
+      '            - columnheader "用途与要求"\n' +
+      '            - columnheader "当前证据"\n' +
+      '            - columnheader "下一步"\n' +
+      '        - rowgroup:\n' +
+      '          - row "字段与测算 快照字段与商品毛利计算 可按快照核对 冻结字段、单件与合计口径及引用已核对；仅表示本快照可计算。 [retail_get_promotions][retail_get_sku_context][retail_get_data_health] 核对原始账单；计算一致不等于已验证真实经营事实。":\n' +
+      '            - cell "字段与测算 快照字段与商品毛利计算"\n' +
+      '            - cell "可按快照核对 冻结字段、单件与合计口径及引用已核对；仅表示本快照可计算。 [retail_get_promotions][retail_get_sku_context][retail_get_data_health]":\n' +
+      '              - strong: 可按快照核对\n' +
+      '              - paragraph: 冻结字段、单件与合计口径及引用已核对；仅表示本快照可计算。\n' +
+      '              - link "[retail_get_promotions]":\n' +
+      '                - /url: "#investigation-evidence-5"\n' +
+      '              - link "[retail_get_sku_context]":\n' +
+      '                - /url: "#investigation-evidence-3"\n' +
+      '              - link "[retail_get_data_health]":\n' +
+      '                - /url: "#investigation-evidence-1"\n' +
+      '            - cell "核对原始账单；计算一致不等于已验证真实经营事实。"\n' +
+      '          - row "字段与测算 优惠调整的条件测算 可按快照核对 只核对其他条件不变时的算术；约束通过与否见方案比较，不预测销量或真实收益。 [retail_simulate_actions] 将测算作为条件方案；缺计算字段时先补字段，不能以假设填充未知值。":\n' +
+      '            - cell "字段与测算 优惠调整的条件测算"\n' +
+      '            - cell "可按快照核对 只核对其他条件不变时的算术；约束通过与否见方案比较，不预测销量或真实收益。 [retail_simulate_actions]":\n' +
+      '              - strong: 可按快照核对\n' +
+      '              - paragraph: 只核对其他条件不变时的算术；约束通过与否见方案比较，不预测销量或真实收益。\n' +
+      '              - link "[retail_simulate_actions]":\n' +
+      '                - /url: "#investigation-evidence-7"\n' +
+      '            - cell "将测算作为条件方案；缺计算字段时先补字段，不能以假设填充未知值。"\n' +
+      '          - row "原因与效果 逐单优惠分摊 尚缺证据 只有规格件的日快照，没有逐单账单及优惠实际承担明细。 [retail_get_promotions][retail_get_data_health] 需逐单账单和分摊规则；当前 CSV 仅支持快照字段，尚不接收这类证据。":\n' +
+      '            - cell "原因与效果 逐单优惠分摊"\n' +
+      '            - cell "尚缺证据 只有规格件的日快照，没有逐单账单及优惠实际承担明细。 [retail_get_promotions][retail_get_data_health]":\n' +
+      '              - strong: 尚缺证据\n' +
+      '              - paragraph: 只有规格件的日快照，没有逐单账单及优惠实际承担明细。\n' +
+      '              - link "[retail_get_promotions]":\n' +
+      '                - /url: "#investigation-evidence-5"\n' +
+      '              - link "[retail_get_data_health]":\n' +
+      '                - /url: "#investigation-evidence-1"\n' +
+      '            - cell "需逐单账单和分摊规则；当前 CSV 仅支持快照字段，尚不接收这类证据。"\n' +
+      '          - row "原因与效果 同口径历史与对照 尚缺证据 冻结历史 Case 为空，没有同范围历史对照可用于佐证；不能证明促销因果，也不能排除成本、流量等解释。 [retail_get_data_health] 需同店铺、渠道、规格及可比窗口的原始对照；当前调查未接入该证据。":\n' +
+      '            - cell "原因与效果 同口径历史与对照"\n' +
+      '            - cell "尚缺证据 冻结历史 Case 为空，没有同范围历史对照可用于佐证；不能证明促销因果，也不能排除成本、流量等解释。 [retail_get_data_health]":\n' +
+      '              - strong: 尚缺证据\n' +
+      '              - paragraph: 冻结历史 Case 为空，没有同范围历史对照可用于佐证；不能证明促销因果，也不能排除成本、流量等解释。\n' +
+      '              - link "[retail_get_data_health]":\n' +
+      '                - /url: "#investigation-evidence-1"\n' +
+      '            - cell "需同店铺、渠道、规格及可比窗口的原始对照；当前调查未接入该证据。"\n' +
+      '          - row "原因与效果 需求弹性与销量响应 尚缺证据 没有优惠变更后的销量观测或可识别的对照试验。 [retail_simulate_actions] 保留为未知项；不得承诺减券后销量不变、净利润增长或实际收益。":\n' +
+      '            - cell "原因与效果 需求弹性与销量响应"\n' +
+      '            - cell "尚缺证据 没有优惠变更后的销量观测或可识别的对照试验。 [retail_simulate_actions]":\n' +
+      '              - strong: 尚缺证据\n' +
+      '              - paragraph: 没有优惠变更后的销量观测或可识别的对照试验。\n' +
+      '              - link "[retail_simulate_actions]":\n' +
+      '                - /url: "#investigation-evidence-7"\n' +
+      '            - cell "保留为未知项；不得承诺减券后销量不变、净利润增长或实际收益。"\n' +
+      '          - row "真实执行 真实平台当前状态与权限 尚缺证据 本项目当前只提供本地隔离模拟，未获得真实改价或优惠写入权限。 [retail_get_data_health] 真实执行适配器尚未接入；本地模拟仍需通过草稿硬约束及独立审批。":\n' +
+      '            - cell "真实执行 真实平台当前状态与权限"\n' +
+      '            - cell "尚缺证据 本项目当前只提供本地隔离模拟，未获得真实改价或优惠写入权限。 [retail_get_data_health]":\n' +
+      '              - strong: 尚缺证据\n' +
+      '              - paragraph: 本项目当前只提供本地隔离模拟，未获得真实改价或优惠写入权限。\n' +
+      '              - link "[retail_get_data_health]":\n' +
+      '                - /url: "#investigation-evidence-1"\n' +
+      '            - cell "真实执行适配器尚未接入；本地模拟仍需通过草稿硬约束及独立审批。"\n' +
+      '      - button "前往数据与导入"\n' +
+      '      - paragraph: 修正快照后请重新发起调查；原报告和旧审批不会自动更新。\n' +
+      '    - heading "数值事实与观察" [level=3]\n' +
+      '    - list:\n' +
+      '      - listitem:\n' +
+      '        - text: 原SKU标价：¥100.00；方案SKU标价：¥105.00；标价变化额：¥5.00。\n' +
+      '        - link "[retail_get_promotions]":\n' +
+      '          - /url: "#investigation-evidence-5"\n' +
+      '        - link "[retail_simulate_actions]":\n' +
+      '          - /url: "#investigation-evidence-7"\n' +
+      '      - listitem:\n' +
+      '        - text: 促销后单件商品收入：¥70.00；单件商品成本：¥60.00；单件商品毛利：¥10.00；商品毛利率：14.29%。\n' +
+      '        - link "[retail_get_promotions]":\n' +
+      '          - /url: "#investigation-evidence-5"\n' +
+      '        - link "[retail_get_sku_context]":\n' +
+      '          - /url: "#investigation-evidence-3"\n' +
+      '      - listitem:\n' +
+      '        - text: 净成交件数：40 件（按SKU规格）；促销后合计商品收入：¥2800.00；合计商品毛利：¥400.00。\n' +
+      '        - link "[retail_get_sku_context]":\n' +
+      '          - /url: "#investigation-evidence-3"\n' +
+      '      - listitem:\n' +
+      '        - text: 原商家券：¥20.00；方案商家券：¥20.00；商家券减少额：¥0.00。\n' +
+      '        - link "[retail_get_promotions]":\n' +
+      '          - /url: "#investigation-evidence-5"\n' +
+      '        - link "[retail_simulate_actions]":\n' +
+      '          - /url: "#investigation-evidence-7"\n' +
+      '      - listitem:\n' +
+      '        - text: 方案单件商品收入：¥75.00；方案单件商品毛利：¥15.00；方案商品毛利率：20.00%；当前规则毛利阈值：20.00%。阈值来自当前版本规则，方案仅为条件测算，不预测销量或实际收益。\n' +
+      '        - link "[retail_simulate_actions]":\n' +
+      '          - /url: "#investigation-evidence-7"\n' +
+      '        - link "[retail_get_data_health]":\n' +
+      '          - /url: "#investigation-evidence-1"\n' +
+      '      - listitem:\n' +
+      '        - text: 数据为部分冻结快照：静态日快照，缺少逐单优惠分摊、实时库存与历史对照，不可用于直接执行；计算字段齐全不等于经营证据完整；不证明需求弹性、优惠因果或实际收益。\n' +
+      '        - link "[retail_get_data_health]":\n' +
+      '          - /url: "#investigation-evidence-1"\n' +
+      '    - heading "原因假设（尚未证实）" [level=3]\n' +
+      '    - paragraph: 暂无可支持的原因假设。\n' +
+      '    - heading "替代解释" [level=3]\n' +
+      '    - list:\n' +
+      '      - listitem: 成本口径可能存在差异\n' +
+      '    - heading "未知项 / 待补证" [level=3]\n' +
+      '    - list:\n' +
+      '      - listitem: 需求响应未知\n' +
+      '      - listitem: 逐单优惠分摊：只有规格件的日快照，没有逐单账单及优惠实际承担明细。 需逐单账单和分摊规则；当前 CSV 仅支持快照字段，尚不接收这类证据。\n' +
+      '      - listitem: 同口径历史与对照：冻结历史 Case 为空，没有同范围历史对照可用于佐证；不能证明促销因果，也不能排除成本、流量等解释。 需同店铺、渠道、规格及可比窗口的原始对照；当前调查未接入该证据。\n' +
+      '      - listitem: 需求弹性与销量响应：没有优惠变更后的销量观测或可识别的对照试验。 保留为未知项；不得承诺减券后销量不变、净利润增长或实际收益。\n' +
+      '      - listitem: 真实平台当前状态与权限：本项目当前只提供本地隔离模拟，未获得真实改价或优惠写入权限。 真实执行适配器尚未接入；本地模拟仍需通过草稿硬约束及独立审批。\n' +
+      '    - heading "方案比较（代码测算）" [level=3]\n' +
+      '    - table "调查方案比较":\n' +
+      '      - rowgroup:\n' +
+      '        - row "方案 SKU标价 / 件 商家券 / 件 收入 / 件 毛利 / 件 毛利率 约束检查":\n' +
+      '          - columnheader "方案"\n' +
+      '          - columnheader "SKU标价 / 件"\n' +
+      '          - columnheader "商家券 / 件"\n' +
+      '          - columnheader "收入 / 件"\n' +
+      '          - columnheader "毛利 / 件"\n' +
+      '          - columnheader "毛利率"\n' +
+      '          - columnheader "约束检查"\n' +
+      '      - rowgroup:\n' +
+      '        - row "不调整，补证并继续观察 ¥100.00 ¥20.00 ¥70.00 ¥10.00 14.29% 未通过 / 需补证":\n' +
+      '          - cell "不调整，补证并继续观察"\n' +
+      '          - cell "¥100.00"\n' +
+      '          - cell "¥20.00"\n' +
+      '          - cell "¥70.00"\n' +
+      '          - cell "¥10.00"\n' +
+      '          - cell "14.29%"\n' +
+      '          - cell "未通过 / 需补证"\n' +
+      '        - row "调整 SKU 标价（条件测算） ¥105.00 ¥20.00 ¥75.00 ¥15.00 20.00% 条件检查通过，仍需执行前补证":\n' +
+      '          - cell "调整 SKU 标价（条件测算）"\n' +
+      '          - cell "¥105.00"\n' +
+      '          - cell "¥20.00"\n' +
+      '          - cell "¥75.00"\n' +
+      '          - cell "¥15.00"\n' +
+      '          - cell "20.00%"\n' +
+      '          - cell "条件检查通过，仍需执行前补证"\n' +
+      '    - group: 不调整，补证并继续观察：假设与约束\n' +
+      '    - group: 调整 SKU 标价（条件测算）：假设与约束\n' +
+      '    - heading "只读 Reviewer 复核" [level=3]\n' +
+      '    - paragraph: 分析复核通过，不构成执行授权\n' +
+      '    - list:\n' +
+      '      - listitem: 本地协议夹具，非真实模型质量评测\n' +
+      '      - listitem: 仅完成冻结快照分析；真实业务未执行，本地模拟须另经草稿约束与审批\n' +
+      '    - group "调查历史Case": 创建调查时冻结的历史 Case（0）\n' +
+      '    - heading "调查过程与原始证据" [level=3]\n' +
+      '    - group: 只读查询 · model_request · 13:34:26\n' +
+      '    - group: 只读查询 · retail_get_data_health · MCP只读查询 · 13:34:26\n' +
+      '    - group: 只读查询 · model_request · 13:34:27\n' +
+      '    - group: 只读查询 · retail_get_sku_context · MCP只读查询 · 13:34:27\n' +
+      '    - group: 只读查询 · model_request · 13:34:27\n' +
+      '    - group: 只读查询 · retail_get_promotions · MCP只读查询 · 13:34:28\n' +
+      '    - group: 只读查询 · model_request · 13:34:28\n' +
+      '    - group: 只读查询 · retail_simulate_actions · MCP只读查询 · 13:34:29\n' +
+      '    - group: 只读查询 · model_request · 13:34:29\n' +
+      '    - group: 只读查询 · model_request · 13:34:29\n' +
+      '    - group: 复核 · readonly_reviewer · 13:34:29\n' +
+      '    - group: 冻结快照与来源摘要\n' +
+      '- region "Notifications alt+T"'
+  }
+}

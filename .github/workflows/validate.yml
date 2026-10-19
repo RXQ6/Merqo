@@ -47,5 +47,6 @@ jobs:
       - name: Retail domain and isolated inference regression
         run: |
           bun run retail:check
-          bun test apps/electron/src/main/__tests__/retail-inference-telemetry.test.ts scripts/i18n-coverage.test.ts
+          bun test apps/electron/src/main/__tests__/retail-inference-telemetry.test.ts scripts/i18n-coverage.test.ts scripts/merqo-signal-pagination.test.ts
           bun run retail:check:mcp
+          bun test packages/shared/src/agent/__tests__/retail-tool-boundary.test.ts

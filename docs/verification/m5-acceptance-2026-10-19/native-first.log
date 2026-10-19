@@ -1,0 +1,4 @@
+Error: M1 initial failed, see artifacts/m1/e2e-initial.json
+    at ChildProcess.<anonymous> (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\retailpilot-m1-e2e.cjs:19:87)
+    at ChildProcess.emit (node:events:509:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:295:12)

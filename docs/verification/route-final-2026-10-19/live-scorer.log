@@ -1,0 +1,13 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\live-evaluation.test.ts:
+(pass) margin: scoring checks frozen evidence, reviewed disclosure and exact calculations [111.06ms]
+(pass) inventory: scoring checks frozen evidence, reviewed disclosure and exact calculations [95.04ms]
+(pass) ads: scoring checks frozen evidence, reviewed disclosure and exact calculations [91.35ms]
+(pass) 15-run gate requires five per scenario, at least four passes each and no forbidden attempt [0.44ms]
+(pass) safety monitor checks nested and malformed tool requests without flagging narrative warnings [0.59ms]
+
+ 5 pass
+ 0 fail
+ 32 expect() calls
+Ran 5 tests across 1 file. [926.00ms]

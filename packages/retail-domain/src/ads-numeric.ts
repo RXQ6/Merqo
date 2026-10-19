@@ -10,11 +10,11 @@ export interface AdsNumericAudit {
   facts: { key: string; label: string; value: number | null; unit: 'CNY_minor' | 'bps' | 'ratio' | 'count'; evidenceIds: string[] }[];
 }
 /** Validate every consumed tool payload before deriving display facts. No model-authored amounts survive. */
-export function auditAdsNumbers(record: SignalRecord, scenarios: Scenario[], trace: Trace[], cases: CaseMemory[] = []): AdsNumericAudit {
-  if (record.kind !== 'ads' || !isDeepStrictEqual(calculateSignal('ads', record.row), record.metrics)) throw new Error('广告指标与冻结字段不一致，数值核验拒绝');
+export function auditAdsNumbers(record: SignalRecord, scenarios: Scenario[], trace: Trace[], cases: CaseMemory[] = [], relatedEvidence?: import('./related-evidence').RelatedEvidence): AdsNumericAudit {
+  if (record.kind !== 'ads' || !isDeepStrictEqual(calculateSignal('ads', record.row,record.policy?.settings), record.metrics)) throw new Error('广告指标与冻结字段不一致，数值核验拒绝');
   for (const tool of SIGNAL_TOOLS.ads) {
     const events = trace.filter(t => t.tool === tool);
-    if (!events.length || events.some(t => t.evidenceId !== `${record.id}:${tool}` || !isDeepStrictEqual(t.data, readSignalTool(record, tool, cases)))) throw new Error('广告工具证据与冻结快照不一致，数值核验拒绝');
+    if (!events.length || events.some(t => t.evidenceId !== `${record.id}:${tool}` || !isDeepStrictEqual(t.data, readSignalTool(record, tool, cases, relatedEvidence)))) throw new Error('广告工具证据与冻结快照不一致，数值核验拒绝');
   }
   const simulation = trace.find(t => t.tool === 'retail_simulate_actions')!;
   if (!isDeepStrictEqual(simulation.data, scenarios)) throw new Error('广告条件方案与代码不一致，数值核验拒绝');

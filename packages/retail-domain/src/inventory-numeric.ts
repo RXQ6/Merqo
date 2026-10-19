@@ -11,11 +11,11 @@ export interface InventoryNumericAudit {
 }
 
 /** Validate frozen tool payloads and code plans before constructing any numeric narrative. */
-export function auditInventoryNumbers(record: SignalRecord, scenarios: Scenario[], trace: Trace[], cases: CaseMemory[] = []): InventoryNumericAudit {
-  if (record.kind !== 'inventory' || !InventorySchema.safeParse(record.row).success || !isDeepStrictEqual(calculateSignal('inventory', record.row), record.metrics)) throw new Error('库存指标与冻结字段不一致，数值核验拒绝');
+export function auditInventoryNumbers(record: SignalRecord, scenarios: Scenario[], trace: Trace[], cases: CaseMemory[] = [], relatedEvidence?: import('./related-evidence').RelatedEvidence): InventoryNumericAudit {
+  if (record.kind !== 'inventory' || !InventorySchema.safeParse(record.row).success || !isDeepStrictEqual(calculateSignal('inventory', record.row,record.policy?.settings), record.metrics)) throw new Error('库存指标与冻结字段不一致，数值核验拒绝');
   for (const tool of SIGNAL_TOOLS.inventory) {
     const events = trace.filter(t => t.tool === tool);
-    if (!events.length || events.some(t => t.evidenceId !== `${record.id}:${tool}` || !isDeepStrictEqual(t.data, readSignalTool(record, tool, cases)))) throw new Error('库存工具证据与冻结快照不一致，数值核验拒绝');
+    if (!events.length || events.some(t => t.evidenceId !== `${record.id}:${tool}` || !isDeepStrictEqual(t.data, readSignalTool(record, tool, cases, relatedEvidence)))) throw new Error('库存工具证据与冻结快照不一致，数值核验拒绝');
   }
   if (!isDeepStrictEqual(scenarios, simulateSignal(record))) throw new Error('库存条件方案与代码不一致，数值核验拒绝');
   const row = record.row as InventoryRow, metrics = record.metrics, action = scenarios.find(s => s.kind === 'replenish_draft');

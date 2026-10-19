@@ -43,6 +43,8 @@ export interface RecoveryMessage {
  * Configuration for PermissionManager
  */
 export interface PermissionManagerConfig {
+  /** Trusted workspace root, independent from mutable session working directory. */
+  workspaceRootPath?:string;
   /** Workspace ID for permission context */
   workspaceId: string;
   /** Session ID for mode state */

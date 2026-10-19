@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "checks": [
+    "real IPC bounds both tables to 30 rows; full anomaly count and off-page shop facet remain visible",
+    "independent scene offsets, last-page boundary and explicitly bounded page export",
+    "search/status reset pagination, scope counts stay complete and stale filter responses do not render",
+    "off-page facet selection, explicit refresh reset and anomaly-center pagination use actual bounded requests"
+  ],
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\signal-pagination-D1cv2c",
+  "modelCalls": 0
+}

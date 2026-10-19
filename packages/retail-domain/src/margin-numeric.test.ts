@@ -23,6 +23,12 @@ test('contradictory money, unit, quantity, threshold and computed action are ref
 test('missing, duplicate and cross-record citations never receive numeric audit',()=>{
  const input=traces(record);expect(()=>auditMarginNumbers(record,simulate(record),input.slice(1))).toThrow('引用');expect(()=>auditMarginNumbers(record,simulate(record),[...input,input[0]!])).toThrow('引用');const foreign=structuredClone(input);foreign[2]!.evidenceId='foreign:retail_get_promotions';expect(()=>auditMarginNumbers(record,simulate(record),foreign)).toThrow('引用');
 });
+
+test('business-time metadata cannot be replaced with a claimed source timestamp',()=>{
+ const trace=traces(record);const health=trace[0]!.data as {timeContext:{sourceObservedAt:unknown}};
+ health.timeContext.sourceObservedAt='2026-10-19T12:00:00+08:00';
+ expect(()=>auditMarginNumbers(record,simulate(record),trace)).toThrow('不一致');
+});
 test('unknown values remain null, zero totals remain zero and negative margin is retained',()=>{
  for(const row of [{...record.row,cost_minor:null},{...record.row,sold_qty:0},{...record.row,cost_minor:8000}]){
   const r={...record,row,calculation:calculate(row)};const audit=auditMarginNumbers(r,simulate(r),traces(r));const byKey=Object.fromEntries(audit.facts.map(f=>[f.key,f.value]));

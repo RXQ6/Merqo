@@ -1,0 +1,12 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\source-metadata.test.ts:
+(pass) source metadata validates bounded identity, ordered watermarks and observation clock without accepting authenticity claims [4.59ms]
+(pass) CSV provenance binds content, deduplicates full declarations, persists frozen tool/report metadata and never backfills old imports [109.23ms]
+(pass) all scene imports persist declarations while builtin clocks are explicitly synthetic and stable across reload [110.64ms]
+(pass) observed age, partial watermarks, current and baseline coverage stay independent of import time [0.33ms]
+
+ 4 pass
+ 0 fail
+ 57 expect() calls
+Ran 4 tests across 1 file. [718.00ms]

@@ -1,0 +1,11 @@
+locator.click: Timeout 25000ms exceeded.
+Call log:
+  - waiting for getByRole('button', { name: '经营分析', exact: true })
+
+    at launch (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-price-desktop-check.cjs:20:96)
+    at async main (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-price-desktop-check.cjs:42:2) {
+  log: [
+    "  - waiting for getByRole('button', { name: '经营分析', exact: true })"
+  ],
+  name: 'TimeoutError'
+}

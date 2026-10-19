@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+
+scripts\merqo-signal-pagination.test.ts:
+(pass) 100000-row preview fits the actual worker deadline and returns only 30 samples per scenario [5801.81ms]
+
+ 1 pass
+ 5 filtered out
+ 0 fail
+ 8 expect() calls
+Ran 1 test across 1 file. [6.63s]

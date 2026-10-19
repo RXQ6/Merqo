@@ -1,0 +1,10 @@
+$ bun scripts/merqo-business-eval.ts --release-gate
+{
+  "total": 48,
+  "passed": 48,
+  "failed": 0,
+  "unsupported": 0,
+  "releaseReady": false,
+  "report": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\business-eval\\report.md"
+}
+error: script "retail:eval" exited with code 1

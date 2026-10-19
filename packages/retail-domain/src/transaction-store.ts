@@ -1,0 +1,59 @@
+import {Database} from 'bun:sqlite';import {createHash} from 'node:crypto';import {mkdirSync} from 'node:fs';import {dirname} from 'node:path';
+import {decodeTransactionCsv,validateTransactionChains,transactionKey,transactionEntity,transactionWindow,TransactionQuerySchema,TRANSACTION_DEMO} from './transactions';
+import type {TransactionEvent,TransactionPreview,TransactionPage,TransactionQuery} from './transactions';
+import {freezeSourceMetadata} from './source-provenance';import type {SourceMetadataInput,EvidenceProvenance} from './source-metadata';
+const hash=(v:string)=>createHash('sha256').update(v).digest('hex');
+interface Stored{json:string;source:'demo'|'csv';batch_id:string;imported_at:string;provenance:string|null}
+export class TransactionStore{
+ private readonly db:Database;
+ constructor(file:string){mkdirSync(dirname(file),{recursive:true});this.db=new Database(file,{create:true,strict:true});this.db.exec(`PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;
+ CREATE TABLE IF NOT EXISTS transaction_batches(id TEXT PRIMARY KEY,source TEXT NOT NULL,hash TEXT NOT NULL,imported_at TEXT NOT NULL,provenance TEXT CHECK(provenance IS NULL OR json_valid(provenance))) STRICT;
+ CREATE TABLE IF NOT EXISTS transaction_events(source TEXT NOT NULL,event_key TEXT NOT NULL,entity_key TEXT NOT NULL,event_at INTEGER NOT NULL,order_at INTEGER NOT NULL,shop_id TEXT NOT NULL,channel TEXT NOT NULL,kind TEXT NOT NULL,quantity INTEGER NOT NULL,amount_minor INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),batch_id TEXT NOT NULL REFERENCES transaction_batches(id),PRIMARY KEY(source,event_key)) STRICT;
+ CREATE INDEX IF NOT EXISTS transaction_event_time ON transaction_events(source,event_at);
+ CREATE INDEX IF NOT EXISTS transaction_order_time ON transaction_events(source,order_at);
+ CREATE INDEX IF NOT EXISTS transaction_entity ON transaction_events(source,entity_key);
+ CREATE TRIGGER IF NOT EXISTS transaction_events_immutable_update BEFORE UPDATE ON transaction_events BEGIN SELECT RAISE(ABORT,'immutable transaction events');END;
+ CREATE TRIGGER IF NOT EXISTS transaction_events_immutable_delete BEFORE DELETE ON transaction_events BEGIN SELECT RAISE(ABORT,'immutable transaction events');END;
+ CREATE TRIGGER IF NOT EXISTS transaction_batches_immutable_update BEFORE UPDATE ON transaction_batches BEGIN SELECT RAISE(ABORT,'immutable transaction batches');END;
+ CREATE TRIGGER IF NOT EXISTS transaction_batches_immutable_delete BEFORE DELETE ON transaction_batches BEGIN SELECT RAISE(ABORT,'immutable transaction batches');END;`);}
+ close(){this.db.close();}
+ preview(csv:string,source:'demo'|'csv'='csv'):TransactionPreview{
+  const parsed=decodeTransactionCsv(csv);const errors=[...parsed.errors];const combined=new Map<string,TransactionEvent>();let duplicateCount=parsed.duplicateCount;
+  const load=this.db.query<{json:string},[string,string]>('SELECT json FROM transaction_events WHERE source=? AND entity_key=?');
+  for(const entity of new Set(parsed.events.map(transactionEntity)))for(const r of load.all(source,entity)){const e=JSON.parse(r.json) as TransactionEvent;combined.set(transactionKey(e),e);}
+  const find=this.db.query<{json:string},[string,string]>('SELECT json FROM transaction_events WHERE source=? AND event_key=?');
+  for(const e of parsed.events){const old=find.get(source,transactionKey(e));if(old){if(old.json!==JSON.stringify(e))errors.push({line:0,reason:`事件 ${e.event_id} 已存在且内容冲突，不能覆盖`});else duplicateCount++;}combined.set(transactionKey(e),e);}
+  errors.push(...validateTransactionChains([...combined.values()]).map(reason=>({line:0,reason})));
+  return{...parsed,errors,duplicateCount,hash:hash(csv),canImport:parsed.events.length>0&&errors.length===0};
+ }
+ import(csv:string,previewHash:string,source:'demo'|'csv'='csv',metadata?:SourceMetadataInput):{accepted:number;duplicateCount:number;batchId:string}{
+  if(hash(csv)!==previewHash)throw Error('交易预览摘要已变化，请重新预览');
+  return this.db.transaction(()=>{
+   const preview=this.preview(csv,source);if(!preview.canImport)throw Error(preview.errors.slice(0,10).map(e=>e.reason).join('；'));
+   const at=new Date().toISOString();if(source==='csv'&&preview.events.some(e=>Date.parse(e.event_at)>Date.parse(at)+300000))throw Error('交易事件时间超前，请核对来源时钟');
+   if(metadata&&preview.events.some(e=>e.source_id!==metadata.sourceId))throw Error('来源声明标识必须与交易 source_id 一致');
+   const rows=preview.events.flatMap(e=>[e.event_at,e.order_at].map(t=>({date:new Date(Date.parse(t)+8*3600000).toISOString().slice(0,10)})));
+   const provenance=freezeSourceMetadata(source,'transactions',csv,rows,at,metadata);
+   const digest=hash(JSON.stringify({csv,source,provenance})),batchId='transactions-'+digest;
+   const existing=this.db.query('SELECT 1 FROM transaction_batches WHERE id=?').get(batchId);if(existing)return{accepted:0,duplicateCount:preview.events.length,batchId};
+   const insert=this.db.query('INSERT OR IGNORE INTO transaction_events VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
+   const count=this.db.query<{n:number},[]>('SELECT COUNT(*) AS n FROM transaction_events').get()!.n;
+   const existingEvent=this.db.query('SELECT 1 FROM transaction_events WHERE source=? AND event_key=?');
+   if(count+preview.events.filter(e=>!existingEvent.get(source,transactionKey(e))).length>100000)throw Error('交易账本最多保留100,000条事件');
+   this.db.query('INSERT INTO transaction_batches VALUES(?,?,?,?,?)').run(batchId,source,digest,at,provenance?JSON.stringify(provenance):null);
+   let accepted=0;for(const e of preview.events)accepted+=insert.run(source,transactionKey(e),transactionEntity(e),Date.parse(e.event_at),Date.parse(e.order_at),e.shop_id,e.channel,e.kind,e.quantity,e.amount_minor,JSON.stringify(e),batchId).changes;
+   return{accepted,duplicateCount:preview.events.length-accepted,batchId};
+  }).immediate();
+ }
+ demo(){const csv=TRANSACTION_DEMO;return this.import(csv,hash(csv),'demo');}
+ page(input:TransactionQuery):TransactionPage{
+  const q=TransactionQuerySchema.parse(input),range=transactionWindow(q.startDate,q.endDate),clock=q.basis==='event'?'event_at':'order_at';
+  const where=`e.source=? AND e.${clock}>=? AND e.${clock}<? AND (?='' OR e.shop_id=?) AND (?='' OR e.channel=?)`;
+  const params:[string,number,number,string,string,string,string]=[q.source,Date.parse(range.startInclusive),Date.parse(range.endExclusive),q.shop,q.shop,q.channel,q.channel];
+  return this.db.transaction(()=>{
+   const totals=this.db.query<{total:number;orderedQty:number;paidQty:number;shippedQty:number;refundedQty:number;paidMinor:number;refundedMinor:number},typeof params>(`SELECT COUNT(*) AS total,COALESCE(SUM(CASE WHEN kind='ordered' THEN quantity ELSE 0 END),0) AS orderedQty,COALESCE(SUM(CASE WHEN kind='paid' THEN quantity ELSE 0 END),0) AS paidQty,COALESCE(SUM(CASE WHEN kind='shipped' THEN quantity ELSE 0 END),0) AS shippedQty,COALESCE(SUM(CASE WHEN kind='refunded' THEN quantity ELSE 0 END),0) AS refundedQty,COALESCE(SUM(CASE WHEN kind='paid' THEN amount_minor ELSE 0 END),0) AS paidMinor,COALESCE(SUM(CASE WHEN kind='refunded' THEN amount_minor ELSE 0 END),0) AS refundedMinor FROM transaction_events e WHERE ${where}`).get(...params)!;
+   const records=this.db.query<Stored,[...typeof params,number,number]>(`SELECT e.json,e.source,e.batch_id,b.imported_at,b.provenance FROM transaction_events e JOIN transaction_batches b ON b.id=e.batch_id WHERE ${where} ORDER BY e.${clock},e.event_at,e.event_key LIMIT ? OFFSET ?`).all(...params,q.limit,q.offset).map(r=>({event:JSON.parse(r.json) as TransactionEvent,source:r.source,batchId:r.batch_id,importedAt:r.imported_at,...(r.provenance?{provenance:JSON.parse(r.provenance) as EvidenceProvenance}:{})}));
+   const {total,...values}=totals;return{records,total,offset:q.offset,limit:q.limit,basis:q.basis,...range,totals:{...values,retainedMinor:values.paidMinor-values.refundedMinor,netPaidQty:values.paidQty-values.refundedQty},limitation:q.basis==='order'?'按原订单归属，包含当前已导入的后续退款；不是历史期末当时已知结果。退款不等于实物退回，结算保留额不等于净利润。':'按事件发生期统计；跨期退款可使本期净件数或保留结算额为负。退款不等于实物退回，结算保留额不等于净利润。'};
+  })();
+ }
+}

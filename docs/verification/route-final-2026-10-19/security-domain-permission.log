@@ -1,0 +1,36 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\injection-boundary.test.ts:
+(pass) CSV and historical Case injection cannot turn frozen readonly tools into execution or supply parameters, roles or scope [129.01ms]
+
+packages\shared\src\agent\__tests__\retail-tool-boundary.test.ts:
+(pass) managed retail workspace blocks native code, shell, writable files and arbitrary MCP even in Auto or Ask, before custom permissions [22.98ms]
+(pass) shared Claude/Pi pre-tool pipeline blocks actual Auto path and changing cwd never changes the trusted retail root [8.21ms]
+
+packages\shared\src\agent\core\__tests__\permission-manager.test.ts:
+(pass) PermissionManager > Permission Mode Management > should return the current permission mode [0.09ms]
+(pass) PermissionManager > Permission Mode Management > should set the permission mode [0.07ms]
+(pass) PermissionManager > Permission Mode Management > should cycle through permission modes [0.11ms]
+(pass) PermissionManager > Command Analysis > should extract base command from simple commands [0.10ms]
+(pass) PermissionManager > Command Analysis > should handle sudo prefix [0.02ms]
+(pass) PermissionManager > Command Analysis > should detect dangerous commands [0.06ms]
+(pass) PermissionManager > Command Analysis > should extract domain from network commands [0.07ms]
+(pass) PermissionManager > Session-Scoped Whitelisting > should start with no whitelisted commands [0.03ms]
+(pass) PermissionManager > Session-Scoped Whitelisting > should whitelist commands [0.02ms]
+(pass) PermissionManager > Session-Scoped Whitelisting > should be case-insensitive for command whitelisting [0.02ms]
+(pass) PermissionManager > Session-Scoped Whitelisting > should whitelist domains [0.03ms]
+(pass) PermissionManager > Session-Scoped Whitelisting > should be case-insensitive for domain whitelisting [0.01ms]
+(pass) PermissionManager > Session-Scoped Whitelisting > should clear all whitelists [0.04ms]
+(pass) PermissionManager > Session-Scoped Whitelisting > should return copies of whitelisted sets for debugging [0.06ms]
+(pass) PermissionManager > Bash Permission Requirements > should not require permission in execute mode [0.04ms]
+(pass) PermissionManager > Bash Permission Requirements > should not require permission in explore mode (blocks instead) [0.04ms]
+(pass) PermissionManager > Bash Permission Requirements > should require permission for dangerous commands in ask mode [0.03ms]
+(pass) PermissionManager > Bash Permission Requirements > should not require permission for safe commands in ask mode [0.03ms]
+(pass) PermissionManager > Context Management > should update working directory [0.03ms]
+(pass) PermissionManager > Context Management > should update plans folder path [0.02ms]
+(pass) PermissionManager > Context Management > should return the session ID [0.02ms]
+
+ 24 pass
+ 0 fail
+ 134 expect() calls
+Ran 24 tests across 3 files. [2.38s]

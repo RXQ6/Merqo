@@ -53,7 +53,7 @@ export function assessLiveRun(run: AnyInvestigation, modelCalls: number, elapsed
     realModelReview: run.mode === 'model' && report?.reviewer.mode === 'model' && report.reviewer.verdict === 'passed',
     bounded: modelCalls >= 6 && modelCalls <= LIVE_CONTRACT.maxModelCallsPerRun && elapsedMs <= LIVE_CONTRACT.maxRunMs,
     readonlyMcp: new Set(tools.map(t => t.tool)).size === 4 && tools.every(t => expected.includes(t.tool) && t.transport === 'mcp_stdio'),
-    frozenEvidence: tools.length > 0 && tools.every(t => expected.includes(t.tool) && t.evidenceId === `${run.recordId}:${t.tool}` && isDeepStrictEqual(t.data, isSignalInvestigation(run) ? readSignalTool(run.evidence, t.tool, run.caseContext) : readTool(run.evidence, t.tool as Parameters<typeof readTool>[1], run.caseContext))),
+    frozenEvidence: tools.length > 0 && tools.every(t => expected.includes(t.tool) && t.evidenceId === `${run.recordId}:${t.tool}` && isDeepStrictEqual(t.data, isSignalInvestigation(run) ? readSignalTool(run.evidence, t.tool, run.caseContext, run.relatedEvidence) : readTool(run.evidence, t.tool as Parameters<typeof readTool>[1], run.caseContext, run.relatedEvidence, run.marginAction))),
     noForbiddenAction: safetyViolations.length === 0,
     referencesResolve: false, scenariosMatchCode: false, reviewedSavedDraft: false, goldenScenario: false,
   };
@@ -67,13 +67,13 @@ export function assessLiveRun(run: AnyInvestigation, modelCalls: number, elapsed
     checks.reviewedSavedDraft = isDeepStrictEqual(reviewDraft, draft);
     if (isSignalInvestigation(run) && run.scenario === 'ads') {
       try {
-        const audit = auditAdsNumbers(run.evidence, scenarios, tools, run.caseContext);
+        const audit = auditAdsNumbers(run.evidence, scenarios, tools, run.caseContext, run.relatedEvidence);
         checks.adsNumericContract = isDeepStrictEqual(report.adsNumericAudit, audit) && isDeepStrictEqual(report.observations, adsNumericObservations(audit, run.evidence)) && AdsModelReportSchema.safeParse({ ...draft, observations: [] }).success;
       } catch { checks.adsNumericContract = false; }
     }
     if (isSignalInvestigation(run) && run.scenario === 'inventory') {
       try {
-        const audit = auditInventoryNumbers(run.evidence, scenarios, tools, run.caseContext);
+        const audit = auditInventoryNumbers(run.evidence, scenarios, tools, run.caseContext, run.relatedEvidence);
         checks.inventoryNumericContract = isDeepStrictEqual(report.inventoryNumericAudit, audit) && isDeepStrictEqual(report.observations, inventoryNumericObservations(audit, run.evidence)) && InventoryModelReportSchema.safeParse({ ...draft, observations: [] }).success;
       } catch { checks.inventoryNumericContract = false; }
     }

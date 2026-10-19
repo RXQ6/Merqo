@@ -1,0 +1,5 @@
+import type {RelatedEvidence} from '../../../../../packages/retail-domain/src/related-evidence';
+export function JointEvidencePanel({bundle}:{bundle:RelatedEvidence|undefined}){
+ if(!bundle?.joint)return null;const j=bundle.joint;
+ return <section className="retail-panel" aria-label="联合证据核验"><h3>联合证据核验 · {j.status==='descriptive_comparison'?'可作并列描述':'待补证'}</h3><p>统一商品：{j.canonicalSku} / {j.canonicalSpec??'规格未知'} · 映射版本 v{j.catalogRevision}</p><p>共同窗口：{j.commonPeriod?`[${j.commonPeriod.startInclusive}, ${j.commonPeriod.endExclusive})`:'未知或窗口不一致'}</p><p>共同完整截止：{j.completeThroughExclusive??'未知'} · 共同覆盖开始：{j.coverageStartInclusive??'未知'}</p><p>独立来源：{j.sourceIds.join('、')||'未提供'}</p><p className="retail-muted">{j.limitation}</p>{j.issues.length>0&&<ul>{j.issues.map((s,i)=><li key={i}>{s}</li>)}</ul>}<details><summary>各场景冻结事实与映射</summary>{j.findings.map(f=><p key={f.evidenceId}>{f.scenario} / {f.evidenceId}：{f.notes.join('；')||'当前规则无预警；不代表业务没有风险'}</p>)}{bundle.items.map(i=><p key={i.evidence.id}>{i.scenario}：原 SKU {i.evidence.row.sku_id} → {i.identity?.sku??'未映射'} / {i.identity?.spec??'规格未知'}；{i.status}；{i.reasons.join('；')}</p>)}</details></section>;
+}

@@ -271,7 +271,13 @@ export async function runBusinessEvaluation() {
     datasetHash: createHash('sha256').update(JSON.stringify({ cases: [...BUSINESS_CASES, ...FAULT_CASES], protocolFixtures: PROTOCOL_FIXTURES })).digest('hex'),
     scope: '合成数据、领域规则及本地模拟账本；非真实模型质量、真实业务效果、安装或性能验收',
     summary, releaseReady: false,
-    remainingGates: ['固定48例与三场景真实模型第三批已通过，但SKU匹配/异常销量/延迟事件仍仅窄范围；会员价/赠品/报价及一层组合装保留业务边界', '完整真实模型安全对抗仍待扩展；第三批禁止动作事件为0，不代表完整安全证明', '毛利十万行30次查询已测；库存/广告同规模、冷缓存/并发及内部全量路径未验收', 'Windows本机beta.1到beta.2升级/重装/卸载已通过；干净环境及其他Windows版本仍待外部验收（用户确认暂无测试环境）'],
+    remainingGates: [
+      '范围：本报告只运行固定合成领域样例，releaseReady=false 不代表其他独立验收未运行；完整结果需结合PRD追踪矩阵及安装验收报告',
+      'F02/D04：CSV来源身份未认证；复杂组合装、自动订单级优惠分摊、分次支付及取消换货未支持，不能宣称完整业务接入',
+      'A5/G07：CSV/Case注入、实际Auto写入阻断和三场景最终Case已有独立记录；有限样例不证明任意模型或所有攻击路径安全',
+      'G05/G08：真实模型、十万行性能属于独立运行，固定领域样例不重放这些检查，不外推生产准确率、冷盘或并发性能',
+      'G09：安装与生命周期以对应版本的独立报告为准；干净Windows和跨Windows版本仍需外部环境，用户已确认单列',
+    ],
     detectorMatrix: matrix, warningConfusion: binary, results,
   };
 }

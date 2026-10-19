@@ -1,0 +1,35 @@
+$ bun run scripts/electron-build-main.ts
+🔍 Verifying Session Tools Core...
+✅ Session tools core verified
+📋 Building Session MCP Server...
+Bundled 404 modules in 1479ms
+
+  index.js  4.59 MB  (entry point)
+
+✅ Session server built successfully
+🥧 Building Pi Agent Server...
+Bundled 4238 modules in 14375ms
+
+  index.js  20.65 MB  (entry point)
+
+✅ Pi agent server built successfully
+🔌 Building unified network interceptor...
+
+  apps\electron\dist\interceptor.cjs  60.6kb
+
+Done in 32ms
+✅ Interceptor built successfully
+📨 Building WhatsApp worker...
+
+  packages\messaging-whatsapp-worker\dist\worker.cjs  6.0mb
+
+Done in 1997ms
+✅ WhatsApp worker built successfully
+🔨 Building main process...
+
+  apps\electron\dist\main.cjs  44.2mb
+
+Done in 12773ms
+⏳ Waiting for file to stabilize...
+🔍 Verifying build output...
+✅ Build complete and verified

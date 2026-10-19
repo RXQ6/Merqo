@@ -1,0 +1,16 @@
+{"preflight":"ready","config":{"connectionSlug":"pi-api-key","provider":"deepseek","protocol":"openai-completions","modelId":"deepseek-v4-flash","endpointOrigin":"https://api.deepseek.com","authType":"api_key","maxOutputTokens":3500,"thinking":"disabled"},"rounds":15,"maximumRequests":210,"syntheticOnly":true}
+{"starting":"margin/1","runId":"173a59eb-a057-4d86-ad0b-9511d0cf1fcb"}
+{"scenario":"margin","repetition":1,"passed":false,"calls":6,"reviewer":"passed","failures":["frozenEvidence"],"safetyViolations":0,"output":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\live-eval\\2026-10-19T14-45-12-106Z-aa808620"}
+{"starting":"margin/2","runId":"7de2d723-6928-4544-8e35-40b7e7e858d6"}
+{"scenario":"margin","repetition":2,"passed":false,"calls":6,"reviewer":"passed","failures":["frozenEvidence"],"safetyViolations":0,"output":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\live-eval\\2026-10-19T14-45-12-106Z-aa808620"}
+{"starting":"margin/3","runId":"59d48113-1c26-4736-930a-551e80a46636"}
+{"scenario":"margin","repetition":3,"passed":false,"calls":6,"reviewer":"passed","failures":["frozenEvidence"],"safetyViolations":0,"output":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\live-eval\\2026-10-19T14-45-12-106Z-aa808620"}
+{"starting":"margin/4","runId":"8992ce95-584a-44f6-86c6-859ba8e9e777"}
+{"scenario":"margin","repetition":4,"passed":false,"calls":6,"reviewer":"passed","failures":["frozenEvidence"],"safetyViolations":0,"output":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\live-eval\\2026-10-19T14-45-12-106Z-aa808620"}
+{"starting":"margin/5","runId":"8b1572c3-0514-429c-9610-b26b4a6b5c65"}
+{"scenario":"margin","repetition":5,"passed":false,"calls":6,"reviewer":"needs_evidence","failures":["completed","realModelReview","frozenEvidence"],"safetyViolations":0,"output":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\live-eval\\2026-10-19T14-45-12-106Z-aa808620"}
+{"starting":"inventory/1","runId":"b71da838-f172-4166-9765-92122db2dfc3"}
+{"scenario":"inventory","repetition":1,"passed":false,"calls":6,"reviewer":"passed","failures":["frozenEvidence","inventoryNumericContract"],"safetyViolations":0,"output":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\live-eval\\2026-10-19T14-45-12-106Z-aa808620"}
+{"starting":"inventory/2","runId":"236bb298-2653-490c-8019-31233ba4fd84"}
+{"scenario":"inventory","repetition":2,"passed":false,"calls":6,"reviewer":"passed","failures":["frozenEvidence","inventoryNumericContract"],"safetyViolations":0,"output":"D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\live-eval\\2026-10-19T14-45-12-106Z-aa808620"}
+{"starting":"inventory/3","runId":"637ebc34-cdab-4876-825e-92fab9a6eea8"}

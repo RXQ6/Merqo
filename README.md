@@ -19,11 +19,16 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 | Advertising performance | Comparable-window ROAS, relative changes, click conversion rates and attribution consistency checks |
 | Decision drafts | Deterministic before/after values, immutable revisions, action/evidence hashes, expiration checks, simulation approval/rejection, isolated execution receipts and persistent audit history |
 | Data and evidence | CSV mapping and preview, validation, quarantined rows, duplicate protection, versioned rules, source hashes and quality reports |
+| Transactions and refunds | Immutable order/payment/shipment/refund events, partial refunds, event-period and original-order-period totals, bounded paging and validated CSV imports |
+| Catalog and joint evidence | Explicit versioned SKU/campaign mappings, common business windows and completeness watermarks, frozen descriptive comparison and up to two supplemental investigations |
+| Business controls | Independent SKU price adjustment, configurable shop policies and approval deadlines, source observation/coverage declarations |
 | Three-scenario investigations | Read-only tool loop, cited observations and hypotheses, alternative explanations, two deterministic scenarios, sequential Reviewer and persistent history |
 | Scheduled checks | Persistent local rule scans, bounded manual catch-up, finding deduplication and interrupted-job recovery while the app is running |
 | Business evaluation | 48 registered contracts, 48 executable cases passing, 0 unsupported cases explicitly excluded from passes; inspectable datasets, evidence and confusion matrices |
 
 All three analytical scenarios work with synthetic data or imported CSVs **without model credentials**. All three investigations support a configured API model or an explicitly labeled offline rules demonstration.
+
+Retail workspaces enforce read-only tools in general Agent conversations, including Auto mode; dedicated retail simulation writes require their own approval workflow. Use a separate ordinary workspace for code editing. CSV source declarations are not authenticated platform identities. Transactions currently support one full payment per line and supplied line-level discount allocations; installment payments, cancellations/exchanges and automatic order discount allocation remain unsupported.
 
 ### Data handling
 
@@ -38,21 +43,21 @@ All three analytical scenarios work with synthetic data or imported CSVs **witho
 
 ## Download the desktop app
 
-The beta.2 preview includes the completed Windows 11 acceptance described in [local acceptance](docs/M5-local-acceptance.md). Full PRD release gates remain incomplete.
+The beta.3 preview includes transactions/refunds, catalog mappings, joint evidence, supplemental investigations and the local acceptance recorded in [the final route report](docs/verification/route-final-2026-10-19/report.md). Full PRD scope remains incomplete.
 
-**[Download Merqo for Windows x64 — 0.1.0-beta.2](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.2/Merqo-Setup-0.1.0-beta.2-x64.exe)**
+**[Download Merqo for Windows x64 — 0.1.0-beta.3](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.3/Merqo-Setup-0.1.0-beta.3-x64.exe)**
 
-[Release notes](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.2) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.2/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
+[Release notes](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.3) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.3/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
 
 Run the installer, launch Merqo and select **经营分析 → 数据与导入 → 载入演示数据**. Retail analysis includes its own Bun runtime, data worker, MCP and Skills; you do not need Node.js or Bun. If Git Bash is absent, select **仅使用经营分析** on first launch. Git for Windows is still needed for the general Agent's shell tools. Configure your own model connection only when requesting a model investigation.
 
 This Windows x64 preview was tested on Windows 11. It is not code-signed, so Windows may show an unknown-publisher or SmartScreen prompt. Check the source and SHA-256 before running it. Updates are downloaded manually from Releases. Uninstall retains user data; the development `.runtime` profile is not automatically migrated.
 
-The beta.2 installer passed beta.1-to-beta.2 upgrade, first-run retail access without Git Bash, three-scenario MCP/protocol checks, pause/restart/resume, simulated execution, server pagination, normal restart, same-version reinstall and uninstall checks. These used a local model protocol fixture. See the [beta.2 verification record](docs/verification/windows-beta2-2026-10-18/report.json) for results and limits.
+The beta.3 installer passed isolated installation, three-scenario bundled MCP/protocol checks, pause/restart/resume, simulated execution, pagination, normal restart, same-version reinstall and uninstall on Windows 11. A copied beta.2 profile migration preserves its exact execution receipt; this does not claim an NSIS cross-version upgrade. See the [verification record](docs/verification/route-final-2026-10-19/report.md).
 
 ## Build from source
 
-Source changes after beta.2 add verified inventory numerical facts, exact rational rounding for target stock, repaired CI checks and pagination metadata invalidation. These changes are documented in [the inventory/CI contract](docs/M5-inventory-numeric-contract.md); the beta.2 download above retains its original build. The v4 live-model batch passed margin 5/5, inventory 4/5 and advertising 5/5, with zero observed forbidden-action events; the inventory needs-evidence run is retained. This is a narrow synthetic gate, not production accuracy.
+The final real-model batch passed 4/5 in each scenario, with zero observed forbidden-action events. All three failures are retained. Domain regression passed 280 tests and 2167 assertions; the fixed synthetic business set passed 48/48. These are bounded synthetic gates, not production accuracy.
 
 ### Prerequisites
 

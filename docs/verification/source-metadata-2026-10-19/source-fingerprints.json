@@ -1,0 +1,79 @@
+{
+  "at": "2026-10-19T06:18:38.395Z",
+  "head": "a4018de72bb9355c45a2e2d01e24fb04f1ca672c",
+  "dirty": true,
+  "files": [
+    {
+      "path": "packages/retail-domain/src/source-metadata.ts",
+      "sha256": "b494c1dc9844807864a66d5cb62553be2b8380cd63ba9da5ca6a6a89e14dc898"
+    },
+    {
+      "path": "packages/retail-domain/src/source-provenance.ts",
+      "sha256": "ad03123d10f9847c851edf776d8a4771609c7b07caebbaac23cc6ba92961b70e"
+    },
+    {
+      "path": "packages/retail-domain/src/source-metadata.test.ts",
+      "sha256": "1c34ed5150a126243349dcbd3664a342b872790563f2ecaee9930f39c2fe2134"
+    },
+    {
+      "path": "packages/retail-domain/src/evidence-policy.ts",
+      "sha256": "a86a1f2af9e4f24cbd135fd18dc0156faab336a33559b66cb8dfa02872f1e815"
+    },
+    {
+      "path": "packages/retail-domain/src/store.ts",
+      "sha256": "6d69a09db6941b0050fe9df83e7b88a5389085f203bd3c3e6a48a888d4a089d6"
+    },
+    {
+      "path": "packages/retail-domain/src/signal-store.ts",
+      "sha256": "95782242dd594a5ad7a65f6b092b5a12b4ebae3430593a788b1e49542216cc06"
+    },
+    {
+      "path": "packages/retail-domain/src/operations.ts",
+      "sha256": "edd7512cc2fbb9a8d9405c469b10e330d91ca5308a97b761d65119be84075930"
+    },
+    {
+      "path": "packages/retail-domain/src/signals.ts",
+      "sha256": "fb0eb48609b1a3261f0f0634dd71e6d8a0de09113002363bb97faf8ebc27784a"
+    },
+    {
+      "path": "packages/retail-domain/src/investigations.ts",
+      "sha256": "bec34b2d5c8eaf732ee37e24a7ed46062c92ed81dbefb6f8fc07b31b965d58c7"
+    },
+    {
+      "path": "packages/retail-domain/src/signal-investigations.ts",
+      "sha256": "b4cec019397d8b8058ea5055c256c6846cc60d803a95cda101596feae92c373d"
+    },
+    {
+      "path": "packages/retail-domain/src/investigation-export.ts",
+      "sha256": "740b3c161ab3410a2e775f9c199c2f9d6c97b13e671bce7d43897706ef505331"
+    },
+    {
+      "path": "packages/retail-domain/src/retail-query.ts",
+      "sha256": "e0d5694db7776f4884018b30a864087d4ddf6ec92fedf2cd7f5c715dba61d3b1"
+    },
+    {
+      "path": "apps/electron/src/renderer/retail/SourceMetadata.tsx",
+      "sha256": "9b2182b10c98bc1ca73b1db0391d228aab3aab2a208d019bce9916ada07eeb4c"
+    },
+    {
+      "path": "apps/electron/src/renderer/retail/RetailWorkspace.tsx",
+      "sha256": "75d5fa35d255b9de2102f4e7931a0a209d72e0c7b4ebe924a6dfc0c15f664809"
+    },
+    {
+      "path": "apps/electron/src/renderer/retail/SignalsPanel.tsx",
+      "sha256": "801f599e63d1560d6110bb7b9477a9ef8486422e60dbbf7feebd55e67d732b8a"
+    },
+    {
+      "path": "apps/electron/src/renderer/retail/InvestigationPanel.tsx",
+      "sha256": "57cf94e9b22e2d30d5f821fb81b4255ca28bce4bedf2d4929ab39853f64949d6"
+    },
+    {
+      "path": "scripts/retailpilot-data-worker.ts",
+      "sha256": "1485dc42730cd106e899191592c54f9f3ae91cf5719a228474cbf9016f54426c"
+    },
+    {
+      "path": "scripts/merqo-source-desktop-check.cjs",
+      "sha256": "ce3fbf5413ff669827e84b7aba1e4164182bdd67c0f86faf2253d5e984be095b"
+    }
+  ]
+}

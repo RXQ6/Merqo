@@ -1,4 +1,7 @@
+import type {EvidenceProvenance} from './source-metadata';
+import type {RuleSettings,FrozenPolicy} from './business-policy';
 import { z } from 'zod';
+import type { SignalPagination } from './signal-page';
 import { parseCsv } from './operations';
 export type SignalKind = 'inventory' | 'ads';
 export const SIGNAL_RULE = 'retail-stock-roas-v1';
@@ -24,16 +27,16 @@ export const ADS_FIELDS = Object.keys(AdsSchema.shape);
 export const SIGNAL_LABELS: Record<string, string> = {
   date: '观察窗结束日期', baseline_end_date: '对照窗结束日期', shop_id: '店铺', channel: '渠道', sku_id: 'SKU', window_days: '观察窗天数', baseline_window_days: '对照窗天数', product_name: '商品名称', spec: '规格', warehouse_id: '仓库', recent_sales_qty: '观察窗净销量', baseline_sales_qty: '对照窗净销量', on_hand: '现存库存', reserved: '占用库存', inbound_qty: '在途库存', inbound_eta: '预计到货日期', lead_days: '补货交期天数', campaign_id: '广告活动', currency: '币种', attribution_window: '当前归因窗口', baseline_attribution_window: '对照归因窗口', spend_minor: '当前花费（分）', attributed_revenue_minor: '当前归因成交额（分）', clicks: '当前点击数', conversions: '当前转化数', baseline_spend_minor: '对照花费（分）', baseline_revenue_minor: '对照归因成交额（分）', baseline_clicks: '对照点击数', baseline_conversions: '对照转化数',
 };
-export interface SignalPreview { headers: string[]; mapping: Record<string, string>; valid: SignalRow[]; rejected: { line: number; reason: string }[]; total: number }
+export interface SignalPreview { headers: string[]; mapping: Record<string, string>; valid: SignalRow[]; validCount?: number; rejected: { line: number; reason: string }[]; rejectedCount?: number; total: number }
 export interface SignalMetrics {
   available: number | null; coverageDays: number | null; salesChangeBps: number | null;
   roas: number | null; baselineRoas: number | null; roasChangeBps: number | null;
   conversionBps: number | null; baselineConversionBps: number | null;
   flags: string[]; issues: string[]; notes: string[];
 }
-export interface SignalRecord { id: string; kind: SignalKind; source: 'demo' | 'csv'; row: SignalRow; metrics: SignalMetrics; status: 'normal' | 'warning' | 'needs_evidence'; importedAt: string; batchId: string; hash: string; ruleVersion: string }
-export interface SignalBatch { ruleVersion: string; id: string; kind: SignalKind; source: 'demo' | 'csv'; importedAt: string; accepted: number; rejected: number; hash: string; errors: { line: number; reason: string }[] }
-export interface SignalSnapshot { records: SignalRecord[]; batches: SignalBatch[]; ruleVersion: string }
+export interface SignalRecord { provenance?:EvidenceProvenance; policy?:FrozenPolicy; id: string; kind: SignalKind; source: 'demo' | 'csv'; row: SignalRow; metrics: SignalMetrics; status: 'normal' | 'warning' | 'needs_evidence'; importedAt: string; batchId: string; hash: string; ruleVersion: string }
+export interface SignalBatch { provenance?:EvidenceProvenance; ruleVersion: string; id: string; kind: SignalKind; source: 'demo' | 'csv'; importedAt: string; accepted: number; rejected: number; hash: string; errors: { line: number; reason: string }[] }
+export interface SignalSnapshot { records: SignalRecord[]; batches: SignalBatch[]; ruleVersion: string; pagination?: SignalPagination }
 export const shiftDate = (value: string, days: number): string => new Date(Date.parse(value + 'T00:00:00Z') + days * 86400000).toISOString().slice(0, 10);
 export function signalKey(kind: SignalKind, row: SignalRow): string {
   return JSON.stringify([row.shop_id, row.channel, row.sku_id, row.date, kind === 'inventory' ? (row as InventoryRow).warehouse_id : (row as AdsRow).campaign_id]);
@@ -61,8 +64,9 @@ export function previewSignals(kind: SignalKind, csv: string, proposed?: Record<
   });
   return { headers, mapping, valid, rejected, total: rows.length };
 }
-export function calculateSignal(kind: SignalKind, row: SignalRow): SignalMetrics {
+export function calculateSignal(kind: SignalKind, row: SignalRow,rules?:RuleSettings): SignalMetrics {
   const m: SignalMetrics = { available: null, coverageDays: null, salesChangeBps: null, roas: null, baselineRoas: null, roasChangeBps: null, conversionBps: null, baselineConversionBps: null, flags: [], issues: [], notes: ['静态窗口快照，非实时监控；阈值为版本化演示规则', '观察窗与对照窗均按 Asia/Shanghai 日口径，数据须来自相同业务范围'] };
+  if(rules){const required=kind==='inventory'?rules.inventoryWindowDays:rules.adsWindowDays;if(required!==null&&row.window_days!==required)m.issues.push('业务窗口不符合配置的可比天数');if(kind==='inventory'&&'recent_sales_qty'in row&&row.recent_sales_qty!==null&&row.recent_sales_qty<rules.minInventorySales)m.issues.push('观察窗销量低于配置的最小样本');if(kind==='ads'&&'clicks'in row&&row.clicks!==null&&row.clicks<rules.minAdsClicks)m.issues.push('点击数低于配置的最小样本');}
   if (row.window_days === null || row.baseline_window_days === null || row.window_days !== row.baseline_window_days || (row.window_days !== null && row.baseline_end_date !== shiftDate(row.date, -row.window_days))) m.issues.push('观察与对照必须为相邻、等长窗口');
   if (kind === 'inventory') {
     const r = row as InventoryRow;
@@ -74,8 +78,8 @@ export function calculateSignal(kind: SignalKind, row: SignalRow): SignalMetrics
     if (r.recent_sales_qty !== null && r.baseline_sales_qty !== null && r.baseline_sales_qty > 0 && !m.issues.includes('观察与对照必须为相邻、等长窗口')) m.salesChangeBps = Math.round((r.recent_sales_qty - r.baseline_sales_qty) * 10000 / r.baseline_sales_qty);
     if (r.inbound_qty !== null && r.inbound_qty > 0 && !r.inbound_eta) m.issues.push('在途数量已知但预计到货日期缺失');
     if (r.inbound_eta && r.inbound_eta < r.date) m.issues.push('在途预计到货早于快照日期，请核对状态');
-    if (m.coverageDays !== null && r.lead_days !== null && m.available !== null && r.recent_sales_qty !== null && r.window_days !== null && BigInt(m.available) * BigInt(r.window_days) <= BigInt(r.recent_sales_qty) * BigInt(r.lead_days + 2)) m.flags.push('库存覆盖不足补货交期加 2 天缓冲');
-    if (m.salesChangeBps !== null && r.recent_sales_qty !== null && r.baseline_sales_qty !== null && r.baseline_sales_qty > 0 && BigInt(r.recent_sales_qty) * 100n <= BigInt(r.baseline_sales_qty) * 80n) m.flags.push('相邻等长窗口销量下降至少 20%');
+    if (m.coverageDays !== null && r.lead_days !== null && m.available !== null && r.recent_sales_qty !== null && r.window_days !== null && BigInt(m.available) * BigInt(r.window_days) <= BigInt(r.recent_sales_qty) * BigInt(r.lead_days + (rules?.stockBufferDays??2))) m.flags.push(`库存覆盖不足补货交期加 ${rules?.stockBufferDays??2} 天缓冲`);
+    if (m.salesChangeBps !== null && r.recent_sales_qty !== null && r.baseline_sales_qty !== null && r.baseline_sales_qty > 0 && BigInt(r.recent_sales_qty) * 10000n <= BigInt(r.baseline_sales_qty) * BigInt(10000-(rules?.salesDropBps??2000))) m.flags.push(`相邻等长窗口销量下降至少 ${(rules?.salesDropBps??2000)/100}%`);
     if (m.coverageDays !== null && r.inbound_eta && (Date.parse(r.inbound_eta + 'T00:00:00Z') - Date.parse(r.date + 'T00:00:00Z')) / 86400000 > Math.ceil(m.coverageDays)) m.flags.push('预计到货晚于当前销量下的库存覆盖期');
     m.notes.push('即时可售 = 现存 − 占用；在途不计入即时可售', '覆盖天数 = 即时可售 ÷（观察窗净销量 ÷ 天数），假设日均销量不变，不等于需求预测', '销量下降不能直接归因为缺货；在途受理不表示已经到账');
   } else {
@@ -90,7 +94,7 @@ export function calculateSignal(kind: SignalKind, row: SignalRow): SignalMetrics
     if (r.baseline_clicks !== null && r.baseline_clicks > 0 && r.baseline_conversions !== null) m.baselineConversionBps = Math.round(r.baseline_conversions * 10000 / r.baseline_clicks);
     if (!m.issues.length && m.roas !== null && m.baselineRoas !== null && m.baselineRoas > 0) {
       m.roasChangeBps = Math.round((m.roas / m.baselineRoas - 1) * 10000);
-      if (BigInt(r.attributed_revenue_minor!) * BigInt(r.baseline_spend_minor!) * 100n <= BigInt(r.baseline_revenue_minor!) * BigInt(r.spend_minor!) * 80n) m.flags.push('同口径 ROAS 相对下降至少 20%');
+      if (BigInt(r.attributed_revenue_minor!) * BigInt(r.baseline_spend_minor!) * 10000n <= BigInt(r.baseline_revenue_minor!) * BigInt(r.spend_minor!) * BigInt(10000-(rules?.adsRoasDropBps??2000))) m.flags.push(`同口径 ROAS 相对下降至少 ${(rules?.adsRoasDropBps??2000)/100}%`);
     }
     m.notes.push('ROAS = 归因成交额 ÷ 广告花费，不代表毛利或净利润', '点击转化率 = 转化数 ÷ 点击数；零点击时显示未知，不假定为零', '缺少库存、自然流量和完整费用证据，不能仅凭 ROAS 下降直接调整预算');
   }

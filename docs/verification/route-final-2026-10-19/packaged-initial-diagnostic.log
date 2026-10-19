@@ -1,0 +1,261 @@
+{
+  "id": "580e42ee-821c-4f19-b301-638b8d4c41cb",
+  "state": "completed",
+  "error": null,
+  "trace": [
+    {
+      "at": "2026-10-19T14:58:37.119Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "580e42ee-821c-4f19-b301-638b8d4c41cb:model:5",
+      "data": {
+        "index": 5,
+        "epoch": 2
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:37.377Z",
+      "stage": "investigate",
+      "tool": "retail_simulate_actions",
+      "evidenceId": "de0309e482d16daedcc6db72:retail_simulate_actions",
+      "data": [
+        {
+          "kind": "observe",
+          "title": "不调整，补证并继续观察",
+          "rationale": "",
+          "couponMinor": 2000,
+          "revenueMinor": 7000,
+          "profitMinor": 1000,
+          "marginBps": 1429,
+          "passed": false,
+          "constraints": [
+            "未达到 20% 演示毛利阈值"
+          ],
+          "assumptions": [
+            "售价、成本、满减及补贴保持不变",
+            "未测算需求弹性和优惠变更后的销量",
+            "仅历史快照分析，执行前须重新核对时效与业务权限"
+          ]
+        },
+        {
+          "kind": "reduce_coupon",
+          "title": "减少商家券（条件测算）",
+          "rationale": "",
+          "couponMinor": 1500,
+          "revenueMinor": 7500,
+          "profitMinor": 1500,
+          "marginBps": 2000,
+          "passed": true,
+          "constraints": [],
+          "assumptions": [
+            "售价、成本、满减及补贴保持不变",
+            "未测算需求弹性和优惠变更后的销量",
+            "仅历史快照分析，执行前须重新核对时效与业务权限"
+          ]
+        }
+      ],
+      "transport": "mcp_stdio"
+    },
+    {
+      "at": "2026-10-19T14:58:37.640Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "580e42ee-821c-4f19-b301-638b8d4c41cb:model:6",
+      "data": {
+        "index": 6,
+        "epoch": 2
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:37.865Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "580e42ee-821c-4f19-b301-638b8d4c41cb:model:7",
+      "data": {
+        "index": 7,
+        "epoch": 2
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:38.104Z",
+      "stage": "review",
+      "tool": "readonly_reviewer",
+      "evidenceId": "580e42ee-821c-4f19-b301-638b8d4c41cb:review",
+      "data": {
+        "verdict": "passed",
+        "notes": [
+          "本地安装包协议夹具，不是真实模型评测",
+          "仅完成冻结快照分析；真实业务未执行，本地模拟须另经草稿约束与审批"
+        ],
+        "mode": "model"
+      }
+    }
+  ]
+}
+{
+  "id": "9eab2adb-9af5-44f5-93c2-f6505a66d3fd",
+  "scenario": "ads",
+  "state": "completed",
+  "error": null,
+  "trace": [
+    {
+      "at": "2026-10-19T14:58:41.275Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "9eab2adb-9af5-44f5-93c2-f6505a66d3fd:model:4",
+      "data": {
+        "index": 4,
+        "epoch": 0
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:41.491Z",
+      "stage": "investigate",
+      "tool": "retail_simulate_actions",
+      "evidenceId": "351723a03ae27722fbc6f06b:retail_simulate_actions",
+      "data": [
+        {
+          "couponMinor": null,
+          "revenueMinor": null,
+          "profitMinor": null,
+          "marginBps": null,
+          "kind": "observe",
+          "title": "不调整预算，核验归因与经营数据",
+          "rationale": "",
+          "values": {
+            "currentSpendMinor": 100000,
+            "proposedSpendMinor": 100000,
+            "hypotheticalRevenueMinor": 180000,
+            "roas": 1.8,
+            "baselineRoas": 3
+          },
+          "passed": true,
+          "constraints": [],
+          "assumptions": [
+            "归因效率保持不变，按花费同比例缩放成交额；这不是预测结果",
+            "减少花费不保证提升ROAS，未测算销量、自然流量、利润或长期影响",
+            "缺商品毛利、实时库存、平台预算上下限和完整归因账单，实际调整前必须补证；未修改Campaign"
+          ]
+        },
+        {
+          "couponMinor": null,
+          "revenueMinor": null,
+          "profitMinor": null,
+          "marginBps": null,
+          "kind": "reduce_budget",
+          "title": "预算降低 10%（条件测算）",
+          "rationale": "",
+          "values": {
+            "currentSpendMinor": 100000,
+            "proposedSpendMinor": 90000,
+            "hypotheticalRevenueMinor": 162000,
+            "roas": 1.8,
+            "baselineRoas": 3
+          },
+          "passed": true,
+          "constraints": [],
+          "assumptions": [
+            "归因效率保持不变，按花费同比例缩放成交额；这不是预测结果",
+            "减少花费不保证提升ROAS，未测算销量、自然流量、利润或长期影响",
+            "缺商品毛利、实时库存、平台预算上下限和完整归因账单，实际调整前必须补证；未修改Campaign"
+          ]
+        }
+      ],
+      "transport": "mcp_stdio"
+    },
+    {
+      "at": "2026-10-19T14:58:41.746Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "9eab2adb-9af5-44f5-93c2-f6505a66d3fd:model:5",
+      "data": {
+        "index": 5,
+        "epoch": 0
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:41.994Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "9eab2adb-9af5-44f5-93c2-f6505a66d3fd:model:6",
+      "data": {
+        "index": 6,
+        "epoch": 0
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:42.229Z",
+      "stage": "review",
+      "tool": "readonly_reviewer",
+      "evidenceId": "9eab2adb-9af5-44f5-93c2-f6505a66d3fd:review",
+      "data": {
+        "verdict": "passed",
+        "notes": [
+          "本地安装包协议夹具，不是真实模型评测",
+          "复核通过仅代表分析报告完成，不授予补货或预算写权限"
+        ],
+        "mode": "model"
+      }
+    }
+  ]
+}
+{
+  "id": "962f9bd9-cdbd-4b34-a8d1-a17a083730bb",
+  "scenario": "inventory",
+  "state": "failed",
+  "error": "调查报告输出格式校验失败（report.observations: 超出长度或数量限制），已保留证据，可重新调查",
+  "trace": [
+    {
+      "at": "2026-10-19T14:58:45.990Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "962f9bd9-cdbd-4b34-a8d1-a17a083730bb:model:5",
+      "data": {
+        "index": 5,
+        "epoch": 0
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:46.211Z",
+      "stage": "contract",
+      "tool": "output_contract",
+      "evidenceId": "962f9bd9-cdbd-4b34-a8d1-a17a083730bb:contract:1",
+      "data": {
+        "correction": 1,
+        "maximum": 2,
+        "message": "输出不符合契约，未执行该请求；要求模型更正"
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:46.439Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "962f9bd9-cdbd-4b34-a8d1-a17a083730bb:model:6",
+      "data": {
+        "index": 6,
+        "epoch": 0
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:46.658Z",
+      "stage": "contract",
+      "tool": "output_contract",
+      "evidenceId": "962f9bd9-cdbd-4b34-a8d1-a17a083730bb:contract:2",
+      "data": {
+        "correction": 2,
+        "maximum": 2,
+        "message": "输出不符合契约，未执行该请求；要求模型更正"
+      }
+    },
+    {
+      "at": "2026-10-19T14:58:46.903Z",
+      "stage": "budget",
+      "tool": "model_request",
+      "evidenceId": "962f9bd9-cdbd-4b34-a8d1-a17a083730bb:model:7",
+      "data": {
+        "index": 7,
+        "epoch": 0
+      }
+    }
+  ]
+}

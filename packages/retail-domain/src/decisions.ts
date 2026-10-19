@@ -1,4 +1,6 @@
-import { evidenceTimeIssue } from './evidence-policy';
+import {PolicyStore,readBusinessPolicy} from './policy-store';
+import {freezePolicy} from './business-policy';
+import { evidenceTimeIssue, evidenceTimeContext } from './evidence-policy';
 import { ReviewLedger, installReviewSchema } from './outcome-reviews';
 import type { ReviewView, ObservationPreview, CaseMemory } from './outcome-reviews';
 import { ExecutionBatchLedger, installBatchSchema } from './execution-batches';
@@ -18,7 +20,7 @@ import type { SignalRecord } from './signals';
 export type DraftEvidence = EvidenceRecord | SignalRecord;
 export const DECISION_POLICY = 'merqo-simulation-draft-v2';
 export interface ApprovalRequest { id: string; decisionId: string; decisionVersion: number; actionHash: string; policyVersion: string; requestedAt: string; expiresAt: string; requestedBy: 'local-analyst'; status: ApprovalStatus }
-export interface DecisionDraft {
+export interface DecisionDraft { policyRevision?:number; approvalMinutes?:number;
   id: string; version: number; workspaceId: string; investigationId: string; scenario: 'margin' | 'inventory' | 'ads';
   state: 'draft' | 'pending_approval' | 'superseded' | 'expired' | 'approved' | 'rejected' | 'invalidated'; environment: 'simulation' | 'analysis_only';
   selectedKind: Scenario['kind']; selected: Scenario; alternatives: Scenario[];
@@ -31,11 +33,11 @@ export interface DecisionDraft {
 interface JsonRow { json: string }
 const digest = (value: unknown): string => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const hashOf = (e: DraftEvidence): string => 'hash' in e ? e.hash : e.snapshotHash;
-function actionHash(draft: DecisionDraft): string { return digest({ id: draft.id, version: draft.version, workspace: draft.workspaceId, investigation: draft.investigationId, scope: draft.scope, kind: draft.selectedKind, before: draft.before, after: draft.after, selected: draft.selected, evidence: draft.evidenceHash, record: draft.recordId, report: draft.reportHash, policy: draft.policyVersion, expiresAt: draft.expiresAt, rule: draft.ruleVersion, note: draft.note }); }
+function actionHash(draft: DecisionDraft): string { return digest({ ...(draft.policyRevision!==undefined?{policyRevision:draft.policyRevision,approvalMinutes:draft.approvalMinutes}:{}), id: draft.id, version: draft.version, workspace: draft.workspaceId, investigation: draft.investigationId, scope: draft.scope, kind: draft.selectedKind, before: draft.before, after: draft.after, selected: draft.selected, evidence: draft.evidenceHash, record: draft.recordId, report: draft.reportHash, policy: draft.policyVersion, expiresAt: draft.expiresAt, rule: draft.ruleVersion, note: draft.note }); }
 /** Local single-user simulated decisions and approvals. No independent identity assurance or business execution. */
 export class DecisionStore {
   private readonly db: Database;
-  constructor(file: string, private readonly workspaceId: string, private readonly current: () => DraftEvidence[]) {
+  constructor(private readonly file: string, private readonly workspaceId: string, private readonly current: () => DraftEvidence[]) {
     this.db = new Database(file + '.investigations.sqlite', { create: true, strict: true });
     try {
       this.db.exec('PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL;');
@@ -43,8 +45,9 @@ export class DecisionStore {
       this.db.query('ATTACH DATABASE ? AS signals_scope').run(file + '.signals.sqlite');
       this.db.exec('CREATE TABLE IF NOT EXISTS decision_schema(version INTEGER PRIMARY KEY) STRICT');
       const schemaVersion = this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0;
-      if (schemaVersion > 6) throw new Error('决策数据库版本高于当前程序');
-      if (schemaVersion >= 1 && schemaVersion <= 5) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
+      if (schemaVersion > 8) throw new Error('决策数据库版本高于当前程序');
+      if (schemaVersion >= 1 && schemaVersion <= 7) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
+      const policies=new PolicyStore(file);policies.close();this.db.query('ATTACH DATABASE ? AS policy_scope').run(file+'.policy.sqlite');
       this.db.transaction(() => { this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS decision_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
         CREATE TABLE IF NOT EXISTS decision_requests(id TEXT PRIMARY KEY,decision_id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),UNIQUE(decision_id,version)) STRICT;
@@ -55,7 +58,7 @@ export class DecisionStore {
         CREATE TABLE IF NOT EXISTS approval_invalidations(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE INDEX IF NOT EXISTS approval_requests_recent ON decision_requests(json_extract(json,'$.requestedAt'));`);
       installSimulationSchema(this.db);installCompensationSchema(this.db);installBatchSchema(this.db);installReviewSchema(this.db);
-      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(6)'); }).immediate();
+      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(8)'); }).immediate();
     } catch (error) { this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
@@ -63,13 +66,14 @@ export class DecisionStore {
   private raw(id: string): DecisionDraft { const row = this.db.query<JsonRow, [string]>('SELECT json FROM decisions WHERE id=?').get(id); if (!row) throw new Error('决策草稿不存在'); const d = JSON.parse(row.json) as DecisionDraft; if (d.workspaceId !== this.workspaceId) throw new Error('决策不属于当前工作空间'); return d; }
   private make(run: AnyInvestigation, kind: Scenario['kind'], note: string, previous?: DecisionDraft): DecisionDraft {
     if (!run.report || run.state === 'running' || run.state === 'failed') throw new Error('调查尚无有效报告，请完成调查后再保存草稿');
-    const alternatives = (isSignalInvestigation(run) ? simulateSignal(run.evidence) : simulate(run.evidence)).map(s => ({ ...s, rationale: run.report!.options.find(o => o.kind === s.kind)?.rationale ?? '' }));
+    const alternatives = (isSignalInvestigation(run) ? simulateSignal(run.evidence) : simulate(run.evidence,run.marginAction)).map(s => ({ ...s, rationale: run.report!.options.find(o => o.kind === s.kind)?.rationale ?? '' }));
     if (JSON.stringify(alternatives) !== JSON.stringify(run.report.scenarios)) throw new Error('调查测算规则或方案结果已变化，请重新调查');
     const selected = alternatives.find(s => s.kind === kind); if (!selected) throw new Error('方案不属于当前调查场景');
     const e = run.evidence; const row = e.row; const now = new Date().toISOString();
-    const before: Record<string, number | null> = isSignalInvestigation(run) ? run.scenario === 'inventory' ? { available: run.evidence.metrics.available, coverageDays: run.evidence.metrics.coverageDays, proposedQuantity: 0 } : { spendMinor: 'spend_minor' in row ? row.spend_minor : null } : { couponMinor: run.evidence.row.coupon_minor, revenueMinor: run.evidence.calculation.revenueMinor, marginBps: run.evidence.calculation.marginBps };
-    const after: Record<string, number | null> = (run.scenario ?? 'margin') === 'margin' ? { couponMinor: selected.couponMinor, revenueMinor: selected.revenueMinor, marginBps: selected.marginBps } : run.scenario === 'inventory' ? { proposedQuantity: selected.values?.proposedQuantity ?? null, leadDays: selected.values?.leadDays ?? null } : { spendMinor: selected.values?.proposedSpendMinor ?? null, hypotheticalRevenueMinor: selected.values?.hypotheticalRevenueMinor ?? null, roas: selected.values?.roas ?? null };
-    const draft: DecisionDraft = { id: previous?.id ?? randomUUID(), version: (previous?.version ?? 0) + 1, workspaceId: this.workspaceId, investigationId: run.id, scenario: run.scenario ?? 'margin', state: 'draft', environment: e.source === 'demo' ? 'simulation' : 'analysis_only', selectedKind: kind, selected, alternatives, scope: { shop: row.shop_id, channel: row.channel, sku: row.sku_id, date: row.date, source: e.source, warehouse: 'warehouse_id' in row ? row.warehouse_id : null, campaign: 'campaign_id' in row ? row.campaign_id : null }, before, after, note, evidenceIds: [...new Set([...run.report.observations, ...run.report.hypotheses].flatMap(c => c.evidenceIds))], evidenceHash: hashOf(e), recordId: e.id, ruleVersion: e.ruleVersion, reportHash: digest(run.report), policyVersion: DECISION_POLICY, actionHash: '', createdAt: previous?.createdAt ?? now, updatedAt: now, expiresAt: new Date(Date.now() + 1800000).toISOString(), submissionBlockers: [], request: null };
+    const before: Record<string, number | null> = isSignalInvestigation(run) ? run.scenario === 'inventory' ? { available: run.evidence.metrics.available, coverageDays: run.evidence.metrics.coverageDays, proposedQuantity: 0 } : { spendMinor: 'spend_minor' in row ? row.spend_minor : null } : { ...(kind==='set_price'?{priceMinor:run.evidence.row.list_price_minor}:{}), couponMinor: run.evidence.row.coupon_minor, revenueMinor: run.evidence.calculation.revenueMinor, marginBps: run.evidence.calculation.marginBps };
+    const after: Record<string, number | null> = (run.scenario ?? 'margin') === 'margin' ? { ...(kind==='set_price'?{priceMinor:selected.values?.priceMinor??null}:{}), couponMinor: selected.couponMinor, revenueMinor: selected.revenueMinor, marginBps: selected.marginBps } : run.scenario === 'inventory' ? { proposedQuantity: selected.values?.proposedQuantity ?? null, leadDays: selected.values?.leadDays ?? null } : { spendMinor: selected.values?.proposedSpendMinor ?? null, hypotheticalRevenueMinor: selected.values?.hypotheticalRevenueMinor ?? null, roas: selected.values?.roas ?? null };
+    const policy=freezePolicy(readBusinessPolicy(this.file),row.shop_id);
+    const draft: DecisionDraft = { ...(policy.revision?{policyRevision:policy.revision,approvalMinutes:policy.settings.approvalMinutes}:{}), id: previous?.id ?? randomUUID(), version: (previous?.version ?? 0) + 1, workspaceId: this.workspaceId, investigationId: run.id, scenario: run.scenario ?? 'margin', state: 'draft', environment: e.source === 'demo' ? 'simulation' : 'analysis_only', selectedKind: kind, selected, alternatives, scope: { shop: row.shop_id, channel: row.channel, sku: row.sku_id, date: row.date, source: e.source, warehouse: 'warehouse_id' in row ? row.warehouse_id : null, campaign: 'campaign_id' in row ? row.campaign_id : null }, before, after, note, evidenceIds: [...new Set([...run.report.observations, ...run.report.hypotheses].flatMap(c => c.evidenceIds))], evidenceHash: hashOf(e), recordId: e.id, ruleVersion: e.ruleVersion, reportHash: digest(run.report), policyVersion: DECISION_POLICY, actionHash: '', createdAt: previous?.createdAt ?? now, updatedAt: now, expiresAt: new Date(Date.now() + policy.settings.approvalMinutes*60000).toISOString(), submissionBlockers: [], request: null };
     draft.actionHash = actionHash(draft); return draft;
   }
   private blockers(d: DecisionDraft): string[] {
@@ -82,7 +86,8 @@ export class DecisionStore {
     if (!d.selected.passed) reasons.push(...d.selected.constraints, '所选方案未通过硬约束');
     if (('metrics' in e ? e.metrics.issues : e.calculation.issues).length) reasons.push('冻结证据缺少关键字段或口径冲突');
     const timeIssue=evidenceTimeIssue(e);if(timeIssue)reasons.push(timeIssue);
-    if (Date.now() >= Date.parse(d.expiresAt)) reasons.push('草稿30分钟有效期已过，请保存新版本');
+    if (Date.now() >= Date.parse(d.expiresAt)) reasons.push(`草稿${d.approvalMinutes??30}分钟有效期已过，请保存新版本`);
+    if((d.policyRevision??0)!==readBusinessPolicy(this.file).revision)reasons.push('经营规则配置已变化，请重新调查并审批');
     const current = this.current().find(r => r.id === e.id);
     if (!current || hashOf(current) !== d.evidenceHash || current.ruleVersion !== d.ruleVersion || JSON.stringify(current.row) !== JSON.stringify(e.row) || ('metrics' in current ? current.metrics.issues : current.calculation.issues).length) reasons.push('当前业务快照、规则或质量已变化，请重新调查');
     if (d.policyVersion !== DECISION_POLICY || d.actionHash !== actionHash(d) || d.reportHash !== digest(run.report)) reasons.push('参数摘要、复核或规则版本变化，需重新生成草稿');
@@ -136,7 +141,7 @@ export class DecisionStore {
     const d=JSON.parse(row.json) as DecisionDraft;if(d.workspaceId!==this.workspaceId)throw new Error('申请不属于当前工作空间');
     const p=this.projection(d,request);
     const audit=this.db.query<ApprovalAudit,[string,number]>('SELECT id,event,at,actor FROM decision_events WHERE decision_id=? AND version=? ORDER BY id LIMIT 100').all(d.id,d.version).map(e=>({...e,...(e.event==='approval_invalidated'?{reason:p.invalidation?.reasons.join('；')??''}:e.event==='approval_approved'||e.event==='approval_rejected'?{reason:p.resolution?.reason??''}:{})}));
-    let evidence: ApprovalView['evidence']=null;try{const run=this.run(d.investigationId);evidence={observedAt:run.evidence.row.date,importedAt:run.evidence.importedAt,source:run.evidence.source,reviewer:run.report?.reviewer.verdict??'unknown',mode:run.mode};}catch{/* invalidation is already persisted */}
+    let evidence: ApprovalView['evidence']=null;try{const run=this.run(d.investigationId);evidence={timeContext:evidenceTimeContext(run.evidence),observedAt:run.evidence.row.date,importedAt:run.evidence.importedAt,source:run.evidence.source,reviewer:run.report?.reviewer.verdict??'unknown',mode:run.mode};}catch{/* invalidation is already persisted */}
     return {evidence,id:request.id,status:p.status,decision:{...d,state:p.status==='pending'?'pending_approval':p.status,request:{...request,status:p.status},submissionBlockers:p.blockers,approvalResolution:p.resolution,approvalInvalidation:p.invalidation},resolution:p.resolution,invalidation:p.invalidation,blockers:p.blockers,audit};
   }
   approvals(): ApprovalView[] { return this.db.transaction(()=>this.db.query<JsonRow,[]>("SELECT json FROM decision_requests ORDER BY json_extract(json,'$.requestedAt') DESC,rowid DESC LIMIT 100").all().map(r=>this.approvalView(JSON.parse(r.json) as ApprovalRequest))).immediate(); }
@@ -218,14 +223,14 @@ export class DecisionStore {
   observeReview(id:string,version:number,input:{csv:string;hash:string}|null):ReviewView{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).observe(id,version,input)).immediate();}
   finalizeReview(id:string,version:number,hash:string,conclusion:'comparison_only'|'inconclusive',note:string,confounders:string,actor:string):ReviewView{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).finalize(id,version,hash,conclusion,note,confounders,actor)).immediate();}
   searchCases(e:DraftEvidence,scenario:DecisionDraft['scenario'],asOf:string):CaseMemory[]{return this.db.transaction(()=>new ReviewLedger(this.db,this.workspaceId).search(e,scenario,asOf)).immediate();}
-  compensations():CompensationView[]{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).list()).immediate();}
-  createCompensation(jobId:string,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).create(jobId,reason)).immediate();}
-  reviseCompensation(id:string,expectedVersion:number,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).revise(id,expectedVersion,reason)).immediate();}
+  compensations():CompensationView[]{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current,shop=>freezePolicy(readBusinessPolicy(this.file),shop).settings.approvalMinutes).list()).immediate();}
+  createCompensation(jobId:string,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current,shop=>freezePolicy(readBusinessPolicy(this.file),shop).settings.approvalMinutes).create(jobId,reason)).immediate();}
+  reviseCompensation(id:string,expectedVersion:number,reason:string):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current,shop=>freezePolicy(readBusinessPolicy(this.file),shop).settings.approvalMinutes).revise(id,expectedVersion,reason)).immediate();}
   resolveCompensation(id:string,version:number,hash:string,choice:'approve'|'reject',reason:string,actor:SimulationApprover|null):CompensationView{
-    const result=this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).resolve(id,version,hash,choice,reason,actor)).immediate();if(result.error)throw new Error(result.error);return result.view;
+    const result=this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current,shop=>freezePolicy(readBusinessPolicy(this.file),shop).settings.approvalMinutes).resolve(id,version,hash,choice,reason,actor)).immediate();if(result.error)throw new Error(result.error);return result.view;
   }
-  executeCompensation(id:string,version:number,hash:string,actor:SimulationExecutor|null):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).execute(id,version,hash,actor)).immediate();}
-  reconcileCompensation(id:string,actor:SimulationExecutor|null):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current).reconcile(id,actor)).immediate();}
+  executeCompensation(id:string,version:number,hash:string,actor:SimulationExecutor|null):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current,shop=>freezePolicy(readBusinessPolicy(this.file),shop).settings.approvalMinutes).execute(id,version,hash,actor)).immediate();}
+  reconcileCompensation(id:string,actor:SimulationExecutor|null):CompensationView{return this.db.transaction(()=>new CompensationLedger(this.db,this.workspaceId,this.current,shop=>freezePolicy(readBusinessPolicy(this.file),shop).settings.approvalMinutes).reconcile(id,actor)).immediate();}
   private save(d: DecisionDraft, event: string): void {
     this.db.query('INSERT INTO decisions VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,json=excluded.json').run(d.id, d.investigationId, d.version, JSON.stringify(d));
     this.db.query('INSERT INTO decision_versions VALUES(?,?,?)').run(d.id, d.version, JSON.stringify(d));

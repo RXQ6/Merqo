@@ -1,0 +1,15 @@
+{
+  "ok": false,
+  "error": "Error: packaged inventory protocol: 962f9bd9-cdbd-4b34-a8d1-a17a083730bb\n\npackaged inventory protocol: 962f9bd9-cdbd-4b34-a8d1-a17a083730bb\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: \"completed\"\nReceived: \"failed\"\n\nCall Log:\n- Timeout 90000ms exceeded while waiting on the predicate",
+  "checks": [
+    "no-Git-Bash first run can enter retail analysis",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "packaged data worker imports three scenarios and computes the expected margin",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "UI pause survives actual process restart; explicit resume preserves frozen evidence and remaining call budget",
+    "packaged margin API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged ads API protocol, bundled MCP, four scoped tools and Skill work"
+  ],
+  "calls": 20,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\profile-p8qogx"
+}

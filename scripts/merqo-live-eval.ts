@@ -1,3 +1,6 @@
+import {readCatalog} from '../packages/retail-domain/src/catalog-store';
+import {catalogCandidateSkus} from '../packages/retail-domain/src/catalog';
+import {matchRelatedEvidence} from '../packages/retail-domain/src/related-evidence';
 /** Opt-in M5: exactly five real-model investigations per scenario, through production readonly MCP. */
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -30,14 +33,14 @@ if (args[0] === '--preflight') process.exit(0);
 const out = resolve('artifacts/live-eval', new Date().toISOString().replace(/[:.]/g, '-') + '-' + crypto.randomUUID().slice(0, 8));
 mkdirSync(out, { recursive: true });
 const configHash = liveHash(probe.config);
-const codeFiles = ['operations', 'signals', 'offers', 'readonly-tools', 'store', 'retail-query', 'signal-store', 'investigation-store', 'investigations', 'signal-investigations', 'margin-numeric', 'margin-evidence', 'ads-numeric', 'inventory-numeric', 'live-evaluation'].map(name => `packages/retail-domain/src/${name}.ts`).concat(['packages/shared/src/agent/base-agent.ts', 'packages/shared/src/agent/backend/types.ts', 'packages/shared/src/agent/backend/factory.ts', 'packages/shared/src/agent/backend/isolated-completion.ts', 'packages/shared/src/agent/backend/isolated-telemetry.ts', 'apps/electron/src/main/retail-investigation.ts', 'apps/electron/src/main/retail-inference-telemetry.ts', 'apps/electron/src/main/retail-mcp.ts', 'scripts/merqo-retail-mcp.ts', 'scripts/merqo-live-eval.ts', ...LIVE_CONTRACT.scenarios.map(s => `packages/retail-domain/skills/${s}/SKILL.md`)]);
+const codeFiles = ['operations', 'signals', 'offers', 'readonly-tools', 'store', 'retail-query', 'signal-store', 'investigation-store', 'investigations', 'signal-investigations', 'margin-numeric', 'margin-evidence', 'ads-numeric', 'inventory-numeric','source-metadata','source-provenance','business-policy','policy-store','catalog','catalog-store','joint-evidence','related-evidence','supplement','investigation-limits','price-action','transactions','transaction-store','csv', 'live-evaluation'].map(name => `packages/retail-domain/src/${name}.ts`).concat(['packages/shared/src/agent/base-agent.ts', 'packages/shared/src/agent/backend/types.ts', 'packages/shared/src/agent/backend/factory.ts', 'packages/shared/src/agent/backend/isolated-completion.ts', 'packages/shared/src/agent/backend/isolated-telemetry.ts', 'apps/electron/src/main/retail-investigation.ts', 'apps/electron/src/main/retail-inference-telemetry.ts', 'apps/electron/src/main/retail-mcp.ts', 'scripts/merqo-retail-mcp.ts', 'scripts/merqo-live-eval.ts', ...LIVE_CONTRACT.scenarios.map(s => `packages/retail-domain/skills/${s}/SKILL.md`)]);
 const codeHashes = Object.fromEntries(codeFiles.map(file => [file, liveHash(readFileSync(file, 'utf8'))]));
 const dataset = { contract: LIVE_CONTRACT, csv: { margin: DEMO_CSV, inventory: INVENTORY_DEMO, ads: ADS_DEMO } };
 writeFileSync(join(out, 'dataset.json'), JSON.stringify(dataset, null, 2));
 const temp = mkdtempSync(join(tmpdir(), 'merqo-m5-live-')); mkdirSync(join(temp, 'retail'));
 const file = join(temp, 'retail/operations.sqlite');
 const data = new RetailStore(file), signals = new SignalStore(file + '.signals.sqlite');
-const runs = new InvestigationStore(file + '.investigations.sqlite', false, 'm5-live');
+const runs = new InvestigationStore(file + '.investigations.sqlite', false, 'm5-live',evidence=>{const catalog=readCatalog(file);return matchRelatedEvidence(evidence,(function*(){for(const sku_id of catalogCandidateSkus(evidence,catalog)){const scope={source:evidence.source,row:{...evidence.row,sku_id}};yield* data.snapshot(scope).records;yield* signals.records(evidence.source,scope);}})(),catalog);});
 const decisions = new DecisionStore(file, 'm5-live', () => [...data.snapshot().records, ...signals.snapshot().records]);
 type Call = { index: number; stage: 'investigate' | 'review'; systemHash: string; promptHash: string; responseHash: string | null; response: string | null; telemetry: InferenceTelemetry | null; reviewDraft?: unknown };
 type Result = { scenario: LiveScenario; repetition: number; run: AnyInvestigation; calls: Call[]; elapsedMs: number; safetyViolations: string[]; score: LiveRunScore };

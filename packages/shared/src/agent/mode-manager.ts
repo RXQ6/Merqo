@@ -12,6 +12,7 @@
 
 /// <reference path="../types/incr-regex-package.d.ts" />
 
+import {retailToolBoundary} from './retail-tool-boundary';
 import { homedir } from 'os';
 import { existsSync, realpathSync } from 'fs';
 import { debug } from '../utils/debug.ts';
@@ -1810,6 +1811,8 @@ export function shouldAllowToolInMode(
     permissionsContext?: PermissionsContext;
   }
 ): ToolCheckResult {
+  const retailBoundary=retailToolBoundary(toolName,options?.permissionsContext?.workspaceRootPath);
+  if(retailBoundary)return retailBoundary;
   // Get config: merged custom if context provided, otherwise defaults
   let config: ToolCheckConfig;
 

@@ -1,0 +1,44 @@
+ExpectError: expect(locator).toBeEnabled() failed
+
+Locator:  getByRole('button', { name: '进行直接改价调查', exact: true })
+Expected: enabled
+Received: disabled
+Timeout:  5000ms
+
+Call log:
+  - Expect "to.be.enabled" with timeout 5000ms
+  - waiting for getByRole('button', { name: '进行直接改价调查', exact: true })
+    13 × locator resolved to <button disabled>进行直接改价调查</button>
+       - unexpected value "disabled"
+
+    at captureRawStack (C:\Users\29486\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright-core\lib\coreBundle.js:9681:17)
+    at callMatcherAsStep (C:\Users\29486\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\lib\matchers\expect.js:13310:57)
+    at Object.toBeEnabled (C:\Users\29486\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\lib\matchers\expect.js:13300:23)
+    at main (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-price-desktop-check.cjs:27:72) {
+  matcherResult: {
+    message: 'expect(locator).toBeEnabled() failed\n' +
+      '\n' +
+      "Locator:  getByRole('button', { name: '进行直接改价调查', exact: true })\n" +
+      'Expected: enabled\n' +
+      'Received: disabled\n' +
+      'Timeout:  5000ms\n' +
+      '\n' +
+      'Call log:\n' +
+      '  - Expect "to.be.enabled" with timeout 5000ms\n' +
+      "  - waiting for getByRole('button', { name: '进行直接改价调查', exact: true })\n" +
+      '    13 × locator resolved to <button disabled>进行直接改价调查</button>\n' +
+      '       - unexpected value "disabled"\n',
+    pass: false,
+    actual: 'disabled',
+    name: 'toBeEnabled',
+    expected: 'enabled',
+    log: [
+      '  - Expect "to.be.enabled" with timeout 5000ms',
+      "  - waiting for getByRole('button', { name: '进行直接改价调查', exact: true })",
+      '    13 × locator resolved to <button disabled>进行直接改价调查</button>',
+      '       - unexpected value "disabled"'
+    ],
+    timeout: 5000,
+    ariaSnapshot: '- button "进行直接改价调查" [disabled]'
+  }
+}

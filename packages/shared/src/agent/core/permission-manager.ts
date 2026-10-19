@@ -78,7 +78,7 @@ export class PermissionManager {
     // Build permissions context for loading custom permissions
     // PermissionsContext expects workspaceRootPath (absolute path to workspace)
     this.permissionsContext = {
-      workspaceRootPath: config.workingDirectory ?? '',
+      workspaceRootPath: config.workspaceRootPath ?? config.workingDirectory ?? '',
     };
   }
 
@@ -307,7 +307,7 @@ export class PermissionManager {
    */
   updateWorkingDirectory(path: string): void {
     this.config.workingDirectory = path;
-    this.permissionsContext.workspaceRootPath = path;
+    this.permissionsContext.workspaceRootPath = this.config.workspaceRootPath ?? path;
   }
 
   /**

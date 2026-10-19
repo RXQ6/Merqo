@@ -1,4 +1,5 @@
 import type { DecisionDraft } from './decisions';
+import type { EvidenceTimeContext } from './evidence-policy';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'superseded' | 'invalidated';
 export interface SimulationApprover { id: 'local-simulation-approver'; role: 'approver'; environment: 'simulation' }
 export interface ApprovalResolution {
@@ -7,5 +8,5 @@ export interface ApprovalResolution {
 }
 export interface ApprovalInvalidation { requestId: string; status: 'expired' | 'superseded' | 'invalidated'; reasons: string[]; at: string }
 export interface ApprovalAudit { id: number; event: string; at: string; actor: string; reason?: string }
-export interface ApprovalEvidence { observedAt: string; importedAt: string; source: 'demo' | 'csv'; reviewer: string; mode: string }
+export interface ApprovalEvidence { observedAt: string; importedAt: string; source: 'demo' | 'csv'; reviewer: string; mode: string; timeContext?: EvidenceTimeContext }
 export interface ApprovalView { evidence: ApprovalEvidence | null; id: string; status: ApprovalStatus; decision: DecisionDraft; resolution: ApprovalResolution | null; invalidation: ApprovalInvalidation | null; blockers: string[]; audit: ApprovalAudit[] }

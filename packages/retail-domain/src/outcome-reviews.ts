@@ -77,12 +77,12 @@ export class ReviewLedger {
       if (membershipIdentity(row) !== membershipIdentity(b)) blockers.push('会员分组、身份或叠加规则与原快照不一致');
       if (offerScope(row) !== offerScope(b)) blockers.push('参考报价上下文与原快照不一致，不能静默移除');
       if (giftIdentity(row) !== giftIdentity(b)) blockers.push('赠品关联、数量或口径与原快照不一致');
-      const x = calculate(b), y = calculate(row); blockers.push(...x.issues,...y.issues);
+      const x = calculate(b,false,r.baseline.policy?.settings), y = calculate(row,false,r.baseline.policy?.settings); blockers.push(...x.issues,...y.issues);
       add('revenue','商品收入 / 件','minor',x.revenueMinor,y.revenueMinor);add('profit','商品毛利 / 件','minor',x.profitMinor,y.profitMinor);add('margin','毛利率','bps',x.marginBps,y.marginBps);add('sales','净成交件数','number',b.sold_qty,row.sold_qty);
     } else {
       if (!('window_days' in row) || !('window_days' in b)) return {blockers:[...blockers,'观察记录不是窗口口径'],metrics};
       if (row.window_days !== r.windowDays || row.baseline_window_days !== r.windowDays || row.baseline_end_date !== b.date) blockers.push('必须为紧邻、等长窗口，且对照窗结束日期对应原快照');
-      const x = calculateSignal(r.job.scenario,b), y = calculateSignal(r.job.scenario,row);blockers.push(...x.issues,...y.issues);
+      const x = calculateSignal(r.job.scenario,b,r.baseline.policy?.settings), y = calculateSignal(r.job.scenario,row,r.baseline.policy?.settings);blockers.push(...x.issues,...y.issues);
       if (r.job.scenario === 'inventory') {
         if (!('warehouse_id' in b) || !('warehouse_id' in row)) return {blockers:[...blockers,'观察记录不是库存口径'],metrics};
         if (row.warehouse_id !== b.warehouse_id || row.baseline_sales_qty !== b.recent_sales_qty) blockers.push('仓库或原窗口销量对照值不一致');

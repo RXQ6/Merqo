@@ -1,3 +1,4 @@
+import { matchRelatedEvidence } from '../packages/retail-domain/src/related-evidence';
 import { DecisionStore } from '../packages/retail-domain/src/decisions';
 import { runInvestigation } from '../packages/retail-domain/src/investigations';
 import type { ModelPort } from '../packages/retail-domain/src/investigations';
@@ -18,7 +19,7 @@ import { ADS_DEMO } from '../packages/retail-domain/src/signals';
 const workspace = mkdtempSync(join(tmpdir(), 'merqo-mcp-')); mkdirSync(join(workspace, 'retail'));
 const margin = new RetailStore(join(workspace, 'retail/operations.sqlite')); margin.import(DEMO_CSV, undefined, 'demo');
 const signals = new SignalStore(join(workspace, 'retail/operations.sqlite.signals.sqlite')); signals.demo();
-const investigations = new InvestigationStore(join(workspace, 'retail/operations.sqlite.investigations.sqlite'));
+const investigations = new InvestigationStore(join(workspace, 'retail/operations.sqlite.investigations.sqlite'),false,undefined,evidence=>matchRelatedEvidence(evidence,[...margin.snapshot(evidence).records,...signals.records(evidence.source,evidence)]));
 const checks: string[] = [];
 try {
   for (const scenario of ['margin', 'inventory', 'ads'] as const) {
@@ -36,7 +37,7 @@ try {
       const denied = scenario === 'ads' ? 'retail_get_inventory' : 'retail_get_campaigns';
       assert((await client.callTool({ name: denied, arguments: {} })).isError);
       const resources = await client.listResources(); assert.equal(resources.resources.length, 1);
-      const skillReply = await client.readResource({ uri: resources.resources[0]!.uri }); assert(JSON.stringify(skillReply).includes(`merqo-${scenario}`)); assert(JSON.stringify(skillReply).includes('version: 1.4.0'));
+      const skillReply = await client.readResource({ uri: resources.resources[0]!.uri }); assert(JSON.stringify(skillReply).includes(`merqo-${scenario}`)); assert(JSON.stringify(skillReply).includes('version: 1.6.0'));
       const before = await client.callTool({ name: 'retail_simulate_actions', arguments: {} });
       if (scenario === 'ads') signals.import('ads', ADS_DEMO.replace(',180000,', ',220000,'), undefined, 'demo');
       const after = await client.callTool({ name: 'retail_simulate_actions', arguments: {} });
@@ -45,9 +46,17 @@ try {
       checks.push(`${scenario}: real stdio tools, scope denial, Skill resource and frozen evidence passed`);
     } finally { await client.close(); }
     const desktop = await connectRetailMcp(run, workspace);
-    try { const result = await desktop.tool('retail_get_data_health'); assert(JSON.stringify(result).includes('hash')); assert(desktop.skill.includes(`merqo-${scenario}`)); await assert.rejects(desktop.tool('execute_purchase')); checks.push(`${scenario}: desktop MCP adapter validates frozen run scope after correction`); } finally { await desktop.close(); }
+    try { const result = await desktop.tool('retail_get_data_health'); assert(JSON.stringify(result).includes('hash')); assert(desktop.skill.includes(`merqo-${scenario}`)); const context=z.object({relatedEvidence:z.unknown()}).parse(await desktop.tool('retail_get_sku_context'));assert.deepEqual(context.relatedEvidence,run.relatedEvidence); await assert.rejects(desktop.tool('execute_purchase')); checks.push(`${scenario}: desktop MCP adapter validates frozen run scope and related evidence after correction`); } finally { await desktop.close(); }
+    const forged=await connectRetailMcp({...run,relatedEvidence:{...run.relatedEvidence!,items:[]}},workspace);
+    try {await assert.rejects(forged.tool('retail_get_sku_context'),/冻结范围/);checks.push(`${scenario}: desktop rejects substituted related evidence`);}finally{await forged.close();}
     investigations.update(run.id,{error:'protocol test complete'});
   }
+  const price=investigations.create(margin.snapshot().records.find(r=>r.row.sku_id==='TEA-500')!,'replay',true,'set_price').run;
+  const priceClient=await connectRetailMcp(price,workspace);
+  try {const ctx=z.object({marginAction:z.literal('set_price')}).parse(await priceClient.tool('retail_get_sku_context'));assert.equal(ctx.marginAction,'set_price');const plans=z.array(z.object({kind:z.string()})).parse(await priceClient.tool('retail_simulate_actions'));assert.deepEqual(plans.map(p=>p.kind),['observe','set_price']);checks.push('direct price: actual MCP freezes action and independent price plans');}finally{await priceClient.close();}
+  const forgedPrice=await connectRetailMcp({...price,marginAction:'reduce_coupon'},workspace);
+  try {await assert.rejects(forgedPrice.tool('retail_get_sku_context'),/冻结范围/);checks.push('direct price: desktop rejects action substitution');}finally{await forgedPrice.close();}
+  investigations.update(price.id,{error:'price protocol test complete'});
   const caseWorkspace='mcp-case-workspace';const decisions=new DecisionStore(join(workspace,'retail/operations.sqlite'),caseWorkspace,()=>[...margin.snapshot().records,...signals.snapshot().records]);
   const scopedRuns=new InvestigationStore(join(workspace,'retail/operations.sqlite.investigations.sqlite'),false,caseWorkspace);
   try {

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { z } from 'zod';
 import type { AnyInvestigation, ReadonlyToolPort } from '../../../../packages/retail-domain/src/investigations';
 const CONTENT = z.object({ content: z.array(z.object({ type: z.literal('text'), text: z.string().max(500000) })).length(1), isError: z.boolean().optional() });
-const ENVELOPE = z.object({ data: z.unknown(), caseContextHash:z.string(), evidenceId: z.string(), snapshotHash: z.string(), ruleVersion: z.string(), batchId: z.string(), scope: z.object({ scenario: z.string(), shop: z.string(), channel: z.string(), sku: z.string(), date: z.string(), warehouse: z.string().nullable(), campaign: z.string().nullable() }) });
+const ENVELOPE = z.object({ data: z.unknown(), relatedEvidenceHash:z.string(), caseContextHash:z.string(), evidenceId: z.string(), snapshotHash: z.string(), ruleVersion: z.string(), batchId: z.string(), scope: z.object({ scenario: z.string(), shop: z.string(), channel: z.string(), sku: z.string(), date: z.string(), warehouse: z.string().nullable(), campaign: z.string().nullable() }) });
 /** Only this fixed child server receives one trusted workspace/run pair. No renderer-provided commands or registry tools. */
 export async function connectRetailMcp(run: AnyInvestigation, workspace: string): Promise<{ tool: ReadonlyToolPort; skill: string; close: () => Promise<void> }> {
   const root = process.env.CRAFT_APP_ROOT || process.cwd();
@@ -30,8 +30,12 @@ export async function connectRetailMcp(run: AnyInvestigation, workspace: string)
       const e = run.evidence; const hash = 'hash' in e ? e.hash : e.snapshotHash;
       if (payload.evidenceId !== `${run.recordId}:${name}` || payload.snapshotHash !== hash || payload.ruleVersion !== e.ruleVersion || payload.batchId !== e.batchId || payload.scope.scenario !== scenario || payload.scope.shop !== e.row.shop_id || payload.scope.channel !== e.row.channel || payload.scope.sku !== e.row.sku_id || payload.scope.date !== e.row.date || payload.scope.warehouse !== ('warehouse_id' in e.row ? e.row.warehouse_id : null) || payload.scope.campaign !== ('campaign_id' in e.row ? e.row.campaign_id : null)) throw new Error('MCP返回证据与冻结范围不符，调查已停止');
       const expectedCases=run.caseContext??[];
-      const context=z.object({historicalCases:z.unknown()}).safeParse(payload.data);
+      const context=z.object({historicalCases:z.unknown(),marginAction:z.enum(['reduce_coupon','set_price']).optional()}).safeParse(payload.data);
       if (payload.caseContextHash!==createHash('sha256').update(JSON.stringify(expectedCases)).digest('hex') || (name==='retail_get_sku_context' && (!context.success || JSON.stringify(context.data.historicalCases)!==JSON.stringify(expectedCases)))) throw new Error('MCP历史Case与冻结范围不符');
+      if(scenario==='margin'&&name==='retail_get_sku_context'&&context.success&&(context.data.marginAction??'reduce_coupon')!==(run.marginAction??'reduce_coupon'))throw new Error('MCP价格动作与冻结范围不符');
+      const related = run.relatedEvidence??null;
+      const relatedContext=z.object({relatedEvidence:z.unknown().optional()}).safeParse(payload.data);
+      if(payload.relatedEvidenceHash!==createHash('sha256').update(JSON.stringify(related)).digest('hex') || (name==='retail_get_sku_context' && (!relatedContext.success || JSON.stringify(relatedContext.data.relatedEvidence??null)!==JSON.stringify(related)))) throw new Error('MCP跨场景旁证与冻结范围不符');
       return payload.data;
     } };
   } catch (error) { await client.close().catch(() => {}); if (error instanceof Error && /冻结范围|只读契约|预算/.test(error.message)) throw error; throw new Error('经营MCP连接失败，请检查本机Bun和服务文件后重新调查'); }

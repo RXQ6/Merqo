@@ -16,7 +16,7 @@ export interface RetailPagination {
 
 /** Rebuildable read projection. Source/history remain authoritative; triggers fence every source mutation. */
 export class RetailQueries {
-  constructor(private readonly db: Database, private readonly load: () => Snapshot) {
+  constructor(private readonly db: Database, private readonly load: () => Snapshot,private readonly currentRuleVersion:()=>string=()=>'' ) {
     const hadBatchInvalidation = !!db.query('SELECT 1 FROM sqlite_master WHERE type=? AND name=?').get('trigger', 'retail_query_retail_batches_update');
     db.exec(`CREATE TABLE IF NOT EXISTS retail_query_meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1),dirty INTEGER NOT NULL,base_json TEXT);
       INSERT OR IGNORE INTO retail_query_meta VALUES(1,1,NULL);
@@ -28,7 +28,7 @@ export class RetailQueries {
       CREATE TRIGGER IF NOT EXISTS retail_query_update AFTER UPDATE ON retail_records BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;
       CREATE TRIGGER IF NOT EXISTS retail_query_delete AFTER DELETE ON retail_records BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;`);
     // Both evidence JSON and base batch history depend on these tables, not only retail_records.
-    for (const table of ['retail_batches', 'retail_batch_rules'] as const) for (const event of ['INSERT', 'UPDATE', 'DELETE'] as const) {
+    for (const table of ['retail_batches', 'retail_batch_rules','retail_batch_provenance'] as const) for (const event of ['INSERT', 'UPDATE', 'DELETE'] as const) {
       db.exec(`CREATE TRIGGER IF NOT EXISTS retail_query_${table}_${event.toLowerCase()} AFTER ${event} ON ${table} BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;`);
     }
     // A projection created by the earlier version may already be stale; invalidate it once on upgrade.
@@ -37,7 +37,8 @@ export class RetailQueries {
   private ready(): Omit<Snapshot, 'records'> {
     return this.db.transaction(() => {
       let meta = this.db.query<{ dirty: number; base_json: string | null }, []>('SELECT dirty,base_json FROM retail_query_meta WHERE singleton=1').get()!;
-      if (meta.dirty || !meta.base_json) {
+      const version=this.currentRuleVersion();
+      if (meta.dirty || !meta.base_json || version&&JSON.parse(meta.base_json).ruleVersion!==version) {
         const { records, ...base } = this.load();
         this.db.exec('DELETE FROM retail_query_records');
         const insert = this.db.query('INSERT INTO retail_query_records VALUES(?,?,?,?,?,?,?,?,?,?,?)');

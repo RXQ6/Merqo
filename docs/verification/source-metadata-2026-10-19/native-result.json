@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\source-ui-Vz5hkE",
+  "checks": [
+    "native invalid future watermark refuses import without writing a batch",
+    "native margin import form and evidence drawer show frozen operator declaration and watermark",
+    "native inventory and ads import forms roundtrip declared provenance through the actual worker",
+    "actual restart retains independent source observation time and unverified declaration status"
+  ],
+  "modelCalls": 0
+}

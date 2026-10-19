@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "version": "0.1.0-beta.3",
+  "from": "historical beta.2 isolated profile",
+  "original": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\profile-iRIQFZ",
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\profile-upgrade-1X2Ep7",
+  "receiptId": "d322bc11-301b-473b-9681-8f6d930f1319",
+  "sourceDatabaseHashes": [
+    {
+      "file": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\profile-iRIQFZ\\config\\workspaces\\my-workspace\\retail\\operations.sqlite",
+      "hash": "f1ed8dd18503a5ee92064d3632118595000a4a2a88eebe37c397d9a6ab62f5f6"
+    },
+    {
+      "file": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\profile-iRIQFZ\\config\\workspaces\\my-workspace\\retail\\operations.sqlite.investigations.sqlite",
+      "hash": "af05d33c431cf3e5ddc1a2be788f1eb00e8e4de745336aad3a9ca64f015c0e2c"
+    },
+    {
+      "file": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\profile-iRIQFZ\\config\\workspaces\\my-workspace\\retail\\operations.sqlite.signals.sqlite",
+      "hash": "50c9838a2190e7ae399c69509d74fe25891e3a87bb216f6ce235d02b6e8cbad7"
+    }
+  ],
+  "checks": [
+    "new packaged app migrates copied beta.2 data and retains exact execution receipt and connection settings",
+    "original beta.2 databases remain unchanged"
+  ],
+  "limits": [
+    "profile migration; not an NSIS cross-version upgrade",
+    "isolated synthetic test data; no real user profile touched"
+  ]
+}

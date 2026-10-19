@@ -1,0 +1,11 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\evaluation\evaluation.test.ts:
+(pass) PRD catalog includes every mode and every variant with an inspectable contract [0.79ms]
+(pass) unsupported and failed results never inflate passed count [0.15ms]
+(pass) fixed cases replay production rules and fault ledger, preserving release gaps [12900.80ms]
+
+ 3 pass
+ 0 fail
+ 228 expect() calls
+Ran 3 tests across 1 file. [13.81s]

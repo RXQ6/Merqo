@@ -2,7 +2,7 @@
 
 更新：2026-10-20。基线为已发布beta.3的`7d20d1f`及本轮本地改动；原始规格：[PRD v0.1](PRD-v0.1-2026-10-15.md)。不修改原始PRD，不以本地模拟代替真实平台和外部验收。
 
-**最新入口：[开发主线](development-progress-2026-10-20.md)及[本轮验收](verification/acceptance-2026-10-20/report.md)。** beta.3已发布；本轮新增功能进入beta.4本地候选包，不自动视为GitHub发布。[上轮验收](verification/route-final-2026-10-19/report.md)保留历史。安全证据见[安全映射](M5-security-acceptance.md)。
+**最新入口：[开发主线](development-progress-2026-10-20.md)及[beta.5发布验收](release-beta5-2026-10-20.md)。** beta.5已在GitHub公开预发布，包含本轮交易扩展与DeepSeek动态模型，实际安装27项通过；beta.4保持历史本地候选状态。[领域验收](verification/acceptance-2026-10-20/report.md)与[上轮验收](verification/route-final-2026-10-19/report.md)保留历史。安全证据见[安全映射](M5-security-acceptance.md)。
 
 2026-10-19后续已实现[业务时间分离](M5-business-time.md)、[旁证冻结](M5-related-evidence.md)、[直接改价](M5-price-action.md)、[可配置规则](M5-business-policy.md)、[来源声明](M5-source-metadata.md)，以及[显式映射与共同窗口/水位](M5-catalog-joint-design.md)。历史业务日不因重导入变新；缺规格、跨窗及多实体保持补证。CSV身份未认证，联合结论只允许描述性比较。
 
@@ -12,7 +12,7 @@
 
 **M0–M4本地主干已实现；M5已完成本轮源码、桌面及性能回归，新包验收见报告。分次支付、取消、实物退回、显式换货、订单优惠分摊及嵌套组合装已补开发。仍有限定契约、真实接入及外部验收边界，不能称全PRD100%。**
 
-beta.3是上一轮已发布版本；当前beta.4候选及本轮验收不构成新的真实模型质量评测。历史真实模型15次12通过、各场景4/5，3次失败保留。详细记录：[真实模型评测](M5-live-evaluation.md)。
+beta.5为当前公开预发布版本，本轮安装验收不构成新的真实模型质量评测。历史真实模型15次12通过、各场景4/5，3次失败保留。详细记录：[真实模型评测](M5-live-evaluation.md)。
 
 状态含义：**已实现**表示存在实现和对应验证入口，限于表中边界；**部分**表示仍有原条文未覆盖；**待开发**表示没有可验收实现；**待验收**表示尚缺足够验证材料。下表路径相对于仓库根目录，测试入口表示覆盖位置，不表示本次重新执行。
 
@@ -32,7 +32,7 @@ beta.3是上一轮已发布版本；当前beta.4候选及本轮验收不构成�
 | F10 | 复盘、结果、干扰因素、范围受限 Case | 部分 | `outcome-reviews.ts`、`readonly-tools.ts`；`decisions.test.ts` | 合成观察与 Case 已实现；没有真实实施后效果观测，不能证明收益 |
 | F11 | 调度、手动补跑、去重、退出限制 | 已实现 | `scheduled-checks.ts`、`scheduled-checks.test.ts` | 程序关闭不持续巡检；漏跑显式展示和补跑 |
 | F12 | Markdown/JSON、证据索引和运行 ID、CSV 公式转义 | 已实现 | `investigation-export.ts`、`operations.ts`；`decisions.test.ts`、`operations.test.ts` | 导出保留未知项和模拟边界 |
-| F13 | 真实系统 Adapter 契约及对账 | 接入准备中 | `adapters/doudian-request.ts`及测试；[抖店路线](P1-doudian-integration-plan.md) | 用户选择抖店且尚未开通应用；离线签名/只读分页请求已做，真实授权、同步、对账及写入未交付，不计入P0真实接入 |
+| F13 | 真实系统 Adapter 契约及对账 | 接入准备中 | `adapters/doudian-request.ts`、`doudian-client.ts`及测试；[抖店路线](P1-doudian-integration-plan.md) | 签名及单页只读传输/响应校验已有合成测试，后续传输模块仅在源码；尚无应用授权，真实同步、字段映射、对账及写入未交付 |
 
 上述领域源码和同名测试默认均位于 `packages/retail-domain/src/`。
 
@@ -81,7 +81,7 @@ beta.3是上一轮已发布版本；当前beta.4候选及本轮验收不构成�
 | G06 | 幂等、UNKNOWN、重启恢复 | `decisions.test.ts`、[本轮归档](verification/inventory-numeric-2026-10-18/checks.json) | 本地模拟范围已验证；不是外部系统证明 |
 | G07 | 三场景UI到最终复盘及错误/驳回/过期提示 | 本轮三场景最终Case、广告驳回重提、实际过期与服务器拒绝、重启留存通过 | 与原错误/缺证/UNKNOWN/补偿回归共同构成本地范围验收；协议夹具不代表模型质量 |
 | G08 | 十万行、30次、常用查询p95≤2秒 | 2026-10-20毛利722.57ms、库存656.27ms、广告647.10ms，各30次 | 限定查询通过；[本轮报告](verification/acceptance-2026-10-20/report.md)保留初版2320.63ms失败及索引修复，不证明冷盘、并发、完整UI绘制或两秒内导入 |
-| G09 | Windows 安装、配置、重启、卸载 | beta.3历史生命周期、本轮beta.4本地候选见最新验收报告 | 新源码与beta.3发布明确分开；干净环境/其他Windows版本、NSIS跨版本升级与签名仍待验收 |
+| G09 | Windows 安装、配置、重启、卸载 | beta.5已发布，实际安装27项通过，见[发布记录](release-beta5-2026-10-20.md) | 包含DeepSeek动态列表和交易扩展；干净环境/其他Windows版本、NSIS跨版本升级与签名仍待验收 |
 
 ## 接下来按什么顺序开发
 

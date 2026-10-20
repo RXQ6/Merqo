@@ -9,4 +9,14 @@
 
 本地分析及模拟执行范围不变。抖店仅离线接入准备，尚无应用授权或真实同步；可信多人审批、真实平台写入、真实效果观察未完成。Windows 安装包未签名，干净环境、其他 Windows 版本和跨版本 NSIS 升级仍待外部验收。
 
-源码与开发验收见[本轮领域和桌面报告](verification/acceptance-2026-10-20/report.md)、[DeepSeek 验证](deepseek-dynamic-models-2026-10-20.md)。本版本实际安装及发布结果将在验收后归档。
+源码与开发验收见[本轮领域和桌面报告](verification/acceptance-2026-10-20/report.md)、[DeepSeek 验证](deepseek-dynamic-models-2026-10-20.md)。
+
+## 安装与发布结果
+
+已公开发布：[GitHub beta.5](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.5)。安装包源于干净源码提交 `d14777305a4ab6b0fc432b72353558f8223d5d26`，`sourceDirty=false`；发布标签指向该提交。beta.4仅为此前本地候选，未覆盖其历史证据。
+
+Windows 11 本机隔离安装27项通过：实际安装、内置 Bun/无开发环境 PATH、三场景 MCP 与协议、模拟执行回读、暂停恢复、分页、交易扩展7项、DeepSeek动态模型4项、同版本重装保留数据及卸载保留配置。模型协议和列表使用本机夹具，不属于新的真实模型质量批次；真实用户配置未被安装测试修改。
+
+安装包204216351字节，SHA-256：`dc40f89ac4cf117da7f06d3348a574a3afb2b899141d497947f752678e36674a`。GitHub 返回的文件大小与摘要一致。构建输入、校验文件和安装结果归档于[验收目录](verification/beta5-2026-10-20/installer-lifecycle.json)。首次受限打包因下载构建工具失败，经授权重试成功。
+
+后续新增的[抖店单页请求模块](P1-doudian-client-2026-10-20.md)属于源码准备，不在本版本安装包内；未开放真实同步功能。

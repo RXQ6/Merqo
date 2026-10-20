@@ -14,7 +14,7 @@ test('offline order plan fixes the read method, official host, page origin, sort
  const next=prepareDoudianOrderRequest({page:1,update_time_start:1700000000,update_time_end:1700000100},secrets,1700000200);expect(new URL(next.url).searchParams.get('sign')).not.toBe(url.searchParams.get('sign'));
 });
 test('preparation accepts only the bounded read contract, rejects missing authorization material and never starts network I/O',()=>{
- const network=spyOn(globalThis,'fetch').mockImplementation(()=>{throw Error('Network forbidden in offline preparation');});
+ const network=spyOn(globalThis,'fetch').mockImplementation(Object.assign(()=>{throw Error('Network forbidden in offline preparation');},{preconnect:()=>{}}) as typeof fetch);
  try{
  for(const query of [{update_time_start:2,update_time_end:1},{update_time_start:1,update_time_end:2,size:101},{update_time_start:1,update_time_end:2,page:-1},{update_time_start:1,update_time_end:2,method:'product.editV2'},{update_time_start:1,update_time_end:2,order_by:'create_time'}])expect(DoudianOrderQuerySchema.safeParse(query).success).toBe(false);
  expect(()=>prepareDoudianOrderRequest({update_time_start:1,update_time_end:2},{...secrets,accessToken:''},1700000200)).toThrow();

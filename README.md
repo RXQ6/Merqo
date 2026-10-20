@@ -28,7 +28,7 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 All three analytical scenarios work with synthetic data or imported CSVs **without model credentials**. All three investigations support a configured API model or an explicitly labeled offline rules demonstration.
 
-Retail workspaces enforce read-only tools in general Agent conversations, including Auto mode; dedicated retail simulation writes require their own approval workflow. Use a separate ordinary workspace for code editing. CSV source declarations are not authenticated platform identities. The local beta.4 candidate adds installment settlement, cancellations, physical returns, explicit exchange lineage, integer order discount allocation and nested bundles; see the [current development route](docs/development-progress-2026-10-20.md) and [acceptance evidence](docs/verification/acceptance-2026-10-20/report.md) for supported contracts and remaining limits. These additions are not included in the published beta.3 installer. Douyin Shop integration is offline preparation only; no shop is connected.
+Retail workspaces enforce read-only tools in general Agent conversations, including Auto mode; dedicated retail simulation writes require their own approval workflow. Use a separate ordinary workspace for code editing. CSV source declarations are not authenticated platform identities. The beta.5 preview adds installment settlement, cancellations, physical returns, explicit exchange lineage, integer order discount allocation, nested bundles and dynamic DeepSeek model discovery; see the [current development route](docs/development-progress-2026-10-20.md) and [release acceptance](docs/release-beta5-2026-10-20.md) for supported contracts and remaining limits. Douyin Shop integration is preparation only; no shop is connected.
 
 ### Data handling
 
@@ -43,21 +43,21 @@ Retail workspaces enforce read-only tools in general Agent conversations, includ
 
 ## Download the desktop app
 
-The beta.3 preview includes transactions/refunds, catalog mappings, joint evidence, supplemental investigations and the local acceptance recorded in [the final route report](docs/verification/route-final-2026-10-19/report.md). Full PRD scope remains incomplete.
+The beta.5 preview includes extended transactions, discount allocation, nested bundles, source coverage and dynamic DeepSeek model lists. See the [release and installation acceptance](docs/release-beta5-2026-10-20.md). Full PRD scope remains incomplete.
 
-**[Download Merqo for Windows x64 — 0.1.0-beta.3](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.3/Merqo-Setup-0.1.0-beta.3-x64.exe)**
+**[Download Merqo for Windows x64 — 0.1.0-beta.5](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.5/Merqo-Setup-0.1.0-beta.5-x64.exe)**
 
-[Release notes](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.3) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.3/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
+[Release notes](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.5) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.5/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
 
 Run the installer, launch Merqo and select **经营分析 → 数据与导入 → 载入演示数据**. Retail analysis includes its own Bun runtime, data worker, MCP and Skills; you do not need Node.js or Bun. If Git Bash is absent, select **仅使用经营分析** on first launch. Git for Windows is still needed for the general Agent's shell tools. Configure your own model connection only when requesting a model investigation.
 
 This Windows x64 preview was tested on Windows 11. It is not code-signed, so Windows may show an unknown-publisher or SmartScreen prompt. Check the source and SHA-256 before running it. Updates are downloaded manually from Releases. Uninstall retains user data; the development `.runtime` profile is not automatically migrated.
 
-The beta.3 installer passed isolated installation, three-scenario bundled MCP/protocol checks, pause/restart/resume, simulated execution, pagination, normal restart, same-version reinstall and uninstall on Windows 11. A copied beta.2 profile migration preserves its exact execution receipt; this does not claim an NSIS cross-version upgrade. See the [verification record](docs/verification/route-final-2026-10-19/report.md).
+The beta.5 installer passed 27 checks on Windows 11: isolated installation, three-scenario bundled MCP/protocol checks, pause/restart/resume, simulated execution, pagination, extended transactions, dynamic DeepSeek models, normal restart, same-version reinstall and uninstall. Cross-version NSIS upgrades remain untested. See the [verification record](docs/release-beta5-2026-10-20.md).
 
 ## Build from source
 
-The final real-model batch passed 4/5 in each scenario, with zero observed forbidden-action events. All three failures are retained. Domain regression passed 280 tests and 2167 assertions; the fixed synthetic business set passed 48/48. These are bounded synthetic gates, not production accuracy.
+The historical final real-model batch passed 4/5 in each scenario, with zero observed forbidden-action events; all three failures are retained. The commerce-extension domain run passed 295 tests and 2748 assertions, with separate adapter and model-discovery checks documented alongside it. The fixed synthetic business set passed 48/48. These are bounded gates, not production accuracy; beta.5 installation fixtures are not a new live-model quality batch.
 
 ### Prerequisites
 

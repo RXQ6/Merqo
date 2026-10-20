@@ -1,12 +1,12 @@
 # Windows 桌面预览版
 
-当前预览版本：`0.1.0-beta.3`，Windows x64，未签名。本机Windows11 build26200安装、三场景随包运行时、暂停/重启/恢复、重装与卸载通过；复制beta.2隔离profile的数据迁移通过。跨版本NSIS升级、干净Windows及其他Windows版本未在本轮测试。详见[本轮验收](verification/route-final-2026-10-19/report.md)。全PRD不标记100%。
+当前公开预览版本：`0.1.0-beta.5`，Windows x64，未签名。本机Windows11 build26200实际安装27项通过，包含三场景、交易扩展、DeepSeek动态模型、重启恢复、同版本重装及卸载。跨版本NSIS升级、干净Windows及其他Windows版本仍待验收。详见[发布记录](release-beta5-2026-10-20.md)。全PRD不标记100%。
 
 ## 下载与运行
 
-- [Windows x64 安装包](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.3/Merqo-Setup-0.1.0-beta.3-x64.exe)
-- [SHA-256 校验文件](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.3/SHA256SUMS.txt)
-- [发布说明](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.3)
+- [Windows x64 安装包](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.5/Merqo-Setup-0.1.0-beta.5-x64.exe)
+- [SHA-256 校验文件](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.5/SHA256SUMS.txt)
+- [发布说明](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.5)
 
 下载后运行安装向导，选择安装目录。经营分析所需的 Bun、数据工作进程、MCP 和三个场景 Skill 已内置，无需安装 Node.js 或 Bun。经营空间通用会话强制只读；普通代码工作区的 Shell 功能仍需 Git for Windows；未安装时可点击“仅使用经营分析”，有 Git Bash 时也可在模型选择页点击“稍后设置”。
 
@@ -15,7 +15,7 @@
 安装包没有代码签名证书，Windows 可能显示未知发布者或 SmartScreen 提示。请核对下载来源和 SHA-256；本预览没有自动更新服务，后续版本通过 Releases 下载。
 
 ```powershell
-Get-FileHash .\Merqo-Setup-0.1.0-beta.3-x64.exe -Algorithm SHA256
+Get-FileHash .\Merqo-Setup-0.1.0-beta.5-x64.exe -Algorithm SHA256
 ```
 
 普通安装数据保存在用户目录下的 `.retailpilot`，Chromium 状态使用 `%APPDATA%\RetailPilot`，不写入程序目录。开发启动的 `.runtime` 数据不自动迁入安装版。卸载保留用户数据；清理或迁移数据前应另行备份。
@@ -28,13 +28,13 @@ Get-FileHash .\Merqo-Setup-0.1.0-beta.3-x64.exe -Algorithm SHA256
 bun run retail:dist:win
 ```
 
-脚本使用 `packaging/windows-release.json` 固定应用、Electron 和 Bun 版本。Bun 使用官方 baseline x64 二进制并核对官方 SHA-256。只从明确列出的源码构建产物与依赖暂存，不复制 `.runtime`、用户配置或凭据；存在 `.env` 时拒绝公开打包。当前产物位于 `artifacts/windows/0.1.0-beta.3/`，同时生成 `SHA256SUMS.txt`。下载依赖时可在当前终端配置 `HTTPS_PROXY`，无需更改系统或 Git 配置。
+脚本使用 `packaging/windows-release.json` 固定应用、Electron 和 Bun 版本。Bun 使用官方 baseline x64 二进制并核对官方 SHA-256。只从明确列出的源码构建产物与依赖暂存，不复制 `.runtime`、用户配置或凭据；存在 `.env` 时拒绝公开打包。当前产物位于 `artifacts/windows/0.1.0-beta.5/`，同时生成 `SHA256SUMS.txt`。下载依赖时可在当前终端配置 `HTTPS_PROXY`，无需更改系统或 Git 配置。
 
 `scripts/merqo-packaged-smoke.cjs` 使用 Playwright 的 Electron 支持测试真实打包可执行文件。开发主机须提供 Playwright，可通过 `MERQO_PLAYWRIGHT_MODULE` 指定模块路径。`scripts/merqo-installer-check.cjs` 对 NSIS 执行隔离安装、打包程序验收、同版本重装、持久化验证和卸载。
 
 ## 发布范围
 
-这是本地分析和模拟执行预览，不接入真实 ERP、广告或改价系统。模型传输和 MCP 安装验证使用本地 HTTP 协议夹具，不构成真实模型推理质量证据。当前源码固定业务评测 48/48 通过，第三批真实模型三场景各 5/5；十万行毛利分页性能及本机 beta.1→beta.2 升级已验收。干净 Windows、其他 Windows 版本、库存/广告同等级规模和更广业务/安全覆盖仍未完成。下载包可用与全部 PRD 发布门禁通过分开记录。
+这是本地分析和模拟执行预览。抖店仍为接入准备，真实授权、数据同步、平台写入和收益观察未交付。安装验收使用本地 HTTP 协议夹具；独立真实模型历史最终批次为三场景各4/5、共12/15通过，失败记录保留，本轮未重做该批次。十万行毛利、库存和广告查询已通过限定性能验收。干净 Windows、其他 Windows 版本和跨版本 NSIS 升级仍待完成。下载包可用与全部 PRD 发布门禁通过分开记录。
 
 ## beta.1 历史验收记录
 

@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {SyncSchedulePublicSchemas,SyncScheduleConfigSchema,type SyncSchedule} from './sync-schedule-contract';
 
 export const SyncConfigSchema=z.strictObject({
  name:z.string().trim().min(1).max(80),mode:z.enum(['fixture','live']),
@@ -8,7 +9,9 @@ export const SyncConfigSchema=z.strictObject({
 export const SyncWindowSchema=z.strictObject({start:z.number().int().positive().safe(),end:z.number().int().positive().safe(),size:z.number().int().min(1).max(100).default(50)}).refine(w=>w.start<w.end&&w.end-w.start<=86400,'同步窗口应大于0且不超过24小时');
 export const SyncCredentialsSchema=z.strictObject({appSecret:z.string().min(1).max(4096),accessToken:z.string().min(1).max(4096),expiresAt:z.number().int().positive().safe()});
 export const SyncPublicSchemas=[
+ ...SyncSchedulePublicSchemas,
  z.strictObject({op:z.literal('sync_view')}),
+ z.strictObject({op:z.literal('sync_job'),id:z.string().uuid()}),
  z.strictObject({op:z.literal('sync_configure'),expectedRevision:z.number().int().min(0),config:SyncConfigSchema,credentials:SyncCredentialsSchema.optional()}),
  z.strictObject({op:z.literal('sync_check')}),
  z.strictObject({op:z.literal('sync_create'),expectedRevision:z.number().int().positive(),window:SyncWindowSchema}),
@@ -23,11 +26,15 @@ export interface SyncJob {
  nextPage:number;received:number;reportedTotal:number|null;attempts:number;retryAt:number|null;
  error:string|null;createdAt:number;updatedAt:number;
  scope?:{shopId:string;appKey:string};
+ incremental?:{scheduleRevision:number;from:number;to:number};
 }
 export interface SyncPageReceipt {page:number;count:number;responseSha256:string;at:number;}
-export interface SyncView {connection:SyncConnection|null;jobs:SyncJob[];receipts:Record<string,SyncPageReceipt[]>;}
+export interface SyncView {schedule?:SyncSchedule|null;connection:SyncConnection|null;jobs:SyncJob[];receipts:Record<string,SyncPageReceipt[]>;}
 export const SyncInternalSchema=z.discriminatedUnion('op',[
+ z.strictObject({op:z.literal('sync_store_schedule_configure'),expectedRevision:z.number().int().min(0),config:SyncScheduleConfigSchema}),
+ z.strictObject({op:z.literal('sync_store_schedule_tick'),expectedRevision:z.number().int().positive().optional()}),
  z.strictObject({op:z.literal('sync_store_view')}),
+ z.strictObject({op:z.literal('sync_store_job'),id:z.string().uuid()}),
  z.strictObject({op:z.literal('sync_store_configure'),expectedRevision:z.number().int().min(0),config:SyncConfigSchema,credentialRef:z.string().uuid().optional(),expiresAt:z.number().int().positive().safe().optional()}),
  z.strictObject({op:z.literal('sync_store_check'),expectedRevision:z.number().int().positive(),ok:z.boolean(),message:z.string().max(200)}),
  z.strictObject({op:z.literal('sync_store_create'),expectedRevision:z.number().int().positive(),window:SyncWindowSchema}),

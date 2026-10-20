@@ -1,3 +1,4 @@
+import {ContributionInputSchema,parseCosts,calculateContribution,type ContributionInput,type ContributionReport} from './contribution';
 import {Database} from 'bun:sqlite';import {createHash} from 'node:crypto';import {mkdirSync} from 'node:fs';import {dirname} from 'node:path';
 import {decodeTransactionCsv,validateTransactionChains,transactionKey,transactionEntity,exchangeTarget,transactionWindow,TransactionQuerySchema,TRANSACTION_DEMO} from './transactions';
 import type {TransactionEvent,TransactionPreview,TransactionPage,TransactionQuery} from './transactions';
@@ -8,6 +9,9 @@ export class TransactionStore{
  private readonly db:Database;
  private readonly ownsConnection:boolean;
  constructor(file:string,connection?:Database){mkdirSync(dirname(file),{recursive:true});this.ownsConnection=!connection;this.db=connection??new Database(file,{create:true,strict:true});this.db.exec(`PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;
+ CREATE TABLE IF NOT EXISTS contribution_reports(id TEXT PRIMARY KEY,json TEXT NOT NULL);
+ CREATE TRIGGER IF NOT EXISTS contribution_reports_immutable_update BEFORE UPDATE ON contribution_reports BEGIN SELECT RAISE(ABORT,'immutable contribution reports');END;
+ CREATE TRIGGER IF NOT EXISTS contribution_reports_immutable_delete BEFORE DELETE ON contribution_reports BEGIN SELECT RAISE(ABORT,'immutable contribution reports');END;
  CREATE TABLE IF NOT EXISTS transaction_batches(id TEXT PRIMARY KEY,source TEXT NOT NULL,hash TEXT NOT NULL,imported_at TEXT NOT NULL,provenance TEXT CHECK(provenance IS NULL OR json_valid(provenance))) STRICT;
  CREATE TABLE IF NOT EXISTS transaction_events(source TEXT NOT NULL,event_key TEXT NOT NULL,entity_key TEXT NOT NULL,event_at INTEGER NOT NULL,order_at INTEGER NOT NULL,shop_id TEXT NOT NULL,channel TEXT NOT NULL,kind TEXT NOT NULL,quantity INTEGER NOT NULL,amount_minor INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),batch_id TEXT NOT NULL REFERENCES transaction_batches(id),PRIMARY KEY(source,event_key)) STRICT;
  CREATE INDEX IF NOT EXISTS transaction_event_time ON transaction_events(source,event_at);
@@ -20,6 +24,13 @@ export class TransactionStore{
  if(!this.db.query<{name:string},[]>('PRAGMA table_info(transaction_events)').all().some(c=>c.name==='replaces_entity'))this.db.exec('ALTER TABLE transaction_events ADD COLUMN replaces_entity TEXT');
  this.db.exec('CREATE INDEX IF NOT EXISTS transaction_replacements ON transaction_events(source,replaces_entity)');}
  close(){if(this.ownsConnection)this.db.close();}
+ contributionReports():ContributionReport[]{return this.db.query<{json:string},[]>('SELECT json FROM contribution_reports ORDER BY rowid DESC LIMIT 20').all().map(row=>JSON.parse(row.json).report);}
+ contribution(input:ContributionInput):ContributionReport[]{const value=ContributionInputSchema.parse(input);return this.db.transaction(()=>{
+  const q=value.query,range=transactionWindow(q.startDate,q.endDate),parsed=parseCosts(value.csv),events=this.db.query<{json:string},[string,number,number,string,string,string,string]>('SELECT json FROM transaction_events WHERE source=? AND order_at>=? AND order_at<? AND (?=\'\' OR shop_id=?) AND (?=\'\' OR channel=?) ORDER BY event_key').all(q.source,Date.parse(range.startInclusive),Date.parse(range.endExclusive),q.shop,q.shop,q.channel,q.channel).map(row=>JSON.parse(row.json) as TransactionEvent);
+  if(!events.length)throw Error('当前原订单归属范围没有交易事件，请先导入交易或调整范围');
+  const report:ContributionReport={id:crypto.randomUUID(),at:Date.now(),label:value.label,source:q.source,query:q,inputHash:hash(value.csv),ledgerHash:this.stateHash(q.source),authority:'operator_declared',duplicates:parsed.duplicates,...calculateContribution(events,parsed.rows)};
+  this.db.query('INSERT INTO contribution_reports VALUES(?,?)').run(report.id,JSON.stringify({report,normalizedCosts:parsed.rows}));return this.contributionReports();
+ }).immediate();}
  stateHash(source:'demo'|'csv'){const h=createHash('sha256');for(const row of this.db.query<{event_key:string;json:string},[string]>('SELECT event_key,json FROM transaction_events WHERE source=? ORDER BY event_key').iterate(source)){h.update(row.event_key);h.update(row.json);}return h.digest('hex');}
  match(event:TransactionEvent,source:'demo'|'csv'):'new'|'duplicate'|'conflict'{const old=this.db.query<{json:string},[string,string]>('SELECT json FROM transaction_events WHERE source=? AND event_key=?').get(source,transactionKey(event));return !old?'new':old.json===JSON.stringify(event)?'duplicate':'conflict';}
  preview(csv:string,source:'demo'|'csv'='csv'):TransactionPreview{

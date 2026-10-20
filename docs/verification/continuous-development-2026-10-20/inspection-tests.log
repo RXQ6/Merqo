@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\return-inspection.test.ts:
+(pass) inspection preserves refund/physical return separation and warehouse disposition without changing transaction ledger [107.29ms]
+(pass) refund target, over-inspection, wrong clock, duplicate conflicts and changed review are rejected [77.53ms]
+
+ 2 pass
+ 0 fail
+ 14 expect() calls
+Ran 2 tests across 1 file. [1.88s]

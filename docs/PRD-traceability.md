@@ -32,7 +32,7 @@ beta.5为当前公开预发布版本，本轮安装验收不构成新的真实�
 | F10 | 复盘、结果、干扰因素、范围受限 Case | 部分 | `outcome-reviews.ts`、`readonly-tools.ts`；`decisions.test.ts` | 合成观察与 Case 已实现；没有真实实施后效果观测，不能证明收益 |
 | F11 | 调度、手动补跑、去重、退出限制 | 已实现 | `scheduled-checks.ts`、`scheduled-checks.test.ts` | 程序关闭不持续巡检；漏跑显式展示和补跑 |
 | F12 | Markdown/JSON、证据索引和运行 ID、CSV 公式转义 | 已实现 | `investigation-export.ts`、`operations.ts`；`decisions.test.ts`、`operations.test.ts` | 导出保留未知项和模拟边界 |
-| F13 | 真实系统 Adapter 契约及对账 | 开发版已有同步、映射及批次入库对账链路，真实联调待验 | `adapters/sync-store.ts`、`adapters/ingestion-store.ts`、`retail-sync.ts`、`IngestionPanel.tsx`；[入库工作流](P1-ingestion-workflow-2026-10-20.md) | 配置→只读拉取→加密暂存→显式映射/隔离/事件去重→预览确认入库→批次合计对账已有合成桌面验收，尚未发布；未开通应用，真实鉴权/身份、平台专用支付售后字段、后台认证对账及完整性仍待开发和联调 |
+| F13 | 真实系统 Adapter 契约及对账 | 开发版已有同步、映射及批次入库对账链路，真实联调待验 | `adapters/sync-store.ts`、`adapters/ingestion-store.ts`、`retail-sync.ts`、`IngestionPanel.tsx`；[入库工作流](P1-ingestion-workflow-2026-10-20.md) | 配置→只读拉取→加密暂存→显式映射/隔离/事件去重→预览确认入库→批次合计对账已有合成桌面验收，尚未发布；未开通应用，真实鉴权/身份、自动增量补拉、逐行文件对账及隔离处理已补开发并演练验收，见[持续开发](P1-continuous-development-2026-10-20.md)；平台专用支付售后字段、后台认证对账及完整性仍待开发和联调 |
 
 上述领域源码和同名测试默认均位于 `packages/retail-domain/src/`。
 
@@ -42,13 +42,13 @@ beta.5为当前公开预发布版本，本轮安装验收不构成新的真实�
 | --- | --- | --- | --- | --- |
 | D01 | 价格/促销实体和直接 SKU 改价 | 已实现 | `price-action.ts`、`price-action.test.ts`；[闭环与原生验证](M5-price-action.md) | 独立改价贯通测算、调查、审批、模拟执行和回读；安全补偿可执行，不安全原价恢复被拒；会员价等限制仍明确保留 |
 | D02 | 示例阈值和规则可配置 | 已实现 | `business-policy.ts`、`policy-store.ts`、`business-policy.test.ts`；[原生配置验证](M5-business-policy.md) | 默认/店铺覆盖、阈值与样本/窗口、审批期限和改价幅度受校验并版本化；变更后旧审批失效 |
-| D03 | 订单/支付/发货/退款数量与退款双时间口径 | 已实现（限定契约） | `transactions.ts`、`transaction-store.ts`、`transactions.test.ts`；[扩展契约](M5-transaction-extension.md) | 分次支付结清只计一次件数；取消、实物退回及显式换货关联、部分退款和双时间；未结清只整行取消，不自动净额结算或库存回补 |
+| D03 | 订单/支付/发货/退款数量与退款双时间口径 | 已实现（限定契约） | `transactions.ts`、`transaction-store.ts`、`transactions.test.ts`；[扩展契约](M5-transaction-extension.md) | 分次支付结清只计一次件数；取消、实物退回及显式换货关联、部分退款和双时间；未结清只整行取消，不自动净额结算或库存回补；新增[退回质检](P1-cost-and-inspection-2026-10-20.md)，只记录仓库/合格/残次/报废，不形成库存写入 |
 | D04 | 商品、规格、组合装、赠品、会员价映射 | 已实现（限定本地契约） | `catalog.ts`、`bundles.test.ts`、`order-allocation.ts`及测试；赠品/会员/报价测试 | 显式规格映射、最多6层500子项组合树及行级订单分摊已实现；活动资格/门槛引擎、真实目录及会员身份认证、多币种仍不在当前范围 |
 | D05 | 库存、占用、在途、ETA、观测时间 | 部分 | `signals.ts`、`inventory-numeric.ts`、`source-metadata.test.ts` | 数量、日期及独立来源时刻/水位声明已有；CSV 平台身份与真实库存完整性未独立验证 |
 | D06 | 广告花费、归因收入、窗口、观测时间 | 已实现（本地分析范围） | `signals.ts`、`catalog.ts`、`joint-evidence.ts`；对应测试 | 归因口径、独立来源时刻、水位、显式广告SKU规格映射和共同窗口已实现；多活动/不同窗不自动汇总，CSV身份不等于已认证 |
 | D07 | Evidence 来源、查询、范围、业务窗、时间、摘要 | 已实现（本地声明范围） | `source-provenance.ts`、`catalog.ts`、`joint-evidence.ts`、只读工具及导出 | v2 冻结来源、映射版本、共同窗口和水位，别名只按显式映射取数；历史v1不回填；真实平台认证属接入阶段 |
 | D08 | Anomaly/Investigation/Decision/Approval/Execution/Case | 已实现 | `investigation-store.ts`、`decisions.ts`、`outcome-reviews.ts`、对应测试 | 以当前领域对象表示，未要求所有类型名称与 PRD 完全一致；组织多租户不在本项证明范围 |
-| C01 | 最小货币单位整数、明确舍入 | 已实现 | `operations.ts`、`margin-numeric.ts`、`margin-numeric.test.ts` | 限定商品毛利；不含全部净利润成本 |
+| C01 | 最小货币单位整数、明确舍入 | 已实现 | `operations.ts`、`margin-numeric.ts`、`margin-numeric.test.ts` | 限定商品毛利；新增五类净费用的人工声明结算贡献报告，缺项保持未知，不含完整净利润或因果归因 |
 | C02 | ROAS 与 ROI 分离、归因窗口一致 | 已实现 | `signals.ts`、`ads-numeric.test.ts`、`signals.test.ts` | 条件预算缩放不宣称改善 ROAS |
 | C03 | 可售不含在途、零销量不可计算 | 已实现 | `inventory-numeric.ts`、`inventory-numeric.test.ts` | 分数和单位保留；补货受理不等于到货 |
 | C04 | 业务时区、左闭右开窗口、退款双时间 | 已实现 | `evidence-policy.ts`、`transactions.ts`、`transactions.test.ts` | Asia/Shanghai半开日期窗；退款发生期与原订单归属期分别查询。归属期是截至当前已导入事件的队列视角，不冒充历史期末报表 |
@@ -86,7 +86,7 @@ beta.5为当前公开预发布版本，本轮安装验收不构成新的真实�
 ## 接下来按什么顺序开发
 
 1. 本轮已补齐交易扩展、优惠分摊、嵌套组合树、三场景来源展示和审批风险文案，并通过领域、桌面和性能验证；新包状态见[最新验收](verification/acceptance-2026-10-20/report.md)。
-2. 保留CSV本地版。安全凭据、同步任务与通用映射入库对账已有开发版实现；抖店应用开通后继续真实鉴权、平台专用字段、售后/支付明细、增量调度与独立后台对账，合成验收不算已连接店铺。
+2. 保留CSV本地版。安全凭据、同步任务与通用映射入库对账已有开发版实现；抖店应用开通后继续真实鉴权、平台专用字段、售后/支付明细、真实增量完整性与独立后台对账，合成验收不算已连接店铺。
 3. 可信多人审批、真实写入及真实效果观察另行验收；干净Windows与其他Windows版本等待外部测试环境。
 
 退款明细和复杂优惠引擎须先固化数据语义，再实施；不通过修改历史 PRD 或测试预期消除差异。该矩阵当前是开发清单，不是用户对规格变更的批准。

@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "checks": [],
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '检测只读连接', exact: true })\u001b[22m\n\n    at configure (D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\scripts\\merqo-ingestion-workflow-check.cjs:20:188)\n    at async main (D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\scripts\\merqo-ingestion-workflow-check.cjs:54:17)",
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-cKZbGK"
+}

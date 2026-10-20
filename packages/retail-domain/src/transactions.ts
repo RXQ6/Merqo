@@ -35,7 +35,7 @@ export interface TransactionPage{
  totals:{orderedQty:number;paidQty:number;shippedQty:number;refundedQty:number;cancelledQty:number;returnedQty:number;exchangeQty:number;paidMinor:number;refundedMinor:number;retainedMinor:number;netPaidQty:number};
  limitation:string;
 }
-export const transactionEntity=(e:TransactionEvent)=>JSON.stringify([e.source_id,e.shop_id,e.channel,e.order_id,e.line_id]);
+export const transactionEntity=(e:Pick<TransactionEvent,'source_id'|'shop_id'|'channel'|'order_id'|'line_id'>)=>JSON.stringify([e.source_id,e.shop_id,e.channel,e.order_id,e.line_id]);
 export const transactionKey=(e:TransactionEvent)=>JSON.stringify([e.source_id,e.shop_id,e.channel,e.event_id]);
 export const exchangeTarget=(e:TransactionEvent)=>e.replaces_order_id&&e.replaces_line_id?JSON.stringify([e.source_id,e.shop_id,e.channel,e.replaces_order_id,e.replaces_line_id]):undefined;
 export function decodeTransactionCsv(csv:string):Omit<TransactionPreview,'hash'|'canImport'>{

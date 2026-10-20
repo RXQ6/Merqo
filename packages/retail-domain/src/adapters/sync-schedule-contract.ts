@@ -1,0 +1,5 @@
+import {z} from 'zod';
+export const SyncScheduleConfigSchema=z.strictObject({enabled:z.boolean(),intervalMinutes:z.number().int().min(5).max(1440),overlapSeconds:z.number().int().min(0).max(3600),delaySeconds:z.number().int().min(60).max(86400),maxWindowSeconds:z.number().int().min(300).max(86400),startFrom:z.number().int().positive().safe(),size:z.number().int().min(1).max(100)}).refine(c=>c.maxWindowSeconds>c.overlapSeconds,'单窗长度须大于重叠补拉长度');
+export type SyncScheduleConfig=z.infer<typeof SyncScheduleConfigSchema>;
+export interface SyncSchedule {revision:number;connectionRevision:number;config:SyncScheduleConfig;cursor:number;pendingJobId:string|null;nextRunAt:number;lastCompletedAt:number|null;error:string|null;backlogSeconds:number;}
+export const SyncSchedulePublicSchemas=[z.strictObject({op:z.literal('sync_schedule_configure'),expectedRevision:z.number().int().min(0),config:SyncScheduleConfigSchema}),z.strictObject({op:z.literal('sync_schedule_run'),expectedRevision:z.number().int().positive()})] as const;

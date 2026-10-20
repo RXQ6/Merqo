@@ -23,6 +23,13 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
   });
   const active = new Set<number>();
   const readers = new Map<number, number>();
+  const readWaiters=new Map<number,Array<()=>void>>();
+  async function acquireRead(id:number){
+    if((readers.get(id)??0)<4){readers.set(id,(readers.get(id)??0)+1);return;}
+    const queue=readWaiters.get(id)??[];if(queue.length>=12)throw Error('读取请求过多，请稍后重试');readWaiters.set(id,queue);
+    await new Promise<void>((resolve,reject)=>{const grant=()=>{clearTimeout(timer);resolve();};const timer=setTimeout(()=>{const index=queue.indexOf(grant);if(index>=0)queue.splice(index,1);reject(Error('读取排队超时，请刷新对应面板'));},15000);queue.push(grant);});
+  }
+  function releaseRead(id:number){const queue=readWaiters.get(id),next=queue?.shift();if(next){next();return;}readWaiters.delete(id);const count=(readers.get(id)??1)-1;if(count)readers.set(id,count);else readers.delete(id);}
   const investigationTasks = new Map<string, AbortController>();
   ipcMain.handle('retail:request', async (event, input: unknown): Promise<RetailReply> => {
     try {
@@ -32,10 +39,9 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null;
       if (!workspace || workspace.remoteServer) throw new Error('请选择本机 Workspace；远程经营数据暂不支持');
       const request = RetailRequestSchema.parse(input);
-      const readOnly = ['ingest_inspect','ingest_view','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
-      if ((readers.get(event.sender.id) ?? 0) >= 4) throw new Error('并发读取过多，请稍后重试');
+      const readOnly = ['inspections_view','inspections_preview','contribution_reports','ingest_issues','ingest_inspect','ingest_view','sync_job','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
       if (!readOnly && active.has(event.sender.id)) throw new Error('上一个经营数据请求尚未完成，请稍后重试');
-      if (readOnly) readers.set(event.sender.id, (readers.get(event.sender.id) ?? 0) + 1);
+      if (readOnly) await acquireRead(event.sender.id);
       else active.add(event.sender.id);
       const workerRequest = (payload: unknown) => requestRetailWorker(workspace, workspaceId!, payload, request.op);
       try {
@@ -53,7 +59,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
           }
         }
         return reply;
-      } finally { if (readOnly) { const remaining = (readers.get(event.sender.id) ?? 1) - 1; if (remaining) readers.set(event.sender.id, remaining); else readers.delete(event.sender.id); } else active.delete(event.sender.id); }
+      } finally { if (readOnly) releaseRead(event.sender.id); else active.delete(event.sender.id); }
     } catch (error) { return { ok: false, error: error instanceof Error ? error.message : '经营数据请求失败' }; }
   });
 }

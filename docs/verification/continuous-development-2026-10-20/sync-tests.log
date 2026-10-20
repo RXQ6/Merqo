@@ -1,0 +1,18 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\adapters\sync-schedule.test.ts:
+(pass) incremental cursor advances only with page commit, overlap repeats and closed-app backlog is never skipped [33.97ms]
+(pass) restart pauses pending job; disabled plan may finish that job but never queues another [57.30ms]
+(pass) configuration changes disable old plans; wrong revisions, future start and internal renderer ticks are rejected [27.77ms]
+(pass) failure never advances cursor or creates a replacement task; explicit retry keeps the same window [28.57ms]
+
+packages\retail-domain\src\adapters\sync-store.test.ts:
+(pass) page staging and checkpoint commit together; pause fences late results, restart preserves pages and requires resume [60.54ms]
+(pass) transient failure uses bounded retries on the same page; permanent failure requires an explicit retry [29.28ms]
+(pass) invalid or changing page totals do not stage a page or advance checkpoints; config changes invalidate old tasks [27.60ms]
+(pass) authorization, time windows and renderer boundary prevent forged transport updates [27.37ms]
+
+ 8 pass
+ 0 fail
+ 65 expect() calls
+Ran 8 tests across 2 files. [1210.00ms]

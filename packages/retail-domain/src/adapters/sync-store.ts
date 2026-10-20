@@ -1,4 +1,5 @@
 import {Database} from 'bun:sqlite';
+import {SyncScheduleStore} from './sync-schedule';
 import {mkdirSync} from 'node:fs';
 import {dirname} from 'node:path';
 import {SyncInternalSchema,type SyncConnection,type SyncJob,type SyncView,type SyncPageReceipt} from './sync-contract';
@@ -6,12 +7,14 @@ import {SyncInternalSchema,type SyncConnection,type SyncJob,type SyncView,type S
 /** One workspace per database. Page staging and checkpoint advance share one transaction. */
 export class SyncStore {
  private db:Database;
+ private schedule:SyncScheduleStore;
  constructor(file:string,private now=Date.now){
   mkdirSync(dirname(file),{recursive:true});this.db=new Database(file,{create:true,strict:true});
   this.db.exec(`PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;
    CREATE TABLE IF NOT EXISTS sync_connection(id INTEGER PRIMARY KEY CHECK(id=1),json TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS sync_jobs(id TEXT PRIMARY KEY,json TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS sync_pages(job_id TEXT NOT NULL,page INTEGER NOT NULL,receipt TEXT NOT NULL,encrypted TEXT NOT NULL,PRIMARY KEY(job_id,page));`);
+  this.schedule=new SyncScheduleStore(this.db,this.now,()=>this.connection(),()=>this.jobs(),j=>this.save(j));
  }
  close(){this.db.close();}
  staging(id:string){const job=this.job(id);if(job.status!=='fetched')throw Error('只有拉取结束的任务可以映射');const bytes=this.db.query<{n:number},[string]>('SELECT COALESCE(SUM(length(encrypted)),0) AS n FROM sync_pages WHERE job_id=?').get(id)!.n;if(bytes>24000000)throw Error('暂存批次超过24MB映射预览限制，请缩小窗口');const pages=this.db.query<{page:number;receipt:string;encrypted:string},[string]>('SELECT page,receipt,encrypted FROM sync_pages WHERE job_id=? ORDER BY page').all(id);if(pages.length!==job.nextPage)throw Error('暂存分页不完整');return{job,pages};}
@@ -19,16 +22,20 @@ export class SyncStore {
  private jobs():SyncJob[]{return this.db.query<{json:string},[]>('SELECT json FROM sync_jobs ORDER BY rowid DESC LIMIT 50').all().map(r=>JSON.parse(r.json));}
  private job(id:string):SyncJob {const row=this.db.query<{json:string},[string]>('SELECT json FROM sync_jobs WHERE id=?').get(id);if(!row)throw Error('同步任务不存在');return JSON.parse(row.json);}
  private save(job:SyncJob){job.updatedAt=this.now();this.db.query('INSERT INTO sync_jobs(id,json) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json').run(job.id,JSON.stringify(job));}
- view():SyncView {const jobs=this.jobs();const receipts:Record<string,SyncPageReceipt[]>={};for(const job of jobs)receipts[job.id]=this.db.query<{receipt:string},[string]>('SELECT receipt FROM sync_pages WHERE job_id=? ORDER BY page DESC LIMIT 100').all(job.id).map(r=>JSON.parse(r.receipt));return{connection:this.connection(),jobs,receipts};}
+ view(selectedId?:string):SyncView {const recent=this.jobs(),jobs=selectedId?[this.job(selectedId),...recent.filter(j=>j.id!==selectedId)]:recent;const receipts:Record<string,SyncPageReceipt[]>={};for(const job of jobs)receipts[job.id]=this.db.query<{receipt:string},[string]>('SELECT receipt FROM sync_pages WHERE job_id=? ORDER BY page DESC LIMIT 100').all(job.id).map(r=>JSON.parse(r.receipt));return{connection:this.connection(),jobs,receipts,schedule:this.schedule.view()};}
  private requireConnection(revision:number):SyncConnection {const c=this.connection();if(!c||c.revision!==revision)throw Error('连接配置已变化，请刷新');return c;}
  private ready(c:SyncConnection){if(!c.check?.ok)throw Error('请先完成连接检查');if(c.mode==='live'&&(!c.credentialRef||!c.expiresAt||c.expiresAt<=this.now()))throw Error('授权已过期，请重新配置授权');}
  request(input:unknown):SyncView {
   const r=SyncInternalSchema.parse(input);
   return this.db.transaction(()=>{
    if(r.op==='sync_store_view')return this.view();
-   if(r.op==='sync_store_configure'){
+   if(r.op==='sync_store_job')return this.view(r.id);
+   if(r.op==='sync_store_schedule_configure'){this.schedule.configure(r.expectedRevision,r.config);}
+   else if(r.op==='sync_store_schedule_tick'){this.schedule.tick(r.expectedRevision);}
+   else if(r.op==='sync_store_configure'){
     const old=this.connection();if((old?.revision??0)!==r.expectedRevision)throw Error('配置版本已变化，请刷新');
     if(r.config.mode==='live'&&(!r.credentialRef||!r.expiresAt||r.expiresAt<=this.now()))throw Error('请提供有效授权和到期时间');
+    this.schedule.invalidate();
     const next:SyncConnection={...r.config,revision:r.expectedRevision+1,...(r.config.mode==='live'?{credentialRef:r.credentialRef!,expiresAt:r.expiresAt!}:{})};
     this.db.query('INSERT INTO sync_connection VALUES(1,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json').run(JSON.stringify(next));
     for(const job of this.jobs())if(job.status!=='fetched'){job.status='blocked';job.epoch++;job.retryAt=null;job.error='连接配置已变化，请创建新任务';this.save(job);}
@@ -72,7 +79,7 @@ export class SyncStore {
       job.nextPage++;job.received=received;job.reportedTotal=r.reportedTotal;job.attempts=0;job.error=null;
       job.status=received===r.reportedTotal?'fetched':job.nextPage>=100?'failed':'queued';
       if(job.status==='failed')job.error='已达到100页上限，请缩小时间窗口';
-      job.retryAt=null;job.epoch++;this.save(job);
+      job.retryAt=null;job.epoch++;this.save(job);if(job.status==='fetched')this.schedule.complete(job);
      }
     }
    }

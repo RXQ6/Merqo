@@ -60,9 +60,14 @@ async function execute(c:Context){
  }
 }
 function kick(c:Context){if(c.runner){c.rerun=true;return;}c.runner=execute(c).catch(()=>{}).finally(()=>{c.runner=undefined;if(c.rerun){c.rerun=false;kick(c);}});}
+export async function tickRetailSync(workspace:Workspace,workspaceId:string){const c=await context(workspace,workspaceId);const result=await worker(c,{op:'sync_store_schedule_tick'});if(result.jobs.some(j=>j.status==='queued'||j.status==='retry_wait'))kick(c);}
+export function stopRetailSync(){for(const c of contexts.values())c.controller?.abort();}
 export async function handleRetailSync(workspace:Workspace,workspaceId:string,request:RetailRequest):Promise<RetailReply>{
  const c=await context(workspace,workspaceId);
  if(request.op.startsWith('ingest_'))return await handleIngestion(c,request);
+ if(request.op==='sync_schedule_configure')return{ok:true,kind:'sync',data:await worker(c,{op:'sync_store_schedule_configure',expectedRevision:request.expectedRevision,config:request.config})};
+ if(request.op==='sync_schedule_run'){const data=await worker(c,{op:'sync_store_schedule_tick',expectedRevision:request.expectedRevision});kick(c);return{ok:true,kind:'sync',data};}
+ if(request.op==='sync_job')return{ok:true,kind:'sync',data:await worker(c,{op:'sync_store_job',id:request.id})};
  if(request.op==='sync_view')return{ok:true,kind:'sync',data:await worker(c,{op:'sync_store_view'})};
  if(request.op==='sync_configure'){
   let ref:string|undefined;
@@ -96,15 +101,16 @@ async function staged(c:Context,id:string){
  return{job:r.data.job,orders,stageDigest:digest(r.data)};
 }
 async function handleIngestion(c:Context,r:RetailRequest):Promise<RetailReply>{
+ if(r.op==='ingest_issues'||r.op==='ingest_issue_review'){const payload=r.op==='ingest_issues'?{op:'ingest_store_issues',offset:r.offset,limit:r.limit}:{...r,op:'ingest_store_issue_review'};const reply=await requestRetailWorker(c.workspace,c.workspaceId,payload,'ingest');if(!reply.ok)throw Error(reply.error);if(reply.kind!=='ingest_issues')throw Error('隔离处理服务响应无效');return reply;}
  if(r.op==='ingest_inspect'){const source=await staged(c,r.jobId);return{ok:true,kind:'ingest_fields',data:inspectOrderFields(source.orders,r.eventArrayPath)};}
  let data:IngestView;
- if(r.op==='ingest_view')data=await ingestion(c,{op:'ingest_store_view'});
+ if(r.op==='ingest_view')data=await ingestion(c,{op:'ingest_store_view',...(r.jobId?{jobId:r.jobId}:{})});
  else if(r.op==='ingest_mapping_save')data=await ingestion(c,{op:'ingest_store_mapping',expectedRevision:r.expectedRevision,profile:r.profile});
  else if(r.op==='ingest_preview'){const source=await staged(c,r.jobId);data=await ingestion(c,{op:'ingest_store_preview',...source});}
  else if(r.op==='ingest_confirm'){
-  const view=await ingestion(c,{op:'ingest_store_view'}),preview=view.previews.find(p=>p.id===r.previewId);if(!preview)throw Error('预览不在最近30项记录中，请重新生成');
+  const view=await ingestion(c,{op:'ingest_store_preview_lookup',id:r.previewId}),preview=view.previews.find(p=>p.id===r.previewId);if(!preview)throw Error('预览不在最近30项记录中，请重新生成');
   const source=await staged(c,preview.jobId);data=await ingestion(c,{op:'ingest_store_confirm',previewId:r.previewId,reviewHash:r.reviewHash,stageDigest:source.stageDigest,allowPartial:r.allowPartial,reason:r.reason});
- }else if(r.op==='ingest_reconcile')data=await ingestion(c,{op:'ingest_store_reconcile',receiptId:r.receiptId,...(r.statement?{statement:r.statement}:{})});
+ }else if(r.op==='ingest_reconcile')data=await ingestion(c,{op:'ingest_store_reconcile',receiptId:r.receiptId,...(r.statement?{statement:r.statement}:{}),...(r.lineReference?{lineReference:r.lineReference}:{})});
  else throw Error('不支持的入库操作');
  return{ok:true,kind:'ingestion',data};
 }

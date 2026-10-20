@@ -13,6 +13,10 @@ import {RetailRequestSchema} from '../operations';
 function job(mode:'fixture'|'live'='fixture'):SyncJob{return{id:crypto.randomUUID(),connectionRevision:1,mode,status:'fetched',epoch:10,window:{start:1700000000,end:1700000100,size:2},nextPage:4,received:7,reportedTotal:7,attempts:0,retryAt:null,error:null,createdAt:Date.now(),updatedAt:Date.now(),scope:{shopId:'DEMO-SHOP',appKey:'declared-app'}};}
 function setup(mode:'fixture'|'live'='fixture'){const dir=mkdtempSync(join(tmpdir(),'merqo-ingest-')),file=join(dir,'ledger.sqlite'),store=new IngestionStore(file);store.saveMapping(0,{...fixtureMapping,mode});return{dir,file,store,cleanup(){store.close();rmSync(dir,{recursive:true,force:true});}};}
 
+test('job-specific history and preview lookup retain receipts beyond the recent thirty-job window',()=>{
+ const f=setup();try{const firstJob=job(),p=f.store.preview(firstJob,ingestionFixture(),'a'.repeat(64)).previews[0]!;const receipt=f.store.confirm(p.id,p.reviewHash,'a'.repeat(64)).receipts[0]!;f.store.reconcile(receipt.id);for(let i=0;i<31;i++)f.store.preview(job(),ingestionFixture(),'b'.repeat(64));expect(f.store.view().previews.some(v=>v.id===p.id)).toBe(false);expect(f.store.lookup(p.id).previews[0]?.id).toBe(p.id);expect(f.store.view(firstJob.id).receipts[0]?.id).toBe(receipt.id);expect(f.store.view(firstJob.id).reconciliations[0]?.receiptId).toBe(receipt.id);}finally{f.cleanup();}
+});
+
 test('duplicate source records are counted consistently in preview and receipt without duplicating events',()=>{
  const f=setup();try{
   const rows=ingestionFixture();rows.push(structuredClone(rows[0]!));const j={...job(),received:8};

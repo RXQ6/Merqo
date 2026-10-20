@@ -1,0 +1,14 @@
+import {test,expect} from 'bun:test';import {mkdtempSync,rmSync} from 'node:fs';import {join} from 'node:path';import {tmpdir} from 'node:os';import {createHash} from 'node:crypto';
+import {ReturnInspectionStore} from './return-inspection-store';import {INSPECTION_FIELDS} from './return-inspection-contract';import {TransactionStore} from './transaction-store';import {TRANSACTION_EXTENDED_DEMO,type TransactionQuery} from './transactions';
+const q:TransactionQuery={source:'csv',basis:'event',startDate:'2026-10-14',endDate:'2026-10-16',shop:'',channel:'',offset:0,limit:30};
+const base={source_id:'example-installments',shop_id:'demo-nanfeng',channel:'线上商城',inspection_id:'Q1',returned_event_id:'E7',warehouse_id:'WH-1',passed_qty:0,defective_qty:1,scrap_qty:0,observed_at:new Date().toISOString()};
+const csv=(rows=[base])=>INSPECTION_FIELDS.join(',')+'\n'+rows.map(r=>INSPECTION_FIELDS.map(f=>String(r[f])).join(',')).join('\n');
+function setup(){const dir=mkdtempSync(join(tmpdir(),'merqo-inspection-')),file=join(dir,'ledger.sqlite'),ledger=new TransactionStore(file);ledger.import(TRANSACTION_EXTENDED_DEMO,createHash('sha256').update(TRANSACTION_EXTENDED_DEMO).digest('hex'),'csv');const store=new ReturnInspectionStore(file);return{file,ledger,store,close(){store.close();ledger.close();rmSync(dir,{recursive:true,force:true});}};}
+test('inspection preserves refund/physical return separation and warehouse disposition without changing transaction ledger',()=>{
+ const f=setup();let second:ReturnInspectionStore|undefined;try{expect(f.store.view(q)).toMatchObject({receivedQty:1,pendingQty:1,defectiveQty:0});const before=f.ledger.stateHash('csv'),p=f.store.preview(csv());expect(p.canImport).toBe(true);const receipt=f.store.import(csv(),p.hash);expect(receipt.accepted).toBe(1);expect(f.store.import(csv(),p.hash).id).toBe(receipt.id);expect(f.store.view(q)).toMatchObject({defectiveQty:1,pendingQty:0});expect(f.ledger.stateHash('csv')).toBe(before);second=new ReturnInspectionStore(f.file);expect(second.view(q).lines[0]?.warehouses).toEqual(['WH-1']);}finally{second?.close();f.close();}
+});
+test('refund target, over-inspection, wrong clock, duplicate conflicts and changed review are rejected',()=>{
+ const f=setup();try{expect(f.store.preview(csv([{...base,returned_event_id:'E4'}])).canImport).toBe(false);expect(f.store.preview(csv([{...base,defective_qty:2}])).canImport).toBe(false);expect(f.store.preview(csv([{...base,observed_at:'2026-10-14T10:00:00+08:00'}])).canImport).toBe(false);expect(f.store.preview(csv([base,{...base,warehouse_id:'OTHER'}])).canImport).toBe(false);
+ const stale=f.store.preview(csv()),other=csv([{...base,inspection_id:'Q2'}]);f.store.import(other,f.store.preview(other).hash);expect(()=>f.store.import(csv(),stale.hash)).toThrow('已变化');expect(f.store.preview(csv()).canImport).toBe(false);expect(f.store.view(q).defectiveQty).toBe(1);
+ }finally{f.close();}
+});

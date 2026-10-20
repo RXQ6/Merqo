@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "checks": [
+    "actual UI maps only explicit events; two bad source records quarantine together, preview writes nothing, partial import requires explicit reason and independent control totals expose 22 vs 16",
+    "corrected fixture imports six missing events, deduplicates sixteen immutable events and matches independent 22-event synthetic control totals",
+    "repeated pulls import zero events; double confirmation returns one receipt and ledger remains 22 events",
+    "actual restart retains mappings, receipts and reconciliation; manual reference is distinctly unverified and a one-fen discrepancy is detected; renderer cannot call internal store operations",
+    "independent-shaped file upload detects two swapped event amounts despite unchanged totals, then a clean 22-event file matches without importing reference data",
+    "quarantine work queue records an explicit local-operator reprocess link while preserving both original isolated records",
+    "UI incremental plan creates a bounded overlapping window, advances only fetched cursor, leaves business ledger unchanged, and preserves disabled plan/cursor plus issue review through actual restart"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-ohhcLn"
+}

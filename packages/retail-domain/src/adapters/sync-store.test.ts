@@ -5,6 +5,9 @@ import {tmpdir} from 'node:os';
 import {SyncStore} from './sync-store';
 import {RetailRequestSchema} from '../operations';
 const config={name:'测试店铺',mode:'fixture',shopId:'',appKey:'',fixture:'normal'};
+test('an archived task remains addressable after the recent fifty-task window',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'merqo-sync-history-')),s=new SyncStore(join(dir,'sync.sqlite'));try{s.request({op:'sync_store_configure',expectedRevision:0,config});s.request({op:'sync_store_check',expectedRevision:1,ok:true,message:'fixture'});let first='';for(let i=0;i<52;i++){const j=s.request({op:'sync_store_create',expectedRevision:1,window:{start:1700000000,end:1700000100,size:100}}).jobs[0]!;if(!i)first=j.id;const running=claim(s,j.id);page(s,j.id,running.epoch,0,0,0);}expect(s.view().jobs.some(j=>j.id===first)).toBe(false);expect(s.request({op:'sync_store_job',id:first}).jobs[0]?.id).toBe(first);}finally{s.close();rmSync(dir,{recursive:true,force:true});}
+});
 function setup(){const dir=mkdtempSync(join(tmpdir(),'merqo-sync-'));const file=join(dir,'sync.sqlite');let now=1700001000000;const store=new SyncStore(file,()=>now);store.request({op:'sync_store_configure',expectedRevision:0,config});store.request({op:'sync_store_check',expectedRevision:1,ok:true,message:'合成演练'});const create=()=>store.request({op:'sync_store_create',expectedRevision:1,window:{start:1700000000,end:1700000100,size:2}}).jobs[0]!;return{dir,file,store,create,tick:(ms:number)=>{now+=ms;}};}
 function claim(store:SyncStore,id:string){const j=store.view().jobs.find(j=>j.id===id)!;return store.request({op:'sync_store_claim',id,expectedEpoch:j.epoch}).jobs.find(j=>j.id===id)!;}
 function page(store:SyncStore,id:string,epoch:number,page:number,count:number,total=3){return store.request({op:'sync_store_page',id,expectedEpoch:epoch,page,count,reportedTotal:total,responseSha256:'a'.repeat(64),encrypted:'{"v":1,"data":"ciphertext-only"}'});}

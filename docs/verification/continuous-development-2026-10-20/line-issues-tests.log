@@ -1,0 +1,23 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\adapters\ingestion-issues.test.ts:
+(pass) quarantine queue retains append-only reviews, rejects stale changes and links only later clean same-source receipts [102.62ms]
+
+packages\retail-domain\src\adapters\ingestion.test.ts:
+(pass) duplicate source records are counted consistently in preview and receipt without duplicating events [46.13ms]
+(pass) receipt failure rolls back both imported events and transaction batch; the same review can safely retry [71.40ms]
+(pass) reviewed import is atomic and idempotent, restart preserves receipts and independent fixture totals reconcile [75.23ms]
+(pass) quality failures quarantine complete records; partial confirmation is explicit and later corrected batch imports only missing events [48.57ms]
+(pass) mapping, staging or ledger changes invalidate an unconfirmed preview; conflicts never overwrite immutable events [72.24ms]
+(pass) live-shaped mapping remains operator-declared, needs a separate reference and cannot claim authenticated platform reconciliation [75.89ms]
+(pass) mapping does not infer events, units or unsafe IDs; field discovery never returns raw personal values [7.41ms]
+
+packages\retail-domain\src\adapters\line-reference.test.ts:
+(pass) line reconciliation detects equal-total swapped amounts, missing and extra IDs independently [3.12ms]
+(pass) file validation rejects unsupported columns, wrong shop, ambiguous duplicates and invalid units; exact duplicates are counted [3.85ms]
+(pass) file references persist separately from aggregate references and never import reference-only events [56.25ms]
+
+ 11 pass
+ 0 fail
+ 67 expect() calls
+Ran 11 tests across 3 files. [1433.00ms]

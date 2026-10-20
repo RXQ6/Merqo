@@ -1,0 +1,11 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\contribution.test.ts:
+(pass) refunds and five explicitly supplied net costs produce declared contribution, never infer cost recovery [3.06ms]
+(pass) explicit duplicate costs dedupe; conflicting categories, decimal amounts, future observations and outside entities reject [4.85ms]
+(pass) cost reports freeze full cohort rather than current page, persist across restart and do not change transaction events [78.55ms]
+
+ 3 pass
+ 0 fail
+ 16 expect() calls
+Ran 3 tests across 1 file. [1468.00ms]

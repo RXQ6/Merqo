@@ -2,19 +2,24 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import type {RetailRequest} from '../../../../../packages/retail-domain/src/operations';
 import type {SyncView,SyncConfig,SyncJob} from '../../../../../packages/retail-domain/src/adapters/sync-contract';
 import {IngestionPanel} from './IngestionPanel';
+import {SyncSchedulePanel} from './SyncSchedulePanel';
+import {IngestionIssuesPanel} from './IngestionIssuesPanel';
 
 const labels:Record<SyncJob['status'],string>={queued:'等待执行',running:'正在拉取',retry_wait:'等待自动重试',paused:'已暂停',blocked:'需处理授权或配置',failed:'失败，断点已保留',fetched:'拉取结束'};
 const localTime=(time:number)=>{const date=new Date(time);return new Date(time-date.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 export function ConnectionsPanel(){
  const [view,setView]=useState<SyncView|null>(null),[step,setStep]=useState(1),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const [selectedJob,setSelectedJob]=useState<string|null>(null);
+ const selectedVisible=!!view?.jobs.some(j=>j.id===selectedJob);
+ useEffect(()=>{if(selectedJob&&selectedVisible)document.getElementById(`retail-sync-${selectedJob}`)?.scrollIntoView({block:'start'});},[selectedJob,selectedVisible]);
  const [config,setConfig]=useState<SyncConfig>({name:'抖店连接',mode:'fixture',shopId:'',appKey:'',fixture:'normal'});
  const [secret,setSecret]=useState(''),[token,setToken]=useState(''),[expiry,setExpiry]=useState('');
  const [start,setStart]=useState(()=>localTime(Date.now()-3600000)),[end,setEnd]=useState(()=>localTime(Date.now()-60000)),[size,setSize]=useState(2);
+ const selectedJobRef=useRef<string|null>(null);
  const hydrated=useRef(false),inFlight=useRef(false),alive=useRef(true),generation=useRef(0),mutating=useRef(false);
  const load=useCallback(async()=>{
   if(inFlight.current||mutating.current)return;inFlight.current=true;const current=generation.current;
-  try{const r=await window.electronAPI.retailRequest({op:'sync_view'});if(!alive.current||generation.current!==current)return;if(!r.ok)throw Error(r.error);if(r.kind==='sync'){setView(r.data);if(!hydrated.current){hydrated.current=true;if(r.data.connection){setConfig(r.data.connection);setStep(r.data.connection.check?.ok?3:2);}}}}
+  try{const r=await window.electronAPI.retailRequest(selectedJobRef.current?{op:'sync_job',id:selectedJobRef.current}:{op:'sync_view'});if(!alive.current||generation.current!==current)return;if(!r.ok)throw Error(r.error);if(r.kind==='sync'){setView(r.data);if(!hydrated.current){hydrated.current=true;if(r.data.connection){setConfig(r.data.connection);setStep(r.data.connection.check?.ok?3:2);}}}}
   catch(e){if(alive.current)setError(e instanceof Error?e.message:'读取任务失败');}finally{inFlight.current=false;}
  },[]);
  useEffect(()=>{alive.current=true;void load();const timer=setInterval(()=>void load(),1000);return()=>{alive.current=false;clearInterval(timer);};},[load]);
@@ -58,17 +63,20 @@ export function ConnectionsPanel(){
     <button className="retail-primary" disabled={busy||!view?.connection?.check?.ok} onClick={()=>void create()}>{view?.connection?.mode==='fixture'?'开始演练拉取':'开始只读拉取'}</button>
    </div>}
   </section>
+  {view&&<SyncSchedulePanel key={view.connection?.revision??0} view={view} busy={busy} send={send}/>}
+  <IngestionIssuesPanel onJob={id=>{selectedJobRef.current=id;setSelectedJob(id);void load();}}/>
   <section className="retail-panel" aria-label="同步任务记录"><div className="retail-section-title"><div><h2>同步任务</h2><p>每页结果与断点一起提交。程序关闭后不运行，重启保留断点并等待手动继续。</p></div><button disabled={busy} onClick={()=>void load()}>刷新任务</button></div>
    {!view?.jobs.length&&<p>暂无任务。完成连接检查后创建第一次拉取。</p>}
-   {view?.jobs.map(job=><article key={job.id} className="retail-sync-job" aria-label={`同步任务 ${job.id}`}>
+   {view?.jobs.map(job=><article key={job.id} id={`retail-sync-${job.id}`} className="retail-sync-job" aria-label={`同步任务 ${job.id}`}>
     <div className="retail-section-title"><strong>{labels[job.status]}</strong><span>{job.mode==='fixture'?'合成演练':'真实只读'} · {new Date(job.createdAt).toLocaleString()}</span></div>
     <p>已提交 {job.nextPage} 页 · 收到 {job.received} 条（未做订单去重） · 平台声明总数 {job.reportedTotal??'未知'} · 下一页 {job.nextPage}（页码从0起）</p>
+    {job.incremental&&<p>增量补拉 · 计划 v{job.incremental.scheduleRevision} · 成功后推进至 {new Date(job.incremental.to*1000).toLocaleString()}</p>}
     <p>窗口 {new Date(job.window.start*1000).toLocaleString()} 至 {new Date(job.window.end*1000).toLocaleString()} · 当前页失败 {job.attempts}/3 次</p>
     {job.error&&<p className="retail-warning">{job.error}</p>}
     {job.retryAt&&<p>自动重试时间：{new Date(job.retryAt).toLocaleString()}</p>}
     {job.status==='fetched'&&<p>拉取结果已加密暂存。在「映射与入库」查看业务预览、入库回执和对账结果。</p>}
     <div className="retail-inline-actions">
-     {job.status==='fetched'&&<button disabled={busy} aria-expanded={selectedJob===job.id} onClick={()=>setSelectedJob(selectedJob===job.id?null:job.id)}>映射与入库</button>}
+     {job.status==='fetched'&&<button disabled={busy} aria-expanded={selectedJob===job.id} onClick={()=>{selectedJobRef.current=selectedJob===job.id?null:job.id;setSelectedJob(selectedJobRef.current);}}>映射与入库</button>}
      {['queued','running','retry_wait'].includes(job.status)&&<button disabled={busy} onClick={()=>void send({op:'sync_control',id:job.id,expectedEpoch:job.epoch,action:'pause'})}>暂停任务</button>}
      {job.status==='paused'&&<button disabled={busy} onClick={()=>void send({op:'sync_control',id:job.id,expectedEpoch:job.epoch,action:'resume'})}>从断点继续</button>}
      {['failed','blocked'].includes(job.status)&&<button disabled={busy||job.connectionRevision!==view.connection?.revision} onClick={()=>void send({op:'sync_control',id:job.id,expectedEpoch:job.epoch,action:'retry'})}>重试当前页</button>}

@@ -3,7 +3,7 @@ const {_electron:electron}=require(process.env.MERQO_PLAYWRIGHT_MODULE||'playwri
 const {expect}=require((process.env.MERQO_PLAYWRIGHT_MODULE||'playwright')+'/test');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {spawnSync}=require('node:child_process');
-const root=path.resolve(__dirname,'..'),profile=['--visual','--maintenance','--comparison'].some(f=>process.argv.includes(f))?process.env.MERQO_PREVIEW_PROFILE:fs.mkdtempSync(path.join(root,'.runtime/ingestion-ui-')),out=path.join(root,'artifacts/ingestion-workflow',new Date().toISOString().replace(/[:.]/g,'-'));
+const root=path.resolve(__dirname,'..'),profile=['--visual','--maintenance','--comparison','--partial-cancel'].some(f=>process.argv.includes(f))?process.env.MERQO_PREVIEW_PROFILE:fs.mkdtempSync(path.join(root,'.runtime/ingestion-ui-')),out=path.join(root,'artifacts/ingestion-workflow',new Date().toISOString().replace(/[:.]/g,'-'));
 if(!profile)throw Error('Visual preview requires the completed isolated test profile');
 fs.mkdirSync(out,{recursive:true});let app,page;const checks=[];
 const button=name=>page.getByRole('button',{name,exact:true});
@@ -67,6 +67,7 @@ async function extended(panel,bad,completed){
  checks.push('actual transaction CSV plus warehouse inspection UI rejects non-return targets and excess quantities, records one defective returned unit, preserves it after restart, and leaves transaction events unchanged');
 }
 async function main(){
+ if(process.argv.includes('--partial-cancel')){await partialCancellation();return;}
  if(process.argv.includes('--comparison')){await comparison();return;}
  if(process.argv.includes('--maintenance')){await maintenance();return;}
  if(process.argv.includes('--visual')){await launch();await page.getByRole('heading',{name:'自动增量同步与补拉',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'schedule.png')});await button('交易与退款').click();await page.getByLabel('交易开始日期',{exact:true}).fill('2026-10-14');await page.getByLabel('交易结束日期',{exact:true}).fill('2026-10-16');await button('查询交易').click();await page.getByRole('heading',{name:'实物退回质检与仓库去向',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'inspection.png')});await page.getByRole('heading',{name:'费用与结算贡献核对',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'contribution.png')});await close('visual.zip');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,visualOnly:true,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,visualOnly:true,out}));return;}
@@ -101,3 +102,19 @@ async function main(){
  await panel.getByLabel('批次对账结果',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'manual-reference.png')});if(process.argv.includes('--extended'))await extended(panel,bad,completed);await close('after-restart.zip');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,checks,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,out,checks}));
 }
 main().catch(async error=>{fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:false,checks,error:error.stack,profile},null,2));if(page)await page.screenshot({path:path.join(out,'failure.png'),fullPage:true}).catch(()=>{});if(app){await page.context().tracing.stop({path:path.join(out,'failure.zip')}).catch(()=>{});await app.close().catch(()=>{});}console.error(error);process.exitCode=1;});
+
+async function partialCancellation(){
+ await launch();await button('交易与退款').click();await expect(button('下载部分取消示例')).toBeVisible();
+ const fields=['source_id','event_id','order_id','line_id','shop_id','channel','sku_id','spec','currency','kind','order_at','event_at','quantity','amount_minor','allocated_discount_minor','platform_subsidy_minor','cancelled_basis_minor'];
+ const base={source_id:'partial-native',order_id:'PARTIAL-NATIVE',line_id:'L1',shop_id:'PARTIAL-SHOP',channel:'offline',sku_id:'PC-SKU',spec:'one',currency:'CNY',order_at:'2026-10-14T10:00:00+08:00',allocated_discount_minor:0,platform_subsidy_minor:0};
+ const events=[['ordered','PC-O',0,3,10001],['paid','PC-D',1,0,2000],['cancelled','PC-C',2,1,0,3333],['paid','PC-P',3,2,4668],['shipped','PC-S',4,2,0]].map(([kind,event_id,minute,quantity,amount_minor,cancelled_basis_minor])=>({...base,kind,event_id,event_at:`2026-10-14T10:0${minute}:00+08:00`,quantity,amount_minor,...(cancelled_basis_minor===undefined?{}:{cancelled_basis_minor})}));
+ const csv=list=>fields.join(',')+'\n'+list.map(e=>fields.map(f=>e[f]??'').join(',')).join('\n');
+ const upload=async(list,name)=>{await page.getByLabel('选择交易事件 CSV',{exact:true}).setInputFiles({name,mimeType:'text/csv',buffer:Buffer.from(csv(list))});return page.getByRole('region',{name:'交易导入预览',exact:true});};
+ let p=await upload(events.slice(0,3).map(e=>({...e,cancelled_basis_minor:undefined})),'missing-cancel-price.csv');await expect(p).toContainText('部分取消须明确');await expect(p.getByRole('button',{name:'确认导入交易事件',exact:true})).toBeDisabled();
+ for(const [i,list]of [events.slice(0,3),events.slice(3)].entries()){p=await upload(list,`partial-${i}.csv`);await expect(p).toContainText('事件链校验通过');await p.getByRole('button',{name:'确认导入交易事件',exact:true}).click();await expect(page.getByTestId('retail-transactions')).toContainText(`新增 ${list.length} 条`);}
+ p=await upload([{...events[4],event_id:'PC-EXCESS',quantity:1,event_at:'2026-10-14T10:05:00+08:00'}],'overship.csv');await expect(p).toContainText('累计发货与结清后取消件数超过支付件数');await expect(p.getByRole('button',{name:'确认导入交易事件',exact:true})).toBeDisabled();await p.getByRole('button',{name:'取消交易导入',exact:true}).click();
+ await page.getByLabel('交易开始日期',{exact:true}).fill('2026-10-14');await page.getByLabel('交易结束日期',{exact:true}).fill('2026-10-14');await page.getByLabel('交易店铺',{exact:true}).fill('PARTIAL-SHOP');await button('查询交易').click();await expect(page.getByRole('region',{name:'交易汇总',exact:true})).toContainText('下单 3 件 · 支付 2 件 · 发货 2 件 · 退款 0 件 · 取消 1 件');await expect(page.getByTestId('retail-transactions')).toContainText('取消原标价 ¥33.33（非退款）');await page.screenshot({path:path.join(out,'partial-cancel.png')});
+ const q={op:'transactions_page',source:'csv',basis:'order',startDate:'2026-10-14',endDate:'2026-10-14',shop:'PARTIAL-SHOP',channel:'offline',offset:0,limit:30};let data=(await request(q)).data;assert.equal(data.total,5);assert.equal(data.totals.retainedMinor,6668);assert.equal(data.totals.refundedMinor,0);assert.equal(data.totals.returnedQty,0);
+ await close('partial-before-restart.zip');await launch();data=(await request(q)).data;assert.equal(data.total,5);assert.equal(data.records.find(r=>r.event.kind==='cancelled').event.cancelled_basis_minor,3333);assert.equal(data.totals.paidQty,2);await close('partial-after-restart.zip');
+ checks.push('actual UI rejects missing partial-cancellation price and excess shipment; imports explicit 3333 fen cancellation across two batches, settles 6668 fen for remaining two units, records no refund/return, and retains five events after actual restart');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,partialCancellationOnly:true,checks,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,partialCancellationOnly:true,out}));
+}

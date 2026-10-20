@@ -5,8 +5,8 @@ import type {SyncJob} from '../../../../../packages/retail-domain/src/adapters/s
 import {fixtureMapping,mappedFields,MappingProfileSchema,StatementSchema} from '../../../../../packages/retail-domain/src/adapters/ingestion-contract';
 import type {IngestView,MappingProfile,ControlTotals} from '../../../../../packages/retail-domain/src/adapters/ingestion-contract';
 
-const fields:Record<string,string>={event_id:'事件 ID',order_id:'订单 ID',line_id:'订单行 ID',shop_id:'店铺 ID',channel:'渠道',sku_id:'SKU',spec:'规格',kind:'事件类型',order_at:'原订单时间',event_at:'事件时间',quantity:'件数',amount_minor:'结算金额',allocated_discount_minor:'商家优惠',replaces_order_id:'换货原订单 ID（可选）',replaces_line_id:'换货原订单行 ID（可选）',platform_subsidy_minor:'平台补贴',currency:'币种'};
-const optionalFields=['replaces_order_id','replaces_line_id'] as const;
+const fields:Record<string,string>={event_id:'事件 ID',order_id:'订单 ID',line_id:'订单行 ID',shop_id:'店铺 ID',channel:'渠道',sku_id:'SKU',spec:'规格',kind:'事件类型',order_at:'原订单时间',event_at:'事件时间',quantity:'件数',amount_minor:'结算金额',allocated_discount_minor:'商家优惠',cancelled_basis_minor:'未结清取消标价（可选，按金额单位）',replaces_order_id:'换货原订单 ID（可选）',replaces_line_id:'换货原订单行 ID（可选）',platform_subsidy_minor:'平台补贴',currency:'币种'};
+const optionalFields=['replaces_order_id','replaces_line_id','cancelled_basis_minor'] as const;
 const kinds:Record<string,string>={ordered:'下单',paid:'支付',shipped:'发货',refunded:'退款',cancelled:'取消',returned:'退货'};
 const totalLabels:Record<keyof ControlTotals,string>={eventCount:'事件数',orderedQty:'下单件数',paidQty:'支付件数',refundedQty:'退款件数',paidMinor:'支付金额（分）',refundedMinor:'退款金额（分）',discountMinor:'商家优惠（分）',subsidyMinor:'平台补贴（分）'};
 const emptyTotals:ControlTotals={eventCount:0,orderedQty:0,paidQty:0,refundedQty:0,paidMinor:0,refundedMinor:0,discountMinor:0,subsidyMinor:0};

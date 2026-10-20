@@ -8,7 +8,7 @@ export const TransactionEventSchema=z.strictObject({
  source_id:id,event_id:id,order_id:id,line_id:id,shop_id:id,channel:text,sku_id:id,spec:text,currency:z.literal('CNY'),
  kind:z.enum(['ordered','paid','shipped','refunded','cancelled','returned']),order_at:time,event_at:time,
  quantity:z.number().int().min(0).max(1_000_000),amount_minor:amount,allocated_discount_minor:amount,platform_subsidy_minor:amount,
- replaces_order_id:id.optional(),replaces_line_id:id.optional(),
+ replaces_order_id:id.optional(),replaces_line_id:id.optional(),cancelled_basis_minor:amount.optional(),
 }).superRefine((r,c)=>{
  if(Date.parse(r.event_at)<Date.parse(r.order_at))c.addIssue({code:'custom',message:'事件发生时间不能早于原订单时间'});
  if(r.kind==='ordered'&&Date.parse(r.event_at)!==Date.parse(r.order_at))c.addIssue({code:'custom',message:'下单事件时间必须等于原订单时间'});
@@ -18,10 +18,11 @@ export const TransactionEventSchema=z.strictObject({
  if(r.kind!=='paid'&&(r.allocated_discount_minor!==0||r.platform_subsidy_minor!==0))c.addIssue({code:'custom',message:'优惠和平台结算补贴只在支付事件填写'});
  if(['shipped','cancelled','returned'].includes(r.kind)&&r.amount_minor!==0)c.addIssue({code:'custom',message:'发货、取消和实物退回不重复记收入，金额必须为零'});
  if(Boolean(r.replaces_order_id)!==Boolean(r.replaces_line_id)||r.replaces_order_id&&r.kind!=='ordered')c.addIssue({code:'custom',message:'换货关联只在新下单事件填写，须同时给出原订单及原行ID'});
+ if(r.cancelled_basis_minor!==undefined&&r.kind!=='cancelled')c.addIssue({code:'custom',message:'取消标价只在取消事件填写，不代表退款'});
 });
 export type TransactionEvent=z.infer<typeof TransactionEventSchema>;
 export const TRANSACTION_FIELDS=['source_id','event_id','order_id','line_id','shop_id','channel','sku_id','spec','currency','kind','order_at','event_at','quantity','amount_minor','allocated_discount_minor','platform_subsidy_minor'] as const satisfies ReadonlyArray<keyof TransactionEvent>;
-export const TRANSACTION_OPTIONAL_FIELDS=['replaces_order_id','replaces_line_id'] as const;
+export const TRANSACTION_OPTIONAL_FIELDS=['replaces_order_id','replaces_line_id','cancelled_basis_minor'] as const;
 const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(s=>{const n=Date.parse(s+'T00:00:00Z');return Number.isFinite(n)&&new Date(n).toISOString().slice(0,10)===s;},'无效业务日期');
 export const TransactionQuerySchema=z.strictObject({source:z.enum(['demo','csv']).default('csv'),startDate:date,endDate:date,basis:z.enum(['event','order']).default('event'),shop:z.string().max(128).default(''),channel:z.string().max(200).default(''),offset:z.number().int().min(0).max(100000).default(0),limit:z.number().int().min(1).max(100).default(30)}).refine(q=>q.startDate<=q.endDate,{message:'开始日期不能晚于结束日期'});
 export type TransactionQuery=z.infer<typeof TransactionQuerySchema>;
@@ -46,7 +47,7 @@ export function decodeTransactionCsv(csv:string):Omit<TransactionPreview,'hash'|
  for(const [i,cells]of rows.entries()){
   if(i>=100000)throw Error('单次交易导入最多100,000条事件');
   if(cells.length!==headers.length){errors.push({line:i+2,reason:'列数量与表头不符'});continue;}
-  const raw=Object.fromEntries(headers.flatMap(f=>{const v=cells[headers.indexOf(f)]?.trim()??'';if((TRANSACTION_OPTIONAL_FIELDS as readonly string[]).includes(f)&&!v)return[];return[[f,['quantity','amount_minor','allocated_discount_minor','platform_subsidy_minor'].includes(f)?/^\d+$/.test(v)?Number(v):NaN:v]];}));
+  const raw=Object.fromEntries(headers.flatMap(f=>{const v=cells[headers.indexOf(f)]?.trim()??'';if((TRANSACTION_OPTIONAL_FIELDS as readonly string[]).includes(f)&&!v)return[];return[[f,['quantity','amount_minor','allocated_discount_minor','platform_subsidy_minor','cancelled_basis_minor'].includes(f)?/^\d+$/.test(v)?Number(v):NaN:v]];}));
   const parsed=TransactionEventSchema.safeParse(raw);if(!parsed.success){errors.push({line:i+2,reason:parsed.error.issues.map(i=>i.message).join('；')});continue;}
   const key=transactionKey(parsed.data),value=JSON.stringify(parsed.data),old=seen.get(key);
   if(old){if(old===value)duplicateCount++;else errors.push({line:i+2,reason:'同一事件ID存在冲突内容'});continue;}
@@ -66,7 +67,7 @@ export function validateTransactionChains(events:TransactionEvent[]):string[]{
   const orders=list.filter(e=>e.kind==='ordered'),payments=list.filter(e=>e.kind==='paid');
   if(orders.length!==1){fail('须有且仅有一个原下单事件');continue;}const order=orders[0]!;
   if(new Set(payments.map(e=>Date.parse(e.event_at))).size!==payments.length){fail('分次支付的发生时间必须可区分，不能猜测先后');continue;}
-  let cash=0,settledBasis=0,paidQty=0,shippedQty=0,refundedQty=0,refundedCash=0,cancelledQty=0,returnedQty=0,closed=false;
+  let cash=0,settledBasis=0,paidQty=0,shippedQty=0,refundedQty=0,refundedCash=0,cancelledQty=0,returnedQty=0,closed=false,preCancelledQty=0,cancelledBasis=0;
   // Equal timestamps across different phases retain the existing paid -> shipped -> refund convention.
   const rank={ordered:0,paid:1,cancelled:2,shipped:3,returned:4,refunded:5};
   for(const e of [...list].sort((a,b)=>Date.parse(a.event_at)-Date.parse(b.event_at)||rank[a.kind]-rank[b.kind]||a.event_id.localeCompare(b.event_id))){
@@ -74,17 +75,28 @@ export function validateTransactionChains(events:TransactionEvent[]):string[]{
    if(e.kind==='paid'){
     if(closed||paidQty){fail('已取消或已结清的订单行不能继续支付');break;}
     cash+=e.amount_minor;settledBasis+=e.amount_minor+e.allocated_discount_minor-e.platform_subsidy_minor;
-    if(settledBasis<0||settledBasis>order.amount_minor){fail('累计已分摊结算金额超过原订单或为负');break;}
-    const final=settledBasis===order.amount_minor;
-    if(final?e.quantity!==order.quantity:e.quantity!==0){fail('未结清数量须为零，结清时须一次确认原订单全部支付件数');break;}
+    const target=order.amount_minor-cancelledBasis;
+    if(settledBasis<0||settledBasis>target){fail('累计已分摊结算金额超过取消后应结标价或为负');break;}
+    const final=settledBasis===target;
+    if(final?e.quantity!==order.quantity-preCancelledQty:e.quantity!==0){fail('未结清数量须为零，结清时须一次确认未取消的全部支付件数');break;}
     if(final)paidQty=e.quantity;
    }else if(e.kind==='cancelled'){
-    if(!paidQty){if(closed||e.quantity!==order.quantity){fail('未结清订单只支持一次整行取消');break;}closed=true;}
+    if(closed){fail('已取消订单行不能继续取消');break;}
+    if(!paidQty){
+     const remaining=order.quantity-preCancelledQty;
+     if(e.quantity>remaining){fail('累计取消件数超过原订单');break;}
+     const all=e.quantity===remaining;
+     if(!all&&e.cancelled_basis_minor===undefined){fail('未结清部分取消须明确取消部分的原标价，不能按件数猜金额');break;}
+     const basis=e.cancelled_basis_minor??order.amount_minor-cancelledBasis;
+     if(basis>order.amount_minor-cancelledBasis||all&&basis!==order.amount_minor-cancelledBasis){fail('累计取消标价与原订单不一致');break;}
+     if(!all&&settledBasis>order.amount_minor-cancelledBasis-basis){fail('取消后应结标价低于已有结算，请拆分原订单或补来源更正');break;}
+     preCancelledQty+=e.quantity;cancelledBasis+=basis;closed=all;
+    }else if(e.cancelled_basis_minor!==undefined){fail('已结清后取消不调整原结算标价，请以独立退款记账');break;}
     cancelledQty+=e.quantity;
     if(cancelledQty+shippedQty>order.quantity){fail('累计取消与发货件数超过原订单');break;}
    }else if(e.kind==='shipped'){
     if(!paidQty||closed){fail('缺少已结清的原支付事件，不能发货');break;}
-    shippedQty+=e.quantity;if(shippedQty+cancelledQty>paidQty){fail('累计发货与取消件数超过支付件数');break;}
+    shippedQty+=e.quantity;if(shippedQty+cancelledQty-preCancelledQty>paidQty){fail('累计发货与结清后取消件数超过支付件数');break;}
    }else if(e.kind==='returned'){
     returnedQty+=e.quantity;if(returnedQty>shippedQty){fail('实物退回不能早于发货或超过已发货件数');break;}
    }else{
@@ -138,3 +150,11 @@ export const TRANSACTION_EXTENDED_DEMO=TRANSACTION_FIELDS.join(',')+'\n'+extende
 const exchangeOrder:TransactionEvent={...example[0]!,source_id:'example-installments',order_id:'EXCHANGE-O1',event_id:'EXCHANGE-E1',sku_id:'TEA-NEW',spec:'替换品500ml×6瓶',quantity:1,amount_minor:10000,order_at:'2026-10-16T10:00:00+08:00',event_at:'2026-10-16T10:00:00+08:00',replaces_order_id:'O1',replaces_line_id:'L1'};
 const exchangeFields=[...TRANSACTION_FIELDS,...TRANSACTION_OPTIONAL_FIELDS];
 export const TRANSACTION_EXCHANGE_DEMO=exchangeFields.join(',')+'\n'+[...extendedEvents,exchangeOrder].map(e=>exchangeFields.map(f=>e[f]??'').join(',')).join('\n');
+const partialOrder:TransactionEvent={...example[0]!,source_id:'example-partial-cancel',order_id:'PARTIAL-O1',quantity:3,amount_minor:10001};
+export const TRANSACTION_PARTIAL_CANCEL_DEMO=exchangeFields.join(',')+'\n'+[
+ partialOrder,
+ {...partialOrder,event_id:'PC-DEPOSIT',kind:'paid',quantity:0,amount_minor:2000,event_at:'2026-10-14T10:01:00+08:00'},
+ {...partialOrder,event_id:'PC-CANCEL',kind:'cancelled',quantity:1,amount_minor:0,cancelled_basis_minor:3333,event_at:'2026-10-14T10:02:00+08:00'},
+ {...partialOrder,event_id:'PC-PAID',kind:'paid',quantity:2,amount_minor:4668,event_at:'2026-10-14T10:03:00+08:00'},
+ {...partialOrder,event_id:'PC-SHIP',kind:'shipped',quantity:2,amount_minor:0,event_at:'2026-10-14T10:04:00+08:00'},
+].map(e=>exchangeFields.map(f=>(e as TransactionEvent)[f]??'').join(',')).join('\n');

@@ -42,7 +42,7 @@ beta.5为当前公开预发布版本，本轮安装验收不构成新的真实�
 | --- | --- | --- | --- | --- |
 | D01 | 价格/促销实体和直接 SKU 改价 | 已实现 | `price-action.ts`、`price-action.test.ts`；[闭环与原生验证](M5-price-action.md) | 独立改价贯通测算、调查、审批、模拟执行和回读；安全补偿可执行，不安全原价恢复被拒；会员价等限制仍明确保留 |
 | D02 | 示例阈值和规则可配置 | 已实现 | `business-policy.ts`、`policy-store.ts`、`business-policy.test.ts`；[原生配置验证](M5-business-policy.md) | 默认/店铺覆盖、阈值与样本/窗口、审批期限和改价幅度受校验并版本化；变更后旧审批失效 |
-| D03 | 订单/支付/发货/退款数量与退款双时间口径 | 已实现（限定契约） | `transactions.ts`、`transaction-store.ts`、`transactions.test.ts`；[扩展契约](M5-transaction-extension.md) | 分次支付结清只计一次件数；取消、实物退回及显式换货关联、部分退款和双时间；未结清只整行取消，不自动净额结算或库存回补；新增[退回质检](P1-cost-and-inspection-2026-10-20.md)，只记录仓库/合格/残次/报废，不形成库存写入 |
+| D03 | 订单/支付/发货/退款数量与退款双时间口径 | 已实现（限定契约） | `transactions.ts`、`transaction-store.ts`、`transactions.test.ts`；[扩展契约](M5-transaction-extension.md) | 分次支付结清只计一次件数；取消、实物退回及显式换货关联、部分退款和双时间；未结清部分取消须明确取消原标价，见[契约](P1-partial-cancellation-2026-10-20.md)，不自动净额结算或库存回补；新增[退回质检](P1-cost-and-inspection-2026-10-20.md)，只记录仓库/合格/残次/报废，不形成库存写入 |
 | D04 | 商品、规格、组合装、赠品、会员价映射 | 已实现（限定本地契约） | `catalog.ts`、`bundles.test.ts`、`order-allocation.ts`及测试；赠品/会员/报价测试 | 显式规格映射、最多6层500子项组合树及行级订单分摊已实现；活动资格/门槛引擎、真实目录及会员身份认证、多币种仍不在当前范围 |
 | D05 | 库存、占用、在途、ETA、观测时间 | 部分 | `signals.ts`、`inventory-numeric.ts`、`source-metadata.test.ts` | 数量、日期及独立来源时刻/水位声明已有；CSV 平台身份与真实库存完整性未独立验证 |
 | D06 | 广告花费、归因收入、窗口、观测时间 | 已实现（本地分析范围） | `signals.ts`、`catalog.ts`、`joint-evidence.ts`；对应测试 | 归因口径、独立来源时刻、水位、显式广告SKU规格映射和共同窗口已实现；多活动/不同窗不自动汇总，CSV身份不等于已认证 |

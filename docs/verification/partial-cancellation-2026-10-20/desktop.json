@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "partialCancellationOnly": true,
+  "checks": [
+    "actual UI rejects missing partial-cancellation price and excess shipment; imports explicit 3333 fen cancellation across two batches, settles 6668 fen for remaining two units, records no refund/return, and retains five events after actual restart"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

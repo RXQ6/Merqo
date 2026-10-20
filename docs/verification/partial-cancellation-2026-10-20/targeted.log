@@ -1,0 +1,39 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\partial-cancellation.test.ts:
+(pass) explicit uneven-price partial cancellation survives split imports, idempotency and restart; does not invent refund or stock [66.24ms]
+(pass) cancellation rejects absent guessed basis, excess, incompatible deposit, non-cancellation fields and invalid final quantities [2.00ms]
+(pass) explicit optional cancellation amount passes mapped money units and independent line reconciliation without truncation [4.91ms]
+
+packages\retail-domain\src\transactions.test.ts:
+(pass) actual data-worker imports and queries both date bases through strict IPC schemas [1402.30ms]
+(pass) explicit replacement consumes returned units once, loads old lines and siblings across batches and persists after reopening [75.75ms]
+(pass) replacement links reject missing scopes, self cycles, incomplete declarations and financial shortcuts [38.26ms]
+(pass) installments import incrementally, count paid units only on settlement and retain both date bases after restart [68.16ms]
+(pass) unsettled full cancellation records cash refunds explicitly and cannot reopen fulfillment [34.75ms]
+(pass) paid partial cancellation and physical returns remain separate from financial refunds and stock [36.92ms]
+(pass) payment, cancellation and return prefixes reject impossible cash or fulfillment atomically [37.94ms]
+(pass) cross-period refund has independent event and original-order views, exact midnight boundaries and negative event-period totals [41.45ms]
+(pass) partial imports resolve original chains; identical events are idempotent and conflicting, orphan or excessive refunds roll back atomically [41.30ms]
+(pass) event contracts reject guessed allocation, time inversion, overshipment, duplicate settlement, malformed rows and cross-spec identity [48.61ms]
+(pass) immutable ledger, provenance, workspace isolation and bounded indexed pagination survive reopening [118.24ms]
+
+packages\retail-domain\src\adapters\ingestion.test.ts:
+(pass) job-specific history and preview lookup retain receipts beyond the recent thirty-job window [242.29ms]
+(pass) duplicate source records are counted consistently in preview and receipt without duplicating events [64.55ms]
+(pass) receipt failure rolls back both imported events and transaction batch; the same review can safely retry [92.95ms]
+(pass) reviewed import is atomic and idempotent, restart preserves receipts and independent fixture totals reconcile [99.69ms]
+(pass) quality failures quarantine complete records; partial confirmation is explicit and later corrected batch imports only missing events [65.93ms]
+(pass) mapping, staging or ledger changes invalidate an unconfirmed preview; conflicts never overwrite immutable events [102.39ms]
+(pass) live-shaped mapping remains operator-declared, needs a separate reference and cannot claim authenticated platform reconciliation [114.56ms]
+(pass) mapping does not infer events, units or unsafe IDs; field discovery never returns raw personal values [6.18ms]
+
+packages\retail-domain\src\adapters\line-reference.test.ts:
+(pass) line reconciliation detects equal-total swapped amounts, missing and extra IDs independently [6.19ms]
+(pass) file validation rejects unsupported columns, wrong shop, ambiguous duplicates and invalid units; exact duplicates are counted [5.16ms]
+(pass) file references persist separately from aggregate references and never import reference-only events [73.96ms]
+
+ 25 pass
+ 0 fail
+ 196 expect() calls
+Ran 25 tests across 4 files. [3.77s]

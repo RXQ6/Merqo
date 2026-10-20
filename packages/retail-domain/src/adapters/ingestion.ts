@@ -36,8 +36,8 @@ export function mapOrders(orders:Record<string,unknown>[],mapping:MappingProfile
     const event:Record<string,unknown>={source_id:sourceId};
     for(const field of [...mappedFields,...TRANSACTION_OPTIONAL_FIELDS]){
      const p=mapping.fields[field];if(!p){if((TRANSACTION_OPTIONAL_FIELDS as readonly string[]).includes(field))continue;throw Error(`缺少字段 ${field}`);}
-     const value=read(input,p);
-     try{event[field]=field==='kind'?mapping.kindMap[identifier(value)]:field==='quantity'?integer(value):['amount_minor','allocated_discount_minor','platform_subsidy_minor'].includes(field)?money(value,mapping.moneyUnit):['event_at','order_at'].includes(field)?timestamp(value,mapping.timeUnit):identifier(value);}catch{throw Error(`${field} 缺失或格式/单位不符合映射契约`);}
+     const value=read(input,p);if((TRANSACTION_OPTIONAL_FIELDS as readonly string[]).includes(field)&&(value===undefined||value===null||value===''))continue;
+     try{event[field]=field==='kind'?mapping.kindMap[identifier(value)]:field==='quantity'?integer(value):['amount_minor','allocated_discount_minor','platform_subsidy_minor','cancelled_basis_minor'].includes(field)?money(value,mapping.moneyUnit):['event_at','order_at'].includes(field)?timestamp(value,mapping.timeUnit):identifier(value);}catch{throw Error(`${field} 缺失或格式/单位不符合映射契约`);}
     }
     const parsed=TransactionEventSchema.safeParse(event);if(!parsed.success)throw Error(parsed.error.issues.map(i=>`${i.path.join('.')}: ${i.message}`).join('；'));
     if(parsed.data.shop_id!==(job.mode==='fixture'?'DEMO-SHOP':job.scope?.shopId))throw Error('事件店铺与任务冻结店铺不一致');

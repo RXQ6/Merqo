@@ -14,7 +14,7 @@ export function parseLineReference(csv:string,sourceId:string,shopId:string){
  const events:TransactionEvent[]=[],seen=new Map<string,string>();let duplicates=0;
  for(const [index,cells]of rows.entries()){
   if(cells.length!==headers.length)throw Error(`对账文件第${index+2}行列数不一致`);
-  const raw:Record<string,unknown>={source_id:sourceId};for(const [col,f]of headers.entries()){const v=cells[col]!.trim();if((TRANSACTION_OPTIONAL_FIELDS as readonly string[]).includes(f)&&!v)continue;raw[f]=['quantity','amount_minor','allocated_discount_minor','platform_subsidy_minor'].includes(f)?/^\d+$/.test(v)?Number(v):NaN:['order_at','event_at'].includes(f)&&z.string().datetime({offset:true}).safeParse(v).success?new Date(v).toISOString():v;}
+  const raw:Record<string,unknown>={source_id:sourceId};for(const [col,f]of headers.entries()){const v=cells[col]!.trim();if((TRANSACTION_OPTIONAL_FIELDS as readonly string[]).includes(f)&&!v)continue;raw[f]=['quantity','amount_minor','allocated_discount_minor','platform_subsidy_minor','cancelled_basis_minor'].includes(f)?/^\d+$/.test(v)?Number(v):NaN:['order_at','event_at'].includes(f)&&z.string().datetime({offset:true}).safeParse(v).success?new Date(v).toISOString():v;}
   const p=TransactionEventSchema.safeParse(raw);if(!p.success)throw Error(`对账文件第${index+2}行字段、金额或时间无效`);if(p.data.shop_id!==shopId)throw Error(`对账文件第${index+2}行店铺不匹配`);
   const key=transactionKey(p.data),json=JSON.stringify(p.data),old=seen.get(key);if(old&&old!==json)throw Error(`对账文件第${index+2}行同一事件内容冲突`);if(old){duplicates++;continue;}seen.set(key,json);events.push(p.data);
  }

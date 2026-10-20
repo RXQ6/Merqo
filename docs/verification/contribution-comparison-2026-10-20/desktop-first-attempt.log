@@ -1,0 +1,3 @@
+TypeError: Cannot read properties of undefined (reading 'id')
+    at comparison (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:38:362)
+    at async main (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:70:44)

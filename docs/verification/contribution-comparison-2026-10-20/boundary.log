@@ -1,0 +1,9 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\contribution-comparison.test.ts:
+(pass) frozen comparison detects receipts up/contribution down and numerical effects add to the exact delta; persists on restart [97.23ms]
+
+ 1 pass
+ 0 fail
+ 8 expect() calls
+Ran 1 test across 1 file. [1.64s]

@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\adapters\sync-cleanup.test.ts:
+(pass) cleanup only clears reviewed old staging, retaining business events, page receipts and an idempotent cleanup receipt [238.92ms]
+(pass) recent, quarantined and unconfirmed jobs are excluded; a new review after preview invalidates cleanup [306.65ms]
+
+ 2 pass
+ 0 fail
+ 12 expect() calls
+Ran 2 tests across 1 file. [2.50s]

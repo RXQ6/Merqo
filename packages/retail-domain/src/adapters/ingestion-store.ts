@@ -20,6 +20,8 @@ export class IngestionStore {
    CREATE TABLE IF NOT EXISTS ingest_mappings(revision INTEGER PRIMARY KEY,json TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS ingest_previews(id TEXT PRIMARY KEY,job_id TEXT NOT NULL,json TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS ingest_receipts(id TEXT PRIMARY KEY,preview_id TEXT NOT NULL UNIQUE,json TEXT NOT NULL);
+   CREATE INDEX IF NOT EXISTS ingest_preview_job ON ingest_previews(job_id);
+   CREATE INDEX IF NOT EXISTS ingest_receipt_job ON ingest_receipts(json_extract(json,'$.jobId'));
    CREATE TABLE IF NOT EXISTS ingest_reconciliations(id TEXT PRIMARY KEY,receipt_id TEXT NOT NULL,json TEXT NOT NULL);`);
   for(const table of['ingest_issue_reviews','ingest_mappings','ingest_previews','ingest_receipts','ingest_reconciliations'])for(const op of['UPDATE','DELETE'])this.db.exec(`CREATE TRIGGER IF NOT EXISTS ${table}_no_${op.toLowerCase()} BEFORE ${op} ON ${table} BEGIN SELECT RAISE(ABORT,'immutable ingestion history');END;`);
  }

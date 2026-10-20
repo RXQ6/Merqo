@@ -48,7 +48,7 @@ beta.5为当前公开预发布版本，本轮安装验收不构成新的真实�
 | D06 | 广告花费、归因收入、窗口、观测时间 | 已实现（本地分析范围） | `signals.ts`、`catalog.ts`、`joint-evidence.ts`；对应测试 | 归因口径、独立来源时刻、水位、显式广告SKU规格映射和共同窗口已实现；多活动/不同窗不自动汇总，CSV身份不等于已认证 |
 | D07 | Evidence 来源、查询、范围、业务窗、时间、摘要 | 已实现（本地声明范围） | `source-provenance.ts`、`catalog.ts`、`joint-evidence.ts`、只读工具及导出 | v2 冻结来源、映射版本、共同窗口和水位，别名只按显式映射取数；历史v1不回填；真实平台认证属接入阶段 |
 | D08 | Anomaly/Investigation/Decision/Approval/Execution/Case | 已实现 | `investigation-store.ts`、`decisions.ts`、`outcome-reviews.ts`、对应测试 | 以当前领域对象表示，未要求所有类型名称与 PRD 完全一致；组织多租户不在本项证明范围 |
-| C01 | 最小货币单位整数、明确舍入 | 已实现 | `operations.ts`、`margin-numeric.ts`、`margin-numeric.test.ts` | 限定商品毛利；新增五类净费用的人工声明结算贡献报告，缺项保持未知，不含完整净利润或因果归因 |
+| C01 | 最小货币单位整数、明确舍入 | 已实现 | `operations.ts`、`margin-numeric.ts`、`margin-numeric.test.ts` | 限定商品毛利；新增五类净费用的人工声明结算贡献报告，缺项保持未知；跨期比较可拆解收款、退款和五类费用变化，不含完整净利润或因果归因 |
 | C02 | ROAS 与 ROI 分离、归因窗口一致 | 已实现 | `signals.ts`、`ads-numeric.test.ts`、`signals.test.ts` | 条件预算缩放不宣称改善 ROAS |
 | C03 | 可售不含在途、零销量不可计算 | 已实现 | `inventory-numeric.ts`、`inventory-numeric.test.ts` | 分数和单位保留；补货受理不等于到货 |
 | C04 | 业务时区、左闭右开窗口、退款双时间 | 已实现 | `evidence-policy.ts`、`transactions.ts`、`transactions.test.ts` | Asia/Shanghai半开日期窗；退款发生期与原订单归属期分别查询。归属期是截至当前已导入事件的队列视角，不冒充历史期末报表 |

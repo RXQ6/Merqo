@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "maintenanceOnly": true,
+  "checks": [
+    "isolated test backdates synthetic creation metadata by ten days; actual UI preview excludes the quarantined task and clears only the clean confirmed task; repeated confirmation and restart retain one receipt, page receipts and unchanged business events"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "ageSimulated": true,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

@@ -39,7 +39,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null;
       if (!workspace || workspace.remoteServer) throw new Error('请选择本机 Workspace；远程经营数据暂不支持');
       const request = RetailRequestSchema.parse(input);
-      const readOnly = ['inspections_view','inspections_preview','contribution_reports','ingest_issues','ingest_inspect','ingest_view','sync_job','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
+      const readOnly = ['contribution_comparisons','sync_cleanup_view','inspections_view','inspections_preview','contribution_reports','ingest_issues','ingest_inspect','ingest_view','sync_job','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
       if (!readOnly && active.has(event.sender.id)) throw new Error('上一个经营数据请求尚未完成，请稍后重试');
       if (readOnly) await acquireRead(event.sender.id);
       else active.add(event.sender.id);

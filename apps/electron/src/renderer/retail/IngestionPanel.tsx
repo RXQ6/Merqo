@@ -25,6 +25,7 @@ export function IngestionPanel({job}:{job:SyncJob}){
  return <section className="retail-ingestion" aria-label={`映射与入库 ${job.id}`}>
   <div className="retail-section-title"><h2>映射与入库</h2><span className="retail-badge">{job.mode==='fixture'?'合成事件演练':'人工映射 · 待平台核验'}</span></div>
   <p>字段映射 → 质量隔离与去重 → 预览 → 确认入库 → 批次对账。只有来源明确给出的交易事件可以入库，订单快照不能推断为支付或退款。</p>
+  {job.stagingPurgedAt&&<p className="retail-warning">此任务的加密原文已清空。可以查看已有入库及对账结果，重新映射须重新拉取。</p>}
   <p className="retail-footnote">本步骤写入交易账本。毛利、库存和广告仍需各自的成本、库存或广告证据，不会由订单金额自动补齐。</p>
   {error&&<p role="alert" className="retail-error">{error}</p>}
   <details open={!preview} className="retail-mapping-details"><summary>1. 字段与口径映射{view?.mapping?` · 当前全局版本 v${view.mapping.revision}`:''}</summary>
@@ -33,7 +34,7 @@ export function IngestionPanel({job}:{job:SyncJob}){
     {job.mode==='fixture'&&<button disabled={busy} onClick={()=>{setProfile(structuredClone(fixtureMapping));setDirty(true);setConfirmed(false);}}>填入演练映射</button>}
     <label>映射名称<input aria-label="映射名称" value={profile.name} onChange={e=>edit({name:e.target.value})}/></label>
     <label>事件数组路径（留空表示每条来源记录就是事件）<input aria-label="事件数组路径" list="ingest-arrays" value={profile.eventArrayPath??''} onChange={e=>edit({eventArrayPath:e.target.value||null})}/></label>
-    <button disabled={busy} onClick={()=>void send({op:'ingest_inspect',jobId:job.id,eventArrayPath:profile.eventArrayPath})}>读取来源字段</button>
+    <button disabled={busy||!!job.stagingPurgedAt} onClick={()=>void send({op:'ingest_inspect',jobId:job.id,eventArrayPath:profile.eventArrayPath})}>读取来源字段</button>
     {discovered&&<p role="status">共 {discovered.totalRecords} 条来源记录；抽样发现 {discovered.fields.length} 个字段。仅返回字段名，不展示原始个人信息。</p>}
     <datalist id="ingest-arrays">{discovered?.arrays.map(f=><option key={f} value={f}/>)}</datalist><datalist id="ingest-fields">{discovered?.fields.map(f=><option key={f} value={f}/>)}</datalist>
     <div className="retail-ingest-columns">
@@ -46,7 +47,7 @@ export function IngestionPanel({job}:{job:SyncJob}){
     <button className="retail-primary" disabled={busy||!confirmed} onClick={()=>void save()}>保存映射版本</button>
    </fieldset>
   </details>
-  <div className="retail-inline-actions"><button className="retail-primary" disabled={busy||dirty||!view?.mapping||view.mapping.profile.mode!==job.mode} onClick={()=>{setPartial(false);setReason('');void send({op:'ingest_preview',jobId:job.id});}}>2. 生成入库预览</button><span>{dirty?'请先核对并保存映射':'已保存映射，可预览'}</span></div>
+  <div className="retail-inline-actions"><button className="retail-primary" disabled={busy||!!job.stagingPurgedAt||dirty||!view?.mapping||view.mapping.profile.mode!==job.mode} onClick={()=>{setPartial(false);setReason('');void send({op:'ingest_preview',jobId:job.id});}}>2. 生成入库预览</button><span>{dirty?'请先核对并保存映射':'已保存映射，可预览'}</span></div>
   {preview&&<section aria-label="入库预览">
    <h3>入库预览 · v{preview.mappingRevision}</h3><p role="status">来源 {preview.totalRecords} 条 · 新事件 {preview.newEvents} 条 · 重复 {preview.duplicateEvents} 条 · 冲突 {preview.conflictEvents} 条 · 隔离 {preview.quarantinedRecords} 条来源记录</p>
    <p>预览时间 {new Date(preview.createdAt).toLocaleString()} · 摘要 {preview.reviewHash.slice(0,16)} · {preview.source==='demo'?'演示账本':'CSV 交易账本（人工声明来源）'}</p>

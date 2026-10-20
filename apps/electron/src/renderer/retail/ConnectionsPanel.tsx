@@ -2,6 +2,7 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import type {RetailRequest} from '../../../../../packages/retail-domain/src/operations';
 import type {SyncView,SyncConfig,SyncJob} from '../../../../../packages/retail-domain/src/adapters/sync-contract';
 import {IngestionPanel} from './IngestionPanel';
+import {SyncCleanupPanel} from './SyncCleanupPanel';
 import {SyncSchedulePanel} from './SyncSchedulePanel';
 import {IngestionIssuesPanel} from './IngestionIssuesPanel';
 
@@ -64,6 +65,7 @@ export function ConnectionsPanel(){
    </div>}
   </section>
   {view&&<SyncSchedulePanel key={view.connection?.revision??0} view={view} busy={busy} send={send}/>}
+  <SyncCleanupPanel/>
   <IngestionIssuesPanel onJob={id=>{selectedJobRef.current=id;setSelectedJob(id);void load();}}/>
   <section className="retail-panel" aria-label="同步任务记录"><div className="retail-section-title"><div><h2>同步任务</h2><p>每页结果与断点一起提交。程序关闭后不运行，重启保留断点并等待手动继续。</p></div><button disabled={busy} onClick={()=>void load()}>刷新任务</button></div>
    {!view?.jobs.length&&<p>暂无任务。完成连接检查后创建第一次拉取。</p>}
@@ -74,7 +76,7 @@ export function ConnectionsPanel(){
     <p>窗口 {new Date(job.window.start*1000).toLocaleString()} 至 {new Date(job.window.end*1000).toLocaleString()} · 当前页失败 {job.attempts}/3 次</p>
     {job.error&&<p className="retail-warning">{job.error}</p>}
     {job.retryAt&&<p>自动重试时间：{new Date(job.retryAt).toLocaleString()}</p>}
-    {job.status==='fetched'&&<p>拉取结果已加密暂存。在「映射与入库」查看业务预览、入库回执和对账结果。</p>}
+    {job.status==='fetched'&&<p>{job.stagingPurgedAt?'加密原文已清空，页回执及业务结果保留。':'拉取结果已加密暂存。'}在「映射与入库」查看业务预览、入库回执和对账结果。</p>}
     <div className="retail-inline-actions">
      {job.status==='fetched'&&<button disabled={busy} aria-expanded={selectedJob===job.id} onClick={()=>{selectedJobRef.current=selectedJob===job.id?null:job.id;setSelectedJob(selectedJobRef.current);}}>映射与入库</button>}
      {['queued','running','retry_wait'].includes(job.status)&&<button disabled={busy} onClick={()=>void send({op:'sync_control',id:job.id,expectedEpoch:job.epoch,action:'pause'})}>暂停任务</button>}

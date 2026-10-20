@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {CleanupPublicSchemas} from './sync-cleanup-contract';
 import {SyncSchedulePublicSchemas,SyncScheduleConfigSchema,type SyncSchedule} from './sync-schedule-contract';
 
 export const SyncConfigSchema=z.strictObject({
@@ -9,7 +10,7 @@ export const SyncConfigSchema=z.strictObject({
 export const SyncWindowSchema=z.strictObject({start:z.number().int().positive().safe(),end:z.number().int().positive().safe(),size:z.number().int().min(1).max(100).default(50)}).refine(w=>w.start<w.end&&w.end-w.start<=86400,'同步窗口应大于0且不超过24小时');
 export const SyncCredentialsSchema=z.strictObject({appSecret:z.string().min(1).max(4096),accessToken:z.string().min(1).max(4096),expiresAt:z.number().int().positive().safe()});
 export const SyncPublicSchemas=[
- ...SyncSchedulePublicSchemas,
+ ...SyncSchedulePublicSchemas,...CleanupPublicSchemas,
  z.strictObject({op:z.literal('sync_view')}),
  z.strictObject({op:z.literal('sync_job'),id:z.string().uuid()}),
  z.strictObject({op:z.literal('sync_configure'),expectedRevision:z.number().int().min(0),config:SyncConfigSchema,credentials:SyncCredentialsSchema.optional()}),
@@ -26,6 +27,7 @@ export interface SyncJob {
  nextPage:number;received:number;reportedTotal:number|null;attempts:number;retryAt:number|null;
  error:string|null;createdAt:number;updatedAt:number;
  scope?:{shopId:string;appKey:string};
+ stagingPurgedAt?:number;
  incremental?:{scheduleRevision:number;from:number;to:number};
 }
 export interface SyncPageReceipt {page:number;count:number;responseSha256:string;at:number;}

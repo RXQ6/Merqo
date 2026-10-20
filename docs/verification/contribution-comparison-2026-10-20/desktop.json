@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "comparisonOnly": true,
+  "checks": [
+    "actual UI imports independent two-period transaction/cost fixtures, detects +2000 fen receipts with -2000 contribution, bridges -4000 goods costs, rejects reversed periods and retains frozen comparison through actual restart"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

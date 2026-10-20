@@ -1,3 +1,4 @@
+import {compareContributions,type ContributionComparison,type FrozenContribution} from './contribution-comparison';
 import {ContributionInputSchema,parseCosts,calculateContribution,type ContributionInput,type ContributionReport} from './contribution';
 import {Database} from 'bun:sqlite';import {createHash} from 'node:crypto';import {mkdirSync} from 'node:fs';import {dirname} from 'node:path';
 import {decodeTransactionCsv,validateTransactionChains,transactionKey,transactionEntity,exchangeTarget,transactionWindow,TransactionQuerySchema,TRANSACTION_DEMO} from './transactions';
@@ -9,6 +10,9 @@ export class TransactionStore{
  private readonly db:Database;
  private readonly ownsConnection:boolean;
  constructor(file:string,connection?:Database){mkdirSync(dirname(file),{recursive:true});this.ownsConnection=!connection;this.db=connection??new Database(file,{create:true,strict:true});this.db.exec(`PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;
+ CREATE TABLE IF NOT EXISTS contribution_comparisons(id TEXT PRIMARY KEY,json TEXT NOT NULL);
+ CREATE TRIGGER IF NOT EXISTS contribution_comparisons_no_update BEFORE UPDATE ON contribution_comparisons BEGIN SELECT RAISE(ABORT,'immutable comparisons');END;
+ CREATE TRIGGER IF NOT EXISTS contribution_comparisons_no_delete BEFORE DELETE ON contribution_comparisons BEGIN SELECT RAISE(ABORT,'immutable comparisons');END;
  CREATE TABLE IF NOT EXISTS contribution_reports(id TEXT PRIMARY KEY,json TEXT NOT NULL);
  CREATE TRIGGER IF NOT EXISTS contribution_reports_immutable_update BEFORE UPDATE ON contribution_reports BEGIN SELECT RAISE(ABORT,'immutable contribution reports');END;
  CREATE TRIGGER IF NOT EXISTS contribution_reports_immutable_delete BEFORE DELETE ON contribution_reports BEGIN SELECT RAISE(ABORT,'immutable contribution reports');END;
@@ -24,6 +28,8 @@ export class TransactionStore{
  if(!this.db.query<{name:string},[]>('PRAGMA table_info(transaction_events)').all().some(c=>c.name==='replaces_entity'))this.db.exec('ALTER TABLE transaction_events ADD COLUMN replaces_entity TEXT');
  this.db.exec('CREATE INDEX IF NOT EXISTS transaction_replacements ON transaction_events(source,replaces_entity)');}
  close(){if(this.ownsConnection)this.db.close();}
+ contributionComparisons():ContributionComparison[]{return this.db.query<{json:string},[]>('SELECT json FROM contribution_comparisons ORDER BY rowid DESC LIMIT 20').all().map(row=>JSON.parse(row.json));}
+ compareContributionReports(baselineId:string,currentId:string){return this.db.transaction(()=>{const read=(id:string)=>{const row=this.db.query<{json:string},[string]>('SELECT json FROM contribution_reports WHERE id=?').get(id);if(!row)throw Error('费用报告不存在');return JSON.parse(row.json) as FrozenContribution;};const result=compareContributions(read(baselineId),read(currentId));this.db.query('INSERT INTO contribution_comparisons VALUES(?,?)').run(result.id,JSON.stringify(result));return this.contributionComparisons();}).immediate();}
  contributionReports():ContributionReport[]{return this.db.query<{json:string},[]>('SELECT json FROM contribution_reports ORDER BY rowid DESC LIMIT 20').all().map(row=>JSON.parse(row.json).report);}
  contribution(input:ContributionInput):ContributionReport[]{const value=ContributionInputSchema.parse(input);return this.db.transaction(()=>{
   const q=value.query,range=transactionWindow(q.startDate,q.endDate),parsed=parseCosts(value.csv),events=this.db.query<{json:string},[string,number,number,string,string,string,string]>('SELECT json FROM transaction_events WHERE source=? AND order_at>=? AND order_at<? AND (?=\'\' OR shop_id=?) AND (?=\'\' OR channel=?) ORDER BY event_key').all(q.source,Date.parse(range.startInclusive),Date.parse(range.endExclusive),q.shop,q.shop,q.channel,q.channel).map(row=>JSON.parse(row.json) as TransactionEvent);

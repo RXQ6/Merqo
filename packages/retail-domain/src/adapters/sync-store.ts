@@ -13,11 +13,12 @@ export class SyncStore {
   this.db.exec(`PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;
    CREATE TABLE IF NOT EXISTS sync_connection(id INTEGER PRIMARY KEY CHECK(id=1),json TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS sync_jobs(id TEXT PRIMARY KEY,json TEXT NOT NULL);
-   CREATE TABLE IF NOT EXISTS sync_pages(job_id TEXT NOT NULL,page INTEGER NOT NULL,receipt TEXT NOT NULL,encrypted TEXT NOT NULL,PRIMARY KEY(job_id,page));`);
+   CREATE TABLE IF NOT EXISTS sync_pages(job_id TEXT NOT NULL,page INTEGER NOT NULL,receipt TEXT NOT NULL,encrypted TEXT NOT NULL,PRIMARY KEY(job_id,page));
+   CREATE INDEX IF NOT EXISTS sync_job_status_created ON sync_jobs(json_extract(json,'$.status'),json_extract(json,'$.createdAt'));`);
   this.schedule=new SyncScheduleStore(this.db,this.now,()=>this.connection(),()=>this.jobs(),j=>this.save(j));
  }
  close(){this.db.close();}
- staging(id:string){const job=this.job(id);if(job.status!=='fetched')throw Error('只有拉取结束的任务可以映射');const bytes=this.db.query<{n:number},[string]>('SELECT COALESCE(SUM(length(encrypted)),0) AS n FROM sync_pages WHERE job_id=?').get(id)!.n;if(bytes>24000000)throw Error('暂存批次超过24MB映射预览限制，请缩小窗口');const pages=this.db.query<{page:number;receipt:string;encrypted:string},[string]>('SELECT page,receipt,encrypted FROM sync_pages WHERE job_id=? ORDER BY page').all(id);if(pages.length!==job.nextPage)throw Error('暂存分页不完整');return{job,pages};}
+ staging(id:string){const job=this.job(id);if(job.stagingPurgedAt)throw Error('加密暂存已按清理回执清空，请重新拉取；原入库及对账回执仍保留');if(job.status!=='fetched')throw Error('只有拉取结束的任务可以映射');const bytes=this.db.query<{n:number},[string]>('SELECT COALESCE(SUM(length(encrypted)),0) AS n FROM sync_pages WHERE job_id=?').get(id)!.n;if(bytes>24000000)throw Error('暂存批次超过24MB映射预览限制，请缩小窗口');const pages=this.db.query<{page:number;receipt:string;encrypted:string},[string]>('SELECT page,receipt,encrypted FROM sync_pages WHERE job_id=? ORDER BY page').all(id);if(pages.length!==job.nextPage)throw Error('暂存分页不完整');return{job,pages};}
  connection():SyncConnection|null {const row=this.db.query<{json:string},[]>('SELECT json FROM sync_connection WHERE id=1').get();return row?JSON.parse(row.json):null;}
  private jobs():SyncJob[]{return this.db.query<{json:string},[]>('SELECT json FROM sync_jobs ORDER BY rowid DESC LIMIT 50').all().map(r=>JSON.parse(r.json));}
  private job(id:string):SyncJob {const row=this.db.query<{json:string},[string]>('SELECT json FROM sync_jobs WHERE id=?').get(id);if(!row)throw Error('同步任务不存在');return JSON.parse(row.json);}

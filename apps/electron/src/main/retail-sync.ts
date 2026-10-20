@@ -65,6 +65,7 @@ export function stopRetailSync(){for(const c of contexts.values())c.controller?.
 export async function handleRetailSync(workspace:Workspace,workspaceId:string,request:RetailRequest):Promise<RetailReply>{
  const c=await context(workspace,workspaceId);
  if(request.op.startsWith('ingest_'))return await handleIngestion(c,request);
+ if(request.op==='sync_cleanup_view'||request.op==='sync_cleanup_preview'||request.op==='sync_cleanup_confirm'){const payload=request.op==='sync_cleanup_view'?{op:'sync_cleanup_store_view'}:request.op==='sync_cleanup_preview'?{op:'sync_cleanup_store_preview',before:request.before}:{op:'sync_cleanup_store_confirm',planId:request.planId,reviewHash:request.reviewHash};const reply=await requestRetailWorker(c.workspace,c.workspaceId,payload,'sync_cleanup');if(!reply.ok)throw Error(reply.error);if(reply.kind!=='sync_cleanup')throw Error('暂存清理响应无效');return reply;}
  if(request.op==='sync_schedule_configure')return{ok:true,kind:'sync',data:await worker(c,{op:'sync_store_schedule_configure',expectedRevision:request.expectedRevision,config:request.config})};
  if(request.op==='sync_schedule_run'){const data=await worker(c,{op:'sync_store_schedule_tick',expectedRevision:request.expectedRevision});kick(c);return{ok:true,kind:'sync',data};}
  if(request.op==='sync_job')return{ok:true,kind:'sync',data:await worker(c,{op:'sync_store_job',id:request.id})};

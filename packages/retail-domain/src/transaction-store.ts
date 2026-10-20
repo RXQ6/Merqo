@@ -6,7 +6,8 @@ const hash=(v:string)=>createHash('sha256').update(v).digest('hex');
 interface Stored{json:string;source:'demo'|'csv';batch_id:string;imported_at:string;provenance:string|null}
 export class TransactionStore{
  private readonly db:Database;
- constructor(file:string){mkdirSync(dirname(file),{recursive:true});this.db=new Database(file,{create:true,strict:true});this.db.exec(`PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;
+ private readonly ownsConnection:boolean;
+ constructor(file:string,connection?:Database){mkdirSync(dirname(file),{recursive:true});this.ownsConnection=!connection;this.db=connection??new Database(file,{create:true,strict:true});this.db.exec(`PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;
  CREATE TABLE IF NOT EXISTS transaction_batches(id TEXT PRIMARY KEY,source TEXT NOT NULL,hash TEXT NOT NULL,imported_at TEXT NOT NULL,provenance TEXT CHECK(provenance IS NULL OR json_valid(provenance))) STRICT;
  CREATE TABLE IF NOT EXISTS transaction_events(source TEXT NOT NULL,event_key TEXT NOT NULL,entity_key TEXT NOT NULL,event_at INTEGER NOT NULL,order_at INTEGER NOT NULL,shop_id TEXT NOT NULL,channel TEXT NOT NULL,kind TEXT NOT NULL,quantity INTEGER NOT NULL,amount_minor INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),batch_id TEXT NOT NULL REFERENCES transaction_batches(id),PRIMARY KEY(source,event_key)) STRICT;
  CREATE INDEX IF NOT EXISTS transaction_event_time ON transaction_events(source,event_at);
@@ -18,7 +19,9 @@ export class TransactionStore{
  CREATE TRIGGER IF NOT EXISTS transaction_batches_immutable_delete BEFORE DELETE ON transaction_batches BEGIN SELECT RAISE(ABORT,'immutable transaction batches');END;`);
  if(!this.db.query<{name:string},[]>('PRAGMA table_info(transaction_events)').all().some(c=>c.name==='replaces_entity'))this.db.exec('ALTER TABLE transaction_events ADD COLUMN replaces_entity TEXT');
  this.db.exec('CREATE INDEX IF NOT EXISTS transaction_replacements ON transaction_events(source,replaces_entity)');}
- close(){this.db.close();}
+ close(){if(this.ownsConnection)this.db.close();}
+ stateHash(source:'demo'|'csv'){const h=createHash('sha256');for(const row of this.db.query<{event_key:string;json:string},[string]>('SELECT event_key,json FROM transaction_events WHERE source=? ORDER BY event_key').iterate(source)){h.update(row.event_key);h.update(row.json);}return h.digest('hex');}
+ match(event:TransactionEvent,source:'demo'|'csv'):'new'|'duplicate'|'conflict'{const old=this.db.query<{json:string},[string,string]>('SELECT json FROM transaction_events WHERE source=? AND event_key=?').get(source,transactionKey(event));return !old?'new':old.json===JSON.stringify(event)?'duplicate':'conflict';}
  preview(csv:string,source:'demo'|'csv'='csv'):TransactionPreview{
   const parsed=decodeTransactionCsv(csv);const errors=[...parsed.errors];const combined=new Map<string,TransactionEvent>();let duplicateCount=parsed.duplicateCount;
   const load=this.db.query<{json:string},[string,string]>('SELECT json FROM transaction_events WHERE source=? AND entity_key=?');

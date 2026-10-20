@@ -32,14 +32,14 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null;
       if (!workspace || workspace.remoteServer) throw new Error('请选择本机 Workspace；远程经营数据暂不支持');
       const request = RetailRequestSchema.parse(input);
-      const readOnly = ['sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
+      const readOnly = ['ingest_inspect','ingest_view','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
       if ((readers.get(event.sender.id) ?? 0) >= 4) throw new Error('并发读取过多，请稍后重试');
       if (!readOnly && active.has(event.sender.id)) throw new Error('上一个经营数据请求尚未完成，请稍后重试');
       if (readOnly) readers.set(event.sender.id, (readers.get(event.sender.id) ?? 0) + 1);
       else active.add(event.sender.id);
       const workerRequest = (payload: unknown) => requestRetailWorker(workspace, workspaceId!, payload, request.op);
       try {
-        if(request.op.startsWith('sync_'))return await handleRetailSync(workspace,workspaceId!,request);
+        if(request.op.startsWith('sync_')||request.op.startsWith('ingest_'))return await handleRetailSync(workspace,workspaceId!,request);
         const reply = await workerRequest(request);
         if (request.op === 'investigation_pause' && reply.ok) investigationTasks.get(`${workspaceId}:${request.id}`)?.abort('operator_pause');
         if ((request.op === 'investigation_supplement' || request.op === 'investigate' || request.op === 'review_followup' || request.op === 'investigation_resume') && reply.ok && reply.kind === 'investigations' && reply.created) {

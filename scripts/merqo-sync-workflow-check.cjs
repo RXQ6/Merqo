@@ -39,7 +39,7 @@ async function main(){
  await page.getByRole('article',{name:`同步任务 ${first.id}`}).getByRole('button',{name:'从断点继续',exact:true}).click();
  await expect.poll(async()=>(await view()).jobs.find(j=>j.id===first.id).status,{timeout:60000}).toBe('fetched');
  const finished=(await view()).jobs.find(j=>j.id===first.id);assert.equal(finished.received,7);assert.equal(finished.nextPage,7);assert.equal((await view()).receipts[first.id].length,7);
- await expect(page.getByRole('article',{name:`同步任务 ${first.id}`})).toContainText('字段映射、业务校验、确认入库、对账均未完成');
+ await expect(page.getByRole('article',{name:`同步任务 ${first.id}`})).toContainText('在「映射与入库」查看业务预览、入库回执和对账结果');
  const snap=await request({op:'snapshot',source:'csv',limit:30});assert.equal(snap.data.pagination.total,0);
  checks.push('resume finishes seven unique committed pages and seven staged rows; unmapped data does not enter CSV business metrics');
  await configure('invalid_response');const bad=await create();await expect.poll(async()=>(await view()).jobs.find(j=>j.id===bad.id).status,{timeout:60000}).toBe('failed');

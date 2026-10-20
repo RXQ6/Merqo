@@ -1,11 +1,13 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {RetailRequest} from '../../../../../packages/retail-domain/src/operations';
 import type {SyncView,SyncConfig,SyncJob} from '../../../../../packages/retail-domain/src/adapters/sync-contract';
+import {IngestionPanel} from './IngestionPanel';
 
-const labels:Record<SyncJob['status'],string>={queued:'等待执行',running:'正在拉取',retry_wait:'等待自动重试',paused:'已暂停',blocked:'需处理授权或配置',failed:'失败，断点已保留',fetched:'拉取结束 · 待映射'};
+const labels:Record<SyncJob['status'],string>={queued:'等待执行',running:'正在拉取',retry_wait:'等待自动重试',paused:'已暂停',blocked:'需处理授权或配置',failed:'失败，断点已保留',fetched:'拉取结束'};
 const localTime=(time:number)=>{const date=new Date(time);return new Date(time-date.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 export function ConnectionsPanel(){
  const [view,setView]=useState<SyncView|null>(null),[step,setStep]=useState(1),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [selectedJob,setSelectedJob]=useState<string|null>(null);
  const [config,setConfig]=useState<SyncConfig>({name:'抖店连接',mode:'fixture',shopId:'',appKey:'',fixture:'normal'});
  const [secret,setSecret]=useState(''),[token,setToken]=useState(''),[expiry,setExpiry]=useState('');
  const [start,setStart]=useState(()=>localTime(Date.now()-3600000)),[end,setEnd]=useState(()=>localTime(Date.now()-60000)),[size,setSize]=useState(2);
@@ -27,14 +29,14 @@ export function ConnectionsPanel(){
  const create=async()=>{const a=Math.floor(new Date(start).getTime()/1000),b=Math.floor(new Date(end).getTime()/1000);if(!Number.isFinite(a)||!Number.isFinite(b)||a>=b||b-a>86400||b>Date.now()/1000||!Number.isInteger(size)||size<1||size>100){setError('请选择有效的过去24小时内时间窗口，每页1至100条');return;}await send({op:'sync_create',expectedRevision:view?.connection?.revision??0,window:{start:a,end:b,size}});};
  return <div className="retail-connections" aria-label="平台接入与同步">
   <div className="retail-section-title"><div><h1>平台接入</h1><p>配置连接、检查权限，再按固定时间窗口拉取订单。</p></div><span className="retail-badge">{view?.connection?.mode==='live'?'真实只读模式':'测试演练 · 合成数据'}</span></div>
-  <p className="retail-footnote">请求取得 → 加密暂存 → 字段映射 → 确认入库 → 后台对账。当前只实现前两步，未映射数据不进入经营指标。</p>
+  <p className="retail-footnote">只读拉取 → 加密暂存 → 字段映射 → 质量隔离与去重 → 确认入库 → 批次对账。拉取完成后，点击任务的「映射与入库」继续。</p>
   {error&&<div role="alert" className="retail-error">{error}</div>}
   <section className="retail-panel" aria-label="抖店接入配置向导">
    <nav className="retail-sync-steps" aria-label="接入步骤">{['配置连接','只读检查','范围与任务'].map((name,i)=><button key={name} aria-current={step===i+1?'step':undefined} disabled={busy||i>0&&!view?.connection} onClick={()=>setStep(i+1)}>{i+1}. {name}</button>)}</nav>
    {step===1&&<div className="retail-sync-form">
     <label>连接名称<input aria-label="连接名称" value={config.name} onChange={e=>setConfig({...config,name:e.target.value})}/></label>
     <label>运行模式<select aria-label="运行模式" value={config.mode} onChange={e=>setConfig({...config,mode:e.target.value as SyncConfig['mode']})}><option value="fixture">测试演练（不访问平台）</option><option value="live">真实抖店只读连接</option></select></label>
-    {config.mode==='fixture'?<label>演练场景<select aria-label="演练场景" value={config.fixture} onChange={e=>setConfig({...config,fixture:e.target.value as SyncConfig['fixture']})}><option value="normal">正常分页 · 7条合成记录</option><option value="rate_limit">第2页限流两次后恢复</option><option value="invalid_response">第2页响应无效 · 手动重试</option></select></label>:<>
+    {config.mode==='fixture'?<label>演练场景<select aria-label="演练场景" value={config.fixture} onChange={e=>setConfig({...config,fixture:e.target.value as SyncConfig['fixture']})}><option value="normal">正常分页 · 7条合成记录</option><option value="rate_limit">第2页限流两次后恢复</option><option value="quality_errors">金额与规格错误 · 隔离演练</option><option value="invalid_response">第2页响应无效 · 手动重试</option></select></label>:<>
      <p>先在抖店开放平台创建应用并取得订单只读授权。本向导不代办开户或生成 Token；凭据仅加密保存，不会回显。</p>
      <label>店铺 ID<input aria-label="店铺 ID" value={config.shopId} onChange={e=>setConfig({...config,shopId:e.target.value})}/></label>
      <label>App Key<input aria-label="App Key" value={config.appKey} onChange={e=>setConfig({...config,appKey:e.target.value})}/></label>
@@ -64,13 +66,15 @@ export function ConnectionsPanel(){
     <p>窗口 {new Date(job.window.start*1000).toLocaleString()} 至 {new Date(job.window.end*1000).toLocaleString()} · 当前页失败 {job.attempts}/3 次</p>
     {job.error&&<p className="retail-warning">{job.error}</p>}
     {job.retryAt&&<p>自动重试时间：{new Date(job.retryAt).toLocaleString()}</p>}
-    {job.status==='fetched'&&<p>拉取结果已加密暂存；字段映射、业务校验、确认入库、对账均未完成。</p>}
+    {job.status==='fetched'&&<p>拉取结果已加密暂存。在「映射与入库」查看业务预览、入库回执和对账结果。</p>}
     <div className="retail-inline-actions">
+     {job.status==='fetched'&&<button disabled={busy} aria-expanded={selectedJob===job.id} onClick={()=>setSelectedJob(selectedJob===job.id?null:job.id)}>映射与入库</button>}
      {['queued','running','retry_wait'].includes(job.status)&&<button disabled={busy} onClick={()=>void send({op:'sync_control',id:job.id,expectedEpoch:job.epoch,action:'pause'})}>暂停任务</button>}
      {job.status==='paused'&&<button disabled={busy} onClick={()=>void send({op:'sync_control',id:job.id,expectedEpoch:job.epoch,action:'resume'})}>从断点继续</button>}
      {['failed','blocked'].includes(job.status)&&<button disabled={busy||job.connectionRevision!==view.connection?.revision} onClick={()=>void send({op:'sync_control',id:job.id,expectedEpoch:job.epoch,action:'retry'})}>重试当前页</button>}
     </div>
     {!!view.receipts[job.id]?.length&&<details><summary>已提交分页回执（{view.receipts[job.id].length}页）</summary><ul>{view.receipts[job.id].map(p=><li key={p.page}>第 {p.page} 页 · {p.count} 条 · 摘要 {p.responseSha256.slice(0,16)} · {new Date(p.at).toLocaleString()}</li>)}</ul></details>}
+    {selectedJob===job.id&&<IngestionPanel key={job.id} job={job}/>}
    </article>)}
   </section>
  </div>;

@@ -1,4 +1,7 @@
-import {createCipheriv,randomBytes,createHash} from 'node:crypto';
+import {createCipheriv,createDecipheriv,randomBytes,createHash} from 'node:crypto';
+import {digest,inspectOrderFields} from '../../../../packages/retail-domain/src/adapters/ingestion';
+import {ingestionFixture} from '../../../../packages/retail-domain/src/adapters/ingestion-fixture';
+import type {IngestView} from '../../../../packages/retail-domain/src/adapters/ingestion-contract';
 import {getCredentialManager} from '@craft-agent/shared/credentials';
 import {requestRetailWorker} from './retail-worker';
 import {fetchDoudianOrderPage,type DoudianPageResult} from '../../../../packages/retail-domain/src/adapters/doudian-client';
@@ -30,7 +33,7 @@ function fixture(job:SyncJob,connection:SyncConnection):DoudianPageResult{
  const audit={provider:'doudian',method:'order.searchList',page:job.nextPage,size:job.window.size,updateStart:job.window.start,updateEnd:job.window.end,requestBodySha256:createHash('sha256').update(JSON.stringify(job.window)).digest('hex'),status:'prepared_offline' as const};
  if(connection.fixture==='rate_limit'&&job.nextPage===1&&job.attempts<2)return{ok:false,kind:'http',httpStatus:429,retryable:true,audit};
  if(connection.fixture==='invalid_response'&&job.nextPage===1)return{ok:false,kind:'invalid_response',retryable:false,audit};
- const orders=Array.from({length:7},(_,i)=>({synthetic:true,fixture_order_id:`DEMO-${i+1}`})).slice(job.nextPage*job.window.size,(job.nextPage+1)*job.window.size);
+ const orders=ingestionFixture(connection.fixture==='quality_errors').slice(job.nextPage*job.window.size,(job.nextPage+1)*job.window.size);
  return{ok:true,orders,page:job.nextPage,size:job.window.size,reportedTotal:7,audit:{...audit,status:'received_unmapped',receivedAt:Date.now(),responseSha256:createHash('sha256').update(JSON.stringify(orders)).digest('hex'),count:orders.length,reportedTotal:7}};
 }
 const failureMessage=(r:Extract<DoudianPageResult,{ok:false}>)=>r.kind==='http'?`接口返回 HTTP ${r.httpStatus}`:r.kind==='platform'?`平台拒绝请求，代码 ${r.platformCode}`:r.kind==='invalid_response'?'响应格式或分页信息不一致':r.kind==='cancelled'?'请求已取消':'网络失败或请求超时';
@@ -59,6 +62,7 @@ async function execute(c:Context){
 function kick(c:Context){if(c.runner){c.rerun=true;return;}c.runner=execute(c).catch(()=>{}).finally(()=>{c.runner=undefined;if(c.rerun){c.rerun=false;kick(c);}});}
 export async function handleRetailSync(workspace:Workspace,workspaceId:string,request:RetailRequest):Promise<RetailReply>{
  const c=await context(workspace,workspaceId);
+ if(request.op.startsWith('ingest_'))return await handleIngestion(c,request);
  if(request.op==='sync_view')return{ok:true,kind:'sync',data:await worker(c,{op:'sync_store_view'})};
  if(request.op==='sync_configure'){
   let ref:string|undefined;
@@ -80,4 +84,27 @@ export async function handleRetailSync(workspace:Workspace,workspaceId:string,re
   const data=await worker(c,{op:'sync_store_control',id:request.id,expectedEpoch:request.expectedEpoch,action:request.action});if(request.action==='pause')c.controller?.abort();else kick(c);return{ok:true,kind:'sync',data};
  }
  throw Error('不支持的同步操作');
+}
+
+async function ingestion(c:Context,input:unknown):Promise<IngestView>{const r=await requestRetailWorker(c.workspace,c.workspaceId,input,'ingest');if(!r.ok)throw Error(r.error);if(r.kind!=='ingestion')throw Error('入库服务返回类型无效');return r.data;}
+async function staged(c:Context,id:string){
+ const r=await requestRetailWorker(c.workspace,c.workspaceId,{op:'sync_store_staging',id},'ingest');if(!r.ok)throw Error(r.error);if(r.kind!=='sync_staging')throw Error('暂存服务返回类型无效');
+ const key=await getCredentialManager().get(keyId(c.workspaceId,'merqo-doudian-staging-key'));if(!key)throw Error('暂存解密密钥缺失，请恢复凭据备份或重新拉取');
+ const orders:Record<string,unknown>[]=[];
+ try{for(const page of r.data.pages){const e=JSON.parse(page.encrypted);if(e.v!==1)throw Error('version');const decipher=createDecipheriv('aes-256-gcm',Buffer.from(key.value,'base64'),Buffer.from(e.iv,'base64'));decipher.setAuthTag(Buffer.from(e.tag,'base64'));const records=JSON.parse(Buffer.concat([decipher.update(Buffer.from(e.data,'base64')),decipher.final()]).toString('utf8'));if(!Array.isArray(records))throw Error('shape');orders.push(...records);}}
+ catch{throw Error('暂存页解密或完整性检查失败，请重新拉取');}
+ return{job:r.data.job,orders,stageDigest:digest(r.data)};
+}
+async function handleIngestion(c:Context,r:RetailRequest):Promise<RetailReply>{
+ if(r.op==='ingest_inspect'){const source=await staged(c,r.jobId);return{ok:true,kind:'ingest_fields',data:inspectOrderFields(source.orders,r.eventArrayPath)};}
+ let data:IngestView;
+ if(r.op==='ingest_view')data=await ingestion(c,{op:'ingest_store_view'});
+ else if(r.op==='ingest_mapping_save')data=await ingestion(c,{op:'ingest_store_mapping',expectedRevision:r.expectedRevision,profile:r.profile});
+ else if(r.op==='ingest_preview'){const source=await staged(c,r.jobId);data=await ingestion(c,{op:'ingest_store_preview',...source});}
+ else if(r.op==='ingest_confirm'){
+  const view=await ingestion(c,{op:'ingest_store_view'}),preview=view.previews.find(p=>p.id===r.previewId);if(!preview)throw Error('预览不在最近30项记录中，请重新生成');
+  const source=await staged(c,preview.jobId);data=await ingestion(c,{op:'ingest_store_confirm',previewId:r.previewId,reviewHash:r.reviewHash,stageDigest:source.stageDigest,allowPartial:r.allowPartial,reason:r.reason});
+ }else if(r.op==='ingest_reconcile')data=await ingestion(c,{op:'ingest_store_reconcile',receiptId:r.receiptId,...(r.statement?{statement:r.statement}:{})});
+ else throw Error('不支持的入库操作');
+ return{ok:true,kind:'ingestion',data};
 }

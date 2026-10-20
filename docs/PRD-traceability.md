@@ -32,7 +32,7 @@ beta.5为当前公开预发布版本，本轮安装验收不构成新的真实�
 | F10 | 复盘、结果、干扰因素、范围受限 Case | 部分 | `outcome-reviews.ts`、`readonly-tools.ts`；`decisions.test.ts` | 合成观察与 Case 已实现；没有真实实施后效果观测，不能证明收益 |
 | F11 | 调度、手动补跑、去重、退出限制 | 已实现 | `scheduled-checks.ts`、`scheduled-checks.test.ts` | 程序关闭不持续巡检；漏跑显式展示和补跑 |
 | F12 | Markdown/JSON、证据索引和运行 ID、CSV 公式转义 | 已实现 | `investigation-export.ts`、`operations.ts`；`decisions.test.ts`、`operations.test.ts` | 导出保留未知项和模拟边界 |
-| F13 | 真实系统 Adapter 契约及对账 | 开发版已实现接入向导及分页任务，真实联调待验 | `adapters/sync-store.ts`、`retail-sync.ts`、`ConnectionsPanel.tsx`；[同步工作流](P1-sync-workflow-2026-10-20.md) | 配置→只读检查→分页加密暂存、断点、重试及重启恢复已有合成验收，尚未发布；未开通应用，真实鉴权/身份、字段映射、去重、入库与对账未完成 |
+| F13 | 真实系统 Adapter 契约及对账 | 开发版已有同步、映射及批次入库对账链路，真实联调待验 | `adapters/sync-store.ts`、`adapters/ingestion-store.ts`、`retail-sync.ts`、`IngestionPanel.tsx`；[入库工作流](P1-ingestion-workflow-2026-10-20.md) | 配置→只读拉取→加密暂存→显式映射/隔离/事件去重→预览确认入库→批次合计对账已有合成桌面验收，尚未发布；未开通应用，真实鉴权/身份、平台专用支付售后字段、后台认证对账及完整性仍待开发和联调 |
 
 上述领域源码和同名测试默认均位于 `packages/retail-domain/src/`。
 
@@ -86,7 +86,7 @@ beta.5为当前公开预发布版本，本轮安装验收不构成新的真实�
 ## 接下来按什么顺序开发
 
 1. 本轮已补齐交易扩展、优惠分摊、嵌套组合树、三场景来源展示和审批风险文案，并通过领域、桌面和性能验证；新包状态见[最新验收](verification/acceptance-2026-10-20/report.md)。
-2. 保留CSV本地版。抖店应用开通后继续安全凭据、真实只读同步、字段映射、售后/支付明细及后台对账；当前离线准备不算已连接店铺。
+2. 保留CSV本地版。安全凭据、同步任务与通用映射入库对账已有开发版实现；抖店应用开通后继续真实鉴权、平台专用字段、售后/支付明细、增量调度与独立后台对账，合成验收不算已连接店铺。
 3. 可信多人审批、真实写入及真实效果观察另行验收；干净Windows与其他Windows版本等待外部测试环境。
 
 退款明细和复杂优惠引擎须先固化数据语义，再实施；不通过修改历史 PRD 或测试预期消除差异。该矩阵当前是开发清单，不是用户对规格变更的批准。

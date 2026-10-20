@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "checks": [
+    "wizard config and readonly fixture check start a durable task; pause/resume and actual running-process restart preserve the committed checkpoint",
+    "resume finishes seven unique committed pages and seven staged rows; unmapped data does not enter CSV business metrics",
+    "invalid responses stop without checkpoint advance; explicit retry repeats only the failed page without duplicate staging",
+    "HTTP 429 fixture automatically retries the same page with bounded backoff and then completes",
+    "credentials and staged pages are encrypted with workspace-scoped keys; renderer receives summaries only and cannot forge page commits or start an unchecked live connection"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\sync-ui-80czIq"
+}

@@ -14,6 +14,7 @@ export class SyncStore {
    CREATE TABLE IF NOT EXISTS sync_pages(job_id TEXT NOT NULL,page INTEGER NOT NULL,receipt TEXT NOT NULL,encrypted TEXT NOT NULL,PRIMARY KEY(job_id,page));`);
  }
  close(){this.db.close();}
+ staging(id:string){const job=this.job(id);if(job.status!=='fetched')throw Error('只有拉取结束的任务可以映射');const bytes=this.db.query<{n:number},[string]>('SELECT COALESCE(SUM(length(encrypted)),0) AS n FROM sync_pages WHERE job_id=?').get(id)!.n;if(bytes>24000000)throw Error('暂存批次超过24MB映射预览限制，请缩小窗口');const pages=this.db.query<{page:number;receipt:string;encrypted:string},[string]>('SELECT page,receipt,encrypted FROM sync_pages WHERE job_id=? ORDER BY page').all(id);if(pages.length!==job.nextPage)throw Error('暂存分页不完整');return{job,pages};}
  connection():SyncConnection|null {const row=this.db.query<{json:string},[]>('SELECT json FROM sync_connection WHERE id=1').get();return row?JSON.parse(row.json):null;}
  private jobs():SyncJob[]{return this.db.query<{json:string},[]>('SELECT json FROM sync_jobs ORDER BY rowid DESC LIMIT 50').all().map(r=>JSON.parse(r.json));}
  private job(id:string):SyncJob {const row=this.db.query<{json:string},[string]>('SELECT json FROM sync_jobs WHERE id=?').get(id);if(!row)throw Error('同步任务不存在');return JSON.parse(row.json);}
@@ -36,7 +37,7 @@ export class SyncStore {
    }else if(r.op==='sync_store_create'){
     const c=this.requireConnection(r.expectedRevision);this.ready(c);if(r.window.end>Math.floor(this.now()/1000))throw Error('同步截止时间不能晚于当前时间');
     if(this.jobs().some(j=>['queued','running','retry_wait','paused'].includes(j.status)&&j.connectionRevision===c.revision))throw Error('已有未结束任务，请继续现有任务');
-    const at=this.now();this.save({id:crypto.randomUUID(),connectionRevision:c.revision,mode:c.mode,window:r.window,status:'queued',epoch:0,nextPage:0,received:0,reportedTotal:null,attempts:0,retryAt:null,error:null,createdAt:at,updatedAt:at});
+    const at=this.now();this.save({id:crypto.randomUUID(),connectionRevision:c.revision,mode:c.mode,scope:{shopId:c.shopId,appKey:c.appKey},window:r.window,status:'queued',epoch:0,nextPage:0,received:0,reportedTotal:null,attempts:0,retryAt:null,error:null,createdAt:at,updatedAt:at});
    }else if(r.op==='sync_store_recover'){
     for(const job of this.jobs())if(['queued','running','retry_wait'].includes(job.status)){job.status='paused';job.epoch++;job.retryAt=null;job.error='程序已重启；已保留提交断点，请手动继续';this.save(job);}
    }else {

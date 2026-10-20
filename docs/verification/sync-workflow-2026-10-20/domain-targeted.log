@@ -1,0 +1,22 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\adapters\doudian-client.test.ts:
+(pass) explicit readonly page transport validates official endpoint and signed body without inferring business events [25.68ms]
+(pass) HTTP errors, platform failures and malformed pages never advance a page or leak response details [11.10ms]
+(pass) transport failures and caller cancellation remain explicit; no automatic retries [2.17ms]
+(pass) request deadline aborts the read instead of reporting an empty successful page [6.55ms]
+
+packages\retail-domain\src\adapters\doudian-request.test.ts:
+(pass) offline order plan fixes the read method, official host, page origin, sorted JSON and signature transport [1.04ms]
+(pass) preparation accepts only the bounded read contract, rejects missing authorization material and never starts network I/O [1.98ms]
+
+packages\retail-domain\src\adapters\sync-store.test.ts:
+(pass) page staging and checkpoint commit together; pause fences late results, restart preserves pages and requires resume [113.71ms]
+(pass) transient failure uses bounded retries on the same page; permanent failure requires an explicit retry [65.70ms]
+(pass) invalid or changing page totals do not stage a page or advance checkpoints; config changes invalidate old tasks [45.70ms]
+(pass) authorization, time windows and renderer boundary prevent forged transport updates [41.20ms]
+
+ 10 pass
+ 0 fail
+ 116 expect() calls
+Ran 10 tests across 3 files. [2.03s]

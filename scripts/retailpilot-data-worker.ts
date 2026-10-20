@@ -1,4 +1,5 @@
 import {freshSupplementEvidence} from '../packages/retail-domain/src/supplement';
+import {SyncStore} from '../packages/retail-domain/src/adapters/sync-store';
 import {CatalogStore,readCatalog} from '../packages/retail-domain/src/catalog-store';
 import {catalogCandidateSkus} from '../packages/retail-domain/src/catalog';
 import {TransactionStore} from '../packages/retail-domain/src/transaction-store';
@@ -43,7 +44,9 @@ try {
   const checkOp = typeof input === 'object' && input !== null && 'op' in input && ['checks','check_configure','check_run','check_catchup','check_retry'].includes(String(input.op));
   const transactionRequest=typeof input==='object'&&input!==null&&'op'in input&&String(input.op).startsWith('transactions_');
   const catalogRequest=typeof input==='object'&&input!==null&&'op'in input&&['catalog','catalog_update'].includes(String(input.op));
-  if(catalogRequest){const r=RetailRequestSchema.parse(input);const catalog=openStore(()=>new CatalogStore(file));try{console.log(JSON.stringify({ok:true,kind:'catalog',data:r.op==='catalog_update'?catalog.update(r,process.argv[5]??''):catalog.view()}));}finally{catalog.close();}}
+  if(typeof input==='object'&&input!==null&&'op'in input&&String(input.op).startsWith('sync_store_')){
+    const sync=openStore(()=>new SyncStore(file+'.sync.sqlite'));try{console.log(JSON.stringify({ok:true,kind:'sync',data:sync.request(input)}));}finally{sync.close();}
+  }else if(catalogRequest){const r=RetailRequestSchema.parse(input);const catalog=openStore(()=>new CatalogStore(file));try{console.log(JSON.stringify({ok:true,kind:'catalog',data:r.op==='catalog_update'?catalog.update(r,process.argv[5]??''):catalog.view()}));}finally{catalog.close();}}
   else if(transactionRequest){const r=RetailRequestSchema.parse(input);transactions=openStore(()=>new TransactionStore(file+'.transactions.sqlite'));if(r.op==='transactions_preview')console.log(JSON.stringify({ok:true,kind:'transactions_preview',data:(()=>{const p=transactions!.preview(r.csv);return {...p,events:p.events.slice(0,30),errors:p.errors.slice(0,200)};})()}));else if(r.op==='transactions_import')console.log(JSON.stringify({ok:true,kind:'transactions_import',data:transactions.import(r.csv,r.previewHash,'csv',r.sourceMetadata)}));else if(r.op==='transactions_demo')console.log(JSON.stringify({ok:true,kind:'transactions_import',data:transactions.demo()}));else if(r.op==='transactions_page')console.log(JSON.stringify({ok:true,kind:'transactions',data:transactions.page((({op,...query})=>query)(r))}));else throw Error('无效交易操作');}
   else if (tick.success || checkOp) {
     const readChecks = function* (source: 'demo' | 'csv') {

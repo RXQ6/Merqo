@@ -32,7 +32,7 @@ beta.5为当前公开预发布版本，本轮安装验收不构成新的真实�
 | F10 | 复盘、结果、干扰因素、范围受限 Case | 部分 | `outcome-reviews.ts`、`readonly-tools.ts`；`decisions.test.ts` | 合成观察与 Case 已实现；没有真实实施后效果观测，不能证明收益 |
 | F11 | 调度、手动补跑、去重、退出限制 | 已实现 | `scheduled-checks.ts`、`scheduled-checks.test.ts` | 程序关闭不持续巡检；漏跑显式展示和补跑 |
 | F12 | Markdown/JSON、证据索引和运行 ID、CSV 公式转义 | 已实现 | `investigation-export.ts`、`operations.ts`；`decisions.test.ts`、`operations.test.ts` | 导出保留未知项和模拟边界 |
-| F13 | 真实系统 Adapter 契约及对账 | 接入准备中 | `adapters/doudian-request.ts`、`doudian-client.ts`及测试；[抖店路线](P1-doudian-integration-plan.md) | 签名及单页只读传输/响应校验已有合成测试，后续传输模块仅在源码；尚无应用授权，真实同步、字段映射、对账及写入未交付 |
+| F13 | 真实系统 Adapter 契约及对账 | 开发版已实现接入向导及分页任务，真实联调待验 | `adapters/sync-store.ts`、`retail-sync.ts`、`ConnectionsPanel.tsx`；[同步工作流](P1-sync-workflow-2026-10-20.md) | 配置→只读检查→分页加密暂存、断点、重试及重启恢复已有合成验收，尚未发布；未开通应用，真实鉴权/身份、字段映射、去重、入库与对账未完成 |
 
 上述领域源码和同名测试默认均位于 `packages/retail-domain/src/`。
 

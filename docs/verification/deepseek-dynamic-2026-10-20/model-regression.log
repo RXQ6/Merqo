@@ -1,0 +1,148 @@
+bun test v1.4.2 (744846f84)
+
+packages\pi-agent-server\src\model-resolution.test.ts:
+(pass) resolvePiModel > preferCustomEndpoint > returns custom-endpoint model when preferCustomEndpoint=true and model exists in both providers [0.40ms]
+(pass) resolvePiModel > preferCustomEndpoint > returns anthropic model when preferCustomEndpoint=false [0.09ms]
+(pass) resolvePiModel > preferCustomEndpoint > falls through to piAuthProvider when preferCustomEndpoint=true but model not in custom-endpoint [0.07ms]
+(pass) resolvePiModel > exact provider lookup > returns exact match for piAuthProvider [0.05ms]
+(pass) resolvePiModel > exact provider lookup > strips MiniMax- prefix for minimax-cn provider [0.06ms]
+(pass) resolvePiModel > pi/ prefix stripping > strips pi/ prefix from model ID [0.03ms]
+(pass) resolvePiModel > fallback chain > falls through getAll scan when no exact match [0.07ms]
+(pass) resolvePiModel > fallback chain > tries common providers in fallback list (custom-endpoint first) [0.08ms]
+(pass) resolvePiModel > fallback chain > returns undefined when model not found anywhere [0.07ms]
+(pass) resolvePiModel > provider-safe fallback > does not return a model from an incompatible provider via getAll fallback [0.05ms]
+(pass) resolvePiModel > provider-safe fallback > returns same-provider model from getAll fallback when exact lookup misses [0.04ms]
+(pass) resolvePiModel > provider-safe fallback > allows custom-endpoint models regardless of piAuthProvider [0.03ms]
+(pass) resolvePiModel > provider-safe fallback > does not filter by provider when piAuthProvider is not set [0.04ms]
+(pass) resolvePiModel > provider-safe fallback > skips incompatible providers in the common-provider fallback loop [0.06ms]
+(pass) isDeniedMiniModelId > denies codex-mini-latest regardless of auth provider [0.06ms]
+(pass) isDeniedMiniModelId > denies *codex-mini* variants when piAuthProvider is openai-codex (ChatGPT account) [0.03ms]
+(pass) isDeniedMiniModelId > allows *codex-mini* variants when piAuthProvider is a regular openai API key [0.02ms]
+(pass) isDeniedMiniModelId > allows non-codex-mini models under openai-codex auth [0.02ms]
+(pass) isDeniedMiniModelId > treats unset piAuthProvider as unrestricted (only the hardcoded denylist applies) [0.02ms]
+(pass) isModelNotFoundError > matches the ChatGPT-account Codex refusal [0.06ms]
+(pass) isModelNotFoundError > matches classic OpenAI model_not_found shapes [0.03ms]
+(pass) isModelNotFoundError > is case-insensitive [0.02ms]
+(pass) isModelNotFoundError > does not match unrelated errors [0.04ms]
+
+packages\shared\tests\models-pi.test.ts:
+(pass) models-pi filtering > excludes codex-mini-latest for openai models [1.17ms]
+(pass) models-pi filtering > excludes all gpt-4* models for openai models [0.26ms]
+(pass) models-pi filtering > keeps Claude Opus 4.6 models in Anthropic catalogs [0.67ms]
+(pass) models-pi filtering > includes DeepSeek in the Pi API key provider list with a human-readable label [3.31ms]
+(pass) models-pi filtering > returns current DeepSeek models from the Pi SDK catalog [0.20ms]
+
+packages\shared\src\config\__tests__\llm-connections.test.ts:
+(pass) getDefaultModelsForConnection > anthropic returns ANTHROPIC_MODELS (ModelDefinition[]) [0.23ms]
+(pass) getDefaultModelsForConnection > pi with piAuthProvider returns filtered models including Opus 4.6 [1.25ms]
+(pass) getDefaultModelsForConnection > pi without piAuthProvider returns all Pi models [4.38ms]
+(pass) getDefaultModelForConnection > returns first model ID for anthropic [0.19ms]
+(pass) getDefaultModelForConnection > regression: Pi anthropic default is in its own model list [0.68ms]
+(pass) getDefaultModelForConnection > Pi openai default is in its own model list [1.27ms]
+(pass) getDefaultModelForConnection > Pi deepseek default is in its own model list [0.10ms]
+(pass) getDefaultModelForConnection > returns empty string for pi_compat (dynamic provider) [0.02ms]
+(pass) isCompatProvider > returns true for pi_compat [0.03ms]
+(pass) isCompatProvider > returns false for anthropic [0.02ms]
+(pass) isCompatProvider > returns false for pi [0.02ms]
+(pass) isAnthropicProvider > returns true for anthropic [0.03ms]
+(pass) isAnthropicProvider > returns false for pi [0.02ms]
+(pass) isPiProvider > returns true for pi [0.02ms]
+(pass) isPiProvider > returns true for pi_compat [0.02ms]
+(pass) isPiProvider > returns false for anthropic [0.02ms]
+(pass) toBedrockNativeId > maps bare Anthropic IDs to US inference profile IDs [0.13ms]
+(pass) toBedrockNativeId > keeps Opus 4.7 mapped and selectable [0.05ms]
+(pass) toBedrockNativeId > maps Sonnet 5 forward and reverse across regions and base IDs [0.16ms]
+(pass) toBedrockNativeId > normalizes deprecated Opus IDs to Opus 4.8 before mapping, keeping Opus 4.6 [0.04ms]
+(pass) toBedrockNativeId > maps base Bedrock IDs to US inference profile IDs [0.03ms]
+(pass) toBedrockNativeId > passes through already US-prefixed IDs [0.01ms]
+(pass) toBedrockNativeId > passes through unknown IDs [0.02ms]
+(pass) toBedrockNativeId > maps to EU inference profiles when regionPrefix is eu [0.03ms]
+(pass) toBedrockNativeId > defaults to US when regionPrefix is omitted or us [0.04ms]
+(pass) toBedrockNativeId > passes through unknown IDs regardless of regionPrefix [0.02ms]
+(pass) deriveBedrockRegionPrefix > returns us for US regions [0.05ms]
+(pass) deriveBedrockRegionPrefix > returns eu for EU regions [0.02ms]
+(pass) deriveBedrockRegionPrefix > returns us for other regions (fallback) [0.07ms]
+(pass) deriveBedrockRegionPrefix > returns us when undefined [0.01ms]
+(pass) Bedrock preferred defaults ordering > sorts preferred models first for amazon-bedrock [4.84ms]
+(pass) fromBedrockNativeId > maps US inference profile IDs back to bare Anthropic [0.15ms]
+(pass) fromBedrockNativeId > maps EU/Global inference profile IDs back to bare [0.05ms]
+(pass) fromBedrockNativeId > maps base Bedrock IDs back to bare [0.02ms]
+(pass) fromBedrockNativeId > passes through bare IDs [0.02ms]
+(pass) fromBedrockNativeId > maps Opus 4.6 native IDs back to the bare ID [0.03ms]
+(pass) normalizeBedrockModelId > strips pi/ prefix and maps to US inference profile [0.12ms]
+(pass) normalizeBedrockModelId > maps bare IDs to US inference profile [0.11ms]
+(pass) normalizeBedrockModelId > maps Opus 4.6 IDs to their own native IDs [0.07ms]
+(pass) normalizeBedrockModelId > maps base Bedrock IDs to US inference profile [0.07ms]
+(pass) normalizeBedrockModelId > is idempotent for already US-prefixed IDs [0.08ms]
+(pass) normalizeBedrockModelId > handles empty/undefined [0.03ms]
+(pass) normalizeBedrockModelId > respects regionPrefix for EU [0.06ms]
+(pass) Bedrock-native model display > getModelDisplayName resolves US inference profile IDs [0.37ms]
+(pass) Bedrock-native model display > getModelDisplayName resolves EU/base Bedrock IDs [0.11ms]
+(pass) Bedrock-native model display > getModelShortName resolves Bedrock IDs [0.19ms]
+(pass) Bedrock-native model display > getModelContextWindow resolves Bedrock IDs [0.11ms]
+(pass) Bedrock-native model display > isClaudeModel recognizes Bedrock IDs [0.14ms]
+(pass) Claude Fable 5 > is registered as an Anthropic model with the expected metadata [0.13ms]
+(pass) Claude Fable 5 > resolves display/short name, context window, and Claude detection [0.15ms]
+(pass) Claude Fable 5 > does NOT become the Anthropic default (Opus 4.8 stays default) [0.03ms]
+(pass) Claude Fable 5 > round-trips through the Bedrock inference-profile mapping [0.23ms]
+
+packages\shared\src\config\__tests__\storage-startup-migration.test.ts:
+(pass) startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration [1157.16ms]
+(pass) startup migration (integration) > preserves userDefined3Tier model subsets during startup migration [1031.35ms]
+(pass) startup migration (integration) > normalizes auto mode model set back to provider defaults [961.98ms]
+(pass) startup migration (integration) > repairs userDefined3Tier lists by removing invalid IDs and fixing default model [989.55ms]
+(pass) startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering [1020.27ms]
+(pass) startup migration (integration) > normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting [972.31ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps direct Anthropic Opus 4.6 default/model entries intact [1057.72ms]
+(pass) legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal [2050.88ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8 [981.82ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable [1050.72ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps workspace default Opus 4.6 unchanged [995.44ms]
+77 |   })
+78 | 
+79 |   if (run.exitCode !== 0) {
+80 |     throw new Error(
+81 |       `migration subprocess failed (exit ${run.exitCode})\nstdout:\n${run.stdout.toString()}\nstderr:\n${run.stderr.toString()}`,
+82 |     )
+         ^
+error: migration subprocess failed (exit 1)
+stdout:
+
+stderr:
+35 |  */
+36 | export function atomicWriteFileSync(filePath: string, data: string): void {
+37 |   const tmpPath = filePath + '.tmp';
+38 |   try {
+39 |     writeFileSync(tmpPath, data);
+40 |     renameSync(tmpPath, filePath);
+         ^
+EPERM: operation not permitted, rename 'C:\Users\29486\AppData\Local\Packages\sandbox.{6ae0f570-d29d-4a75-b844-9452db880816}\AC\Temp\craft-agent-config-7yFf4X\workspaces\my-workspace\config.json.tmp' -> 'C:\Users\29486\AppData\Local\Packages\sandbox.{6ae0f570-d29d-4a75-b844-9452db880816}\AC\Temp\craft-agent-config-7yFf4X\workspaces\my-workspace\config.json'
+    path: "C:\\Users\\29486\\AppData\\Local\\Packages\\sandbox.{6ae0f570-d29d-4a75-b844-9452db880816}\\AC\\Temp\\craft-agent-config-7yFf4X\\workspaces\\my-workspace\\config.json.tmp",
+    dest: "C:\\Users\\29486\\AppData\\Local\\Packages\\sandbox.{6ae0f570-d29d-4a75-b844-9452db880816}\\AC\\Temp\\craft-agent-config-7yFf4X\\workspaces\\my-workspace\\config.json",
+ syscall: "rename",
+   errno: -4048,
+    code: "EPERM"
+
+      at atomicWriteFileSync (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\utils\files.ts:40:5)
+      at saveWorkspaceConfig (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\workspaces\storage.ts:163:3)
+      at migrateWorkspaceLegacyOpusToDefaultOpus (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\storage.ts:2139:7)
+      at migrateLegacyLlmConnectionsConfig (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\storage.ts:2406:5)
+      at D:\helson-skills\craft-agents-oss-main\retailpilot-agent\[eval]:1:290
+
+Bun v1.4.2 (Windows x64)
+
+      at runMigration (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\__tests__\storage-startup-migration.test.ts:82:5)
+      at <anonymous> (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\packages\shared\src\config\__tests__\storage-startup-migration.test.ts:464:5)
+(fail) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [914.88ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Anthropic Opus 4.6 IDs unchanged [978.06ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Bedrock Opus 4.6 native IDs unchanged [1010.58ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6 [918.00ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs [928.34ms]
+
+1 tests failed:
+(fail) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [914.88ms]
+
+ 95 pass
+ 1 fail
+ 233 expect() calls
+Ran 96 tests across 4 files. [18.93s]

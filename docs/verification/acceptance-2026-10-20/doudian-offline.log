@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\adapters\doudian-request.test.ts:
+(pass) offline order plan fixes the read method, official host, page origin, sorted JSON and signature transport [2.47ms]
+(pass) preparation accepts only the bounded read contract, rejects missing authorization material and never starts network I/O [1.23ms]
+
+ 2 pass
+ 0 fail
+ 22 expect() calls
+Ran 2 tests across 1 file. [550.00ms]

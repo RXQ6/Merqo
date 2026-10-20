@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0-beta.4",
+  "bunVersion": "1.4.2",
+  "electronVersion": "39.2.7",
+  "appId": "local.retailpilot.agent",
+  "productName": "Merqo",
+  "repository": "RXQ6/Merqo",
+  "sourceCommit": "7d20d1fdd6d3e144e2fa6391d5ab24c1ae1eef24",
+  "sourceDirty": true,
+  "sourceStatus": " M apps/electron/src/renderer/retail/ApprovalsPanel.tsx\n M apps/electron/src/renderer/retail/RetailWorkspace.tsx\n M apps/electron/src/renderer/retail/SignalsPanel.tsx\n M apps/electron/src/renderer/retail/TransactionsPanel.tsx\n M packages/retail-domain/src/bundles.test.ts\n M packages/retail-domain/src/evaluation/catalog.ts\n M packages/retail-domain/src/evaluation/runner.ts\n M packages/retail-domain/src/investigations.ts\n M packages/retail-domain/src/operations.ts\n M packages/retail-domain/src/retail-query.test.ts\n M packages/retail-domain/src/retail-query.ts\n M packages/retail-domain/src/signal-page.ts\n M packages/retail-domain/src/signal-query.test.ts\n M packages/retail-domain/src/signal-query.ts\n M packages/retail-domain/src/store.ts\n M packages/retail-domain/src/transaction-store.ts\n M packages/retail-domain/src/transactions.test.ts\n M packages/retail-domain/src/transactions.ts\n M packaging/windows-release.json\n M scripts/merqo-closure-desktop-check.cjs\n M scripts/merqo-installer-check.cjs\n M scripts/merqo-packaged-smoke.cjs\n M scripts/merqo-price-desktop-check.cjs\n?? apps/electron/src/renderer/retail/BundleTree.tsx\n?? apps/electron/src/renderer/retail/OrderAllocation.tsx\n?? apps/electron/src/renderer/retail/ScopeEvidence.tsx\n?? docs/M5-transaction-extension.md\n?? packages/retail-domain/src/adapters/\n?? packages/retail-domain/src/order-allocation.test.ts\n?? packages/retail-domain/src/order-allocation.ts\n?? scripts/merqo-commerce-extension-check.cjs\n",
+  "bundleHashes": {
+    "dist/main.cjs": "4a25936534234767e0a2d8721c62edd66e15ff588f051c9490aa20ef0f1eb386",
+    "dist/bootstrap-preload.cjs": "f5c4091f0ec2dfb9e9ec9b9c610adf37c449defacf8f9b1fb1669120370f7d67",
+    "scripts/retailpilot-data-worker.ts": "8b0b4cd18b6e655671f27890be495ef67480d2839bd5cb1d6cac05fcb73d4494",
+    "scripts/merqo-retail-mcp.ts": "f7ee91e61f8c921244bfcda6a26ab3b63821d59544d0cc51f2f99ba66f7b3554"
+  },
+  "bunSha256": "15277c59ccd6c6c20f8dc9716c2b59c1776320d606b6a8658f70be8799519ca4",
+  "stage": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\stage-0.1.0-beta.4-1792465068094",
+  "signed": false
+}

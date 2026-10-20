@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\commerce-ui-7u1GGZ",
+  "checks": [],
+  "error": "page.waitForEvent: Timeout 25000ms exceeded while waiting for event \"download\"\n=========================== logs ===========================\nwaiting for event \"download\"\n============================================================\n    at download (D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\scripts\\merqo-commerce-extension-check.cjs:20:55)\n    at main (D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\scripts\\merqo-commerce-extension-check.cjs:26:21)"
+}

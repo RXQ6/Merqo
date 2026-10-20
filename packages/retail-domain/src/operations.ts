@@ -26,7 +26,7 @@ import type { ChecksView } from './check-types';
 import { RetailPageSchema } from './retail-query';
 import type { RetailPagination } from './retail-query';
 
-export const RULE_VERSION = 'retail-margin-v5';
+export const RULE_VERSION = 'retail-margin-v6';
 export const FIELDS = ['date', 'shop_id', 'channel', 'sku_id', 'product_name', 'spec', 'currency', 'list_price_minor', 'coupon_minor', 'full_reduction_minor', 'subsidy_minor', 'subsidy_funder', 'cost_minor', 'sold_qty', 'on_hand', 'reserved', 'inbound_qty'] as const;
 export type Field = typeof FIELDS[number];
 export const OPTIONAL_FIELDS = ['product_type', 'bundle_components', 'gift_policy', 'gift_cost_basis', 'gifts', 'membership', 'offers'] as const;
@@ -54,6 +54,13 @@ export const BundleComponentSchema = z.strictObject({
   quantity: z.number().int().min(1).max(10000),
   unit_cost_minor: money.nullable(),
 });
+export interface BundleNode {sku_id:string;spec:string;quantity:number;unit_cost_minor:number|null;children?:BundleNode[]|undefined}
+const BundleNodeSchema:z.ZodType<BundleNode>=z.lazy(()=>BundleComponentSchema.extend({children:z.array(BundleNodeSchema).min(1).max(100).optional()}));
+// Bound the raw tree before recursive schema parsing, including malformed or cyclic JS inputs.
+const BundleTreeSchema=z.unknown().superRefine((value,ctx)=>{
+ const stack:Array<{value:unknown;depth:number}>=Array.isArray(value)?value.map(value=>({value,depth:1})):[];let count=0;
+ while(stack.length){const item=stack.pop()!;if(++count>500||item.depth>6){ctx.addIssue({code:'custom',message:'组合装最多6层、500个子项'});return;}if(typeof item.value==='object'&&item.value!==null&&'children'in item.value&&Array.isArray(item.value.children)){if(item.value.children.length>100){ctx.addIssue({code:'custom',message:'每层组合装最多100个直接子项'});return;}for(const child of item.value.children)stack.push({value:child,depth:item.depth+1});}}
+}).pipe(z.array(BundleNodeSchema).max(100).nullable().optional());
 export const RowSchema = z.strictObject({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => { const date = new Date(value + 'T00:00:00Z'); return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value; }, '日期不存在'),
   shop_id: z.string().trim().min(1).max(100), channel: z.string().trim().min(1).max(80), sku_id: z.string().trim().min(1).max(100),
@@ -61,7 +68,7 @@ export const RowSchema = z.strictObject({
   list_price_minor: money.positive(), coupon_minor: money, full_reduction_minor: money, subsidy_minor: money,
   subsidy_funder: z.enum(['platform', 'merchant', 'unknown']), cost_minor: money.nullable(),
   product_type: z.enum(['single', 'bundle']).optional(),
-  bundle_components: z.array(BundleComponentSchema).max(100).nullable().optional(),
+  bundle_components: BundleTreeSchema,
   gift_policy: z.enum(['none', 'free_per_unit', 'unknown']).optional(),
   gift_cost_basis: z.enum(['additional', 'included', 'unknown']).optional(),
   gifts: z.array(BundleComponentSchema).max(100).nullable().optional(),
@@ -201,7 +208,8 @@ export function effectivePrice(row: RetailRow): number | null {
 }
 export function bundleIdentity(row: RetailRow): string | null {
   if (row.product_type !== 'bundle') return null;
-  return JSON.stringify(row.bundle_components?.map(p => [p.sku_id, p.spec, p.quantity]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))) ?? null);
+  const identity=(parts:BundleNode[]):unknown[]=>parts.map(p=>p.children?[p.sku_id,p.spec,p.quantity,identity(p.children)]:[p.sku_id,p.spec,p.quantity]).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
+  return JSON.stringify(row.bundle_components?identity(row.bundle_components):null);
 }
 export function hasGiftFields(row: RetailRow): boolean {
   return row.gift_policy !== undefined || row.gift_cost_basis !== undefined || row.gifts !== undefined;
@@ -236,23 +244,31 @@ export function marginCost(row: RetailRow): number | null {
   const extra = giftCost(row);
   return row.cost_minor === null || extra === null ? null : row.cost_minor + extra;
 }
-/** Flat bundle, per sellable pack. Component costs are CNY and inherit the row's shop/channel/date. */
+/** Explicit bounded tree, per sellable pack. Parent unit costs must match their direct children. */
 export function bundleIssues(row: RetailRow): string[] {
   const parts = row.bundle_components;
   if (row.product_type !== 'bundle') return parts !== undefined ? ['组合装子项必须明确声明 product_type=bundle'] : [];
   if (!parts?.length) return ['组合装缺少子项映射'];
   const issues: string[] = [];
-  const seen = new Set<string>();
-  let sum = 0;
-  for (const part of parts) {
-    if (part.sku_id === row.sku_id) issues.push('组合装不能包含自身 SKU');
-    if (seen.has(part.sku_id)) issues.push('组合装子 SKU 重复或规格映射冲突');
-    seen.add(part.sku_id);
-    if (part.unit_cost_minor === null) issues.push('组合装缺少子项单位成本');
-    else sum += part.quantity * part.unit_cost_minor;
-  }
-  if (sum > 100_000_000) issues.push('组合装子项合计成本超过金额上限');
-  if (parts.every(part => part.unit_cost_minor !== null) && row.cost_minor !== null && sum !== row.cost_minor) issues.push('组合装子项合计与整包成本不一致');
+  const identities=new Map<string,string>();let count=0;
+  const sumParts=(children:BundleNode[],ancestors:Set<string>,depth:number):bigint=>{
+    if(depth>6){issues.push('组合装最多6层、500个子项');return 0n;}
+    const seen=new Set<string>();let sum=0n;
+    for(const part of children){
+      if(++count>500){issues.push('组合装最多6层、500个子项');return 0n;}
+      if(ancestors.has(part.sku_id)){issues.push('组合装不能包含自身 SKU 或祖先 SKU');continue;}
+      if(seen.has(part.sku_id))issues.push('组合装子 SKU 重复或规格映射冲突');seen.add(part.sku_id);
+      const identity=JSON.stringify([part.spec,part.unit_cost_minor,part.children?bundleIdentity({...row,bundle_components:part.children}):null]);
+      if(identities.has(part.sku_id)&&identities.get(part.sku_id)!==identity)issues.push('组合装同 SKU 的规格、成本或子项映射冲突');identities.set(part.sku_id,identity);
+      if(part.unit_cost_minor===null)issues.push('组合装缺少子项单位成本');
+      if(part.children){const nested=sumParts(part.children,new Set([...ancestors,part.sku_id]),depth+1);if(!part.children.length||part.unit_cost_minor!==null&&nested!==BigInt(part.unit_cost_minor))issues.push('组合装嵌套子项合计与父项单位成本不一致');}
+      sum+=BigInt(part.quantity)*BigInt(part.unit_cost_minor??0);
+    }
+    if(sum>100_000_000n)issues.push('组合装子项合计成本超过金额上限');
+    return sum;
+  };
+  const sum=sumParts(parts,new Set([row.sku_id]),1);
+  if(row.cost_minor!==null&&sum!==BigInt(row.cost_minor))issues.push('组合装子项合计与整包成本不一致');
   return [...new Set(issues)];
 }
 export function calculate(row: RetailRow, specConflict = false, rules?:RuleSettings): Calculation {
@@ -297,6 +313,11 @@ export const BUNDLE_DEMO_CSV = [IMPORT_FIELDS.join(','), ...[
   bundleRow, { ...bundleRow, sku_id: 'PACK-CONFLICT', cost_minor: 1000 },
   { ...bundleRow, sku_id: 'PACK-MISSING', bundle_components: null },
 ].map(row => IMPORT_FIELDS.map(key => csvCell(row[key])).join(','))].join('\r\n');
+const nestedBundle:RetailRow={...bundleRow,sku_id:'NESTED-PACK',spec:'茶饮子包×2+咖啡×2',bundle_components:[
+ {sku_id:'TEA-PAIR',spec:'500ml×2',quantity:2,unit_cost_minor:2000,children:[{sku_id:'TEA-UNIT',spec:'500ml',quantity:2,unit_cost_minor:1000}]},
+ {sku_id:'COFFEE-UNIT',spec:'250ml',quantity:2,unit_cost_minor:1000},
+]};
+export const NESTED_BUNDLE_DEMO_CSV=[IMPORT_FIELDS.join(','),IMPORT_FIELDS.map(key=>csvCell(nestedBundle[key])).join(',')].join('\r\n');
 const giftRow: RetailRow = { ...demoRows[0]!, sku_id: 'GIFT-NORMAL', product_name: '买赠合成验收', spec: '主商品500ml', coupon_minor: 1000, sold_qty: 10, gift_policy: 'free_per_unit', gift_cost_basis: 'additional', gifts: [
   { sku_id: 'GIFT-SAMPLE', spec: '30ml', quantity: 1, unit_cost_minor: 0 },
 ] };

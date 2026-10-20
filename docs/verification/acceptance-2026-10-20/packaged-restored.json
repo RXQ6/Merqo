@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\0.1.0-beta.4\\profile-Xd0e5H",
+  "receiptId": "47005e51-59e3-4ab6-8809-5b1ec9b93143",
+  "checks": [
+    "installer reinstall preserves data, connection settings and execution receipt"
+  ]
+}

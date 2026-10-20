@@ -10,6 +10,7 @@ export const RetailPageSchema = z.strictObject({
 export type RetailPageInput = z.input<typeof RetailPageSchema>;
 export interface RetailPagination {
   total: number; offset: number; limit: number;
+  scopeEvidence?: { businessStart: string | null; businessEnd: string | null; batches: Array<{ batchId: string; count: number; importedAt: string; provenance?: EvidenceRecord['provenance'] }>; truncated: boolean };
   summary: { total: number; known: number; warning: number; missing: number; revenueMinor: string; profitMinor: string };
   facets: { shops: string[]; channels: string[]; dates: string[] };
 }
@@ -28,6 +29,9 @@ export class RetailQueries {
       CREATE TRIGGER IF NOT EXISTS retail_query_update AFTER UPDATE ON retail_records BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;
       CREATE TRIGGER IF NOT EXISTS retail_query_delete AFTER DELETE ON retail_records BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;`);
     // Both evidence JSON and base batch history depend on these tables, not only retail_records.
+    const hasBatchColumn = db.query<{name:string},[]>('PRAGMA table_info(retail_query_records)').all().some(column=>column.name==='batch_id');
+    if(!hasBatchColumn){db.exec("ALTER TABLE retail_query_records ADD COLUMN batch_id TEXT NOT NULL DEFAULT ''; UPDATE retail_query_meta SET dirty=1 WHERE singleton=1;");}
+    db.exec('CREATE INDEX IF NOT EXISTS retail_query_batches ON retail_query_records(source,shop,channel,date,batch_id,id)');
     for (const table of ['retail_batches', 'retail_batch_rules','retail_batch_provenance'] as const) for (const event of ['INSERT', 'UPDATE', 'DELETE'] as const) {
       db.exec(`CREATE TRIGGER IF NOT EXISTS retail_query_${table}_${event.toLowerCase()} AFTER ${event} ON ${table} BEGIN UPDATE retail_query_meta SET dirty=1 WHERE singleton=1; END;`);
     }
@@ -41,9 +45,9 @@ export class RetailQueries {
       if (meta.dirty || !meta.base_json || version&&JSON.parse(meta.base_json).ruleVersion!==version) {
         const { records, ...base } = this.load();
         this.db.exec('DELETE FROM retail_query_records');
-        const insert = this.db.query('INSERT INTO retail_query_records VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+        const insert = this.db.query('INSERT INTO retail_query_records VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
         for (const r of records) insert.run(r.id, r.source, r.row.shop_id, r.row.channel, r.row.date, r.row.sku_id, r.status,
-          `${r.row.sku_id} ${r.row.product_name} ${r.row.spec}`.toLowerCase(), r.calculation.totalRevenueMinor?.toString() ?? null, r.calculation.totalProfitMinor?.toString() ?? null, JSON.stringify(r));
+          `${r.row.sku_id} ${r.row.product_name} ${r.row.spec}`.toLowerCase(), r.calculation.totalRevenueMinor?.toString() ?? null, r.calculation.totalProfitMinor?.toString() ?? null, JSON.stringify(r),r.batchId);
         const json = JSON.stringify(base);
         this.db.query('UPDATE retail_query_meta SET dirty=0,base_json=? WHERE singleton=1').run(json);
         meta = { dirty: 0, base_json: json };
@@ -69,6 +73,10 @@ export class RetailQueries {
         if (r.status === 'low_margin') summary.warning++;
       }
       summary.revenueMinor = revenue.toString(); summary.profitMinor = profit.toString();
+      const dates = this.db.query<{ first: string | null; last: string | null }, string[]>(`SELECT MIN(date) AS first,MAX(date) AS last FROM retail_query_records${scopedWhere}`).get(...params)!;
+      const batchGroups = this.db.query<{ batch_id: string; n: number; record_id: string }, string[]>(`SELECT batch_id,COUNT(*) AS n,MIN(id) AS record_id FROM retail_query_records${scopedWhere} GROUP BY batch_id ORDER BY batch_id LIMIT 31`).all(...params);
+      const batchRecord=this.db.query<{evidence_json:string},[string]>('SELECT evidence_json FROM retail_query_records WHERE id=?');
+      const scopeEvidence: NonNullable<RetailPagination['scopeEvidence']> = { businessStart: dates.first, businessEnd: dates.last, truncated: batchGroups.length > 30, batches: batchGroups.slice(0,30).map(group => { const record=JSON.parse(batchRecord.get(group.record_id)!.evidence_json) as EvidenceRecord; return {batchId:group.batch_id,count:group.n,importedAt:record.importedAt,...(record.provenance?{provenance:record.provenance}:{})}; }) };
       const filters = [...scope], args = [...params];
       if (q.status === 'anomalies') filters.push("status!='normal'"); else if (q.status !== 'all') { filters.push('status=?'); args.push(q.status); }
       if (q.search) { filters.push("search LIKE ? ESCAPE '\\'"); args.push('%' + q.search.toLowerCase().replace(/[\\%_]/g, '\\$&') + '%'); }
@@ -77,7 +85,7 @@ export class RetailQueries {
       const offset = Math.min(q.offset, Math.max(0, Math.floor((total - 1) / q.limit) * q.limit));
       const rows = this.db.query<{ evidence_json: string }, (string | number)[]>(`SELECT evidence_json FROM retail_query_records${where} ORDER BY source,shop,date DESC,sku,id LIMIT ? OFFSET ?`).all(...args, q.limit, offset);
       const facets = (column: 'shop' | 'channel' | 'date') => this.db.query<{ value: string }, string[]>(`SELECT DISTINCT ${column} AS value FROM retail_query_records${q.source ? ' WHERE source=?' : ''} ORDER BY value`).all(...(q.source ? [q.source] : [])).map(r => r.value);
-      return { ...base, records: rows.map(r => JSON.parse(r.evidence_json) as EvidenceRecord), pagination: { total, offset, limit: q.limit, summary, facets: { shops: facets('shop'), channels: facets('channel'), dates: facets('date') } } };
+      return { ...base, records: rows.map(r => JSON.parse(r.evidence_json) as EvidenceRecord), pagination: { total, offset, limit: q.limit, summary, scopeEvidence, facets: { shops: facets('shop'), channels: facets('channel'), dates: facets('date') } } };
     }).deferred();
   }
   explain(): unknown[] { this.ready(); return this.db.query("EXPLAIN QUERY PLAN SELECT evidence_json FROM retail_query_records WHERE source='csv' AND shop='shop-0' ORDER BY source,shop,date DESC,sku,id LIMIT 30").all(); }

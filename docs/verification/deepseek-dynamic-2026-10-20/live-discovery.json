@@ -1,0 +1,42 @@
+{
+  "defaultModel": "pi/deepseek-v4-flash",
+  "modelDiscovery": {
+    "source": "live",
+    "lastSuccessAt": 1792472277968,
+    "lastAttemptAt": 1792472277968
+  },
+  "models": [
+    {
+      "id": "pi/deepseek-flash",
+      "name": "DeepSeek-V4.1-Flash",
+      "shortName": "DeepSeek-V4.1-Flash",
+      "description": "DeepSeek API",
+      "provider": "pi",
+      "contextWindow": 1048576,
+      "maxOutputTokens": 393216,
+      "supportsImages": true,
+      "supportedReasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "supportsThinking": true
+    },
+    {
+      "id": "pi/deepseek-v4-pro",
+      "name": "DeepSeek-V4-Pro",
+      "shortName": "DeepSeek-V4-Pro",
+      "description": "DeepSeek API",
+      "provider": "pi",
+      "contextWindow": 1048576,
+      "maxOutputTokens": 393216,
+      "supportsImages": false,
+      "supportedReasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "supportsThinking": true
+    }
+  ]
+}

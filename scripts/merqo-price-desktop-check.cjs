@@ -23,6 +23,7 @@ async function main(){await new Promise(r=>server.listen(0,'127.0.0.1',r));await
  const configPath=path.join(profile,'config/config.json');const config=JSON.parse(fs.readFileSync(configPath,'utf8'));
  config.llmConnections=[{slug:'price-contract',name:'本地改价协议夹具',providerType:'pi_compat',authType:'none',createdAt:Date.now(),baseUrl:`http://127.0.0.1:${server.address().port}/v1`,defaultModel:'pi/deepseek-v4-flash',piAuthProvider:'deepseek',customEndpoint:{api:'openai-completions'}}];config.defaultLlmConnection='price-contract';fs.writeFileSync(configPath,JSON.stringify(config,null,2));
  await button('载入演示数据').click();await expect(button('开始调查 TEA-500')).toBeEnabled();
+ const scopeEvidence=page.getByRole('region',{name:'当前统计范围与来源',exact:true});await expect(scopeEvidence).toContainText('2026-10-14');await expect(scopeEvidence).toContainText('导入时间不能替代');await scopeEvidence.getByText(/来源批次 · 当前范围 6 条快照/).click();await expect(scopeEvidence).toContainText('覆盖范围');checks.push('overview exposes business dates, full-scope batch counts and declared observation/coverage separately from import time');
  const before=(await request({op:'snapshot',source:'demo'})).data.records.find(r=>r.row.sku_id==='TEA-500');
  await button('开始调查 TEA-500').click();await expect(button('进行直接改价调查')).toBeEnabled({timeout:60000});await button('进行直接改价调查').click();
  await expect.poll(async()=>{const r=await request({op:'investigations'});return r.data.find(v=>v.marginAction==='set_price')?.state;},{timeout:60000}).toBe('completed');
@@ -30,6 +31,7 @@ async function main(){await new Promise(r=>server.listen(0,'127.0.0.1',r));await
  await expect(page.getByRole('table',{name:'调查方案比较'})).toContainText('SKU标价 / 件');await expect(page.getByLabel('毛利数值事实',{exact:true})).toContainText('方案SKU标价');
  checks.push('native UI selects frozen direct-price investigation and displays independently audited price facts');
  await button('生成决策草稿').click();await page.getByLabel('决策方案',{exact:true}).selectOption('set_price');await page.getByLabel('决策备注',{exact:true}).fill('本地改价验收');await button('保存草稿').click();await expect(button('提交模拟审批')).toBeEnabled();await button('提交模拟审批').click();await button('查看审批').click();
+ const approvalRisks=page.getByRole('region',{name:'审批来源水位与风险',exact:true});await expect(approvalRisks).toContainText('覆盖范围');await expect(approvalRisks).toContainText('必须独立创建并重新审批');await expect(approvalRisks).toContainText('不能覆盖后续人工修改');checks.push('approval exposes frozen source coverage, scenario risks and separately approved conditional compensation');
  await page.getByLabel('审批理由',{exact:true}).fill('核对冻结价格、毛利和未变的商家券');await button('批准模拟方案').click();await button('查看模拟执行').click();await page.getByLabel('确认仅写本地模拟账本',{exact:true}).check();await button('执行到模拟账本').click();
  await expect(page.getByRole('table',{name:'模拟执行实际值'})).toContainText('SKU标价 / 件');await expect(page.getByLabel('执行回读核对',{exact:true})).toContainText('回读核对一致');
  const executed=(await request({op:'executions'})).data.find(v=>v.receipt?.after.values.priceMinor!==undefined);assert(executed?.receipt);

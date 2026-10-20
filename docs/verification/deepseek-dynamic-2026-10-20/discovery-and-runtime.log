@@ -1,0 +1,13 @@
+bun test v1.4.2 (744846f84)
+
+packages\pi-agent-server\src\deepseek-models.test.ts:
+(pass) API-discovered IDs resolve under DeepSeek with current capabilities and original wire protocol [2.26ms]
+
+packages\shared\src\config\__tests__\deepseek-models.test.ts:
+(pass) DeepSeek live model discovery > uses authenticated GET /models and maps all returned IDs and explicit capabilities [27.25ms]
+(pass) DeepSeek live model discovery > rejects failures and empty lists without exposing provider bodies or following redirects [21.48ms]
+
+ 3 pass
+ 0 fail
+ 18 expect() calls
+Ran 3 tests across 2 files. [5.06s]

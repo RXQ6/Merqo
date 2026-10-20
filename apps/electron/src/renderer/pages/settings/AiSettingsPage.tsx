@@ -55,6 +55,7 @@ import { useAppShellContext } from '@/context/AppShellContext'
 import { getModelShortName, type ModelDefinition } from '@config/models'
 import { getModelsForProviderType, resolveMidStreamBehavior, type CustomEndpointApi, type MidStreamBehavior } from '@config/llm-connections'
 import { toast } from 'sonner'
+import { DeepSeekModels } from './DeepSeekModels'
 
 /**
  * Compact token count: 1234 → "1.2K", 1234567 → "1.2M". Used by the RTK
@@ -78,7 +79,7 @@ function getModelOptionsForConnection(
 
   // If connection has explicit models, use those
   if (connection.models && connection.models.length > 0) {
-    return connection.models.map((m) => {
+    const options = connection.models.map((m) => {
       if (typeof m === 'string') {
         return { value: m, label: getModelShortName(m), description: '' }
       }
@@ -86,6 +87,10 @@ function getModelOptionsForConnection(
       const def = m as ModelDefinition
       return { value: def.id, label: def.name, description: def.description, descriptionKey: def.descriptionKey }
     })
+    if (connection.defaultModel && !options.some(m => m.value === connection.defaultModel)) {
+      options.unshift({ value: connection.defaultModel, label: `${getModelShortName(connection.defaultModel)}（当前列表未返回）`, description: '保留的当前选择' })
+    }
+    return options
   }
 
   // Fall back to registry models for this provider type
@@ -1108,6 +1113,9 @@ export default function AiSettingsPage() {
               )}
 
               {/* Connections Management */}
+              {llmConnections.filter(conn => conn.providerType === 'pi' && conn.piAuthProvider === 'deepseek').map(conn => (
+                <DeepSeekModels key={conn.slug} connection={conn} onChange={refreshLlmConnections} />
+              ))}
               <SettingsSection title={t("settings.ai.connections")} description={t("settings.ai.connectionsDesc")}>
                 <SettingsCard>
                   {llmConnections.length === 0 ? (

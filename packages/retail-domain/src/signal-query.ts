@@ -15,6 +15,8 @@ export class SignalQueries {
       CREATE TABLE IF NOT EXISTS signal_query_records(id TEXT PRIMARY KEY,kind TEXT NOT NULL,source TEXT NOT NULL,shop TEXT NOT NULL,channel TEXT NOT NULL,date TEXT NOT NULL,sku TEXT NOT NULL,status TEXT NOT NULL,search TEXT NOT NULL,evidence_json TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS signal_query_order ON signal_query_records(kind,source,shop,date DESC,sku,id);
       CREATE INDEX IF NOT EXISTS signal_query_scope ON signal_query_records(kind,source,shop,channel,date,status);`);
+    if(!db.query<{name:string},[]>('PRAGMA table_info(signal_query_records)').all().some(c=>c.name==='batch_id'))db.exec("ALTER TABLE signal_query_records ADD COLUMN batch_id TEXT NOT NULL DEFAULT ''; UPDATE signal_query_meta SET dirty=1 WHERE singleton=1");
+    db.exec('CREATE INDEX IF NOT EXISTS signal_query_batches ON signal_query_records(kind,source,shop,channel,date,batch_id,id)');
     for (const table of ['signal_current', 'signal_batches', 'signal_rules'] as const) {
       for (const event of ['INSERT', 'UPDATE', 'DELETE'] as const) {
         db.exec(`CREATE TRIGGER IF NOT EXISTS signal_query_${table}_${event.toLowerCase()} AFTER ${event} ON ${table} BEGIN UPDATE signal_query_meta SET dirty=1 WHERE singleton=1; END;`);
@@ -31,8 +33,8 @@ export class SignalQueries {
       if (meta.dirty || meta.version !== this.currentRuleVersion() || !meta.base_json) {
         const { records, ...snapshotBase } = this.load();
         this.db.exec('DELETE FROM signal_query_records');
-        const insert = this.db.query('INSERT INTO signal_query_records VALUES(?,?,?,?,?,?,?,?,?,?)');
-        for (const r of records) insert.run(r.id, r.kind, r.source, r.row.shop_id, r.row.channel, r.row.date, r.row.sku_id, r.status, JSON.stringify(r.row).toLowerCase(), JSON.stringify(r));
+        const insert = this.db.query('INSERT INTO signal_query_records VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+        for (const r of records) insert.run(r.id, r.kind, r.source, r.row.shop_id, r.row.channel, r.row.date, r.row.sku_id, r.status, JSON.stringify(r.row).toLowerCase(), JSON.stringify(r),r.batchId);
         base = snapshotBase;
         this.db.query('UPDATE signal_query_meta SET dirty=0,version=?,base_json=? WHERE singleton=1').run(base.ruleVersion, JSON.stringify(base));
       } else base = JSON.parse(meta.base_json) as Omit<SignalSnapshot, 'records'>;
@@ -41,6 +43,10 @@ export class SignalQueries {
         if (value) { scope.push(`${column}=?`); params.push(value); }
       }
       const scopedWhere = scope.length ? ' WHERE ' + scope.join(' AND ') : '';
+      const dates=this.db.query<{first:string|null;last:string|null},string[]>(`SELECT MIN(date) AS first,MAX(date) AS last FROM signal_query_records${scopedWhere}`).get(...params)!;
+      const batchGroups=this.db.query<{batch_id:string;n:number;record_id:string},string[]>(`SELECT batch_id,COUNT(*) AS n,MIN(id) AS record_id FROM signal_query_records${scopedWhere} GROUP BY batch_id ORDER BY batch_id LIMIT 31`).all(...params);
+      const batchRecord=this.db.query<{evidence_json:string},[string]>('SELECT evidence_json FROM signal_query_records WHERE id=?');
+      const scopeEvidence={businessStart:dates.first,businessEnd:dates.last,truncated:batchGroups.length>30,batches:batchGroups.slice(0,30).map(g=>{const r=JSON.parse(batchRecord.get(g.record_id)!.evidence_json) as SignalRecord;return{batchId:g.batch_id,count:g.n,importedAt:r.importedAt,...(r.provenance?{provenance:r.provenance}:{})};})};
       const summary = { inventory: emptyCounts(), ads: emptyCounts() };
       const counts = this.db.query<{ kind: 'inventory' | 'ads'; status: SignalRecord['status']; n: number }, string[]>(`SELECT kind,status,count(*) AS n FROM signal_query_records${scopedWhere} GROUP BY kind,status`).all(...params);
       for (const row of counts) {
@@ -57,7 +63,7 @@ export class SignalQueries {
       const rows = this.db.query<{ evidence_json: string }, (string | number)[]>(`SELECT evidence_json FROM signal_query_records${where} ORDER BY kind,source,shop,date DESC,sku,id LIMIT ? OFFSET ?`).all(...args, q.limit, offset);
       // Facets cover the source, independent of current page and selected business filters.
       const facets = (column: 'shop' | 'channel' | 'date') => this.db.query<{ value: string }, string[]>(`SELECT DISTINCT ${column} AS value FROM signal_query_records${q.source ? ' WHERE source=?' : ''} ORDER BY value`).all(...(q.source ? [q.source] : [])).map(r => r.value);
-      return { ...base, records: rows.map(r => JSON.parse(r.evidence_json) as SignalRecord), pagination: { total, offset, limit: q.limit, summary, facets: { shops: facets('shop'), channels: facets('channel'), dates: facets('date') } } };
+      return { ...base, records: rows.map(r => JSON.parse(r.evidence_json) as SignalRecord), pagination: { total, offset, limit: q.limit, summary, scopeEvidence, facets: { shops: facets('shop'), channels: facets('channel'), dates: facets('date') } } };
     }).immediate();
   }
 }

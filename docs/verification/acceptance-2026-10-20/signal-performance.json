@@ -1,0 +1,147 @@
+{
+  "passed": true,
+  "evaluatedAt": "2026-10-20T02:42:04.768Z",
+  "resumed": false,
+  "datasets": {
+    "inventory": {
+      "sha256": "7b686435a6130135d7eefd2e255797ef472ca82b077e09eac28fc7ff58f41f36",
+      "rows": 100000,
+      "characters": 9216876,
+      "utf8Bytes": 11516878,
+      "expected": {
+        "total": 100000,
+        "warning": 33334,
+        "normal": 33333,
+        "missing": 33333
+      }
+    },
+    "ads": {
+      "sha256": "1bb0a5d8a0e30d86f69a4376c21a9aac08d3e34756f6f4fe05d1845d0f76dc40",
+      "rows": 100000,
+      "characters": 12283617,
+      "utf8Bytes": 13083617,
+      "expected": {
+        "total": 100000,
+        "warning": 33334,
+        "normal": 33333,
+        "missing": 33333
+      }
+    }
+  },
+  "results": {
+    "inventory": {
+      "importMs": 15974.1499,
+      "queries": 30,
+      "timings": [
+        624.4902000000002,
+        570.9016000000047,
+        453.34739999999874,
+        622.0152000000016,
+        617.4397000000026,
+        489.57620000000315,
+        598.2235000000001,
+        589.5501000000004,
+        463.8348999999944,
+        636.991399999999,
+        627.4355999999971,
+        480.2597999999998,
+        622.0353000000032,
+        632.0356000000029,
+        493.61359999999695,
+        657.2513999999937,
+        581.6012000000046,
+        467.9745000000112,
+        647.0687000000034,
+        548.4400000000023,
+        453.9414000000106,
+        569.3000000000029,
+        545.64929999999,
+        449.23769999999786,
+        577.6695000000036,
+        656.2722000000067,
+        477.57549999999173,
+        586.6584000000003,
+        569.9064999999973,
+        450.9326000000001
+      ],
+      "p95Ms": 656.2722000000067,
+      "passed": true
+    },
+    "ads": {
+      "importMs": 43541.1883,
+      "queries": 30,
+      "timings": [
+        572.4164000000019,
+        574.8147999999928,
+        480.8435000000027,
+        601.7220000000088,
+        561.8157000000065,
+        520.0034000000014,
+        639.0320999999967,
+        602.3562999999995,
+        515.7954000000027,
+        615.6153000000049,
+        556.9076000000059,
+        438.9064999999973,
+        592.5136000000057,
+        566.2097999999969,
+        449.29539999998815,
+        552.373299999992,
+        549.3138000000035,
+        457.0541000000085,
+        615.9386999999988,
+        590.3396000000066,
+        486.9517000000051,
+        647.1046999999962,
+        624.5908999999956,
+        510.65239999999176,
+        669.4311000000016,
+        568.9643999999971,
+        467.97639999999956,
+        576.7574000000022,
+        589.1423000000068,
+        484.9094000000041
+      ],
+      "p95Ms": 647.1046999999962,
+      "passed": true
+    }
+  },
+  "check": {
+    "elapsedMs": 15854.197,
+    "checked": 200000,
+    "anomalies": 133334,
+    "newFindings": 133334,
+    "previewRows": 200,
+    "truncated": true
+  },
+  "overflowBlocked": true,
+  "queryPlan": [
+    {
+      "id": 8,
+      "parent": 0,
+      "notused": 62,
+      "detail": "SEARCH signal_query_records USING INDEX signal_query_order (kind=? AND source=?)"
+    }
+  ],
+  "sourceHashes": {
+    "packages/retail-domain/src/signal-store.ts": "95782242dd594a5ad7a65f6b092b5a12b4ebae3430593a788b1e49542216cc06",
+    "packages/retail-domain/src/signal-query.ts": "8859bbdec4b367ad5309d6e5237c18c8d7c09941e3330a609cbaa0845763f2b1",
+    "packages/retail-domain/src/signals.ts": "fb0eb48609b1a3261f0f0634dd71e6d8a0de09113002363bb97faf8ebc27784a",
+    "packages/retail-domain/src/signal-page.ts": "eec1426fb697b6d083b89d88c5385a863dee0c30eb408d390640cfa35e49c3e2",
+    "packages/retail-domain/src/operations.ts": "b9b422ba5b871cfdec511e780b75c141d2f2b570019f37d77c5b72436e03fe61",
+    "packages/retail-domain/src/scheduled-checks.ts": "d957c3952d95e67f3ef0d6e21ad413f2114d987b18b7d0c74185e2e8824929bf",
+    "scripts/retailpilot-data-worker.ts": "913af5572692b1fa6c30b6a1d5c86f94394ef526879bedb4e2f87bb058d62165",
+    "apps/electron/src/main/retail-worker.ts": "ad6783b28f2e405664c44cfdf4f760a523634b7e03ca2eb7e2a9982832b049f3"
+  },
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "osRelease": "10.0.26200",
+    "cpu": "AMD Ryzen 9 7945HX with Radeon Graphics        ",
+    "logicalCpus": 32,
+    "memoryBytes": 16844886016,
+    "bun": "1.4.2"
+  },
+  "cache": "OS/SQLite warm after actual worker CSV import and projection build; new process and connection for each of 30 measured requests per scenario",
+  "scope": "Inventory and ads full counts, warning filter, shop filter, deep/first pages. Includes worker launch and JSON transport. Fresh import includes initial projection; resumed runs do not measure import. No model calls, renderer timing, cold disk or concurrent write benchmark."
+}

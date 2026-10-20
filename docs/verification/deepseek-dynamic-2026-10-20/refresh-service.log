@@ -1,0 +1,9 @@
+bun test v1.4.2 (744846f84)
+
+packages\server-core\src\model-fetchers\deepseek-refresh.isolated.ts:
+(pass) live refresh survives storage migration, preserves missing default, caches on failure and deduplicates [3167.32ms]
+
+ 1 pass
+ 0 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [3.21s]

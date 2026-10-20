@@ -35,7 +35,7 @@ type CredentialResolver = (slug: string) => Promise<ModelFetcherCredentials>
 // ModelRefreshService
 // ============================================================
 
-class ModelRefreshService {
+export class ModelRefreshService {
   private timers = new Map<string, ReturnType<typeof setInterval>>()
   private inFlight = new Map<string, Promise<void>>()
 
@@ -87,6 +87,7 @@ class ModelRefreshService {
 
     let newModels: ModelDefinition[] | null = null
     let serverDefault: string | undefined
+    const isDeepSeek = connection.providerType === 'pi' && connection.piAuthProvider === 'deepseek'
 
     // Layer 1: Provider API/SDK
     try {
@@ -99,6 +100,16 @@ class ModelRefreshService {
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
       handlerLog.warn(`Model refresh [${slug}]: provider fetch failed: ${msg}`)
+      if (isDeepSeek) {
+        updateLlmConnection(slug, {
+          modelDiscovery: {
+            source: connection.models?.length ? 'cache' : 'seed',
+            lastSuccessAt: connection.modelDiscovery?.lastSuccessAt,
+            lastAttemptAt: Date.now(), error: msg,
+          },
+        })
+        return
+      }
     }
 
     // Layer 2: Persisted connection.models (keep what we have)
@@ -127,7 +138,7 @@ class ModelRefreshService {
     // model policy controls which models are enabled, so we must always
     // accept the live API result.
     const isCopilot = connection.providerType === 'pi' && connection.piAuthProvider === 'github-copilot'
-    if (connection.providerType === 'pi' && connection.modelSelectionMode === 'userDefined3Tier' && !isCopilot) {
+    if (connection.providerType === 'pi' && connection.modelSelectionMode === 'userDefined3Tier' && !isCopilot && !isDeepSeek) {
       const modelCount = connection.models?.length ?? 0
       handlerLog.info(`Model refresh [${slug}]: preserving user-defined Pi model list (${modelCount} models)`)
       if (modelCount > 10) {
@@ -139,12 +150,13 @@ class ModelRefreshService {
     // Preserve user's defaultModel if still valid
     const currentDefault = connection.defaultModel
     const stillValid = currentDefault && newModels.some(m => m.id === currentDefault)
-    const newDefault = stillValid
+    const newDefault = (stillValid || (isDeepSeek && currentDefault))
       ? currentDefault
       : serverDefault ?? newModels[0]?.id
 
     updateLlmConnection(slug, {
       models: newModels,
+      ...(isDeepSeek ? { modelDiscovery: { source: 'live' as const, lastSuccessAt: Date.now(), lastAttemptAt: Date.now() } } : {}),
       ...(newDefault && !stillValid ? { defaultModel: newDefault } : {}),
     })
   }

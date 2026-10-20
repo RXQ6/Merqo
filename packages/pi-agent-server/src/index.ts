@@ -58,6 +58,7 @@ setBedrockProviderModule(bedrockProviderModule);
 // Model resolution (extracted for testability + custom-endpoint precedence)
 import { resolvePiModel, isDeniedMiniModelId, isModelNotFoundError } from './model-resolution.ts';
 import { pickProviderAppropriateMiniModel } from './pick-mini-model.ts';
+import { registerDeepSeekModels, type DiscoveredDeepSeekModel } from './deepseek-models.ts';
 import {
   buildCustomEndpointModelDef,
   normalizeCustomEndpointModelEntry,
@@ -114,7 +115,7 @@ interface InitMessage {
   branchFromSessionPath?: string;
   branchFromSdkTurnId?: string;
   customEndpoint?: { api: CustomEndpointApi; supportsImages?: boolean };
-  customModels?: Array<string | { id: string; contextWindow?: number; supportsImages?: boolean }>;
+  customModels?: Array<string | DiscoveredDeepSeekModel>;
   piAuth?: { provider: string; credential: PiCredential };
 }
 
@@ -126,7 +127,7 @@ interface RuntimeConfigUpdateMessage {
   authType?: string;
   baseUrl?: string;
   customEndpoint?: { api: CustomEndpointApi; supportsImages?: boolean };
-  customModels?: Array<string | { id: string; contextWindow?: number; supportsImages?: boolean }>;
+  customModels?: Array<string | DiscoveredDeepSeekModel>;
 }
 
 /** Messages from main process (stdin) */
@@ -495,6 +496,9 @@ function createAuthenticatedRegistry(): {
   }
 
   const modelRegistry = PiModelRegistry.inMemory(authStorage);
+  if (initConfig?.piAuth?.provider === 'deepseek') {
+    registerDeepSeekModels(modelRegistry, initConfig.customModels ?? [], initConfig.baseUrl);
+  }
 
   // Register custom endpoint models dynamically via Pi SDK's registerProvider API.
   // This makes arbitrary OpenAI/Anthropic-compatible endpoints work through the Pi SDK
@@ -1526,6 +1530,9 @@ async function handleUpdateRuntimeConfig(msg: RuntimeConfigUpdateMessage): Promi
       customModels: msg.customModels,
     };
 
+    if (piModelRegistry && initConfig.piAuth?.provider === 'deepseek') {
+      registerDeepSeekModels(piModelRegistry, initConfig.customModels ?? [], initConfig.baseUrl);
+    }
     if (piModelRegistry && initConfig.baseUrl?.trim() && initConfig.customEndpoint) {
       const modelEntries: CustomEndpointModelEntry[] = (initConfig.customModels?.length
         ? initConfig.customModels

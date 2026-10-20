@@ -2,6 +2,7 @@ import type { ProviderDriver, DriverTestConnectionArgs } from '../driver-types.t
 import type { ModelDefinition } from '../../../../config/models.ts';
 import { getAllPiModels, getPiModelsForAuthProvider } from '../../../../config/models-pi.ts';
 import { getPiProviderBaseUrl } from '../../../../config/models-pi.ts';
+import { fetchDeepSeekModels } from '../../../../config/deepseek-models.ts';
 
 // ── Copilot model types ────────────────────────────────────────────────
 type RawCopilotModel = {
@@ -237,6 +238,7 @@ export const piDriver: ProviderDriver = {
     customEndpoint: context.connection?.customEndpoint,
     customModels: context.connection?.models?.map(m => {
       if (typeof m === 'string') return m;
+      if (context.connection?.piAuthProvider === 'deepseek') return { ...m };
       const supportsImages = typeof m.supportsImages === 'boolean'
         ? m.supportsImages
         : undefined;
@@ -251,6 +253,9 @@ export const piDriver: ProviderDriver = {
     }),
   }),
   fetchModels: async ({ connection, credentials, timeoutMs }) => {
+    if (connection.piAuthProvider === 'deepseek') {
+      return { models: await fetchDeepSeekModels(credentials.apiKey, connection.baseUrl || undefined, timeoutMs) };
+    }
     // Copilot OAuth: fetch models directly from the Copilot API via HTTP.
     // Uses the GitHub OAuth token (our refreshToken) to exchange for a
     // Copilot API token, then queries GET /models for the live model list.

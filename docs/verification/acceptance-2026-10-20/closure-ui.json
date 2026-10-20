@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\closure-ui-jHQY5I",
+  "checks": [
+    "margin: actual UI investigation → draft → approval → execution/readback → observation → reviewed Case, with completed synthetic window",
+    "inventory: actual UI investigation → draft → approval → execution/readback → observation → reviewed Case, with completed synthetic window",
+    "advertising rejection is visible and revision requires independent resubmission",
+    "ads: actual UI investigation → draft → approval → execution/readback → observation → reviewed Case, with completed synthetic window",
+    "real one-minute approval expiry is visible in UI and disables approval action without changing clocks",
+    "actual restart retains final Cases and exact execution receipts for all three scenarios without executing again"
+  ],
+  "cases": [
+    {
+      "scenario": "margin",
+      "runId": "2b23ec0b-d1a8-48a9-923f-84d78148bc19",
+      "caseId": "dce2e593-be87-4a11-a1fc-49c2adcff070",
+      "receiptId": "075c6b26-ccef-426d-bab2-d3e8490505f5"
+    },
+    {
+      "scenario": "inventory",
+      "runId": "f71e07b9-b4d0-4768-8ea3-d7d308d198a5",
+      "caseId": "f21dd7a6-e95d-4061-afb5-2b6f730ed12d",
+      "receiptId": "29c824c3-7253-4fc7-8df1-b9ed13e1687a"
+    },
+    {
+      "scenario": "ads",
+      "runId": "cf521517-eec8-4d4e-9adf-5cc57ac022b9",
+      "caseId": "dc94c2a3-cf38-43d1-a0a1-0b04532528c6",
+      "receiptId": "1b93d376-2b29-46a9-a263-197435e1249c"
+    }
+  ],
+  "calls": 24,
+  "modelFixture": true,
+  "liveModelQuality": false,
+  "clockChanged": false
+}

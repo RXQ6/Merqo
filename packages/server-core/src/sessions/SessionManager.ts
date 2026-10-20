@@ -3274,6 +3274,7 @@ export class SessionManager implements ISessionManager {
             customEndpoint: connection.customEndpoint,
             customModels: connection.models?.map(model => {
               if (typeof model === 'string') return model
+              if (connection.piAuthProvider === 'deepseek') return { ...model }
               const supportsImages = typeof model.supportsImages === 'boolean' ? model.supportsImages : undefined
               if (model.contextWindow || supportsImages !== undefined) {
                 return {

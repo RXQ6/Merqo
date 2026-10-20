@@ -156,6 +156,12 @@ export interface LlmConnection {
 
   /** Override available models (for custom endpoints that don't support model listing) */
   models?: Array<ModelDefinition | string>;
+  modelDiscovery?: {
+    source: 'live' | 'cache' | 'seed';
+    lastSuccessAt?: number;
+    lastAttemptAt: number;
+    error?: string;
+  };
 
   /** Default model for this connection */
   defaultModel?: string;

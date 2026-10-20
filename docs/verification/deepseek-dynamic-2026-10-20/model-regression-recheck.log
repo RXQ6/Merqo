@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+
+packages\shared\src\config\__tests__\storage-startup-migration.test.ts:
+(pass) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [934.34ms]
+
+ 1 pass
+ 15 filtered out
+ 0 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [2.24s]

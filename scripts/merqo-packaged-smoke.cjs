@@ -7,7 +7,7 @@ const http = require('node:http');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
 const exe = path.resolve(process.argv[2] || `artifacts/windows/${require('../packaging/windows-release.json').version}/win-unpacked/Merqo.exe`);
-const out = path.join(root, 'artifacts/windows/verification'); fs.mkdirSync(out, { recursive: true });
+const out = path.join(root, 'artifacts/windows/verification',require('../packaging/windows-release.json').version); fs.mkdirSync(out, { recursive: true });
 const restoreProfile = process.argv[3] === '--restore-profile' ? path.resolve(process.argv[4]) : null;
 if (restoreProfile && !restoreProfile.startsWith(out + path.sep)) throw new Error('Restore profile must be an isolated verification directory');
 const profile = restoreProfile || fs.mkdtempSync(path.join(out, 'profile-'));

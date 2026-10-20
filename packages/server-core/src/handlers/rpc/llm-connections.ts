@@ -302,7 +302,8 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
       // Awaited so the model selector shows real available models immediately.
       const pendingModels = Array.isArray(pendingConnection.models) ? pendingConnection.models : []
       const isAutoSynced = pendingConnection.modelSelectionMode === 'automaticallySyncedFromProvider'
-      if (!pendingModels.length || isAutoSynced) {
+      const isDeepSeek = pendingConnection.providerType === 'pi' && pendingConnection.piAuthProvider === 'deepseek'
+      if (!pendingModels.length || isAutoSynced || isDeepSeek) {
         try {
           await getModelRefreshService().refreshNow(setup.slug)
         } catch (err) {
@@ -612,6 +613,8 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
       }
 
       await getModelRefreshService().refreshNow(slug)
+      const discovery = getLlmConnection(slug)?.modelDiscovery
+      if (discovery?.error) return { success: false, error: discovery.error }
       return { success: true }
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error'

@@ -27,6 +27,24 @@ test('both scenarios page without truncating scope counts or losing records', ()
   expect(store.page({ status: 'anomalies' }).records.every(r => r.status !== 'normal')).toBe(true);
 });
 
+test('scenario sources and business dates cover the selected scope independent of search, status and page',()=>{
+ for(const kind of ['inventory','ads'] as const){
+  const rows=store.snapshot().records.filter(r=>r.kind===kind),scope=store.page({kind,source:'demo',limit:1}).pagination.scopeEvidence!;
+  expect(scope.batches).toHaveLength(1);expect(scope.batches[0]!.count).toBe(rows.length);
+  expect(scope.businessStart).toBe(rows.map(r=>r.row.date).sort()[0]!);
+  expect(scope.businessEnd).toBe(rows.map(r=>r.row.date).sort().at(-1)!);
+  expect(scope.batches[0]!.provenance?.origin).toBe('builtin_synthetic');
+  expect(store.page({kind,source:'demo',search:'nonexistent',status:'warning',offset:10}).pagination.scopeEvidence).toEqual(scope);
+  expect(store.page({kind,source:'csv'}).pagination.scopeEvidence!.batches).toHaveLength(0);
+ }
+});
+
+test('legacy clean signal projection migrates batch indexing and reconstructs authoritative data',()=>{
+ const original=store.page({source:'demo'}).records;store.close();const db=new Database(file);
+ db.exec('DROP TABLE signal_query_records; CREATE TABLE signal_query_records(id TEXT PRIMARY KEY,kind TEXT NOT NULL,source TEXT NOT NULL,shop TEXT NOT NULL,channel TEXT NOT NULL,date TEXT NOT NULL,sku TEXT NOT NULL,status TEXT NOT NULL,search TEXT NOT NULL,evidence_json TEXT NOT NULL); UPDATE signal_query_meta SET dirty=0 WHERE singleton=1');db.close();
+ store=new SignalStore(file);const migrated=store.page({source:'demo'});expect(migrated.records).toEqual(original);expect(migrated.pagination.scopeEvidence!.batches.reduce((n,r)=>n+r.count,0)).toBe(original.length);
+});
+
 test('kind, source, shop, channel, date, literal search and empty pages stay scoped', () => {
   store.import('inventory', INVENTORY_DEMO, undefined, 'csv');
   const row = store.snapshot().records.find(r => r.kind === 'inventory' && r.source === 'demo')!;

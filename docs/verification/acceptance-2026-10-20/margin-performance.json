@@ -1,0 +1,70 @@
+{
+  "evaluatedAt": "2026-10-20T02:41:24.815Z",
+  "passed": true,
+  "rows": 100000,
+  "queries": 30,
+  "p95Ms": 722.5671000000002,
+  "importMs": 40561.8158,
+  "timings": [
+    725.5792000000001,
+    650.2548000000024,
+    616.6061000000045,
+    632.9959999999992,
+    607.4134000000049,
+    609.0013000000035,
+    617.5547999999981,
+    591.1184999999969,
+    630.0161999999982,
+    625.8107999999993,
+    634.4356999999945,
+    633.6308999999965,
+    649.2410000000018,
+    633.4444000000003,
+    627.4502999999968,
+    646.2865999999995,
+    679.9291999999987,
+    686.3225999999995,
+    685.620600000002,
+    639.2332999999999,
+    646.8834999999963,
+    698.6868000000031,
+    695.5002000000022,
+    640.3129000000044,
+    657.4135000000024,
+    689.2046000000046,
+    698.4308999999994,
+    722.5671000000002,
+    640.0924999999988,
+    665.754200000003
+  ],
+  "datasetHash": "0bb26b52d8b04c9253ee325637dc53160f46bd99df03df10ff8c36b1f8b3398d",
+  "sourceHashes": {
+    "operations": "b9b422ba5b871cfdec511e780b75c141d2f2b570019f37d77c5b72436e03fe61",
+    "store": "76245af4573e9ad01f829aa872ca8eed88e64b2ab4fac6410419877b2596cbfe",
+    "retail-query": "de064b8afb9f9fc98aa1183a0d2e2fc5d66bad6a451c83f55af24fa0f304c5cb"
+  },
+  "queryPlan": [
+    {
+      "id": 5,
+      "parent": 0,
+      "notused": 61,
+      "detail": "SEARCH retail_query_records USING INDEX retail_query_order (source=? AND shop=?)"
+    }
+  ],
+  "expected": {
+    "known": 85714,
+    "revenueMinor": "26285680000",
+    "profitMinor": "5714320000"
+  },
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "osRelease": "10.0.26200",
+    "cpu": "AMD Ryzen 9 7945HX with Radeon Graphics        ",
+    "logicalCpus": 32,
+    "memoryBytes": 16844886016,
+    "bun": "1.4.2"
+  },
+  "cache": "OS/SQLite files warmed by import and projection build; fresh worker and SQLite connection per measured request; no model calls",
+  "scope": "margin common scope totals, status and first/deep offset pages; not signal-query performance, renderer paint, cold disk, concurrent writes or model latency"
+}

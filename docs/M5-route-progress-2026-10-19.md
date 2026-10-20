@@ -1,5 +1,7 @@
 # 剩余路线执行记录
 
+**2026-10-20更新：** 本页是上一轮beta.3历史记录。复杂交易、订单优惠分摊、嵌套组合装和页面缺口已继续开发，本轮位置以[开发主线](development-progress-2026-10-20.md)和[最新验收](verification/acceptance-2026-10-20/report.md)为准。用户选择“CSV本地版+抖店准备”，尚未开通抖店应用。
+
 用户已要求沿路线持续开发。功能开发、源码及beta.3本机安装验收已完成；历史失败记录保留。[最终验收记录](verification/route-final-2026-10-19/report.md)为最新入口，发布状态见[GitHub beta.3](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.3)。
 
 | 路线 | 当前实现与证据 | 后续 |

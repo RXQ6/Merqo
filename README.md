@@ -28,7 +28,7 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 All three analytical scenarios work with synthetic data or imported CSVs **without model credentials**. All three investigations support a configured API model or an explicitly labeled offline rules demonstration.
 
-Retail workspaces enforce read-only tools in general Agent conversations, including Auto mode; dedicated retail simulation writes require their own approval workflow. Use a separate ordinary workspace for code editing. CSV source declarations are not authenticated platform identities. Transactions currently support one full payment per line and supplied line-level discount allocations; installment payments, cancellations/exchanges and automatic order discount allocation remain unsupported.
+Retail workspaces enforce read-only tools in general Agent conversations, including Auto mode; dedicated retail simulation writes require their own approval workflow. Use a separate ordinary workspace for code editing. CSV source declarations are not authenticated platform identities. The local beta.4 candidate adds installment settlement, cancellations, physical returns, explicit exchange lineage, integer order discount allocation and nested bundles; see the [current development route](docs/development-progress-2026-10-20.md) and [acceptance evidence](docs/verification/acceptance-2026-10-20/report.md) for supported contracts and remaining limits. These additions are not included in the published beta.3 installer. Douyin Shop integration is offline preparation only; no shop is connected.
 
 ### Data handling
 

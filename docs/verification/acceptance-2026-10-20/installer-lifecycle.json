@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "installer": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\0.1.0-beta.4\\Merqo-Setup-0.1.0-beta.4-x64.exe",
+  "install": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\verification\\0.1.0-beta.4\\installed-s9uDZ4",
+  "signed": false,
+  "checks": [
+    "per-user NSIS silent install succeeds into isolated directory",
+    "no-Git-Bash first run can enter retail analysis",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "packaged data worker imports three scenarios and computes the expected margin",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "UI pause survives actual process restart; explicit resume preserves frozen evidence and remaining call budget",
+    "packaged margin API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged ads API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged inventory API protocol, bundled MCP, four scoped tools and Skill work",
+    "packaged approval, isolated execution, reread and receipt idempotency",
+    "actual UI uses bounded server pages; next-page and search preserve full-scope exact metric totals",
+    "analysis and conversations round-trip in a single window",
+    "actual packaged executable starts with bundled Bun and no developer PATH",
+    "normal restart preserves demo data, model connection settings, investigation and execution receipt",
+    "downloaded real exchange template imports deposit with cash but zero settled units",
+    "balance, cancellation, physical return, refund and linked replacement import through UI without duplicate cash or units",
+    "a second replacement cannot consume already linked returned units and leaves the ledger unchanged",
+    "actual allocation template, preview and exported CSV conserve independent pools with deterministic residual and excluded gift",
+    "downloaded nested pack imports through UI, renders child tree and independently calculates exact pack profit under version 6",
+    "actual process restart retains replacement lineage, financial totals and nested composition",
+    "inventory and advertising expose full-scope business dates, grouped batches and independent source coverage in their actual pages",
+    "installer reinstall preserves data, connection settings and execution receipt",
+    "NSIS uninstall removes installed executable and retains isolated user configuration"
+  ],
+  "modelFixture": true,
+  "liveModelQuality": false,
+  "limits": [
+    "same-version reinstall; cross-version upgrade not tested",
+    "isolated custom user-data paths; real user profile untouched",
+    "no SmartScreen reputation or code-signing certificate",
+    "no clean Windows VM tested"
+  ]
+}

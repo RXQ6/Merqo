@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\price-ui-08fvHN",
+  "checks": [
+    "overview exposes business dates, full-scope batch counts and declared observation/coverage separately from import time",
+    "native UI selects frozen direct-price investigation and displays independently audited price facts",
+    "approval exposes frozen source coverage, scenario risks and separately approved conditional compensation",
+    "UI draft, exact-version approval, price execution and readback preserve coupons and source snapshots",
+    "UI refuses unsafe original-price restoration instead of bypassing the margin floor",
+    "actual process restart preserves direct-price receipt and target version"
+  ],
+  "calls": 12,
+  "modelFixture": true,
+  "liveModelQuality": false
+}

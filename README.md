@@ -10,6 +10,22 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 ![Retail workbench — historical layout](docs/images/retail-window.png)
 
+## Current source status — 2026-10-21
+
+The development source includes the operational workflows below. **The published beta.5 installer predates these additions**; build from source to try them. The latest local acceptance passed **348 domain tests and 3,128 assertions**, domain/Electron type checks, main/renderer builds, and the warehouse desktop workflow with an actual process restart. See the [verification record](docs/verification/warehouse-ledger-2026-10-21/report.md) and [development route](docs/development-progress-2026-10-20.md).
+
+| UI entry | Implemented in the current source | Scope and evidence |
+| --- | --- | --- |
+| 平台接入 | Configuration wizard, read-only connection checks, paginated sync jobs, checkpoints, pause/resume/retry, incremental overlap and backlog windows | [Sync workflow](docs/P1-sync-workflow-2026-10-20.md); encrypted credentials and raw staging; scheduling requires the app to remain running |
+| 平台接入 | Explicit event mapping, preview and quarantine, reviewed imports, deduplication, task history, independent aggregate/line reconciliation and reviewed staging cleanup | [Ingestion](docs/P1-ingestion-workflow-2026-10-20.md), [cleanup](docs/P1-staging-maintenance-2026-10-20.md); fetching does not automatically import business events |
+| 交易与退款 | Explicit partial cancellation before settlement, five-category declared net costs, frozen contribution reports and equal-period comparisons, physical-return inspections | [Cancellation](docs/P1-partial-cancellation-2026-10-20.md), [costs and inspections](docs/P1-cost-and-inspection-2026-10-20.md), [comparisons](docs/P1-contribution-comparison-2026-10-20.md); missing or stale costs remain unknown |
+| 交易与退款 → 促销资格与赠品成本 | Local preview/export of declared promotion eligibility, stacking, thresholds and integer discount/gift-cost allocation | [Promotion contract](docs/P1-promotion-eligibility-2026-10-21.md); no automatic application or ledger writes |
+| 库存与广告 → 采购到货与批次效期 | Immutable procurement plans, ETA changes, cancellations, quality-split arrivals and declared batch expiry | [Procurement contract](docs/P1-procurement-2026-10-21.md); arrival history does not automatically become stock |
+| 库存与广告 → 仓库收发存与调拨 | Local warehouse opening balances, evidence-linked purchase/return receipts, shipments, partial transfers and in-transit quantities | [Warehouse contract](docs/P1-warehouse-ledger-2026-10-21.md); independent declared ledger, quantity caps and expiry checks, no real WMS writeback |
+| 平台接入 → 经营数据完整备份与恢复 | Password-encrypted business-database backup, validated preview and restore into a new isolated workspace | [Backup and recovery](docs/P1-backup-recovery-2026-10-21.md); excludes model keys/chats/attachments; restored execution remains locked |
+
+**No real Douyin Shop is connected.** The local integration workflow is ready for further adapter work; shop authorization, official payment/aftersale field mapping, token renewal and platform completeness still require real-platform acceptance. These additions do not establish full profit, authenticated inventory, production approvals or completion of the PRD.
+
 ## Features
 
 | Scenario | Available today |
@@ -19,7 +35,7 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 | Advertising performance | Comparable-window ROAS, relative changes, click conversion rates and attribution consistency checks |
 | Decision drafts | Deterministic before/after values, immutable revisions, action/evidence hashes, expiration checks, simulation approval/rejection, isolated execution receipts and persistent audit history |
 | Data and evidence | CSV mapping and preview, validation, quarantined rows, duplicate protection, versioned rules, source hashes and quality reports |
-| Transactions and refunds | Immutable order/payment/shipment/refund events, partial refunds, event-period and original-order-period totals, bounded paging and validated CSV imports |
+| Transactions and refunds | Immutable order/payment/shipment/refund/cancellation/return events, partial settlement and cancellation, physical-return inspection, declared costs, frozen contribution comparisons and validated imports |
 | Catalog and joint evidence | Explicit versioned SKU/campaign mappings, common business windows and completeness watermarks, frozen descriptive comparison and up to two supplemental investigations |
 | Business controls | Independent SKU price adjustment, configurable shop policies and approval deadlines, source observation/coverage declarations |
 | Three-scenario investigations | Read-only tool loop, cited observations and hypotheses, alternative explanations, two deterministic scenarios, sequential Reviewer and persistent history |
@@ -57,7 +73,7 @@ The beta.5 installer passed 27 checks on Windows 11: isolated installation, thre
 
 ## Build from source
 
-The historical final real-model batch passed 4/5 in each scenario, with zero observed forbidden-action events; all three failures are retained. The commerce-extension domain run passed 295 tests and 2748 assertions, with separate adapter and model-discovery checks documented alongside it. The fixed synthetic business set passed 48/48. These are bounded gates, not production accuracy; beta.5 installation fixtures are not a new live-model quality batch.
+The latest source domain run passed 348 tests and 3,128 assertions. The fixed synthetic business set passed 48/48. The latest archived real-model batch passed margin 5/5, inventory 4/5 and advertising 5/5, with zero observed forbidden-action events; the inventory needs-evidence result and earlier batches remain recorded. These are bounded gates, not production accuracy. The current operational additions have local contract and desktop acceptance; they have not received a new live-model quality batch or a new installer release.
 
 ### Prerequisites
 
@@ -200,7 +216,9 @@ A reviewed built-in replay can explicitly seed a later demo investigation from i
 
 ## Business-contract source updates
 
-The current source supports explicit flat bundle component mappings, pack-cost reconciliation, missing/conflicting evidence blocks, frozen investigation evidence and composition-scoped outcome reviews/Cases. Download the example from **数据与导入 → 下载组合装示例**. Free gifts per sales unit now add explicitly separate gift costs to margin and coupon simulations. Download their example from **数据与导入 → 下载赠品示例**; see [gift contract and acceptance](docs/M5-gift-contract.md). Explicit membership snapshots now select an eligible member price, enforce date validity and discount exclusivity, and bind cohort context through reviews. Download **数据与导入 → 下载会员价示例**; see [member-price contract](docs/M5-membership-contract.md). Public-offer snapshots now filter exact scope/date and availability, exclude unavailable low prices, block unknown stock and retain a separate reference price. Download **数据与导入 → 下载可售报价示例**; see [offer contract](docs/M5-offer-contract.md). Existing CSVs remain compatible. The `0.1.0-beta.2` installer includes this update; beta.1 predates it. See [local acceptance and package evidence](docs/M5-local-acceptance.md). See [bundle contract and acceptance](docs/M5-bundle-contract.md).
+The original snapshot workflows support explicit bundle component mappings, pack-cost reconciliation, missing/conflicting evidence blocks, frozen investigation evidence and composition-scoped outcome reviews/Cases. Download examples from **数据与导入 → 下载组合装示例**, **下载赠品示例**, **下载会员价示例** and **下载可售报价示例**. These cover explicitly additional gift costs, declared member-price eligibility, and exact-scope/date public offers with stock checks. See the [bundle](docs/M5-bundle-contract.md), [gift](docs/M5-gift-contract.md), [member-price](docs/M5-membership-contract.md) and [offer](docs/M5-offer-contract.md) contracts. Existing CSVs remain compatible.
+
+The beta.5 commerce extension adds nested bundle trees and integer order-level discount allocation; see [release acceptance](docs/release-beta5-2026-10-20.md). The current source additionally supports the declared promotion/gift allocation preview and operational ledgers listed above. These separate contracts do not automatically supply new evidence to existing Agent investigations or rewrite historical reports.
 
 ## CSV examples
 
@@ -222,9 +240,11 @@ React desktop UI
     │ typed, allowlisted IPC
 Electron main process
     ├── Trusted workspace scope and bounded worker requests
+    ├── Main-only credentials, native backup dialogs and encrypted recovery
     ├── Inference adapter → configured API / local endpoint
     └── Bun data worker
           ├── Deterministic margin, inventory and ROAS rules
+          ├── Sync staging, transaction, procurement and warehouse ledgers
           └── Per-workspace SQLite snapshots, history and investigations
 ```
 
@@ -260,7 +280,7 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The latest source verification on 2026-10-18 passed **211 tests and 1,578 assertions**, including the fixed business evaluation, plus domain and Electron TypeScript checks, a desktop build, three-scenario MCP regression and the bundle/gift/member-price/offer native UI workflows with process restart. Desktop tests use isolated profiles and write local reports under `artifacts/`.
+The latest source verification on **2026-10-21** passed **348 domain tests, 0 failures and 3,128 assertions across 48 files** (159.29 seconds), domain and Electron TypeScript checks, and main/renderer builds. The isolated warehouse desktop acceptance exercised transfers, evidence-linked purchase/return receipts, rejection of excess quantities and persistence after an actual process restart. See the [logs and desktop results](docs/verification/warehouse-ledger-2026-10-21/report.md). Earlier modules retain their own acceptance records linked above. Desktop tests use isolated profiles and write raw local reports under ignored `artifacts/`; curated verification records are tracked under `docs/verification/`. This was source acceptance on the current Windows 11 host, not a new package, clean-machine or real-platform acceptance.
 
 ### Fixed business evaluation
 
@@ -272,7 +292,7 @@ The latest source verification on 2026-10-18 passed **211 tests and 1,578 assert
 | Executable cases failed | 0 |
 | Registered but unsupported cases | 0 |
 
-All 48 fixed synthetic contracts now execute, including the three public-offer cases. Availability, exact SKU/specification, scope and business date are checked before choosing a reference price; unknown states block certainty. Reference quotes never overwrite transaction revenue. Member pricing remains limited to a single cohort/day; gifts to explicitly additional fixed free-gift costs; bundles to flat component cost reconciliation. Real customer authentication, live inventory verification, mixed-cohort sales, order-level allocation and nested bundles remain outside these implementations. The approval/execution harness uses a local model/Reviewer protocol fixture, which does not measure real-model reasoning quality.
+All 48 archived fixed synthetic contracts execute, including the three public-offer cases. Availability, exact SKU/specification, scope and business date are checked before choosing a reference price; unknown states block certainty. Reference quotes never overwrite transaction revenue. That fixed set covers single-cohort/day member pricing, explicitly additional fixed gift costs and flat bundle reconciliation. Later nested bundles, order-level allocation and operational ledgers have separate contract tests; their addition does not expand this archived 48-case benchmark. Real customer authentication, live inventory verification and mixed-cohort sales remain unverified. The approval/execution harness uses a local model/Reviewer protocol fixture, which does not measure real-model reasoning quality.
 
 For release checks, run `bun run retail:eval --release-gate`. It currently **exits 1** because release gates remain unmet. A normal evaluation exit of 0 only means there were no executable-case failures. See the [archived report](docs/verification/business-eval-offers-2026-10-18/report.md), [input contracts](docs/verification/business-eval-offers-2026-10-18/dataset.json), [full evidence](docs/verification/business-eval-offers-2026-10-18/report.json) and [scope and acceptance](docs/M5-business-evaluation.md).
 
@@ -283,16 +303,26 @@ Inference transport tests use a **local HTTP contract fixture**. They verify the
 - **M5 evaluation foundation:** `bun run retail:eval` writes the fixed-case dataset and inspectable Markdown/JSON reports under `artifacts/business-eval/`. Current source result: all 48 registered cases execute and pass, with no unsupported cases. This finite synthetic set does not establish complete business coverage. `bun run retail:eval --release-gate` currently exits 1. See [business evaluation scope and acceptance](docs/M5-business-evaluation.md).
 - **Available:** three analytical workflows, three scoped investigation workflows, conditional plans, Reviewer, persistent evidence, integrated read-only MCP, versioned Skills, Markdown/JSON export, versioned decision drafts and simulation approval/rejection with persistent invalidation and audit, plus three local simulation actions, unique receipts, reread reconciliation and separately approved single-action compensation, independent execution batches, durable uncertain outcomes and per-item recovery/retry, plus synthetic outcome reviews and scoped frozen Case retrieval.
 - **Current PRD stage:** M5 evaluation foundation. M0–M4 provide the local three-scenario analysis and simulation workflow; business coverage gaps below remain open. M5 is not complete and release gates have not passed.
-- **Windows preview:** a per-user x64 NSIS installer bundles the required retail runtime. Packaging and isolated lifecycle acceptance are documented separately from business-quality gates; beta.1-to-beta.2 upgrade passed on the current Windows 11 host; clean-VM and other Windows-version compatibility remain unverified. The unsigned beta.2 installer is available from the public download above and locally under `artifacts/windows/0.1.0-beta.2/`.
-- **M5 live evaluation (2026-10-18):** the fourth complete v4 batch passed margin 5/5, inventory 4/5 and advertising 5/5, with zero observed forbidden-action events. It meets the predeclared per-scenario 4/5 gate. Inventory run 1 remains needs-evidence; all earlier batches are retained. See [all batches](docs/M5-live-evaluation.md). This narrow synthetic gate is not complete production or safety validation.
+- **Windows preview:** the public unsigned beta.5 NSIS installer bundles the retail runtime and passed 27 local Windows 11 lifecycle checks. It predates the current sync, cost, backup, promotion, procurement and warehouse additions. Clean-VM, other Windows-version and cross-version NSIS acceptance remain open. See [beta.5 acceptance](docs/release-beta5-2026-10-20.md).
+- **M5 live evaluation (2026-10-18):** the latest archived batch passed margin 5/5, inventory 4/5 and advertising 5/5 with zero observed forbidden-action events. The inventory needs-evidence result and earlier batches remain recorded. See [all batches](docs/M5-live-evaluation.md). This narrow synthetic gate is not complete production or safety validation, and was not rerun for the latest operational additions.
 - **Local acceptance completed:** margin claim/Reviewer calibration, 100,000-row margin pagination and 30-query p95, persistent pause/resume with epoch fencing and retained call budgets, isolated AgentBackend reuse, actual Windows upgrade/reinstall/uninstall and local beta.2 packaging. See [evidence and scope limits](docs/M5-local-acceptance.md).
-- **Next:** obtain a clean Windows environment and other Windows versions, expand adversarial safety and narrow business contracts, and validate inventory/advertising scale plus cold-cache/concurrent performance. Full PRD release gates remain unmet.
-- **Later:** real-system integrations and outcome observation, external outcome queries, model-generated multi-action plans and production multi-user authorization.
+- **Remaining development chain:** warehouse reservations/releases, count and expiry corrections, state conversion and transfer loss/cancellation → exchange price-difference settlement → refund-adjusted advertising attribution and overlapping campaigns → independent multi-shop connections and unified entity mapping → additional cost/accounting scope and Agent integration of the new ledgers → authenticated platform adapters, real writes/readback and production multi-user approval → outcome observation and release acceptance. See the [current route](docs/development-progress-2026-10-20.md).
+- **Additional scope:** promotion usage limits, gift quantity/stock rules and persisted rule management; supplier payments; full-app/in-place/cloud recovery and a reviewed way to unlock execution in restored workspaces remain open.
+- **Release and performance gaps:** publish a new installer after package acceptance, obtain clean/other-version Windows environments, expand adversarial and business-quality evaluation, and validate cold-cache, concurrent and full-UI performance. Existing bounded 100,000-row query checks do not validate combined workloads or the new ledgers at scale. Full PRD release gates remain unmet.
 
-No real ERP or advertising platform integration, real business writes or production multi-user authorization is delivered yet. Snapshot data is not live monitoring. Combined upper-bound data-volume performance is not validated; server-side pagination remains needed before large-scale use.
+No real ERP/WMS or advertising platform integration, real business writes or production multi-user authorization is delivered yet. Snapshot data and operator-declared ledgers are not authenticated live monitoring. Existing pagination and bounded query checks do not establish combined upper-bound data-volume performance.
 
 ## Documentation
 
+- [Current development route and remaining scope](docs/development-progress-2026-10-20.md)
+- [Latest source acceptance: warehouse ledger](docs/verification/warehouse-ledger-2026-10-21/report.md)
+- [Continuous operational development and acceptance](docs/P1-continuous-development-2026-10-20.md)
+- [Platform sync setup and resumable jobs](docs/P1-sync-workflow-2026-10-20.md)
+- [Reviewed event ingestion and reconciliation](docs/P1-ingestion-workflow-2026-10-20.md)
+- [Encrypted business backup and isolated recovery](docs/P1-backup-recovery-2026-10-21.md)
+- [Promotion eligibility and gift allocation](docs/P1-promotion-eligibility-2026-10-21.md)
+- [Procurement arrivals and batch expiry](docs/P1-procurement-2026-10-21.md)
+- [Warehouse ledger and transfers](docs/P1-warehouse-ledger-2026-10-21.md)
 - [Windows preview installation and packaging](docs/windows-preview.md)
 - [M5 business evaluation and acceptance](docs/M5-business-evaluation.md)
 - [M5 real-model evaluation, failures and next actions](docs/M5-live-evaluation.md)

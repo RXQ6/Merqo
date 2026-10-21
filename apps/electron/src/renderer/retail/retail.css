@@ -220,4 +220,10 @@ fieldset.retail-ingest-form{border:0;padding:0;min-width:0}
 .retail-operational-panel .retail-sync-form>div[aria-label]>button{margin:8px 0 12px}
 .retail-app pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 .retail-app td.retail-event-note{white-space:normal;min-width:180px;max-width:320px;line-height:1.8;overflow-wrap:anywhere}
+.retail-sync-form h3{font-weight:600;color:var(--ink)}
+.retail-sync-form>div[aria-label]{border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
+.retail-module-nav{position:sticky;top:0;z-index:2;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:10px 0;margin:10px 0 20px;border-block:1px solid var(--line);background:var(--background)}
+.retail-module-nav>span{font-size:11px;color:var(--muted);margin-right:8px}
+.retail-module-nav button{font-size:12px;border:0;background:var(--paper);padding:7px 10px}
+.retail-main section[aria-label]{scroll-margin-top:66px}
 @media(max-width:850px){.retail-form-columns{grid-template-columns:1fr}.retail-main .retail-panel>h2{padding:18px 18px 0}.retail-operational-panel .retail-sync-form{padding:14px 18px 20px}.retail-app .retail-scope-evidence{padding:16px 18px}.retail-section-title{flex-wrap:wrap}.retail-main .retail-panel>p{margin-inline:18px}}

@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "checks": [
+    "actual UI imports four transaction events, allocates 100 CNY paid and 20 CNY refunded across two campaigns at 60/40 without double counting, reports 4.8/3.2 refund-adjusted settlement ROAS, labels missing coverage provisional, rejects 200% attribution, keeps invalid touch evidence unknown, exports exact frozen report and retains results after actual same-workspace restart without modifying ledger"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

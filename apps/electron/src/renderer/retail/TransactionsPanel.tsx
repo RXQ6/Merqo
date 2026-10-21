@@ -1,4 +1,5 @@
 import {ExchangeSettlementPanel} from './ExchangeSettlementPanel';
+import {ModuleNavigation} from './ModuleNavigation';
 import {PromotionPanel} from './PromotionPanel';
 import {useEffect,useRef,useState} from 'react';
 import {TRANSACTION_DEMO,TRANSACTION_EXTENDED_DEMO,TRANSACTION_EXCHANGE_DEMO,TRANSACTION_PARTIAL_CANCEL_DEMO,TransactionQuerySchema} from '../../../../../packages/retail-domain/src/transactions';
@@ -23,6 +24,7 @@ export function TransactionsPanel({request}:{request:(r:RetailRequest)=>Promise<
  async function demo(){setBusy(true);setError('');try{const r=await request({op:'transactions_demo'});if(!r?.ok)throw Error(r?r.error:'演示载入失败');const q={...initialQuery(),source:'demo' as const,startDate:'2026-10-14',endDate:'2026-10-16'};if(alive.current){setForm(q);setQuery(q);setRevision(v=>v+1);setNotice('已载入跨期退款演示：14日支付，16日部分退款。');}}catch(e){if(alive.current)setError(e instanceof Error?e.message:'演示载入失败');}finally{if(alive.current)setBusy(false);}}
  function search(){const parsed=TransactionQuerySchema.safeParse({...form,offset:0});if(!parsed.success){setError(parsed.error.issues.map(i=>i.message).join('；'));return;}setError('');setQuery(parsed.data);}
  return <section data-testid="retail-transactions"><div className="retail-section-title"><div><h1>交易与退款</h1><p>独立事件账本 · Asia/Shanghai · 整数分 · 不替换原销量快照或授予执行权限</p></div></div>
+ <ModuleNavigation items={[{label:'换货差价',region:'换货差价核对'},{label:'退回质检',region:'实物退回质检'},{label:'费用与贡献',region:'费用与结算贡献核对'},{label:'订单分摊',region:'订单优惠分摊'},{label:'促销与赠品',region:'促销资格与赠品成本'}]}/>
  <div className="retail-inline-actions"><button disabled={busy||loading} onClick={()=>input.current?.click()}>导入交易事件 CSV</button><button onClick={()=>download('Merqo-交易事件模板.csv','\uFEFF'+TRANSACTION_DEMO)}>下载交易事件模板</button><button onClick={()=>download('Merqo-分次支付与退回示例.csv','\uFEFF'+TRANSACTION_EXTENDED_DEMO)}>下载分次支付示例</button><button onClick={()=>download('Merqo-换货关联示例.csv','\uFEFF'+TRANSACTION_EXCHANGE_DEMO)}>下载换货关联示例</button><button onClick={()=>download('Merqo-未结清部分取消示例.csv','\uFEFF'+TRANSACTION_PARTIAL_CANCEL_DEMO)}>下载部分取消示例</button><button disabled={busy||loading} onClick={()=>void demo()}>载入交易退款演示</button></div>
  <input ref={input} type="file" accept=".csv,text/csv" aria-label="选择交易事件 CSV" className="retail-file-input" onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void open(file);}}/>
  {error&&<div role="alert" className="retail-alert error">{error}</div>}{notice&&<p role="status">{notice}</p>}

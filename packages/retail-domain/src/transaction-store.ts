@@ -1,5 +1,6 @@
 import {compareContributions,type ContributionComparison,type FrozenContribution} from './contribution-comparison';
 import {ExchangeInputSchema,calculateExchange,type ExchangeInput,type ExchangeReport} from './exchange-settlement';
+import {AdRefundInputSchema,calculateAdRefund,adLinkEntity,type AdRefundInput,type AdRefundReport} from './ad-refund';
 import {ContributionInputSchema,parseCosts,calculateContribution,type ContributionInput,type ContributionReport} from './contribution';
 import {Database} from 'bun:sqlite';import {createHash} from 'node:crypto';import {mkdirSync} from 'node:fs';import {dirname} from 'node:path';
 import {decodeTransactionCsv,validateTransactionChains,transactionKey,transactionEntity,exchangeTarget,transactionWindow,TransactionQuerySchema,TRANSACTION_DEMO} from './transactions';
@@ -12,6 +13,9 @@ export class TransactionStore{
  private readonly ownsConnection:boolean;
  constructor(file:string,connection?:Database){mkdirSync(dirname(file),{recursive:true});this.ownsConnection=!connection;this.db=connection??new Database(file,{create:true,strict:true});this.db.exec(`PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;
  CREATE TABLE IF NOT EXISTS exchange_reports(id TEXT PRIMARY KEY,json TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS ad_refund_reports(id TEXT PRIMARY KEY,json TEXT NOT NULL);
+ CREATE TRIGGER IF NOT EXISTS ad_refund_reports_no_update BEFORE UPDATE ON ad_refund_reports BEGIN SELECT RAISE(ABORT,'immutable ad refund report');END;
+ CREATE TRIGGER IF NOT EXISTS ad_refund_reports_no_delete BEFORE DELETE ON ad_refund_reports BEGIN SELECT RAISE(ABORT,'immutable ad refund report');END;
  CREATE TRIGGER IF NOT EXISTS exchange_reports_no_update BEFORE UPDATE ON exchange_reports BEGIN SELECT RAISE(ABORT,'immutable exchange report');END;
  CREATE TRIGGER IF NOT EXISTS exchange_reports_no_delete BEFORE DELETE ON exchange_reports BEGIN SELECT RAISE(ABORT,'immutable exchange report');END;
  CREATE TABLE IF NOT EXISTS contribution_comparisons(id TEXT PRIMARY KEY,json TEXT NOT NULL);
@@ -32,6 +36,11 @@ export class TransactionStore{
  if(!this.db.query<{name:string},[]>('PRAGMA table_info(transaction_events)').all().some(c=>c.name==='replaces_entity'))this.db.exec('ALTER TABLE transaction_events ADD COLUMN replaces_entity TEXT');
  this.db.exec('CREATE INDEX IF NOT EXISTS transaction_replacements ON transaction_events(source,replaces_entity)');}
  close(){if(this.ownsConnection)this.db.close();}
+ adRefundReports():AdRefundReport[]{return this.db.query<{json:string},[]>('SELECT json FROM ad_refund_reports ORDER BY rowid DESC LIMIT 5').all().map(row=>JSON.parse(row.json));}
+ adRefund(input:AdRefundInput):AdRefundReport[]{const value=AdRefundInputSchema.parse(input);if(Date.parse(value.observedAt)>Date.now()+300000)throw Error('广告归因核对时间超前');return this.db.transaction(()=>{
+  const events:TransactionEvent[]=[],load=this.db.query<{json:string},[string,string]>('SELECT json FROM transaction_events WHERE source=? AND entity_key=? ORDER BY event_at,event_key LIMIT 2001');for(const key of new Set(value.links.map(adLinkEntity))){const rows=load.all(value.source,key);if(events.length+rows.length>2000)throw Error('单次广告核对最多2000条关联交易事件');events.push(...rows.map(r=>JSON.parse(r.json) as TransactionEvent));}
+  const report:AdRefundReport={id:crypto.randomUUID(),at:Date.now(),input:value,authority:'operator_declared',ledgerHash:this.stateHash(value.source),events,...calculateAdRefund(value,events)};this.db.query('INSERT INTO ad_refund_reports VALUES(?,?)').run(report.id,JSON.stringify(report));return this.adRefundReports();
+ }).immediate();}
  exchangeReports():ExchangeReport[]{return this.db.query<{json:string},[]>('SELECT json FROM exchange_reports ORDER BY rowid DESC LIMIT 5').all().map(row=>JSON.parse(row.json));}
  exchange(input:ExchangeInput):ExchangeReport[]{const value=ExchangeInputSchema.parse(input);if(Date.parse(value.observedAt)>Date.now()+300000)throw Error('换货核对时间超前');return this.db.transaction(()=>{
   const key=JSON.stringify([value.sourceId,value.shop,value.channel,value.orderId,value.lineId]);

@@ -1,3 +1,5 @@
+import {AdRefundPanel} from './AdRefundPanel';
+import {ModuleNavigation} from './ModuleNavigation';
 import {WarehousePanel} from './WarehousePanel';
 import {ProcurementPanel} from './ProcurementPanel';
 import {SourceMetadataEditor,SourceMetadataSummary,emptySourceDraft,parseSourceDraft} from './SourceMetadata';
@@ -76,6 +78,7 @@ export function SignalsPanel({ snapshot, request, busy, scope, onInvestigate, co
   };
   return <section data-testid="retail-signals">
     <div className="retail-section-title"><div><h2>{compact ? '库存与广告异常' : '库存与广告数据'}</h2><p>{summary ? `范围内库存预警 ${summary.inventory.warning} 条；广告预警 ${summary.ads.warning} 条；待补证 ${summary.inventory.missing + summary.ads.missing} 条。计数不受搜索、状态和分页影响。` : '正在读取范围计数…'}来源：{scope.source === 'demo' ? '合成演示' : 'CSV 导入'}。</p></div><button disabled={busy} onClick={() => void request({ op: 'signals_demo' })}>载入库存与广告演示</button></div>
+    {!compact&&<ModuleNavigation items={[{label:'采购与效期',region:'采购到货与批次效期'},{label:'仓库与调拨',region:'仓库收发存与调拨'},{label:'广告退款归因',region:'广告退款后归因核对'}]}/>}
     {!compact && scope.source==='demo'&&<div className="retail-inline-actions"><button disabled={busy} onClick={()=>void request({op:'signals_replenishment_demo'})}>载入补货执行演示</button><span className="retail-muted">合成样例改为1天交期，可走通补货请求；原5天样例仍会阻断到货前缺口。</span></div>}
     {!compact && <>
       <div className="retail-inline-actions retail-signal-actions"><label>导入类型 <select aria-label="场景导入类型" value={kind} onChange={e => { setKind(e.target.value as SignalKind);setSourceDraft(emptySourceDraft()); setPreview(null); setCsv(''); setError(''); }}><option value="inventory">库存与销量</option><option value="ads">广告回报</option></select></label><button disabled={busy} onClick={() => input.current?.click()}>选择场景 CSV</button><button onClick={() => download(`${kind}-模板.csv`, kind === 'inventory' ? INVENTORY_DEMO : ADS_DEMO, true)}>下载当前场景模板</button></div>
@@ -88,7 +91,7 @@ export function SignalsPanel({ snapshot, request, busy, scope, onInvestigate, co
     </>}
     {renderTable('inventory')}{renderTable('ads')}
     {!compact && <section className="retail-panel"><div className="retail-section-title"><h2>场景导入批次与质量报告</h2></div>{batches.map(b => <div className="retail-signal-batch" key={b.id}><span>{b.kind === 'inventory' ? '库存' : '广告'} / {b.source === 'demo' ? '演示' : 'CSV'} · {new Date(b.importedAt).toLocaleString('zh-CN')} · 有效 {b.accepted} / 隔离 {b.rejected}</span><button onClick={() => download(`场景质量-${b.id}.json`, b)}>导出质量报告</button></div>)}</section>}
-    {!compact&&<><ProcurementPanel request={request}/><WarehousePanel request={request}/></>}
+    {!compact&&<><ProcurementPanel request={request}/><WarehousePanel request={request}/><AdRefundPanel request={request}/></>}
   </section>;
 }
 function SignalEvidence({ record: r }: { record: SignalRecord }) {

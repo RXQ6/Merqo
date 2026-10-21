@@ -1,0 +1,13 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\ad-refund.test.ts:
+(pass) explicit overlapping campaign shares conserve paid and refunded settlement without treating physical returns as refunds [19.54ms]
+(pass) duplicate links, over/under attribution and future watermarks reject the declaration instead of normalizing silently [1.04ms]
+(pass) maturity and declared current coverage remain separate from unknown links, invalid touch windows and zero denominator [1.13ms]
+(pass) integer tails across six overlapping campaigns preserve cents and never allocate more refund than campaign receipts [3.29ms]
+(pass) frozen ledger-backed reports reopen and recover through encrypted backup while later events require a new report [212.05ms]
+
+ 5 pass
+ 0 fail
+ 78 expect() calls
+Ran 5 tests across 1 file. [1306.00ms]

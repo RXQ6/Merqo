@@ -1,0 +1,26 @@
+import {useEffect,useRef,useState} from 'react';
+import {AD_REFUND_CSV,AD_REFUND_DEMO,AdRefundInputSchema,type AdRefundInput,type AdRefundReport} from '../../../../../packages/retail-domain/src/ad-refund';
+import type {RetailRequest,RetailReply} from '../../../../../packages/retail-domain/src/operations';
+const money=(n:number|null)=>n===null?'待补证':'¥'+(n/100).toFixed(2),ratio=(n:number|null)=>n===null?'不可计算':n.toFixed(2);
+const labels={declared_mature:'按声明覆盖，观察期已结束',provisional:'暂态，仍需观察',needs_evidence:'关联缺证或口径冲突'};
+function download(name:string,value:unknown,csv=false){const u=URL.createObjectURL(new Blob([csv?'\uFEFF'+String(value):JSON.stringify(value,null,2)],{type:csv?'text/csv;charset=utf-8':'application/json'})),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}
+export function AdRefundPanel({request}:{request:(r:RetailRequest)=>Promise<RetailReply|undefined>}){
+ const [input,setInput]=useState<AdRefundInput|null>(null),[reports,setReports]=useState<AdRefundReport[]>([]),[selected,setSelected]=useState(''),[busy,setBusy]=useState(false),[confirmed,setConfirmed]=useState(false),[error,setError]=useState('');const file=useRef<HTMLInputElement>(null),pending=useRef(false);
+ useEffect(()=>{let active=true;void request({op:'ad_refund_reports'}).then(r=>{if(active&&r?.ok&&r.kind==='ad_refund_reports'){setReports(r.data);setSelected(r.data[0]?.id??'');}});return()=>{active=false;};},[request]);
+ async function open(f:File){setInput(null);setConfirmed(false);setError('');if(f.size>1000000){setError('广告归因文件不能超过1 MB');return;}try{setInput(AdRefundInputSchema.parse(JSON.parse(await f.text())));}catch(e){setError(e instanceof Error?e.message:'归因文件无效');}}
+ async function analyze(){if(!input||!confirmed||pending.current)return;pending.current=true;setBusy(true);setError('');try{const r=await request({op:'ad_refund_analyze',input});if(!r?.ok||r.kind!=='ad_refund_reports')throw Error(r&&!r.ok?r.error:'广告退款核对失败');setReports(r.data);setSelected(r.data[0]?.id??'');}catch(e){setError(e instanceof Error?e.message:'广告退款核对失败');}finally{pending.current=false;setBusy(false);}}
+ const report=reports.find(r=>r.id===selected);
+ return <section className="retail-panel retail-operational-panel" aria-label="广告退款后归因核对"><h2>广告退款后归因核对</h2><div className="retail-sync-form">
+  <p>用明确关联的订单行核对退款后的结算回报，检查活动重叠和观察期。支出、触点及比例为人工声明，不替代上方广告快照或平台报表。</p>
+  <details className="retail-method-note"><summary>分摊、观察期与指标口径</summary><p>同一订单行跨活动比例须合计10000基点；收款、退款分别按整数分分配，退款不超过对应活动已分配收款。只使用关联订单当前已导入事件，缺单或触点冲突保持待补证。活动结束后还须经过归因窗口及退款观察期，声明关联完整且水位覆盖本次核对时间，才标记观察期已结束；该声明未经平台认证，未来仍可能有迟到退款。结算回报使用商家支付结算额，可能含交易声明的结算补贴，不等于买家GMV、平台ROAS、利润或因果效果；零投放不计算比率。</p></details>
+  <div className="retail-inline-actions"><button onClick={()=>download('Merqo-广告退款交易示例.csv',AD_REFUND_CSV,true)}>下载广告退款交易示例</button><button onClick={()=>download('Merqo-广告退款归因示例.json',AD_REFUND_DEMO)}>下载广告归因示例</button><button disabled={busy} onClick={()=>file.current?.click()}>选择广告归因 JSON</button></div>
+  <input ref={file} className="retail-file-input" type="file" accept=".json,application/json" aria-label="选择广告归因文件" onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)void open(f);}}/>
+  {input&&<><p>待核对：{input.label} · {input.campaigns.length} 个活动 · {input.links.length} 条关联声明 · {input.source==='csv'?'CSV声明':'合成演示'}。请先在“交易与退款”导入对应交易事件。</p><p>分配依据：{input.model}</p><label className="retail-checkbox"><input type="checkbox" aria-label="确认广告归因口径" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>已核对投放支出、订单关联比例、触点与声明水位</label><button className="retail-primary" disabled={busy||!confirmed} onClick={()=>void analyze()}>核对广告退款归因并保存报告</button></>}
+  {error&&<p role="alert">{error}</p>}
+  {reports.length>0&&<label>最近广告退款核对报告（最多5份）<select aria-label="历史广告退款核对报告" value={selected} onChange={e=>setSelected(e.target.value)}>{reports.map(r=><option key={r.id} value={r.id}>{r.input.label} · {new Date(r.at).toLocaleString()}</option>)}</select></label>}
+  {report&&<div aria-label="广告退款归因结果"><h3>退款后结算回报</h3><p>已分配收款 {money(report.totals.paidMinor)} · 已分配退款 {money(report.totals.refundMinor)} · 保留结算 {money(report.totals.retainedMinor)} · 声明投放 {money(report.totals.spendMinor)}</p><div className="retail-table-wrap"><table aria-label="活动退款后回报"><thead><tr>{['活动 / 状态','关联订单行','收款 / 退款','保留结算','声明投放','结算回报 / 退款后回报'].map(t=><th key={t}>{t}</th>)}</tr></thead><tbody>{report.campaigns.map(c=><tr key={c.id}><td><strong>{c.name}</strong><small>{labels[c.status]}</small></td><td>{c.linkedLines}</td><td>{money(c.paidMinor)} / {money(c.refundMinor)}</td><td>{money(c.retainedMinor)}</td><td>{money(c.spendMinor)}</td><td>{ratio(c.settlementRoas)} / {ratio(c.refundAdjustedRoas)}</td></tr>)}</tbody></table></div>
+   {report.campaigns.map(c=><details className="retail-method-note" key={c.id}><summary>{c.name}：{labels[c.status]}</summary><p>归因及退款观察期最早截止：{new Date(c.requiredMatureAt).toLocaleString()}。{c.reasons.join('；')||'关联和水位按人工声明满足当前契约，仍非平台完整性或因果证明。'}</p></details>)}
+   <button onClick={()=>download('Merqo-广告退款归因报告.json',report)}>导出广告退款报告与证据</button><p className="retail-muted">冻结 {report.events.length} 条关联事件，账本摘要 {report.ledgerHash.slice(0,16)}。之后导入不会更新旧报告；本工具不随上方快照筛选自动改变，也不自动调整投放或进入Agent调查。</p>
+  </div>}
+ </div></section>;
+}

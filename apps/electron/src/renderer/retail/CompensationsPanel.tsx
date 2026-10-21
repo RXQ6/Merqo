@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CompensationView, CompensationStatus } from '../../../../../packages/retail-domain/src/compensation';
 import type { ExecutionView } from '../../../../../packages/retail-domain/src/simulation';
@@ -23,7 +24,7 @@ export function CompensationsPanel({target,onBack}:{target:ExecutionView|null;on
  useEffect(()=>{setConfirmed(false);},[selected?.status]);
  const r=selected?.request;const ready=selected?.status==='pending'&&!selected.blockers.length;const approved=selected?.status==='approved'&&!selected.blockers.length;
  const resolve=(choice:'approve'|'reject')=>{if(r)void call({op:'compensation_resolve',id:r.id,expectedVersion:r.version,expectedActionHash:r.actionHash,choice,reason:approvalReason});};
- return <section data-testid="retail-compensations"><div className="retail-section-title"><div><h2>补偿申请与记录</h2><p>补偿需要重新审批，只恢复本地模拟状态；不能覆盖后续修改，也不会修改原始经营数据。</p></div><button onClick={onBack}>返回执行记录</button></div>
+ return <section data-testid="retail-compensations"><PageHeader title="补偿申请与记录" actions={<><button onClick={onBack}>返回执行记录</button></>}>补偿需要重新审批，只恢复本地模拟状态；不能覆盖后续修改，也不会修改原始经营数据。</PageHeader>
   {error&&<div className="retail-alert error" role="alert">{error}</div>}{notice&&<div className="retail-alert success" role="status">{notice}</div>}
   <div className="retail-inline-actions retail-approval-filters"><label>补偿状态<select aria-label="补偿状态筛选" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部状态</option>{Object.entries(labels).map(([key,text])=><option key={key} value={key}>{text}</option>)}</select></label><button disabled={busy} onClick={()=>void call({op:'compensations'})}>刷新补偿记录</button><span className="retail-muted">最近100项；单用户本地角色演示</span></div>
   <div className="retail-investigation-layout"><aside className="retail-investigation-list" aria-label="补偿申请列表">{!filtered.length&&<p>{busy?'正在读取…':'暂无补偿申请。可从成功执行回执发起。'}</p>}{filtered.map(v=><button key={v.request.id} aria-current={v.request.id===selected?.request.id?'true':undefined} onClick={()=>setFocus(v.request.id)}><strong>{v.request.scope.sku} · 补偿v{v.request.version}</strong><span>{labels[v.status]}</span><small>{v.request.scenario==='margin'?'恢复模拟商家券':v.request.scenario==='ads'?'恢复模拟预算':'取消待受理补货请求'}</small></button>)}</aside>

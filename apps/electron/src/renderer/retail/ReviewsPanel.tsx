@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import type { AnyInvestigation } from '../../../../../packages/retail-domain/src/investigations';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ObservationPreview, ReviewView, ReviewMetric } from '../../../../../packages/retail-domain/src/outcome-reviews';
@@ -26,7 +27,7 @@ export function ReviewsPanel({jobId,onBack,onFollowup}:{jobId:string|null;onBack
   useEffect(()=>{setCsv('');setPreview(null);setSynthetic(false);setConfirmed(false);setNote('');setConfounders('');setConclusion('comparison_only');},[r?.id]);
   useEffect(()=>{setConfirmed(false);setPreview(null);},[r?.id,r?.version]);
   const metrics=(list:ReviewMetric[],label:string)=><div className="retail-table-wrap"><table aria-label={label}><thead><tr><th>指标</th><th>原窗口</th><th>观察窗口</th><th>差值</th></tr></thead><tbody>{list.map(m=><tr key={m.key}><td>{m.label}</td><td>{value(m.before,m.unit)}</td><td>{value(m.after,m.unit)}</td><td>{m.unit==='bps'&&m.delta!==null?(m.delta/100).toFixed(2)+' 个百分点':value(m.delta,m.unit)}</td></tr>)}</tbody></table></div>;
-  return <section data-testid="retail-reviews"><div className="retail-section-title"><div><h2>复盘与 Case</h2><p>核对观察窗口、前后指标和同期活动，保留可追溯的比较记录。</p></div><button onClick={onBack}>返回执行记录</button></div>
+  return <section data-testid="retail-reviews"><PageHeader title="复盘与 Case" actions={<><button onClick={onBack}>返回执行记录</button></>}>核对观察窗口、前后指标和同期活动，保留可追溯的比较记录。</PageHeader>
     {error&&<div className="retail-alert error" role="alert">{error}</div>}{notice&&<div className="retail-alert success" role="status">{notice}</div>}
     <div className="retail-inline-actions"><button disabled={busy} onClick={()=>void call({op:'reviews'})}>刷新复盘</button><span className="retail-muted">最近50项；保留原回执，不改写经营快照</span></div>
     <div className="retail-investigation-layout"><aside className="retail-investigation-list" aria-label="经营复盘列表">{!items.length&&<p>{busy?'正在读取…':'暂无复盘。先完成一个本地模拟动作，再从成功回执创建复盘。'}</p>}{items.map(v=><button disabled={busy} key={v.review.id} aria-current={selected?.review.id===v.review.id?'true':undefined} onClick={()=>setFocus(v.review.id)}><strong>{v.review.job.scope.sku} · {v.review.job.scenario==='margin'?'促销毛利':v.review.job.scenario==='ads'?'广告回报':'库存销量'}</strong><span>{states[v.state]}</span><small>{v.review.windowStart} 至 {v.review.windowEnd}</small></button>)}</aside>

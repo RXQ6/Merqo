@@ -2430,6 +2430,7 @@ function AppShellContent({
                 {/* Primary Nav: All Sessions (▸ Statuses, Flagged, Archived), Labels | Sources, Skills | Settings */}
                 {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
                 <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
+                <div className="px-5 pt-2 pb-3 text-xs text-muted-foreground"><p className="font-medium text-foreground">高级工作台</p><p className="mt-1 leading-relaxed">整理通用会话、资料与自动化。经营审批请进入经营分析。</p></div>
                 <LeftSidebar
                   isCollapsed={false}
                   getItemProps={getSidebarItemProps}

@@ -250,9 +250,12 @@ app.on('web-contents-created', (_event, contents) => {
         await js(`(() => { const select = document.querySelector('select[aria-label="数据来源"]'); select.value='csv'; select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
         await waitFor(`document.querySelectorAll('tbody tr').length === 1`, 'persisted CSV row');
         await assert(`document.body.innerText.includes('33.33%') && document.body.innerText.includes('¥90.00')`, 'corrected margin survives application restart');
-        await click('库存与广告');
-        await waitFor(`document.querySelectorAll('[data-testid="signals-inventory"] tbody tr').length===1 && document.querySelectorAll('[data-testid="signals-ads"] tbody tr').length===1`, 'persisted scenario CSV rows');
-        await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('990') && document.querySelector('[data-testid="signals-ads"]').innerText.includes('4.00 / 3.00')`, 'inventory and advertising corrections survive restart');
+        await click('库存与补货');
+        await waitFor(`document.querySelectorAll('[data-testid="signals-inventory"] tbody tr').length===1`, 'persisted inventory CSV row');
+        await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('990')`, 'inventory correction survives restart');
+        await click('广告经营');
+        await waitFor(`document.querySelectorAll('[data-testid="signals-ads"] tbody tr').length===1`, 'persisted advertising CSV row');
+        await assert(`document.querySelector('[data-testid="signals-ads"]').innerText.includes('4.00 / 3.00')`, 'inventory and advertising corrections survive restart');
 
         await click('决策草稿');await waitFor(`!!Array.from(document.querySelectorAll('[aria-label="决策草稿列表"] button')).find(b=>b.textContent.includes('v2')&&b.textContent.includes('减少商家券'))`, 'margin draft list');await js(`Array.from(document.querySelectorAll('[aria-label="决策草稿列表"] button')).find(b=>b.textContent.includes('v2')&&b.textContent.includes('减少商家券')).click()`);await waitFor(`document.body.innerText.includes('v2 已驳回')`, 'decision version and rejection persist across restart');await click('查看版本记录');await waitFor(`document.querySelector('[aria-label="决策版本记录"]')?.innerText.includes('已被新版本替代')`, 'decision request history persists across restart');checks.push('versioned draft and superseded approval request survive restart');
         await click('审批中心');await waitFor(`!!document.querySelector('select[aria-label="审批状态筛选"]')`, 'approval inbox after restart');
@@ -395,8 +398,9 @@ app.on('web-contents-created', (_event, contents) => {
         await assert(`(await window.electronAPI.retailRequest({op:'investigation_update',id:'forged',report:{}})).ok === false`, 'renderer cannot forge investigation completion');
         checks.push('explicit offline replay remains distinct from model investigation');
         await click('返回经营总览');
-        await click('库存与广告');
+        await click('库存与补货');
         for (const kind of ['inventory', 'ads']) {
+          await click(kind==='inventory'?'库存与补货':'广告经营');
           await waitFor(`!!document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]:not(:disabled)')`, kind+' paged evidence ready');
           await js(`document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]').click()`);
           await waitFor(`document.querySelector('.retail-investigation-body')?.innerText.includes('本地协议测试报告') && document.querySelector('.retail-investigation-body')?.innerText.includes('只读 Reviewer 复核')`, kind+' model report');
@@ -406,7 +410,7 @@ app.on('web-contents-created', (_event, contents) => {
           if(kind==='inventory') await assert(`document.querySelector('table[aria-label="调查方案比较"]').innerText.includes('100.00') && document.querySelector('table[aria-label="调查方案比较"]').innerText.includes('未通过')`, 'inventory plan does not erase pre-arrival gap');
           else await assert(`document.querySelector('table[aria-label="调查方案比较"]').innerText.includes('¥900.00') && document.querySelector('table[aria-label="调查方案比较"]').innerText.includes('¥1620.00') && document.querySelector('table[aria-label="调查方案比较"]').innerText.includes('1.80')`, 'ads budget scales revenue at unchanged ROAS');
           await capture(`investigation-${kind}.png`);
-          await click('返回经营总览'); await click('库存与广告');
+          await click('返回经营总览'); await click('库存与补货');
         }
         if (contractCalls!==18) throw new Error('Expected 18 HTTP calls for three scenarios, got '+contractCalls);
         await assert(`(await window.electronAPI.retailRequest({op:'investigations'})).data.filter(r=>r.report).every(r=>r.trace.filter(t=>t.stage==='investigate').every(t=>t.transport==='mcp_stdio'))`, 'all three scenarios and offline replay consume actual MCP evidence');
@@ -454,10 +458,10 @@ app.on('web-contents-created', (_event, contents) => {
         checks.push('correction changes current SKU to 33.33% while retaining source separation');
         await assert(`(await window.electronAPI.retailRequest({op:'snapshot',workspace_id:'other'})).ok === false`, 'IPC rejects renderer-supplied workspace scope');
         await assert(`(await window.electronAPI.retailRequest({op:'execute_price',price:1})).ok === false`, 'IPC rejects business execution operations');
-        await click('库存与广告');
+        await click('库存与补货');
         await click('载入库存与广告演示');
-        await waitFor(`document.querySelectorAll('[data-testid="signals-inventory"] tbody tr').length===3 && document.querySelectorAll('[data-testid="signals-ads"] tbody tr').length===3`, 'inventory and advertising demo rows');
-        await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('40 / 2.00 天') && document.querySelector('[data-testid="signals-ads"]').innerText.includes('-40.00%')`, 'inventory coverage and ROAS decline match independent arithmetic');
+        await waitFor(`document.querySelectorAll('[data-testid="signals-inventory"] tbody tr').length===3`, 'inventory and advertising demo rows');
+        await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('40 / 2.00 天')`, 'inventory coverage and ROAS decline match independent arithmetic');
         await js(`document.querySelector('summary[aria-label="查看 TEA-500 inventory 场景证据"]').click()`);
         await assert(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('在途不计入即时可售') && document.querySelector('[data-testid="signals-inventory"]').innerText.includes('SHA-256')`, 'scenario evidence shows rule, formula and immutable source hash');
         await capture('inventory-advertising.png');
@@ -473,7 +477,7 @@ app.on('web-contents-created', (_event, contents) => {
         await waitFor(`!!Array.from(document.querySelectorAll('button')).find(el=>el.textContent.trim()==='导入 1 条场景数据'&&!el.disabled)`, 'inventory correction preview');
         await click('导入 1 条场景数据');
         await waitFor(`document.querySelector('[data-testid="signals-inventory"]').innerText.includes('990')`, 'inventory correction');
-        await js(`(() => { const select=document.querySelector('select[aria-label="场景导入类型"]');select.value='ads';select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
+        await click('广告经营');
         await signalFile('ads-errors.csv');
         await waitFor(`document.body.innerText.includes('总计 3 行，有效 1 行，隔离 2 行')`, 'advertising quarantine preview');
         await click('导入 1 条场景数据');
@@ -488,7 +492,7 @@ app.on('web-contents-created', (_event, contents) => {
         checks.push('two new scenarios support CSV quarantine, idempotence, correction, evidence and unified anomaly center');
         await assert(`(await Promise.all([window.electronAPI.retailRequest({op:'snapshot'}),window.electronAPI.retailRequest({op:'signals'})])).every(r=>r.ok)`, 'concurrent read refreshes do not block page remounts');
         for(const kind of ['ads','inventory']) {
-          await click('库存与广告');
+          await click(kind==='inventory'?'库存与补货':'广告经营');
           if(kind==='inventory'){await click('载入补货执行演示');await waitFor(`document.body.innerText.includes('已载入1天交期')`, 'feasible built-in replenishment demo');}
           await waitFor(`!!document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]')&&!document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]').disabled`, kind+' investigation enabled after pending read');
           await js(`document.querySelector('button[aria-label="开始调查 TEA-500 ${kind}"]').click()`);

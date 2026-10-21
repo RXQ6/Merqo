@@ -42,63 +42,33 @@ async function main() {
   await page.getByRole('button', { name: '经营分析', exact: true }).click();
   await expect(page.getByTestId('retail-workspace')).toBeVisible();
   for (const kind of ['inventory', 'ads']) await request({ op: 'signals_import', kind, ...fixture(kind) });
-  await page.getByRole('button', { name: '库存与广告', exact: true }).click();
-  await page.getByLabel('数据来源', { exact: true }).selectOption('csv');
-  const inventory = page.getByTestId('signals-inventory'), ads = page.getByTestId('signals-ads');
-  await expect(inventory.getByRole('row')).toHaveCount(31);
-  await expect(ads.getByRole('row')).toHaveCount(31);
-  await expect(inventory).toContainText('1–30 / 65');
-  await expect(page.getByRole('button', { name: /^异常中心/ })).toContainText('86');
-  await expect.poll(() => page.getByLabel('店铺', { exact: true }).locator('option').allTextContents()).toContain('tail-only-shop');
-  checks.push('real IPC bounds both tables to 30 rows; full anomaly count and off-page shop facet remain visible');
-
-  await inventory.getByRole('button', { name: '下一页', exact: true }).click();
-  await expect(inventory).toContainText('31–60 / 65');
-  await expect(ads).toContainText('1–30 / 65');
-  await inventory.getByRole('button', { name: '下一页', exact: true }).click();
-  await expect(inventory).toContainText('61–65 / 65');
-  await expect(inventory.getByRole('row')).toHaveCount(6);
-  await expect(inventory.getByRole('button', { name: '下一页', exact: true })).toBeDisabled();
-  // Electron exposes native downloads through its Session, not Playwright's browser download event.
-  const downloadFile = path.join(out, 'inventory-current-page.json');
-  await application.evaluate(({ session }, target) => {
-    globalThis.signalPaginationDownload = null;
-    session.defaultSession.once('will-download', (_event, item) => {
-      item.setSavePath(target);
-      item.once('done', (_event, state) => { globalThis.signalPaginationDownload = state; });
-    });
-  }, downloadFile);
-  await inventory.getByRole('button', { name: '导出当前页证据', exact: true }).click();
-  await expect.poll(() => application.evaluate(() => globalThis.signalPaginationDownload)).toBe('completed');
-  const exported = JSON.parse(fs.readFileSync(downloadFile, 'utf8'));
-  assert.equal(exported.records.length, 5); assert.equal(exported.pagination.total, 65);
-  checks.push('independent scene offsets, last-page boundary and explicitly bounded page export');
-
-  await page.getByLabel('搜索库存或广告', { exact: true }).fill('PAGE-064');
-  await expect(inventory).toContainText('1–1 / 1'); await expect(ads).toContainText('1–1 / 1');
-  await expect(inventory.getByRole('row')).toHaveCount(2);
-  await expect(page.getByTestId('retail-signals')).toContainText('库存预警 22 条');
-  await expect(page.getByTestId('retail-signals')).toContainText('广告预警 22 条');
-  // A rapid second filter must not leave the first request's rows displayed.
-  await page.getByLabel('搜索库存或广告', { exact: true }).fill('PAGE-000');
-  await page.getByLabel('搜索库存或广告', { exact: true }).fill('NO-SUCH-SKU');
-  await expect(inventory).toContainText('0–0 / 0'); await expect(ads).toContainText('0–0 / 0');
-  await expect(inventory.getByRole('row')).toHaveCount(0);
-  await page.getByLabel('搜索库存或广告', { exact: true }).fill('');
-  await expect(inventory).toContainText('1–30 / 65');
-  await page.getByLabel('库存广告状态', { exact: true }).selectOption('warning');
-  await expect(inventory).toContainText('1–22 / 22'); await expect(ads).toContainText('1–22 / 22');
-  checks.push('search/status reset pagination, scope counts stay complete and stale filter responses do not render');
-
-  await page.getByLabel('库存广告状态', { exact: true }).selectOption('all');
-  await page.getByLabel('店铺', { exact: true }).selectOption('tail-only-shop');
-  await expect(inventory).toContainText('1–1 / 1'); await expect(ads).toContainText('1–1 / 1');
-  await page.getByLabel('店铺', { exact: true }).selectOption('');
-  await expect(inventory).toContainText('1–30 / 65');
-  await inventory.getByRole('button', { name: '下一页', exact: true }).click();
-  await expect(inventory).toContainText('31–60 / 65');
-  await page.getByRole('button', { name: '刷新经营数据', exact: true }).click();
-  await expect(inventory).toContainText('1–30 / 65');
+  for (const kind of ['inventory', 'ads']) {
+    await page.getByRole('navigation', {name:'经营导航',exact:true}).getByRole('button', {name:kind==='inventory'?'库存与补货':'广告经营',exact:true}).click();
+    await page.getByLabel('数据来源', { exact: true }).selectOption('csv');
+    const scene=page.getByTestId('signals-'+kind);
+    await expect(page.getByTestId('signals-'+(kind==='inventory'?'ads':'inventory'))).toHaveCount(0);
+    await expect(scene.getByRole('row')).toHaveCount(31);
+    await expect(scene).toContainText('1–30 / 65');
+    await expect(page.getByRole('button', {name:/^异常中心/})).toContainText('86');
+    await expect.poll(()=>page.getByLabel('店铺',{exact:true}).locator('option').allTextContents()).toContain('tail-only-shop');
+    await scene.getByRole('button',{name:'下一页',exact:true}).click();await expect(scene).toContainText('31–60 / 65');
+    await scene.getByRole('button',{name:'下一页',exact:true}).click();await expect(scene).toContainText('61–65 / 65');
+    await expect(scene.getByRole('row')).toHaveCount(6);await expect(scene.getByRole('button',{name:'下一页',exact:true})).toBeDisabled();
+    const downloadFile=path.join(out,kind+'-current-page.json');
+    await application.evaluate(({BrowserWindow},{url,target})=>{const w=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL()===url);globalThis.signalPaginationDownload=null;w.webContents.session.once('will-download',(_event,item)=>{item.setSavePath(target);item.once('done',(_event,state)=>{globalThis.signalPaginationDownload=state;});});},{url:page.url(),target:downloadFile});
+    await scene.getByRole('button',{name:'导出当前页证据',exact:true}).click();await expect.poll(()=>application.evaluate(()=>globalThis.signalPaginationDownload)).toBe('completed');
+    const exported=JSON.parse(fs.readFileSync(downloadFile,'utf8'));assert.equal(exported.records.length,5);assert.equal(exported.pagination.total,65);assert(exported.records.every(r=>r.kind===kind));
+    await page.getByLabel('搜索库存或广告',{exact:true}).fill('PAGE-064');await expect(scene).toContainText('1–1 / 1');await expect(scene.getByRole('row')).toHaveCount(2);
+    await expect(page.getByTestId('retail-signals')).toContainText((kind==='inventory'?'库存':'广告')+'预警 22 条');
+    await page.getByLabel('搜索库存或广告',{exact:true}).fill('PAGE-000');await page.getByLabel('搜索库存或广告',{exact:true}).fill('NO-SUCH-SKU');await expect(scene).toContainText('0–0 / 0');
+    await page.getByLabel('搜索库存或广告',{exact:true}).fill('');await expect(scene).toContainText('1–30 / 65');
+    await page.getByLabel('库存广告状态',{exact:true}).selectOption('warning');await expect(scene).toContainText('1–22 / 22');
+    await page.getByLabel('库存广告状态',{exact:true}).selectOption('all');await page.getByLabel('店铺',{exact:true}).selectOption('tail-only-shop');await expect(scene).toContainText('1–1 / 1');
+    await page.getByLabel('店铺',{exact:true}).selectOption('');await expect(scene).toContainText('1–30 / 65');await scene.getByRole('button',{name:'下一页',exact:true}).click();await expect(scene).toContainText('31–60 / 65');
+    await page.getByRole('button',{name:'刷新经营数据',exact:true}).click();await expect(scene).toContainText('1–30 / 65');
+    checks.push(kind+': separate business route, 65-row pagination, five-row exact-kind export, off-page facets, full-scope counts, search/status reset and stale-response protection');
+  }
+  const inventory=page.getByTestId('signals-inventory'),ads=page.getByTestId('signals-ads');
   await page.getByRole('button', { name: /^异常中心/ }).click();
   await expect(inventory).toContainText('1–30 / 43');
   await expect(ads).toContainText('1–30 / 43');

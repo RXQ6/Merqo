@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnyInvestigation, Scenario } from '../../../../../packages/retail-domain/src/investigations';
 import type { DecisionDraft } from '../../../../../packages/retail-domain/src/decisions';
@@ -26,7 +27,7 @@ export function DecisionsPanel({ target, onBack, onApproval, onInvestigation }: 
   const dirty=!!selected&&(kind!==selected.selectedKind||note!==selected.note);
   const options=selected?.alternatives??target?.report?.scenarios??[];
   const save=()=>selected?void call({op:'decision_revise',id:selected.id,expectedVersion:selected.version,kind,note}):target?void call({op:'decision_create',investigationId:target.id,kind,note}):undefined;
-  return <section data-testid="retail-decisions"><div className="retail-section-title"><div><h2>决策草稿</h2><p>核对前后值、证据与约束，再提交模拟审批。当前不会修改经营数据。</p></div><button onClick={onBack}>返回经营总览</button></div>
+  return <section data-testid="retail-decisions"><PageHeader title="决策草稿" actions={<><button onClick={onBack}>返回经营总览</button></>}>核对前后值、证据与约束，再提交模拟审批。当前不会修改经营数据。</PageHeader>
     {error&&<div className="retail-alert error" role="alert">{error}<button disabled={busy} onClick={()=>void call({op:'decisions'})}>刷新草稿</button></div>}
     {notice&&<div className="retail-alert success" role="status">{notice}</div>}
     <div className="retail-investigation-layout"><aside className="retail-investigation-list" aria-label="决策草稿列表"><div className="retail-inline-actions"><strong>最近草稿</strong><button disabled={busy} onClick={()=>void call({op:'decisions'})}>刷新</button></div>

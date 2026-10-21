@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import {BackupPanel} from './BackupPanel';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {RetailRequest} from '../../../../../packages/retail-domain/src/operations';
@@ -35,7 +36,7 @@ export function ConnectionsPanel(){
  };
  const create=async()=>{const a=Math.floor(new Date(start).getTime()/1000),b=Math.floor(new Date(end).getTime()/1000);if(!Number.isFinite(a)||!Number.isFinite(b)||a>=b||b-a>86400||b>Date.now()/1000||!Number.isInteger(size)||size<1||size>100){setError('请选择有效的过去24小时内时间窗口，每页1至100条');return;}await send({op:'sync_create',expectedRevision:view?.connection?.revision??0,window:{start:a,end:b,size}});};
  return <div className="retail-connections" aria-label="平台接入与同步">
-  <div className="retail-section-title"><div><h1>平台接入</h1><p>配置连接、检查权限，再按固定时间窗口拉取订单。</p></div><span className="retail-badge">{view?.connection?.mode==='live'?'真实只读模式':'测试演练 · 合成数据'}</span></div>
+  <PageHeader title="平台接入" actions={<><span className="retail-badge">{view?.connection?.mode==='live'?'真实只读模式':'测试演练 · 合成数据'}</span></>}>配置连接、检查权限，再按固定时间窗口拉取订单。</PageHeader>
   <p className="retail-footnote">只读拉取 → 加密暂存 → 字段映射 → 质量隔离与去重 → 确认入库 → 批次对账。拉取完成后，点击任务的「映射与入库」继续。</p>
   {error&&<div role="alert" className="retail-error">{error}</div>}
   <section className="retail-panel" aria-label="抖店接入配置向导">

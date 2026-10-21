@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BatchView } from '../../../../../packages/retail-domain/src/execution-batches';
 import type { ExecutionView } from '../../../../../packages/retail-domain/src/simulation';
@@ -19,7 +20,7 @@ export function ExecutionBatchesPanel({onBack}:{onBack:()=>void}){
  useEffect(()=>{void call({op:'execution_batches'});},[call]);const selected=items.find(v=>v.batch.id===focus)??items[0];const eligible=jobs.filter(j=>!j.receipt&&!j.batchId&&!j.blockers.length);const unresolved=selected?.items.some(i=>i.dispatch.status==='unknown'||i.dispatch.status==='running')??false;
  useEffect(()=>{setConfirmed(false);},[selected?.batch.id,newMode,selected?.status]);
  const create=()=>void call({op:'batch_create',jobIds:selectedIds,reason});
- return <section data-testid="retail-batches"><div className="retail-section-title"><div><h2>执行批次</h2><p>将已逐项批准的独立动作分批处理。每项单独提交，部分成功不会自动回滚；待确认项先查账本。</p></div><button onClick={onBack}>返回执行记录</button></div>
+ return <section data-testid="retail-batches"><PageHeader title="执行批次" actions={<><button onClick={onBack}>返回执行记录</button></>}>将已逐项批准的独立动作分批处理。每项单独提交，部分成功不会自动回滚；待确认项先查账本。</PageHeader>
  {error&&<div className="retail-alert error" role="alert">{error}</div>}{notice&&<div className="retail-alert success" role="status">{notice}</div>}
  <div className="retail-inline-actions"><button disabled={busy} onClick={()=>{setNewMode(true);setSelectedIds([]);}}>新建执行批次</button><button disabled={busy} onClick={()=>void call({op:'execution_batches'})}>刷新执行批次</button><span className="retail-muted">最近50批；仅本地模拟，不具备跨系统原子性</span></div>
  <div className="retail-investigation-layout"><aside className="retail-investigation-list" aria-label="执行批次列表">{!items.length&&<p>{busy?'正在读取…':'暂无批次。先分别批准两个独立模拟动作。'}</p>}{items.map(v=><button key={v.batch.id} aria-current={!newMode&&v.batch.id===selected?.batch.id?'true':undefined} onClick={()=>{setFocus(v.batch.id);setNewMode(false);}}><strong>{v.batch.shop} · {v.items.length}项</strong><span>{labels[v.status]}</span><small>{v.batch.reason}</small></button>)}</aside>

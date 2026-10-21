@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ExecutionView } from '../../../../../packages/retail-domain/src/simulation';
 import type { RetailRequest } from '../../../../../packages/retail-domain/src/operations';
@@ -24,7 +25,7 @@ export function ExecutionsPanel({initialRequestId,onBack,onCompensation,onBatche
   const selected=filtered.find(v=>v.job.id===focus)??filtered.find(v=>v.job.requestId===initialRequestId)??filtered[0];
   useEffect(()=>{setConfirmed(false);},[selected?.job.id,selected?.status]);
   const job=selected?.job;const receipt=selected?.receipt;const check=selected?.reconciliation;
-  return <section data-testid="retail-executions"><div className="retail-section-title"><div><h2>模拟执行记录</h2><p>仅写入本机模拟业务账本。原始经营数据不变，不连接真实经营系统。</p></div><div className="retail-inline-actions"><button onClick={()=>onReview(null)}>复盘与 Case</button><button onClick={onBatches}>执行批次</button><button onClick={onBack}>返回审批中心</button></div></div>
+  return <section data-testid="retail-executions"><PageHeader title="模拟执行记录" actions={<><div className="retail-inline-actions"><button onClick={()=>onReview(null)}>复盘与 Case</button><button onClick={onBatches}>执行批次</button><button onClick={onBack}>返回审批中心</button></div></>}>仅写入本机模拟业务账本。原始经营数据不变，不连接真实经营系统。</PageHeader>
     {error&&<div className="retail-alert error" role="alert">{error}</div>}{notice&&<div className="retail-alert success" role="status">{notice}</div>}
     <div className="retail-inline-actions retail-approval-filters"><label>执行状态<select aria-label="执行状态筛选" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部状态</option>{Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><button disabled={busy} onClick={()=>void call({op:'executions'})}>刷新执行记录</button><span className="retail-muted">最近100项；超时先刷新确认结果</span></div>
     <div className="retail-investigation-layout"><aside className="retail-investigation-list" aria-label="模拟执行列表">{!filtered.length&&<p>{busy?'正在读取…':'暂无执行项。先在审批中心批准一个符合条件的模拟方案。'}</p>}{filtered.map(v=><button key={v.job.id} aria-current={v.job.id===selected?.job.id?'true':undefined} onClick={()=>setFocus(v.job.id)}><strong>{v.job.scope.sku} · v{v.job.decisionVersion}</strong><span>{labels[v.status]}</span><small>{v.job.scenario==='margin'?'调整模拟商家券':v.job.scenario==='ads'?'调整模拟预算':'创建模拟补货请求'}</small></button>)}</aside>

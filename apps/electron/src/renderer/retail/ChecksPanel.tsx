@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RetailRequest } from '../../../../../packages/retail-domain/src/operations';
 import type { CheckConfigInput, ChecksView } from '../../../../../packages/retail-domain/src/check-types';
@@ -28,7 +29,7 @@ export function ChecksPanel({ onAnomalies }: { onAnomalies: () => void }) {
   useEffect(() => { alive.current = true; void call({ op: 'checks' }); const timer = setInterval(() => void call({ op: 'checks' }), 15000); return () => { alive.current = false; clearInterval(timer); }; }, [call]);
   const selected = view?.runs.find(r => r.id === selectedId) ?? view?.runs[0];
   return <section data-testid="retail-checks">
-    <div className="retail-section-title"><div><h2>经营巡检</h2><p>定时检查毛利、缺货与广告异常，使用本机已导入快照。</p></div><button disabled={busy} onClick={() => void call({ op: 'checks' })}>刷新巡检记录</button></div>
+    <PageHeader title="经营巡检" actions={<><button disabled={busy} onClick={() => void call({ op: 'checks' })}>刷新巡检记录</button></>}>定时检查毛利、缺货与广告异常，使用本机已导入快照。</PageHeader>
     <p className="retail-muted">应用运行时按分钟触发调度；关闭、休眠期间不保证检查。补跑读取补跑当时的快照，不还原历史实时状态，不调用模型、不自动审批或执行业务。</p>
     {error && <div className="retail-alert error" role="alert">{error}</div>}{notice && <div className="retail-alert" role="status">{notice}</div>}
     {!view ? <p>正在读取巡检配置与记录…</p> : <>

@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "checks": [
+    "inventory: separate business route, 65-row pagination, five-row exact-kind export, off-page facets, full-scope counts, search/status reset and stale-response protection",
+    "ads: separate business route, 65-row pagination, five-row exact-kind export, off-page facets, full-scope counts, search/status reset and stale-response protection",
+    "off-page facet selection, explicit refresh reset and anomaly-center pagination use actual bounded requests"
+  ],
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\signal-pagination-edQnc1",
+  "modelCalls": 0
+}

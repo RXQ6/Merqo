@@ -56,8 +56,8 @@ async function main(){
  await button('交易与退款').click();await setQuery('2026-10-14','2026-10-16','order');await expect(page.getByRole('region',{name:'交易汇总',exact:true})).toContainText('换货关联 1 件');
  const saved=(await request({op:'snapshot',source:'csv',limit:30})).data.records.find(r=>r.id===record.id);assert.deepEqual(saved.row,record.row);
  checks.push('actual process restart retains replacement lineage, financial totals and nested composition');
- await button('库存与广告').click();await page.getByLabel('数据来源',{exact:true}).selectOption('demo');await button('载入库存与广告演示').click();
- for(const kind of ['inventory','ads']){const section=page.getByTestId('signals-'+kind),sources=section.getByRole('region',{name:'当前统计范围与来源',exact:true});await expect(sources).toContainText('2026-10-14');await expect(sources.getByText(/来源批次 · 当前范围/)).toHaveCount(1);await sources.getByText(/来源批次 · 当前范围/).click();await expect(sources).toContainText('覆盖范围');await expect(sources).toContainText('导入时间不能替代');}
+ await button('库存与补货').click();await page.getByLabel('数据来源',{exact:true}).selectOption('demo');await button('载入库存与广告演示').click();
+ for(const kind of ['inventory','ads']){await button(kind==='inventory'?'库存与补货':'广告经营').click();const section=page.getByTestId('signals-'+kind),sources=section.getByRole('region',{name:'当前统计范围与来源',exact:true});await expect(sources).toContainText('2026-10-14');await expect(sources.getByText(/来源批次 · 当前范围/)).toHaveCount(1);await sources.getByText(/来源批次 · 当前范围/).click();await expect(sources).toContainText('覆盖范围');await expect(sources).toContainText('导入时间不能替代');}
  checks.push('inventory and advertising expose full-scope business dates, grouped batches and independent source coverage in their actual pages');
  await page.context().tracing.stop({path:path.join(out,'restart-trace.zip')});await app.close();app=null;
  fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,profile,checks,modelCalls:0,realPlatform:false},null,2));console.log(JSON.stringify({ok:true,out,checks}));

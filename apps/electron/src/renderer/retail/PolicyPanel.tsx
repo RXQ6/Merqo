@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import {useEffect,useRef,useState} from 'react';
 import {DEFAULT_RULE_SETTINGS,RuleSettingsSchema} from '../../../../../packages/retail-domain/src/business-policy';
 import type {PolicyView,RuleSettings} from '../../../../../packages/retail-domain/src/business-policy';
@@ -23,7 +24,7 @@ export function PolicyPanel({request,onChanged}:{request:(r:RetailRequest)=>Prom
   const parsed=RuleSettingsSchema.safeParse(values);if(!parsed.success){setError(parsed.error.issues.map(i=>`${fields.find(f=>f.key===i.path[0])?.label??i.path.join('.')}: ${i.message}`).join('；'));return;}
   setBusy(true);setError('');setNotice('');try{const r=await request({op:'policy_update',expectedRevision:view.current.revision,shopId:shop.trim()||null,settings:parsed.data,reason});if(!r?.ok||r.kind!=='policy')throw new Error(r&&!r.ok?r.error:'规则保存失败');if(alive.current){setView(r.data);setReason('');setConfirmed(false);setNotice(`已保存规则版本 v${r.data.current.revision}。旧报告保留，相关审批需重新调查和确认。`);onChanged();}}catch(e){if(alive.current)setError(e instanceof Error?e.message:'规则保存失败');}finally{if(alive.current)setBusy(false);}
  }
- return <section data-testid="retail-policy" className="retail-panel"><div className="retail-section-title"><div><h2>经营规则配置</h2><p>当前经营空间 · {view?`规则版本 v${view.current.revision}`:'读取中'}</p></div></div>
+ return <section data-testid="retail-policy"><PageHeader title="经营规则配置">当前经营空间 · {view?`规则版本 v${view.current.revision}`:'读取中'}</PageHeader><div className="retail-settings-body">
  <p>当前角色：本地模拟管理员。规则影响后续计算和审批；历史报告保留原版本。默认值是演示规则，可按店铺设置完整覆盖。</p>
  {error&&<div role="alert" className="retail-alert error">{error}</div>}{notice&&<div role="status" className="retail-alert">{notice}</div>}
  <label className="retail-draft-field">适用店铺<input aria-label="规则适用店铺" value={shop} disabled={busy} onChange={e=>scope(e.target.value)} placeholder="留空：全部店铺默认；输入店铺ID：仅该店铺覆盖"/></label>
@@ -32,5 +33,5 @@ export function PolicyPanel({request,onChanged}:{request:(r:RetailRequest)=>Prom
  <label className="retail-draft-field">变更原因<textarea aria-label="规则变更原因" rows={3} maxLength={2000} disabled={busy} value={reason} onChange={e=>setReason(e.target.value)}/></label>
  <label><input type="checkbox" aria-label="确认更新经营规则" checked={confirmed} disabled={busy} onChange={e=>setConfirmed(e.target.checked)}/> 我已核对适用店铺和参数，确认生成新规则版本</label>
  <div className="retail-inline-actions"><button disabled={busy||!view||!confirmed||!reason.trim()} onClick={()=>void save()}>保存新规则版本</button><button disabled={busy||!view} onClick={()=>scope('')}>查看默认规则</button></div>
- <details><summary>规则变更记录</summary>{view?.history.length?view.history.map(p=><p key={p.revision}>v{p.revision} · {p.at&&new Date(p.at).toLocaleString('zh-CN')} · {p.reason} · 本地模拟管理员</p>):<p>当前沿用内置演示规则，尚无变更。</p>}</details></section>;
+ <details><summary>规则变更记录</summary>{view?.history.length?view.history.map(p=><p key={p.revision}>v{p.revision} · {p.at&&new Date(p.at).toLocaleString('zh-CN')} · {p.reason} · 本地模拟管理员</p>):<p>当前沿用内置演示规则，尚无变更。</p>}</details></div></section>;
 }

@@ -16,11 +16,11 @@ function download(name: string, value: unknown, csv = false) {
   const url = URL.createObjectURL(new Blob([csv ? '\uFEFF' + String(value) : JSON.stringify(value, null, 2)], { type: csv ? 'text/csv;charset=utf-8' : 'application/json' }));
   const link = document.createElement('a'); link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export function SignalsPanel({ snapshot, request, busy, scope, onInvestigate, compact = false, refreshKey = 0 }: {
+export function SignalsPanel({ snapshot, request, busy, scope, onInvestigate, compact = false, refreshKey = 0, mode = 'all' }: {
   onInvestigate: (record: SignalRecord) => void; snapshot: SignalSnapshot | null; request: (r: RetailRequest) => Promise<RetailReply | undefined>; busy: boolean;
-  scope: { source: 'demo' | 'csv'; shop: string; channel: string; date: string; query: string }; compact?: boolean; refreshKey?: number;
+  scope: { source: 'demo' | 'csv'; shop: string; channel: string; date: string; query: string }; compact?: boolean; refreshKey?: number; mode?: 'all' | SignalKind;
 }) {
-  const [kind, setKind] = useState<SignalKind>('inventory'); const [preview, setPreview] = useState<SignalPreview | null>(null);
+  const [kind, setKind] = useState<SignalKind>(mode === 'ads' ? 'ads' : 'inventory'); const [preview, setPreview] = useState<SignalPreview | null>(null);
   const [mapping, setMapping] = useState<Record<string, string>>({}); const [csv, setCsv] = useState(''); const [error, setError] = useState('');
   const [sourceDraft,setSourceDraft]=useState(emptySourceDraft);
   const [query, setQuery] = useState(''); const [status, setStatus] = useState<'all' | 'normal' | 'warning' | 'needs_evidence'>('all');
@@ -59,7 +59,7 @@ export function SignalsPanel({ snapshot, request, busy, scope, onInvestigate, co
   const rows = currentPages ? [...currentPages.inventory.records, ...currentPages.ads.records] : [];
   const summary = currentPages ? { inventory: currentPages.inventory.pagination.summary.inventory, ads: currentPages.ads.pagination.summary.ads } : null;
   const unavailable = busy || loading || !currentPages;
-  const batches = currentPages?.inventory.batches ?? snapshot?.batches ?? [];
+  const batches = (currentPages?.inventory.batches ?? snapshot?.batches ?? []).filter(batch => mode === 'all' || batch.kind === mode);
   const validate = async (text: string, proposed?: Record<string, string>) => {
     const result = await request({ op: 'signals_preview', kind, csv: text, ...(proposed ? { mapping: proposed } : {}) });
     if (result?.ok && result.kind === 'signals_preview') { setPreview(result.data); setMapping(result.data.mapping); }
@@ -77,21 +77,21 @@ export function SignalsPanel({ snapshot, request, busy, scope, onInvestigate, co
     </section>;
   };
   return <section data-testid="retail-signals">
-    <div className="retail-section-title"><div><h2>{compact ? '库存与广告异常' : '库存与广告数据'}</h2><p>{summary ? `范围内库存预警 ${summary.inventory.warning} 条；广告预警 ${summary.ads.warning} 条；待补证 ${summary.inventory.missing + summary.ads.missing} 条。计数不受搜索、状态和分页影响。` : '正在读取范围计数…'}来源：{scope.source === 'demo' ? '合成演示' : 'CSV 导入'}。</p></div><button disabled={busy} onClick={() => void request({ op: 'signals_demo' })}>载入库存与广告演示</button></div>
-    {!compact&&<ModuleNavigation items={[{label:'采购与效期',region:'采购到货与批次效期'},{label:'仓库与调拨',region:'仓库收发存与调拨'},{label:'广告退款归因',region:'广告退款后归因核对'}]}/>}
-    {!compact && scope.source==='demo'&&<div className="retail-inline-actions"><button disabled={busy} onClick={()=>void request({op:'signals_replenishment_demo'})}>载入补货执行演示</button><span className="retail-muted">合成样例改为1天交期，可走通补货请求；原5天样例仍会阻断到货前缺口。</span></div>}
+    <div className="retail-section-title"><div><h2>{compact ? '库存与广告异常' : mode === 'inventory' ? '库存风险与数据' : mode === 'ads' ? '广告表现与数据' : '库存与广告数据'}</h2><p>{summary ? `${mode !== 'ads' ? `库存预警 ${summary.inventory.warning} 条；` : ''}${mode !== 'inventory' ? `广告预警 ${summary.ads.warning} 条；` : ''}待补证 ${mode === 'inventory' ? summary.inventory.missing : mode === 'ads' ? summary.ads.missing : summary.inventory.missing + summary.ads.missing} 条。计数不受搜索、状态和分页影响。` : '正在读取范围计数…'}来源：{scope.source === 'demo' ? '合成演示' : 'CSV 导入'}。</p></div><button disabled={busy} onClick={() => void request({ op: 'signals_demo' })}>载入库存与广告演示</button></div>
+    {!compact&&<ModuleNavigation items={mode === 'ads' ? [{label:'广告退款归因',region:'广告退款后归因核对'}] : [{label:'采购与效期',region:'采购到货与批次效期'},{label:'仓库与调拨',region:'仓库收发存与调拨'},...(mode === 'all' ? [{label:'广告退款归因',region:'广告退款后归因核对'}] : [])]}/>}
+    {!compact && mode !== 'ads' && scope.source==='demo'&&<div className="retail-inline-actions"><button disabled={busy} onClick={()=>void request({op:'signals_replenishment_demo'})}>载入补货执行演示</button><span className="retail-muted">合成样例改为1天交期，可走通补货请求；原5天样例仍会阻断到货前缺口。</span></div>}
     {!compact && <>
-      <div className="retail-inline-actions retail-signal-actions"><label>导入类型 <select aria-label="场景导入类型" value={kind} onChange={e => { setKind(e.target.value as SignalKind);setSourceDraft(emptySourceDraft()); setPreview(null); setCsv(''); setError(''); }}><option value="inventory">库存与销量</option><option value="ads">广告回报</option></select></label><button disabled={busy} onClick={() => input.current?.click()}>选择场景 CSV</button><button onClick={() => download(`${kind}-模板.csv`, kind === 'inventory' ? INVENTORY_DEMO : ADS_DEMO, true)}>下载当前场景模板</button></div>
+      <div className="retail-inline-actions retail-signal-actions"><label>导入类型 <select aria-label="场景导入类型" disabled={mode !== 'all'} value={kind} onChange={e => { setKind(e.target.value as SignalKind);setSourceDraft(emptySourceDraft()); setPreview(null); setCsv(''); setError(''); }}><option value="inventory">库存与销量</option><option value="ads">广告回报</option></select></label><button disabled={busy} onClick={() => input.current?.click()}>选择场景 CSV</button><button onClick={() => download(`${kind}-模板.csv`, kind === 'inventory' ? INVENTORY_DEMO : ADS_DEMO, true)}>下载当前场景模板</button></div>
       <input ref={input} type="file" className="retail-file-input" accept=".csv,text/csv" aria-label="选择库存或广告 CSV" onChange={e => { const file = e.target.files?.[0];setSourceDraft(emptySourceDraft()); e.target.value = ''; if (!file) return; setError(''); setPreview(null); if (file.size > 32000000) { setError('文件超过 32 MB'); return; } void file.text().then(text => { setCsv(text); return validate(text); }).catch(() => setError('无法读取 CSV，请使用 UTF-8')); }}/>
       {error && <div role="alert" className="retail-alert error">{error}</div>}
       {preview && <section className="retail-panel" aria-label="场景导入预览"><SourceMetadataEditor value={sourceDraft} onChange={setSourceDraft}/><div className="retail-section-title"><h2>场景导入预览</h2><span>总计 {preview.total} 行，有效 {preview.validCount ?? preview.valid.length} 行，隔离 {preview.rejectedCount ?? preview.rejected.length} 行</span></div><div className="retail-mappings">{fields.map(f => <label key={f}>{SIGNAL_LABELS[f]}<select aria-label={`场景映射 ${SIGNAL_LABELS[f]}`} value={mapping[f] ?? ''} onChange={e => { setMapping(v => ({ ...v, [f]: e.target.value })); setPreview(v => v ? { ...v, valid: [], validCount: 0 } : null); }}><option value="">选择列</option>{preview.headers.map(h => <option key={h}>{h}</option>)}</select></label>)}</div>
         {!!preview.rejected.length && <ul className="retail-rejected">{preview.rejected.slice(0, 30).map(r => <li key={r.line}>第 {r.line} 行：{r.reason}</li>)}</ul>}
         <div className="retail-inline-actions"><button disabled={busy} onClick={() => void validate(csv, mapping)}>重新校验场景映射</button><button className="retail-primary" disabled={busy || !preview.valid.length} onClick={() => void importRows()}>导入 {preview.validCount ?? preview.valid.length} 条场景数据</button></div></section>}
-      <div className="retail-table-toolbar"><input aria-label="搜索库存或广告" placeholder="搜索 SKU、仓库或 Campaign" value={query} onChange={e => setQuery(e.target.value)}/><select aria-label="库存广告状态" value={status} onChange={e => setStatus(e.target.value as typeof status)}><option value="all">全部状态</option><option value="warning">经营预警</option><option value="needs_evidence">待补证</option><option value="normal">正常</option></select></div>
+      <div className="retail-table-toolbar"><input aria-label="搜索库存或广告" placeholder={mode === 'ads' ? '搜索 SKU 或广告活动' : mode === 'inventory' ? '搜索 SKU 或仓库' : '搜索 SKU、仓库或广告活动'} value={query} onChange={e => setQuery(e.target.value)}/><select aria-label="库存广告状态" value={status} onChange={e => setStatus(e.target.value as typeof status)}><option value="all">全部状态</option><option value="warning">经营预警</option><option value="needs_evidence">待补证</option><option value="normal">正常</option></select></div>
     </>}
-    {renderTable('inventory')}{renderTable('ads')}
+    {mode !== 'ads' && renderTable('inventory')}{mode !== 'inventory' && renderTable('ads')}
     {!compact && <section className="retail-panel"><div className="retail-section-title"><h2>场景导入批次与质量报告</h2></div>{batches.map(b => <div className="retail-signal-batch" key={b.id}><span>{b.kind === 'inventory' ? '库存' : '广告'} / {b.source === 'demo' ? '演示' : 'CSV'} · {new Date(b.importedAt).toLocaleString('zh-CN')} · 有效 {b.accepted} / 隔离 {b.rejected}</span><button onClick={() => download(`场景质量-${b.id}.json`, b)}>导出质量报告</button></div>)}</section>}
-    {!compact&&<><ProcurementPanel request={request}/><WarehousePanel request={request}/><AdRefundPanel request={request}/></>}
+    {!compact&&<>{mode !== 'ads' && <><ProcurementPanel request={request}/><WarehousePanel request={request}/></>}{mode !== 'inventory' && <AdRefundPanel request={request}/>}</>}
   </section>;
 }
 function SignalEvidence({ record: r }: { record: SignalRecord }) {

@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ApprovalStatus, ApprovalView } from '../../../../../packages/retail-domain/src/approval-types';
 import type { RetailRequest } from '../../../../../packages/retail-domain/src/operations';
@@ -22,7 +23,7 @@ export function ApprovalsPanel({initialRequestId,onBack,onExecution}:{initialReq
  useEffect(()=>{setReason('');},[selected?.id]);
  const d=selected?.decision;const eligible=!!selected&&selected.status==='pending'&&!selected.blockers.length;
  const resolve=(choice:'approve'|'reject')=>{if(selected&&d)void call({op:'approval_resolve',requestId:selected.id,expectedVersion:d.version,expectedActionHash:d.actionHash,choice,reason});};
- return <section data-testid="retail-approvals"><div className="retail-section-title"><div><h2>审批中心</h2><p>本地单用户模拟审批。批准绑定当前方案版本，不代表真实业务授权，仅可另行执行到本地模拟账本。</p></div><button onClick={onBack}>返回决策草稿</button></div>
+ return <section data-testid="retail-approvals"><PageHeader title="审批中心" actions={<><button onClick={onBack}>返回决策草稿</button></>}>本地单用户模拟审批。批准绑定当前方案版本，不代表真实业务授权，仅可另行执行到本地模拟账本。</PageHeader>
   {error&&<div className="retail-alert error" role="alert">{error}<button disabled={busy} onClick={()=>void call({op:'approvals'})}>刷新审批</button></div>}{notice&&<div className="retail-alert success" role="status">{notice}</div>}
   <div className="retail-inline-actions retail-approval-filters"><label>申请状态<select aria-label="审批状态筛选" value={filter} onChange={e=>setFilter(e.target.value as ApprovalStatus|'all')}><option value="all">全部状态</option>{Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><button disabled={busy} onClick={()=>void call({op:'approvals'})}>刷新审批</button><span className="retail-muted">待审批 {items.filter(a=>a.status==='pending').length} · 最近100条申请</span></div>
   <div className="retail-investigation-layout"><aside className="retail-investigation-list" aria-label="审批申请列表">{!filtered.length&&<p className="retail-muted">{busy?'正在读取申请…':filter==='pending'?'暂无待处理申请。可切换全部状态查看历史，或从决策草稿提交。':'当前筛选没有申请。'}</p>}{filtered.map(a=><button key={a.id} aria-current={a.id===selected?.id?'true':undefined} onClick={()=>setFocus(a.id)}><strong>{a.decision.scope.sku} · v{a.decision.version}</strong><span>{labels[a.status]}</span><small>{a.decision.selected.title}</small></button>)}</aside>

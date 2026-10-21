@@ -1,3 +1,4 @@
+import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {SupplementPanel} from './SupplementPanel';
 import {JointEvidencePanel} from './JointEvidencePanel';
@@ -53,7 +54,7 @@ export function InvestigationPanel({ target, initialId, onBack, onDraft, onData 
   const scenario = record ? scenarioOf(record) : 'margin';
   const citation = (id: string) => <a key={id} href={`#investigation-evidence-${selected?.trace.findIndex(t => t.evidenceId === id)}`} title={id}>[{id.split(':').at(-1)}]</a>;
   return <section data-testid="retail-investigation" className="retail-investigation">
-    <div className="retail-section-title"><div><h2>{names[scenario]}</h2><p>只读调查 → 证据归纳 → 条件测算 → 复核。复核通过后可生成草稿并进入本地模拟审批；不改写真实平台。</p></div><button onClick={onBack}>返回经营总览</button></div>
+    <PageHeader title={names[scenario]} actions={<><button onClick={onBack}>返回经营总览</button></>}>只读调查 → 证据归纳 → 条件测算 → 复核。复核通过后可生成草稿并进入本地模拟审批；不改写真实平台。</PageHeader>
     {exportError && <div className="retail-alert error" role="alert">{exportError}</div>}
     {error && <div className="retail-alert error" role="alert">{error}<button disabled={busy} onClick={() => void call({ op: 'investigations' })}>重新读取调查</button></div>}
     <div className="retail-investigation-layout">

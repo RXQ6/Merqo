@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "backupOnly": true,
+  "checks": [
+    "real UI/main/worker encrypted backup, wrong-password rejection, reviewed isolated workspace registration, transaction totals equal, credential manager staging-key restore verified by actual staged-page decryption, historical execution blocked, source preserved; restored database reopened after actual application restart; native file dialogs directed to fixture paths"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe",
+  "restoredPath": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe\\restore-targets\\Merqo-Restored-7d6c2181-6829-4a6a-b55e-63acbdac40a9"
+}

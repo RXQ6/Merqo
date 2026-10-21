@@ -1,4 +1,5 @@
 import { requestRetailWorker } from './retail-worker';
+import {handleRetailBackup} from './retail-backup';
 import {handleRetailSync} from './retail-sync';
 import { ipcMain } from 'electron';
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config';
@@ -45,6 +46,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       else active.add(event.sender.id);
       const workerRequest = (payload: unknown) => requestRetailWorker(workspace, workspaceId!, payload, request.op);
       try {
+        if(request.op.startsWith('backup_'))return await handleRetailBackup(workspace,workspaceId!,event.sender,request,id=>{getWindowManager()?.createWindow({workspaceId:id,retail:true});});
         if(request.op.startsWith('sync_')||request.op.startsWith('ingest_'))return await handleRetailSync(workspace,workspaceId!,request);
         const reply = await workerRequest(request);
         if (request.op === 'investigation_pause' && reply.ok) investigationTasks.get(`${workspaceId}:${request.id}`)?.abort('operator_pause');

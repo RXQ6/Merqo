@@ -1,0 +1,15 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\backup-worker-gate.test.ts:
+(pass) worker admission freezes database creation during backup and resumes even after a failed freeze [628.41ms]
+(pass) restored workspace cannot execute historical grants or use an incomplete restore [10.93ms]
+
+packages\retail-domain\src\backup.test.ts:
+(pass) consistent WAL images, encrypted staging key, cursor and receipts survive portable encrypted backup and isolated restore [287.04ms]
+(pass) wrong password, tampering, changed file, missing or incorrect stage key and unsupported database names fail before restore [579.15ms]
+(pass) renderer cannot provide restore paths, credentials, database bytes or skip reviewed confirmation [1.65ms]
+
+ 5 pass
+ 0 fail
+ 30 expect() calls
+Ran 5 tests across 2 files. [2.13s]

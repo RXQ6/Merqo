@@ -32,6 +32,7 @@ async function main() {
   for (const name of ['LICENSE', 'NOTICE', 'TRADEMARK.md']) copy(name);
   copy('packages/retail-domain/skills');
   bundle('scripts/retailpilot-data-worker.ts', 'scripts/retailpilot-data-worker.ts');
+  bundle('scripts/retailpilot-backup-worker.ts', 'scripts/retailpilot-backup-worker.ts');
   bundle('scripts/merqo-retail-mcp.ts', 'scripts/merqo-retail-mcp.ts');
   copy('packages/session-mcp-server/dist/index.js', 'resources/session-mcp-server/index.js');
   copy('packages/pi-agent-server/dist/index.js', 'resources/pi-agent-server/index.js');
@@ -78,7 +79,7 @@ async function main() {
   };
   fs.mkdirSync(output, { recursive: true });
   const sourceStatus = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' });
-  const bundleHashes = Object.fromEntries(['dist/main.cjs','dist/bootstrap-preload.cjs','scripts/retailpilot-data-worker.ts','scripts/merqo-retail-mcp.ts'].map(file => [file, hash(path.join(app,file))]));
+  const bundleHashes = Object.fromEntries(['dist/main.cjs','dist/bootstrap-preload.cjs','scripts/retailpilot-data-worker.ts','scripts/retailpilot-backup-worker.ts','scripts/merqo-retail-mcp.ts'].map(file => [file, hash(path.join(app,file))]));
   fs.writeFileSync(path.join(output, 'build-inputs.json'), JSON.stringify({ ...release, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), sourceDirty: !!sourceStatus.trim(), sourceStatus, bundleHashes, bunSha256: hash(bun), stage, signed: false }, null, 2));
   await build({ targets: Platform.WINDOWS.createTarget(['nsis'], 1), config, publish: 'never' });
   const installer = `Merqo-Setup-${release.version}-x64.exe`;

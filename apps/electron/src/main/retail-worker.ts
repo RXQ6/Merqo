@@ -1,10 +1,21 @@
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync,readFileSync } from 'node:fs';
 import type { RetailReply } from '../../../../packages/retail-domain/src/operations';
 
+// A backup freezes worker admission, drains existing workers, then releases queued requests.
+const gates=new Map<string,{frozen:boolean;active:Set<Promise<unknown>>;waiters:Array<()=>void>}>();
+function gate(id:string){let g=gates.get(id);if(!g){g={frozen:false,active:new Set(),waiters:[]};gates.set(id,g);}return g;}
+export async function freezeRetailWorkers<T>(id:string,run:()=>Promise<T>):Promise<T>{const g=gate(id);if(g.frozen)throw Error('当前工作空间正在备份');g.frozen=true;try{await Promise.allSettled([...g.active]);return await run();}finally{g.frozen=false;g.waiters.splice(0).forEach(w=>w());}}
+const blockedRestoredOperations=new Set(['approval_resolve','simulation_execute','execution_reconcile','compensation_resolve','compensation_execute','compensation_reconcile','batch_run','batch_retry_item','batch_recover','decision_submit','decision_revise','review_finalize','check_tick','check_configure','check_run','check_catchup','check_retry']);
+export async function requestRetailWorker(workspace:{rootPath:string;name:string},workspaceId:string,payload:unknown,operation:string):Promise<RetailReply>{
+ const g=gate(workspaceId);while(g.frozen)await new Promise<void>(resolve=>g.waiters.push(resolve));
+ const marker=join(workspace.rootPath,'retail','restored-history.json');let owner=workspaceId;
+ if(existsSync(marker)){const restored=JSON.parse(readFileSync(marker,'utf8'));if(!restored.ready)throw Error('此恢复工作空间未完成注册与凭据校验，请从原始备份重新恢复');if(blockedRestoredOperations.has(operation))throw Error('恢复工作空间保留历史证据，审批、执行与自动巡检已锁定；请在正常工作空间重新调查和审批');owner=restored.originalWorkspaceId;}
+ const pending=runRetailWorker(workspace,owner,payload,operation);g.active.add(pending);try{return await pending;}finally{g.active.delete(pending);}
+}
 /** Scope and role come from trusted main-process callers, never renderer fields. */
-export async function requestRetailWorker(workspace: {rootPath:string;name:string}, workspaceId: string, payload: unknown, operation: string): Promise<RetailReply> {
+async function runRetailWorker(workspace: {rootPath:string;name:string}, workspaceId: string, payload: unknown, operation: string): Promise<RetailReply> {
   const root = process.env.CRAFT_APP_ROOT || process.cwd();
   const worker = join(root, 'scripts/retailpilot-data-worker.ts');
   if (!existsSync(worker)) throw new Error('经营数据工作进程缺失，请重新安装或重新构建当前版本');

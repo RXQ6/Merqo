@@ -1,0 +1,13 @@
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(denied.error.includes('恢复工作空间'))
+
+    at backupWorkflow (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:132:157)
+    at async main (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:70:40) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

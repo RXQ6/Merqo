@@ -1,3 +1,4 @@
+import {BackupPanel} from './BackupPanel';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {RetailRequest} from '../../../../../packages/retail-domain/src/operations';
 import type {SyncView,SyncConfig,SyncJob} from '../../../../../packages/retail-domain/src/adapters/sync-contract';
@@ -87,5 +88,6 @@ export function ConnectionsPanel(){
     {selectedJob===job.id&&<IngestionPanel key={job.id} job={job}/>}
    </article>)}
   </section>
+ <BackupPanel/>
  </div>;
 }

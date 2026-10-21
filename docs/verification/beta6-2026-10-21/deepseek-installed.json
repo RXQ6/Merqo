@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "checks": [
+    "startup fetches authenticated API list, capabilities and preserves the unreturned old selection",
+    "failed refresh exposes safe HTTP error and retains cached models and last successful sync",
+    "manual refresh discovers a new ID absent from SDK and can select it as connection default",
+    "actual restart while API fails preserves discovered model metadata and selected default"
+  ],
+  "calls": 4,
+  "fixture": true,
+  "liveInference": false
+}

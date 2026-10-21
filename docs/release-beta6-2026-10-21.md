@@ -14,4 +14,12 @@
 
 安装包未签名。本机验收不代替干净虚拟机、其他 Windows 版本或真实平台验收。旧安装包的检查逻辑不会被远程改写；首次升级请从本版 Release 下载新安装包。
 
-源码修复证据见[更新检查修复](update-check-fix-2026-10-21.md)和[经营界面验收](verification/business-workbench-2026-10-21/report.md)。安装验收与发布结果将在完成后归档。
+源码修复证据见[更新检查修复](update-check-fix-2026-10-21.md)和[经营界面验收](verification/business-workbench-2026-10-21/report.md)。安装验收与发布结果见下方记录。
+
+## 安装验收与公开发布
+
+已发布：[GitHub beta.6](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.6)。安装包源于干净源码提交 ecd8e9a2cf342ae68d5d9e818b65f8dfa2f16a06，sourceDirty=false；标签绑定该提交。
+
+本机30项安装验收通过，包括实际安装版版本显示、GitHub错误及重试、三场景协议、交易和模型列表、同版本重装保留数据和卸载保留配置；完整记录见[验收目录](verification/beta6-2026-10-21/report.md)。371项业务测试、3362个断言及8项更新测试通过。
+
+安装包204321042字节；SHA-256为17bf19b43242d11bf34d618a4be16af16a388aa92648c7ed2682a5fa8256311b。GitHub返回的大小及摘要与本地一致。未覆盖beta.5历史资产，首次升级需要手动下载安装。

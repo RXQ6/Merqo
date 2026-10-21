@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\commerce-ui-MPXGYY",
+  "checks": [
+    "downloaded real exchange template imports deposit with cash but zero settled units",
+    "balance, cancellation, physical return, refund and linked replacement import through UI without duplicate cash or units",
+    "a second replacement cannot consume already linked returned units and leaves the ledger unchanged",
+    "actual allocation template, preview and exported CSV conserve independent pools with deterministic residual and excluded gift",
+    "downloaded nested pack imports through UI, renders child tree and independently calculates exact pack profit under version 6",
+    "actual process restart retains replacement lineage, financial totals and nested composition",
+    "inventory and advertising expose full-scope business dates, grouped batches and independent source coverage in their actual pages"
+  ],
+  "modelCalls": 0,
+  "realPlatform": false
+}

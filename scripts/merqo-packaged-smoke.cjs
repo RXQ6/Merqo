@@ -94,7 +94,7 @@ async function main() {
       await page.getByRole('button', { name: '暂停调查', exact: true }).click();
       await expect.poll(async () => (await request({ op: 'investigations', id })).data[0].state).toBe('paused');
       releaseHeld();
-      await page.getByRole('button', { name: '返回会话', exact: true }).click();
+      await page.getByRole('button', { name: '高级工作台', exact: true }).click();
       await close('paused'); await launch();
       assert.equal((await request({ op: 'investigations', id })).data[0].state, 'paused');
       await page.getByRole('button', { name: '经营分析', exact: true }).click();
@@ -141,7 +141,7 @@ async function main() {
   assert.equal(await page.getByLabel('经营指标').innerText(),metricText);
   checks.push('actual UI uses bounded server pages; next-page and search preserve full-scope exact metric totals');
   await page.screenshot({ path: path.join(out, 'installed-analysis.png') });
-  await page.getByRole('button', { name: '返回会话', exact: true }).click();
+  await page.getByRole('button', { name: '高级工作台', exact: true }).click();
   await expect(page.locator('[data-focus-zone="sidebar"]')).toBeVisible();
   checks.push('analysis and conversations round-trip in a single window');
   await close('initial'); await launch();

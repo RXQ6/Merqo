@@ -47,7 +47,7 @@ export function selectMerqoRelease(payload: unknown, includePrerelease: boolean)
   return candidates[0];
 }
 
-export async function fetchMerqoRelease(currentVersion: string, fetcher: typeof fetch = fetch): Promise<MerqoRelease> {
+export async function fetchMerqoRelease(currentVersion: string, fetcher: (url: string, init?: RequestInit) => Promise<Response> = fetch): Promise<MerqoRelease> {
   const response = await fetcher(MERQO_RELEASES_API, {
     headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'Merqo-Desktop' },
     signal: AbortSignal.timeout(15000),

@@ -41,12 +41,12 @@ describe('Merqo release identity and update feed', () => {
     const fetcher = (async (url: string | URL | Request) => {
       expect(url).toBe(MERQO_RELEASES_API);
       return Response.json([published('0.1.0-beta.5')]);
-    }) as typeof fetch;
+    });
     const result = await fetchMerqoRelease('0.1.0-beta.3', fetcher);
     expect(result.releaseUrl).toBe('https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.5');
   });
   test('network and HTTP failures propagate as failed checks', async () => {
-    await expect(fetchMerqoRelease('0.1.0-beta.5', (async () => new Response('', { status: 403 })) as typeof fetch)).rejects.toThrow('HTTP 403');
-    await expect(fetchMerqoRelease('0.1.0-beta.5', (async () => { throw new Error('offline'); }) as typeof fetch)).rejects.toThrow('offline');
+    await expect(fetchMerqoRelease('0.1.0-beta.5', async () => new Response('', { status: 403 }))).rejects.toThrow('HTTP 403');
+    await expect(fetchMerqoRelease('0.1.0-beta.5', async () => { throw new Error('offline'); })).rejects.toThrow('offline');
   });
 });

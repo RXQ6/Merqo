@@ -9,7 +9,7 @@ export interface AllocationLine extends AllocationInput {allocated_discount_mino
 const compare=(a:string,b:string)=>a<b?-1:a>b?1:0;
 
 /** Largest remainder in integer fen. The explicit original gross is the weight for both pools. */
-function distribute(rows:AllocationInput[],total:number):Map<string,number>{
+export function distributeMinor(rows:Array<Pick<AllocationInput,'line_id'|'eligible'|'gross_minor'>>,total:number):Map<string,number>{
  const eligible=rows.filter(r=>r.eligible&&r.gross_minor>0),weight=eligible.reduce((n,r)=>n+BigInt(r.gross_minor),0n);
  if(total&&weight===0n)throw Error('没有可分摊的正金额参与行');
  const values=eligible.map(r=>{const product=BigInt(total)*BigInt(r.gross_minor);return{id:r.line_id,value:weight?product/weight:0n,remainder:weight?product%weight:0n};});
@@ -28,7 +28,7 @@ export function allocateOrders(input:AllocationInput[]):AllocationLine[]{
   const first=rows[0]!;
   if(rows.some(r=>r.order_discount_minor!==first.order_discount_minor||r.order_subsidy_minor!==first.order_subsidy_minor))throw Error(`${order}：订单优惠和补贴须在各行一致声明`);
   if(BigInt(first.order_discount_minor)>rows.filter(r=>r.eligible).reduce((n,r)=>n+BigInt(r.gross_minor),0n))throw Error(`${order}：商家优惠超过参与行标价合计`);
-  const discounts=distribute(rows,first.order_discount_minor),subsidies=distribute(rows,first.order_subsidy_minor);
+  const discounts=distributeMinor(rows,first.order_discount_minor),subsidies=distributeMinor(rows,first.order_subsidy_minor);
   for(const row of rows){const discount=discounts.get(row.line_id)??0,subsidy=subsidies.get(row.line_id)??0;output.push({...row,allocated_discount_minor:discount,platform_subsidy_minor:subsidy,settlement_minor:row.gross_minor-discount+subsidy});}
  }
  return output.sort((a,b)=>compare(a.order_id,b.order_id)||compare(a.line_id,b.line_id));

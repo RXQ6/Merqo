@@ -3,7 +3,7 @@ const {_electron:electron}=require(process.env.MERQO_PLAYWRIGHT_MODULE||'playwri
 const {expect}=require((process.env.MERQO_PLAYWRIGHT_MODULE||'playwright')+'/test');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {spawnSync}=require('node:child_process');
-const root=path.resolve(__dirname,'..'),profile=['--visual','--maintenance','--comparison','--partial-cancel','--backup'].some(f=>process.argv.includes(f))?process.env.MERQO_PREVIEW_PROFILE:fs.mkdtempSync(path.join(root,'.runtime/ingestion-ui-')),out=path.join(root,'artifacts/ingestion-workflow',new Date().toISOString().replace(/[:.]/g,'-'));
+const root=path.resolve(__dirname,'..'),profile=['--visual','--maintenance','--comparison','--partial-cancel','--backup','--promotion'].some(f=>process.argv.includes(f))?process.env.MERQO_PREVIEW_PROFILE:fs.mkdtempSync(path.join(root,'.runtime/ingestion-ui-')),out=path.join(root,'artifacts/ingestion-workflow',new Date().toISOString().replace(/[:.]/g,'-'));
 if(!profile)throw Error('Visual preview requires the completed isolated test profile');
 fs.mkdirSync(out,{recursive:true});let app,page;const checks=[];
 const button=name=>page.getByRole('button',{name,exact:true});
@@ -67,6 +67,7 @@ async function extended(panel,bad,completed){
  checks.push('actual transaction CSV plus warehouse inspection UI rejects non-return targets and excess quantities, records one defective returned unit, preserves it after restart, and leaves transaction events unchanged');
 }
 async function main(){
+ if(process.argv.includes('--promotion')){await promotionWorkflow();return;}
  if(process.argv.includes('--backup')){await backupWorkflow();return;}
  if(process.argv.includes('--partial-cancel')){await partialCancellation();return;}
  if(process.argv.includes('--comparison')){await comparison();return;}
@@ -133,4 +134,15 @@ async function backupWorkflow(){
  const target=(await panel.getByText(/^位置：/).innerText()).replace('位置：','').trim();assert(target.startsWith(parent+path.sep));assert(fs.existsSync(path.join(target,'retail','restored-history.json')));assert.equal((await ledger('csv')).total,original.total);await close('backup-before-restart.zip');await launch();
  const verify=spawnSync(process.env.CRAFT_BUN||'bun',['-e',"const {Database}=require('bun:sqlite');const db=new Database(process.argv[1],{readonly:true});console.log(db.query(\"SELECT COUNT(*) n FROM transaction_events WHERE source='csv'\").get().n);db.close()",path.join(target,'retail','operations.sqlite.transactions.sqlite')],{cwd:root,encoding:'utf8',windowsHide:true});assert.equal(verify.status,0,verify.stderr);assert.equal(Number(verify.stdout.trim()),original.total);await close('backup-after-restart.zip');
  checks.push('real UI/main/worker encrypted backup, wrong-password rejection, reviewed isolated workspace registration, transaction totals equal, credential manager staging-key restore verified by actual staged-page decryption, historical execution blocked, source preserved; restored database reopened after actual application restart; native file dialogs directed to fixture paths');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,backupOnly:true,checks,syntheticOnly:true,realPlatformCalls:0,profile,restoredPath:target},null,2));console.log(JSON.stringify({ok:true,backupOnly:true,out}));
+}
+
+async function promotionWorkflow(){
+ await launch();const before=await ledger('csv');await button('交易与退款').click();const panel=page.getByRole('region',{name:'促销资格与赠品成本',exact:true}),result=panel.getByLabel('促销资格核对结果',{exact:true});await panel.scrollIntoViewIfNeeded();
+ const getDownload=async(name,file)=>{await app.evaluate(({BrowserWindow},{url,file})=>{const w=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL()===url);w.webContents.session.once('will-download',(_event,item)=>item.setSavePath(file));},{url:page.url(),file});await panel.getByRole('button',{name,exact:true}).click();await expect.poll(()=>{try{JSON.parse(fs.readFileSync(file,'utf8'));return true;}catch{return false;}}).toBe(true);return JSON.parse(fs.readFileSync(file,'utf8'));};
+ const input=await getDownload('下载促销资格示例',path.join(out,'promotion-sample.json'));const upload=async value=>await panel.getByLabel('选择促销资格文件',{exact:true}).setInputFiles({name:'promotion-fixture.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});
+ await upload(input);await expect(result).toContainText('核对结果：适用');await expect(result).toContainText('商品与赠品贡献 ¥35.00');await panel.screenshot({path:path.join(out,'promotion-eligible.png')});const exported=await getDownload('导出促销资格核对结果',path.join(out,'promotion-result.json'));assert.equal(exported.result.totals.contributionMinor,3500);assert.equal(exported.result.totals.netSalesMinor,13000);assert.equal(exported.result.totals.giftCostMinor,500);assert.equal(exported.inputHash,require('node:crypto').createHash('sha256').update(JSON.stringify(exported.input)).digest('hex'));
+ const missing=structuredClone(input);missing.membership.status='unknown';await upload(missing);await expect(result).toContainText('核对结果：待补证');await expect(result).toContainText('缺少下单时会员资格');await expect(result.getByText('商品与赠品贡献 ¥35.00',{exact:true})).toHaveCount(0);
+ const exclusive=structuredClone(input);exclusive.rules[0].stacksWith=[];await upload(exclusive);await expect(result).toContainText('核对结果：不适用');await expect(result).toContainText('未双向允许叠加');
+ const unknownCost=structuredClone(input);unknownCost.gifts[0].totalCostMinor=null;await upload(unknownCost);await expect(result).toContainText('额外赠品成本 未知');await expect(result).toContainText('商品与赠品贡献 未知');await panel.screenshot({path:path.join(out,'promotion-unknown.png')});
+ const included=structuredClone(input);included.gifts[0].costBasis='included_in_goods';await upload(included);await expect(result).toContainText('商品与赠品贡献 ¥40.00');assert.equal((await ledger('csv')).total,before.total);assert.deepEqual((await ledger('csv')).totals,before.totals);await close('promotion.zip');checks.push('actual UI downloads declared-rule sample, evaluates sequential thresholds/stacking/member status, exports replay input with matching SHA256 and 3500 fen contribution, rejects incompatible stacking, keeps missing member/gift cost unknown, avoids duplicating included gift costs and leaves ledger unchanged');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,promotionOnly:true,checks,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,promotionOnly:true,out}));
 }

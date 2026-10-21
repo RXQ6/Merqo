@@ -1,0 +1,17 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\order-allocation.test.ts:
+(pass) integer largest remainders conserve each pool, use stable line IDs, exclude gifts and ignore input ordering [10.38ms]
+(pass) BigInt multiplication handles large orders without losing fen and separate orders never share discounts [7.42ms]
+(pass) duplicate lines, conflicting pools, invalid currency assumptions or impossible allocation reject the whole input [1.03ms]
+
+packages\retail-domain\src\promotion-eligibility.test.ts:
+(pass) explicit sequential thresholds and bilateral stacking allocate exact integer discounts and gift costs [2.30ms]
+(pass) unknown eligibility never becomes zero or silently skips a selected rule; ineligible combinations have no financial result [0.53ms]
+(pass) gift cost inclusions do not duplicate goods costs; unknown gifts and zero-weight owners remain unknown [0.65ms]
+(pass) invalid references, duplicate identities, floating money, over-discount and guessed member rules reject [0.84ms]
+
+ 7 pass
+ 0 fail
+ 494 expect() calls
+Ran 7 tests across 2 files. [636.00ms]

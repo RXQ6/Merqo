@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "promotionOnly": true,
+  "checks": [
+    "actual UI downloads declared-rule sample, evaluates sequential thresholds/stacking/member status, exports replay input with matching SHA256 and 3500 fen contribution, rejects incompatible stacking, keeps missing member/gift cost unknown, avoids duplicating included gift costs and leaves ledger unchanged"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

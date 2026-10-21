@@ -1,0 +1,10 @@
+page.waitForEvent: Timeout 30000ms exceeded while waiting for event "download"
+=========================== logs ===========================
+waiting for event "download"
+============================================================
+    at getDownload (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:141:58)
+    at promotionWorkflow (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:142:20)
+    at async main (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:70:43) {
+  log: [],
+  name: 'TimeoutError'
+}

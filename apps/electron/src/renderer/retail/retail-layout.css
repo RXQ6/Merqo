@@ -22,7 +22,7 @@
 .retail-app .retail-scope-evidence h2 { font-size: 13px; }
 .retail-section-title { padding: 20px var(--retail-space); gap: 16px; align-items: flex-start; }
 .retail-section-title p { margin-top: 6px; line-height: 1.8; }
-.retail-main > section > .retail-section-title { padding-inline: 0; }
+.retail-main > section:not(.retail-panel) > .retail-section-title { padding-inline: 0; }
 .retail-panel { border-radius: 8px; margin-bottom: 20px; }
 .retail-panel > h2, .retail-panel > h3 { margin: 0; padding: 20px var(--retail-space) 0; }
 .retail-main .retail-panel > p { margin: 10px var(--retail-space) 18px; padding: 0; max-width: 56rem; line-height: 1.8; }

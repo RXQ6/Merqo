@@ -31,6 +31,15 @@ async function main() {
   await run(process.execPath,[path.join(__dirname,'merqo-deepseek-models-check.cjs'),exe],'deepseek-smoke.log');
   const deepseek=JSON.parse(fs.readFileSync(path.join(out,'deepseek-smoke.log'),'utf8').trim());assert.equal(deepseek.ok,true);checks.push(...deepseek.checks);
   fs.copyFileSync(path.join(deepseek.out,'result.json'),path.join(out,'deepseek-installed.json'));
+  const previousPreviewProfile=process.env.MERQO_PREVIEW_PROFILE;
+  process.env.MERQO_PREVIEW_PROFILE=smoke.profile;
+  try {
+    await run(process.execPath,[path.join(__dirname,'merqo-update-ui-check.cjs'),exe],'update-smoke.log');
+  } finally {
+    if(previousPreviewProfile===undefined)delete process.env.MERQO_PREVIEW_PROFILE;else process.env.MERQO_PREVIEW_PROFILE=previousPreviewProfile;
+  }
+  const update=JSON.parse(fs.readFileSync(path.join(out,'update-smoke.log'),'utf8').trim());assert.equal(update.ok,true);checks.push(...update.checks);
+  fs.copyFileSync(path.join(update.out,'result.json'),path.join(out,'update-installed.json'));
   await run(installer, ['/S', `/D=${install}`], 'reinstall.log');
   await run(process.execPath, [path.join(__dirname, 'merqo-packaged-smoke.cjs'), exe, '--restore-profile', smoke.profile], 'restored-smoke.log');
   const restored = JSON.parse(fs.readFileSync(path.join(out, 'packaged-restored.json'), 'utf8'));

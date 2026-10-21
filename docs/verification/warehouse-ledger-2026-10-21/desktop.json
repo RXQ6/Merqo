@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "warehouseOnly": true,
+  "checks": [
+    "actual warehouse UI records opening, separate transfer departure/arrival and shipment, keeps pending units out of destination stock, rejects negative stock/excess arrival, caps purchase restock by qualified receipt and return restock by real inspection dispositions, preserves scoped balances after actual restart and leaves transactions unchanged by warehouse operations"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

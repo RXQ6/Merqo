@@ -1,0 +1,12 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\warehouse-store.test.ts:
+(pass) separate transfer departure/arrival conserves physical stock and in-transit units, scopes warehouses and survives restart [121.32ms]
+(pass) purchase receipts cannot exceed explicitly qualified quantity or invent batch expiry; stale evidence invalidates preview [88.53ms]
+(pass) negative prefixes, over-arrival, duplicate departures and unknown or expired sellable batches are blocked atomically [40.67ms]
+(pass) explicit returned inspection dispositions cap restocking; a refund or mismatched warehouse cannot authorize stock [401.50ms]
+
+ 4 pass
+ 0 fail
+ 28 expect() calls
+Ran 4 tests across 1 file. [2.17s]

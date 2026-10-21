@@ -27,3 +27,5 @@
 后续售后仍需部分取消、平台售后专用映射、仓库真实入库及换货差价；本次质检不是整个售后流程完成。
 
 实现：`contribution.ts`、`transaction-store.ts`、`return-inspection-contract.ts`、`return-inspection-store.ts`；界面为 `ContributionPanel.tsx`、`ReturnInspectionPanel.tsx`。证据见[本轮验收](verification/continuous-development-2026-10-20/report.md)。
+
+后续开发版已补独立[仓库收发存与引用入库](P1-warehouse-ledger-2026-10-21.md)：原采购到货/退回质检本身仍不自动增加库存，需要另行预览确认；真实平台库存回写仍未实现。

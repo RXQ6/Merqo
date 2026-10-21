@@ -1,0 +1,13 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\exchange-settlement.test.ts:
+(pass) whole-line difference matching preserves the incomplete replacement payment state and separates physical return from refund [7.49ms]
+(pass) refund-and-repurchase requires each flow even when the net difference matches [0.38ms]
+(pass) negative difference explicitly requires a refund; no payment or physical receipt is invented [0.22ms]
+(pass) unknown link, wrong scope, partial returns, reused old line, excess entitlement, stale declaration and later new-order refunds block certainty [0.27ms]
+(pass) frozen reports survive later imports, real database reopening and encrypted backup recovery without changing transaction totals [401.66ms]
+
+ 5 pass
+ 0 fail
+ 36 expect() calls
+Ran 5 tests across 1 file. [1.81s]

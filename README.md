@@ -12,7 +12,7 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 ## Current source status — 2026-10-21
 
-The development source includes the operational workflows below. **The published beta.5 installer predates these additions**; build from source to try them. The latest local acceptance passed **357 domain tests and 3,204 assertions**, domain/Electron type checks, main/renderer builds, and the warehouse desktop workflow with an actual process restart. See the [verification record](docs/verification/warehouse-maintenance-2026-10-21/report.md) and [development route](docs/development-progress-2026-10-20.md).
+The development source includes the operational workflows below. **The published beta.5 installer predates these additions**; build from source to try them. Whole-line exchange cash-flow reconciliation is also available in **交易与退款 → 换货差价核对**; it preserves declared agreements and frozen evidence, and does not post credits or mark replacement orders settled. See the [contract](docs/P1-exchange-settlement-2026-10-21.md). The latest local acceptance passed **362 domain tests and 3,240 assertions**, domain/Electron type checks, main/renderer builds, and the warehouse desktop workflow with an actual process restart. See the [verification record](docs/verification/exchange-settlement-2026-10-21/report.md) and [development route](docs/development-progress-2026-10-20.md).
 
 | UI entry | Implemented in the current source | Scope and evidence |
 | --- | --- | --- |
@@ -73,7 +73,7 @@ The beta.5 installer passed 27 checks on Windows 11: isolated installation, thre
 
 ## Build from source
 
-The latest source domain run passed 357 tests and 3,204 assertions. The fixed synthetic business set passed 48/48. The latest archived real-model batch passed margin 5/5, inventory 4/5 and advertising 5/5, with zero observed forbidden-action events; the inventory needs-evidence result and earlier batches remain recorded. These are bounded gates, not production accuracy. The current operational additions have local contract and desktop acceptance; they have not received a new live-model quality batch or a new installer release.
+The latest source domain run passed 362 tests and 3,240 assertions. The fixed synthetic business set passed 48/48. The latest archived real-model batch passed margin 5/5, inventory 4/5 and advertising 5/5, with zero observed forbidden-action events; the inventory needs-evidence result and earlier batches remain recorded. These are bounded gates, not production accuracy. The current operational additions have local contract and desktop acceptance; they have not received a new live-model quality batch or a new installer release.
 
 ### Prerequisites
 
@@ -280,7 +280,7 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The latest source verification on **2026-10-21** passed **357 domain tests, 0 failures and 3,204 assertions across 50 files** (111.76 seconds), domain and Electron TypeScript checks, and main/renderer builds. Isolated desktop acceptance exercised the revised layout at wide/narrow window sizes, partial reservation release and linked shipment, blocked use of held stock, count/expiry corrections, state changes, transfer loss/physical return and persistence after actual process restarts. See the [logs and desktop results](docs/verification/warehouse-maintenance-2026-10-21/report.md). Earlier modules retain their own acceptance records linked above. Desktop tests use isolated profiles and write raw local reports under ignored `artifacts/`; curated verification records are tracked under `docs/verification/`. This was source acceptance on the current Windows 11 host, not a new package, clean-machine or real-platform acceptance.
+The latest source verification on **2026-10-21** passed **362 domain tests, 0 failures and 3,240 assertions across 51 files** (170.67 seconds), domain and Electron TypeScript checks, and main/renderer builds. The latest isolated desktop acceptance exercised whole-line exchange reconciliation, equal-net-difference but unmatched gross flows, stale evidence, exact frozen report export and actual process restart. Earlier acceptance also covers layout at wide/narrow sizes and warehouse reservations, corrections and transfer exceptions. See the [logs and desktop results](docs/verification/exchange-settlement-2026-10-21/report.md). Earlier modules retain their own acceptance records linked above. Desktop tests use isolated profiles and write raw local reports under ignored `artifacts/`; curated verification records are tracked under `docs/verification/`. This was source acceptance on the current Windows 11 host, not a new package, clean-machine or real-platform acceptance.
 
 ### Fixed business evaluation
 
@@ -306,7 +306,7 @@ Inference transport tests use a **local HTTP contract fixture**. They verify the
 - **Windows preview:** the public unsigned beta.5 NSIS installer bundles the retail runtime and passed 27 local Windows 11 lifecycle checks. It predates the current sync, cost, backup, promotion, procurement and warehouse additions. Clean-VM, other Windows-version and cross-version NSIS acceptance remain open. See [beta.5 acceptance](docs/release-beta5-2026-10-20.md).
 - **M5 live evaluation (2026-10-18):** the latest archived batch passed margin 5/5, inventory 4/5 and advertising 5/5 with zero observed forbidden-action events. The inventory needs-evidence result and earlier batches remain recorded. See [all batches](docs/M5-live-evaluation.md). This narrow synthetic gate is not complete production or safety validation, and was not rerun for the latest operational additions.
 - **Local acceptance completed:** margin claim/Reviewer calibration, 100,000-row margin pagination and 30-query p95, persistent pause/resume with epoch fencing and retained call budgets, isolated AgentBackend reuse, actual Windows upgrade/reinstall/uninstall and local beta.2 packaging. See [evidence and scope limits](docs/M5-local-acceptance.md).
-- **Remaining development chain:** warehouse picking and automatic allocation → exchange price-difference settlement → refund-adjusted advertising attribution and overlapping campaigns → independent multi-shop connections and unified entity mapping → additional cost/accounting scope and Agent integration of the new ledgers → authenticated platform adapters, real writes/readback and production multi-user approval → outcome observation and release acceptance. See the [current route](docs/development-progress-2026-10-20.md).
+- **Remaining development chain:** warehouse picking and automatic allocation → partial/multi-line exchange allocation and actual credit posting → refund-adjusted advertising attribution and overlapping campaigns → independent multi-shop connections and unified entity mapping → additional cost/accounting scope and Agent integration of the new ledgers → authenticated platform adapters, real writes/readback and production multi-user approval → outcome observation and release acceptance. See the [current route](docs/development-progress-2026-10-20.md).
 - **Additional scope:** promotion usage limits, gift quantity/stock rules and persisted rule management; supplier payments; full-app/in-place/cloud recovery and a reviewed way to unlock execution in restored workspaces remain open.
 - **Release and performance gaps:** publish a new installer after package acceptance, obtain clean/other-version Windows environments, expand adversarial and business-quality evaluation, and validate cold-cache, concurrent and full-UI performance. Existing bounded 100,000-row query checks do not validate combined workloads or the new ledgers at scale. Full PRD release gates remain unmet.
 
@@ -315,7 +315,7 @@ No real ERP/WMS or advertising platform integration, real business writes or pro
 ## Documentation
 
 - [Current development route and remaining scope](docs/development-progress-2026-10-20.md)
-- [Latest source acceptance: warehouse ledger](docs/verification/warehouse-maintenance-2026-10-21/report.md)
+- [Latest source acceptance: exchange cash-flow reconciliation](docs/verification/exchange-settlement-2026-10-21/report.md)
 - [Continuous operational development and acceptance](docs/P1-continuous-development-2026-10-20.md)
 - [Platform sync setup and resumable jobs](docs/P1-sync-workflow-2026-10-20.md)
 - [Reviewed event ingestion and reconciliation](docs/P1-ingestion-workflow-2026-10-20.md)
@@ -324,6 +324,7 @@ No real ERP/WMS or advertising platform integration, real business writes or pro
 - [Procurement arrivals and batch expiry](docs/P1-procurement-2026-10-21.md)
 - [Warehouse ledger and transfers](docs/P1-warehouse-ledger-2026-10-21.md)
 - [Warehouse reservations, corrections and transfer exceptions](docs/P1-warehouse-maintenance-2026-10-21.md)
+- [Whole-line exchange cash-flow reconciliation](docs/P1-exchange-settlement-2026-10-21.md)
 - [Windows preview installation and packaging](docs/windows-preview.md)
 - [M5 business evaluation and acceptance](docs/M5-business-evaluation.md)
 - [M5 real-model evaluation, failures and next actions](docs/M5-live-evaluation.md)

@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "checks": [
+    "actual UI imports six explicitly linked transaction events, matches 50 CNY top-up without marking the replacement fully paid, detects pending gross flows despite equal net difference, retains stale declaration as needs-evidence, exports exact frozen input/events and persists reports after actual same-workspace restart; report generation leaves transaction totals unchanged"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

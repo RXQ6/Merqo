@@ -1,0 +1,25 @@
+import {useEffect,useRef,useState} from 'react';
+import {EXCHANGE_SETTLEMENT_DEMO,EXCHANGE_SETTLEMENT_CSV,ExchangeInputSchema,type ExchangeInput,type ExchangeReport} from '../../../../../packages/retail-domain/src/exchange-settlement';
+import type {RetailRequest,RetailReply} from '../../../../../packages/retail-domain/src/operations';
+const money=(n:number)=>'¥'+(n/100).toFixed(2);
+const labels={matched:'约定资金流匹配',pending:'尚有待收或待退',mismatch:'实际收退超过约定',needs_evidence:'需要补充结算依据'};
+export function ExchangeSettlementPanel({request,download}:{request:(r:RetailRequest)=>Promise<RetailReply|undefined>;download:(name:string,text:string,type?:string)=>void}){
+ const [input,setInput]=useState<ExchangeInput|null>(null),[reports,setReports]=useState<ExchangeReport[]>([]),[selected,setSelected]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[confirmed,setConfirmed]=useState(false);const file=useRef<HTMLInputElement>(null),pending=useRef(false);
+ useEffect(()=>{let active=true;void request({op:'exchange_reports'}).then(r=>{if(active&&r?.ok&&r.kind==='exchange_reports'){setReports(r.data);setSelected(r.data[0]?.id??'');}});return()=>{active=false;};},[request]);
+ async function open(f:File){setError('');setInput(null);setConfirmed(false);if(f.size>100000){setError('换货约定文件不能超过100 KB');return;}try{setInput(ExchangeInputSchema.parse(JSON.parse(await f.text())));}catch(e){setError(e instanceof Error?e.message:'约定文件无效');}}
+ async function analyze(){if(!input||!confirmed||pending.current)return;pending.current=true;setBusy(true);setError('');try{const r=await request({op:'exchange_analyze',input});if(!r?.ok||r.kind!=='exchange_reports')throw Error(r&&!r.ok?r.error:'换货核对失败');setReports(r.data);setSelected(r.data[0]?.id??'');}catch(e){setError(e instanceof Error?e.message:'换货核对失败');}finally{pending.current=false;setBusy(false);}}
+ const report=reports.find(r=>r.id===selected),a=report?.amounts;
+ return <section className="retail-panel retail-operational-panel" aria-label="换货差价核对"><h2>换货差价核对</h2><div className="retail-sync-form">
+  <p>分别核对旧单退款与新单收款，区分退旧重买、保留旧款补退差价。核对不会自动抵扣、收退款或改变订单结清状态。</p>
+  <details className="retail-method-note"><summary>适用范围与约定填写说明</summary><p>当前支持旧订单整行结清并已全部实物退回、同来源店铺渠道、等件数且单一换货分支。原款抵退额度、新单结算目标及策略须人工明确声明，不按件数均分金额。新单后续退款、取消和再次退回需补专用结算口径。金额单位为整数分，核对时间不能早于已知事件。仅证明已导入流水与声明约定是否匹配，不证明平台身份或资金完整性。</p></details>
+  <div className="retail-inline-actions"><button onClick={()=>download('Merqo-换货补差交易示例.csv','\uFEFF'+EXCHANGE_SETTLEMENT_CSV)}>下载换货补差交易示例</button><button onClick={()=>download('Merqo-换货结算约定示例.json',JSON.stringify(EXCHANGE_SETTLEMENT_DEMO,null,2),'application/json')}>下载换货约定示例</button><button disabled={busy} onClick={()=>file.current?.click()}>选择换货约定 JSON</button></div>
+  <input ref={file} className="retail-file-input" type="file" accept=".json,application/json" aria-label="选择换货约定文件" onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)void open(f);}}/>
+  {input&&<><p>待核对：{input.label} · {input.source==='csv'?'CSV声明':'合成演示'} · {input.sourceId}/{input.shop}/{input.channel} · 新单 {input.orderId}/{input.lineId}</p><p>策略：{input.strategy==='difference'?'保留旧款，补退差价':'退旧重买'} · 原款抵退额度 {money(input.oldCreditMinor)} · 新单结算目标 {money(input.newSettlementMinor)}</p><label className="retail-checkbox"><input type="checkbox" aria-label="确认换货约定口径" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>已核对约定及收退款口径；不将资金流匹配当作新单结清</label><button className="retail-primary" disabled={busy||!confirmed} onClick={()=>void analyze()}>核对换货差价并保存报告</button></>}
+  {error&&<p role="alert">{error}</p>}
+  {reports.length>0&&<label>最近换货核对报告（最多5份）<select aria-label="历史换货核对报告" value={selected} onChange={e=>setSelected(e.target.value)}>{reports.map(r=><option key={r.id} value={r.id}>{r.input.label} · {labels[r.status]} · {new Date(r.at).toLocaleString()}</option>)}</select></label>}
+  {report&&<div aria-label="换货差价核对结果"><h3>{labels[report.status]}</h3><p>原单 {report.oldOrderId??'未知'}/{report.oldLineId??'未知'} → 新单 {report.input.orderId}/{report.input.lineId} · {report.quantity??'未知'} 件</p>{report.reasons.map((s,i)=><p key={i}>{s}</p>)}
+   {a&&<div className="retail-table-wrap"><table aria-label="换货收退款对照"><thead><tr><th>资金流</th><th>声明应发生</th><th>已导入</th><th>差额（负数为超额）</th></tr></thead><tbody><tr><td>新单收款</td><td>{money(a.expectedNewCash)}</td><td>{money(a.newPaid)}</td><td>{money(a.outstandingPay)}</td></tr><tr><td>旧单退款</td><td>{money(a.expectedOldRefund)}</td><td>{money(a.oldRefund)}</td><td>{money(a.outstandingRefund)}</td></tr></tbody></table><p className="retail-muted">约定净差 {money(a.expectedDifference)} · 实际新增收款减退款 {money(a.actualDifference)}；分别核对两条资金流，净差相同不代表收退各自匹配。</p></div>}
+   <button onClick={()=>download('Merqo-换货差价核对报告.json',JSON.stringify(report,null,2),'application/json')}>导出换货核对报告与证据</button><details className="retail-method-note"><summary>冻结证据与范围</summary><p>报告 {report.id} · 账本摘要 {report.ledgerHash.slice(0,16)} · {report.events.length} 条关联事件。报告保留当时输入和事件，之后导入不会自动更新旧报告；页面上方的交易日期筛选不影响本工具指定的订单行。</p></details>
+  </div>}
+ </div></section>;
+}

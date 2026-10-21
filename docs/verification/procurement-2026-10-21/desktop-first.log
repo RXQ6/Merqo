@@ -1,0 +1,13 @@
+locator.scrollIntoViewIfNeeded: Error: strict mode violation: getByRole('region', { name: '采购到货与批次效期', exact: true }) resolved to 2 elements:
+    1) <section aria-label="采购到货与批次效期" class="retail-panel retail-operational-panel">…</section> aka getByTestId('signals-inventory').getByRole('region', { name: '采购到货与批次效期' })
+    2) <section aria-label="采购到货与批次效期" class="retail-panel retail-operational-panel">…</section> aka getByTestId('signals-ads').getByRole('region', { name: '采购到货与批次效期' })
+
+Call log:
+  - waiting for getByRole('region', { name: '采购到货与批次效期', exact: true })
+
+    at procurementWorkflow (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:152:159)
+    at async main (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:70:45) {
+  log: [
+    "  - waiting for getByRole('region', { name: '采购到货与批次效期', exact: true })"
+  ]
+}

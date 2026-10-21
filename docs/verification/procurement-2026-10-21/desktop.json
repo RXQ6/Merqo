@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "procurementOnly": true,
+  "checks": [
+    "actual UI imports plan and partial arrival across batches, shows 6 outstanding/overdue with explicit 3 qualified and 1 quarantined, rejects over-receipt and conflicting expiry, returns original receipt without claiming new writes, preserves procurement/expiry across actual restart and leaves transaction ledger unchanged"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

@@ -1,3 +1,4 @@
+import {ProcurementPanel} from './ProcurementPanel';
 import {SourceMetadataEditor,SourceMetadataSummary,emptySourceDraft,parseSourceDraft} from './SourceMetadata';
 import {ScopeEvidence} from './ScopeEvidence';
 import { useEffect, useRef, useState } from 'react';
@@ -86,6 +87,7 @@ export function SignalsPanel({ snapshot, request, busy, scope, onInvestigate, co
     </>}
     {renderTable('inventory')}{renderTable('ads')}
     {!compact && <section className="retail-panel"><div className="retail-section-title"><h2>场景导入批次与质量报告</h2></div>{batches.map(b => <div className="retail-signal-batch" key={b.id}><span>{b.kind === 'inventory' ? '库存' : '广告'} / {b.source === 'demo' ? '演示' : 'CSV'} · {new Date(b.importedAt).toLocaleString('zh-CN')} · 有效 {b.accepted} / 隔离 {b.rejected}</span><button onClick={() => download(`场景质量-${b.id}.json`, b)}>导出质量报告</button></div>)}</section>}
+    {!compact&&<ProcurementPanel request={request}/>}
   </section>;
 }
 function SignalEvidence({ record: r }: { record: SignalRecord }) {

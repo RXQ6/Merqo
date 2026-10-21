@@ -1,0 +1,13 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== 6
+
+    at procurementWorkflow (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:161:695)
+    at async main (D:\helson-skills\craft-agents-oss-main\retailpilot-agent\scripts\merqo-ingestion-workflow-check.cjs:70:45) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: 6,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

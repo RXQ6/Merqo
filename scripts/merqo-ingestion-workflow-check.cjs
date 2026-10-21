@@ -3,7 +3,7 @@ const {_electron:electron}=require(process.env.MERQO_PLAYWRIGHT_MODULE||'playwri
 const {expect}=require((process.env.MERQO_PLAYWRIGHT_MODULE||'playwright')+'/test');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {spawnSync}=require('node:child_process');
-const root=path.resolve(__dirname,'..'),profile=['--visual','--maintenance','--comparison','--partial-cancel','--backup','--promotion'].some(f=>process.argv.includes(f))?process.env.MERQO_PREVIEW_PROFILE:fs.mkdtempSync(path.join(root,'.runtime/ingestion-ui-')),out=path.join(root,'artifacts/ingestion-workflow',new Date().toISOString().replace(/[:.]/g,'-'));
+const root=path.resolve(__dirname,'..'),profile=['--visual','--maintenance','--comparison','--partial-cancel','--backup','--promotion','--procurement'].some(f=>process.argv.includes(f))?process.env.MERQO_PREVIEW_PROFILE:fs.mkdtempSync(path.join(root,'.runtime/ingestion-ui-')),out=path.join(root,'artifacts/ingestion-workflow',new Date().toISOString().replace(/[:.]/g,'-'));
 if(!profile)throw Error('Visual preview requires the completed isolated test profile');
 fs.mkdirSync(out,{recursive:true});let app,page;const checks=[];
 const button=name=>page.getByRole('button',{name,exact:true});
@@ -11,9 +11,9 @@ async function request(input){const r=await page.evaluate(input=>window.electron
 async function view(){return(await request({op:'sync_view'})).data;}
 async function ingest(){return(await request({op:'ingest_view'})).data;}
 async function ledger(source='demo'){return(await request({op:'transactions_page',source,startDate:'2026-10-01',endDate:'2026-10-31',basis:'event',shop:'',channel:'',offset:0,limit:100})).data;}
-async function launch(){
+async function launch(workspaceId){
  const env={...process.env,CRAFT_CONFIG_DIR:path.join(profile,'config'),RETAILPILOT_USER_DATA_DIR:path.join(profile,'chromium'),RETAILPILOT_SMOKE:'1'};delete env.ELECTRON_RUN_AS_NODE;
- app=await electron.launch({executablePath:path.join(root,'node_modules/electron/dist/electron.exe'),args:[path.join(root,'apps/electron')],cwd:root,env,timeout:60000});page=await app.firstWindow();page.setDefaultTimeout(30000);await page.context().tracing.start({screenshots:true,snapshots:true});
+ app=await electron.launch({executablePath:path.join(root,'node_modules/electron/dist/electron.exe'),args:[path.join(root,'apps/electron')],cwd:root,env,timeout:60000});page=await app.firstWindow();if(workspaceId){await expect.poll(()=>app.windows().some(p=>{try{return new URL(p.url()).searchParams.get('workspaceId')===workspaceId;}catch{return false;}})).toBe(true);page=app.windows().find(p=>{try{return new URL(p.url()).searchParams.get('workspaceId')===workspaceId;}catch{return false;}});}page.setDefaultTimeout(30000);await page.context().tracing.start({screenshots:true,snapshots:true});
  await expect.poll(async()=>await page.getByRole('button',{name:/^(Get Started|开始使用|Setup later|稍后设置|仅使用经营分析)$/}).count()||await page.locator('[data-focus-zone="sidebar"]').count(),{timeout:30000}).toBeGreaterThan(0);
  for(const name of [/^仅使用经营分析$/,/^(Get Started|开始使用)$/,/^(Setup later|稍后设置)$/]){const b=page.getByRole('button',{name});if(await b.count())await b.click();}
  await expect.poll(async()=>await page.getByTestId('retail-workspace').isVisible()||await button('经营分析').isVisible(),{timeout:30000}).toBe(true);if(!await page.getByTestId('retail-workspace').isVisible())await button('经营分析').click();await button('平台接入').click();
@@ -67,6 +67,7 @@ async function extended(panel,bad,completed){
  checks.push('actual transaction CSV plus warehouse inspection UI rejects non-return targets and excess quantities, records one defective returned unit, preserves it after restart, and leaves transaction events unchanged');
 }
 async function main(){
+ if(process.argv.includes('--procurement')){await procurementWorkflow();return;}
  if(process.argv.includes('--promotion')){await promotionWorkflow();return;}
  if(process.argv.includes('--backup')){await backupWorkflow();return;}
  if(process.argv.includes('--partial-cancel')){await partialCancellation();return;}
@@ -145,4 +146,18 @@ async function promotionWorkflow(){
  const exclusive=structuredClone(input);exclusive.rules[0].stacksWith=[];await upload(exclusive);await expect(result).toContainText('核对结果：不适用');await expect(result).toContainText('未双向允许叠加');
  const unknownCost=structuredClone(input);unknownCost.gifts[0].totalCostMinor=null;await upload(unknownCost);await expect(result).toContainText('额外赠品成本 未知');await expect(result).toContainText('商品与赠品贡献 未知');await panel.screenshot({path:path.join(out,'promotion-unknown.png')});
  const included=structuredClone(input);included.gifts[0].costBasis='included_in_goods';await upload(included);await expect(result).toContainText('商品与赠品贡献 ¥40.00');assert.equal((await ledger('csv')).total,before.total);assert.deepEqual((await ledger('csv')).totals,before.totals);await close('promotion.zip');checks.push('actual UI downloads declared-rule sample, evaluates sequential thresholds/stacking/member status, exports replay input with matching SHA256 and 3500 fen contribution, rejects incompatible stacking, keeps missing member/gift cost unknown, avoids duplicating included gift costs and leaves ledger unchanged');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,promotionOnly:true,checks,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,promotionOnly:true,out}));
+}
+
+async function procurementWorkflow(){
+ await launch();const before=await ledger('csv');await button('库存与广告').click();const panel=page.getByRole('region',{name:'采购到货与批次效期',exact:true});await panel.scrollIntoViewIfNeeded();await expect(panel.getByRole('button',{name:'下载采购到货示例',exact:true})).toBeVisible();
+ const sourceId='procurement-native-'+Date.now();const base={source_id:sourceId,shop_id:'SHOP-P',warehouse_id:'WH-NATIVE',purchase_id:'PO-NATIVE',line_id:'L1',sku:'SKU-P',spec:'one'};
+ const plan={...base,event_id:'P-N1',kind:'planned',quantity:10,eta:'2026-10-16',event_at:'2026-10-14T10:00:00+08:00'},arrival={...base,event_id:'R-N1',kind:'received',quantity:4,accepted_qty:3,quarantined_qty:1,batch_id:'B-N1',expires_on:'2026-11-01',event_at:'2026-10-15T10:00:00+08:00'};
+ const upload=async events=>{await expect(panel.getByRole('button',{name:'导入采购事件 JSON',exact:true})).toBeEnabled();await panel.getByLabel('选择采购事件文件',{exact:true}).setInputFiles({name:'procurement-events.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(events))});return panel.getByLabel('采购事件预览',{exact:true});};
+ for(const event of [plan,arrival]){const p=await upload([event]);await expect(p).toContainText('采购事件链校验通过');await p.getByRole('button',{name:'确认导入采购事件',exact:true}).click();await expect(panel.getByRole('status')).toContainText('采购导入完成：新增 1 条');}
+ await panel.getByLabel('采购截止日期',{exact:true}).fill('2026-10-21');await panel.getByLabel('采购来源',{exact:true}).fill(sourceId);await panel.getByRole('button',{name:'查询采购到货',exact:true}).click();await expect(panel.getByLabel('采购到货结果',{exact:true})).toContainText('计划 10 件 · 到货 4 件 · 合格 3 件 · 待处理 1 件 · 取消 0 件 · 未到 6 件 · 逾期未到 6 件');
+ const over=await upload([{...arrival,event_id:'R-EXCESS',quantity:7,accepted_qty:7,quarantined_qty:0}]);await expect(over).toContainText('累计到货与取消件数超过采购计划');await expect(over.getByRole('button',{name:'确认导入采购事件',exact:true})).toBeDisabled();
+ const changed=await upload([{...arrival,event_id:'R-BAD-EXPIRY',expires_on:'2026-11-02'}]);await expect(changed).toContainText('批次的效期冲突');await expect(changed.getByRole('button',{name:'确认导入采购事件',exact:true})).toBeDisabled();
+ const repeat=await upload([arrival]);await repeat.getByRole('button',{name:'确认导入采购事件',exact:true}).click();await expect(panel.getByRole('status')).toContainText('此文件已导入，返回原回执，本次没有新增事件');
+ await panel.getByLabel('采购到货结果',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'procurement.png')});const query={asOf:'2026-10-21',sourceId,shop:'',warehouse:''};const current=(await request({op:'procurement_view',query})).data;assert.equal(current.totals.outstanding,6);assert.equal(current.totals.nearExpiryBatches,1);assert.equal(current.recentWorkspaceReceipts.filter(r=>r.accepted===1).length>=2,true);assert.equal((await ledger('csv')).total,before.total);assert.deepEqual((await ledger('csv')).totals,before.totals);const workspaceId=new URL(page.url()).searchParams.get('workspaceId');assert(workspaceId);await close('procurement-before-restart.zip');await launch(workspaceId);const persisted=(await request({op:'procurement_view',query})).data;assert.equal(persisted.totals.outstanding,6);assert.equal(persisted.batches[0].expiresOn,'2026-11-01');assert.equal((await ledger('csv')).total,before.total);await close('procurement-after-restart.zip');
+ checks.push('actual UI imports plan and partial arrival across batches, shows 6 outstanding/overdue with explicit 3 qualified and 1 quarantined, rejects over-receipt and conflicting expiry, returns original receipt without claiming new writes, preserves procurement/expiry across actual restart and leaves transaction ledger unchanged');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,procurementOnly:true,checks,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,procurementOnly:true,out}));
 }

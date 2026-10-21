@@ -3,7 +3,7 @@ const {_electron:electron}=require(process.env.MERQO_PLAYWRIGHT_MODULE||'playwri
 const {expect}=require((process.env.MERQO_PLAYWRIGHT_MODULE||'playwright')+'/test');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {spawnSync}=require('node:child_process');
-const root=path.resolve(__dirname,'..'),profile=['--visual','--maintenance','--comparison','--partial-cancel','--backup','--promotion','--procurement','--warehouse'].some(f=>process.argv.includes(f))?process.env.MERQO_PREVIEW_PROFILE:fs.mkdtempSync(path.join(root,'.runtime/ingestion-ui-')),out=path.join(root,'artifacts/ingestion-workflow',new Date().toISOString().replace(/[:.]/g,'-'));
+const root=path.resolve(__dirname,'..'),profile=['--warehouse-maintenance','--layout-reservations','--visual','--maintenance','--comparison','--partial-cancel','--backup','--promotion','--procurement','--warehouse'].some(f=>process.argv.includes(f))?process.env.MERQO_PREVIEW_PROFILE:fs.mkdtempSync(path.join(root,'.runtime/ingestion-ui-')),out=path.join(root,'artifacts/ingestion-workflow',new Date().toISOString().replace(/[:.]/g,'-'));
 if(!profile)throw Error('Visual preview requires the completed isolated test profile');
 fs.mkdirSync(out,{recursive:true});let app,page;const checks=[];
 const button=name=>page.getByRole('button',{name,exact:true});
@@ -67,6 +67,8 @@ async function extended(panel,bad,completed){
  checks.push('actual transaction CSV plus warehouse inspection UI rejects non-return targets and excess quantities, records one defective returned unit, preserves it after restart, and leaves transaction events unchanged');
 }
 async function main(){
+ if(process.argv.includes('--warehouse-maintenance')){await warehouseMaintenance();return;}
+ if(process.argv.includes('--layout-reservations')){await layoutReservations();return;}
  if(process.argv.includes('--warehouse')){await warehouseWorkflow();return;}
  if(process.argv.includes('--procurement')){await procurementWorkflow();return;}
  if(process.argv.includes('--promotion')){await promotionWorkflow();return;}
@@ -161,6 +163,58 @@ async function procurementWorkflow(){
  const repeat=await upload([arrival]);await repeat.getByRole('button',{name:'确认导入采购事件',exact:true}).click();await expect(panel.getByRole('status')).toContainText('此文件已导入，返回原回执，本次没有新增事件');
  await panel.getByLabel('采购到货结果',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'procurement.png')});const query={asOf:'2026-10-21',sourceId,shop:'',warehouse:''};const current=(await request({op:'procurement_view',query})).data;assert.equal(current.totals.outstanding,6);assert.equal(current.totals.nearExpiryBatches,1);assert.equal(current.recentWorkspaceReceipts.filter(r=>r.accepted===1).length>=2,true);assert.equal((await ledger('csv')).total,before.total);assert.deepEqual((await ledger('csv')).totals,before.totals);const workspaceId=new URL(page.url()).searchParams.get('workspaceId');assert(workspaceId);await close('procurement-before-restart.zip');await launch(workspaceId);const persisted=(await request({op:'procurement_view',query})).data;assert.equal(persisted.totals.outstanding,6);assert.equal(persisted.batches[0].expiresOn,'2026-11-01');assert.equal((await ledger('csv')).total,before.total);await close('procurement-after-restart.zip');
  checks.push('actual UI imports plan and partial arrival across batches, shows 6 outstanding/overdue with explicit 3 qualified and 1 quarantined, rejects over-receipt and conflicting expiry, returns original receipt without claiming new writes, preserves procurement/expiry across actual restart and leaves transaction ledger unchanged');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,procurementOnly:true,checks,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,procurementOnly:true,out}));
+}
+
+async function warehouseMaintenance(){
+ assert(path.resolve(profile).startsWith(path.join(root,'.runtime','ingestion-ui-')),'isolated fixture profile required');
+ const config=JSON.parse(fs.readFileSync(path.join(profile,'config/config.json'),'utf8')),workspace=config.workspaces[0];await launch(workspace.id);await button('库存与广告').click();
+ const browserWindow=await app.browserWindow(page);await browserWindow.evaluate(w=>w.setSize(1440,1000));await expect.poll(()=>page.evaluate(()=>innerWidth)).toBeGreaterThan(1200);
+ const panel=page.getByRole('region',{name:'仓库收发存与调拨',exact:true}),sourceId='maintenance-native-'+Date.now();
+ const fixture=spawnSync(process.env.CRAFT_BUN||'bun',['-e',"import {WAREHOUSE_MAINTENANCE_DEMO} from './packages/retail-domain/src/warehouse-contract';console.log(JSON.stringify(WAREHOUSE_MAINTENANCE_DEMO))"],{cwd:root,encoding:'utf8',windowsHide:true});assert.equal(fixture.status,0,fixture.stderr);const events=JSON.parse(fixture.stdout).map(e=>({...e,source_id:sourceId}));
+ const upload=async list=>{await expect(panel.getByRole('button',{name:'导入仓库事件 JSON',exact:true})).toBeEnabled();await panel.getByLabel('选择仓库事件文件',{exact:true}).setInputFiles({name:'maintenance-native.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(list))});return panel.getByLabel('仓库事件预览',{exact:true});};
+ const p=await upload(events);await expect(p).toContainText('仓库事件链校验通过');await p.getByRole('button',{name:'确认导入仓库事件',exact:true}).click();await expect(panel.getByRole('status')).toContainText('库存导入完成：新增 7 条');
+ await panel.getByLabel('库存账本来源',{exact:true}).fill(sourceId);await panel.getByLabel('库存账本截止日期',{exact:true}).fill('2026-10-21');await panel.getByRole('button',{name:'查询仓库账本',exact:true}).click();await expect(panel.getByLabel('仓库账本结果',{exact:true})).toContainText('声明可售状态 5 件中预占 0 件');
+ await panel.getByText('调拨状态（前100项）',{exact:true}).click();await expect(panel.getByLabel('仓库账本结果',{exact:true})).toContainText('出库3 / 到仓0 / 丢失1 / 退回1 / 在途1');await panel.getByText('最近库存事件（前30条，共7条）',{exact:true}).click();await expect(panel.getByRole('table',{name:'库存事件审计',exact:true})).toContainText('盘点更正');await expect(panel.getByRole('table',{name:'库存事件审计',exact:true})).toContainText('2027-01-31');await panel.getByRole('heading',{name:'仓库收发存与调拨',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'warehouse-controls.png')});await panel.getByLabel('仓库账本结果',{exact:true}).locator('p').first().scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'warehouse-maintenance.png')});await panel.getByRole('table',{name:'库存事件审计',exact:true}).locator('thead').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'warehouse-audit.png')});
+ const wrong=await upload([{...events[1],event_id:'STALE-COUNT',expires_on:'2027-01-31',event_at:'2026-10-21T00:00:00+08:00'}]);await expect(wrong).toContainText('账面数量');await expect(wrong.getByRole('button',{name:'确认导入仓库事件',exact:true})).toBeDisabled();
+ const query={asOf:'2026-10-21',sourceId,shop:'',warehouse:''},before=(await request({op:'warehouse_view',query})).data;assert.equal(before.eventCount,7);assert.equal(before.totals.quarantined,2);assert.equal(before.totals.available,5);assert.equal(before.transfers[0].pending,1);
+ await close('warehouse-maintenance-before-restart.zip');await launch(workspace.id);const after=(await request({op:'warehouse_view',query})).data;assert.deepEqual(after,before);await close('warehouse-maintenance-after-restart.zip');
+ checks.push('actual UI imports seven count/state/expiry/departure/loss/physical-return events; audit exposes reasons and original/corrected expiry, stale count is blocked, and exact same-workspace view survives actual process restart; all evidence is operator-declared synthetic data');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,checks,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,out,checks}));
+}
+
+async function layoutReservations(){
+ assert(path.resolve(profile).startsWith(path.join(root,'.runtime','ingestion-ui-')),'isolated fixture profile required');
+ const config=JSON.parse(fs.readFileSync(path.join(profile,'config/config.json'),'utf8')),workspace=config.workspaces[0];
+ await launch(workspace.id);
+ await button('数据与导入').click();await button('载入演示数据').click();
+ await button('经营总览').click();
+ const scopes=page.getByRole('region',{name:'当前统计范围与来源',exact:true});
+ await expect(scopes.first()).toBeVisible();await scopes.first().screenshot({path:path.join(out,'scope-margin.png')});
+ await button('库存与广告').click();await button('载入库存与广告演示').click();
+ await page.getByTestId('signals-inventory').screenshot({path:path.join(out,'scope-inventory.png')});
+ const panel=page.getByRole('region',{name:'仓库收发存与调拨',exact:true}),sourceId='reservation-native-'+Date.now();
+ const base={source_id:sourceId,shop_id:'SHOP-H',warehouse_id:'WH-A',sku:'SKU-H',spec:'one',batch_id:'B-H',expires_on:'2026-12-31',state:'sellable'};
+ const opening={...base,event_id:'OPEN',kind:'opening',quantity:10,note:'隔离合成验收人工盘点期初数量',event_at:'2026-10-14T10:00:00+08:00'},hold={...base,event_id:'HOLD',kind:'reserve',quantity:6,reservation_id:'HOLD-NATIVE',order_ref:'DECLARED-ORDER-H',event_at:'2026-10-15T10:00:00+08:00'};
+ const upload=async events=>{await expect(panel.getByRole('button',{name:'导入仓库事件 JSON',exact:true})).toBeEnabled();await panel.getByLabel('选择仓库事件文件',{exact:true}).setInputFiles({name:'reservation-native.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(events))});return panel.getByLabel('仓库事件预览',{exact:true});};
+ const commit=async events=>{const p=await upload(events);await expect(p).toContainText('仓库事件链校验通过');await p.getByRole('button',{name:'确认导入仓库事件',exact:true}).click();await expect(panel.getByRole('status')).toContainText(`库存导入完成：新增 ${events.length} 条`);};
+ await commit([opening,hold]);const query={asOf:'2026-10-21',sourceId,shop:'',warehouse:''};
+ let v=(await request({op:'warehouse_view',query})).data;assert.equal(v.totals.sellableRecorded,10);assert.equal(v.totals.reserved,6);assert.equal(v.totals.available,4);
+ let p=await upload([{...base,event_id:'STEAL',kind:'transfer_out',quantity:5,transfer_id:'STEAL',to_warehouse_id:'WH-B',event_at:'2026-10-16T10:00:00+08:00'}]);await expect(p).toContainText('不能挪用已预占库存');await expect(p.getByRole('button',{name:'确认导入仓库事件',exact:true})).toBeDisabled();
+ await commit([{...base,event_id:'RELEASE',kind:'release',quantity:2,reservation_id:hold.reservation_id,note:'人工核对后释放不再需要的部分预占',event_at:'2026-10-16T10:00:00+08:00'},{...base,event_id:'SHIP',kind:'shipment',quantity:3,reservation_id:hold.reservation_id,shipment_ref:'SHIP-H',event_at:'2026-10-17T10:00:00+08:00'}]);
+ await panel.getByLabel('库存账本来源',{exact:true}).fill(sourceId);await panel.getByLabel('库存账本截止日期',{exact:true}).fill(query.asOf);await panel.getByRole('button',{name:'查询仓库账本',exact:true}).click();
+ await expect(panel.getByLabel('仓库账本结果',{exact:true})).toContainText('声明可售状态 7 件中预占 1 件');await panel.getByText('预占明细（前100项，共1项）',{exact:true}).click();await expect(panel.getByRole('table',{name:'库存预占明细',exact:true})).toContainText('DECLARED-ORDER-H');
+ await panel.screenshot({path:path.join(out,'warehouse-reservations.png')});
+ v=(await request({op:'warehouse_view',query})).data;assert.equal(v.totals.available,6);assert.deepEqual([v.reservations[0].released,v.reservations[0].shipped,v.reservations[0].pending],[2,3,1]);
+ await button('交易与退款').click();const comparison=page.getByRole('region',{name:'结算贡献跨期比较',exact:true});await comparison.scrollIntoViewIfNeeded();
+ const geometry=await comparison.evaluate(el=>{const columns=el.querySelector('.retail-form-columns'),labels=[...columns.children].map(x=>{const r=x.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width};});return{labels,gap:parseFloat(getComputedStyle(columns).gap)};});
+ assert.equal(geometry.labels[0].y,geometry.labels[1].y);assert(geometry.gap>=14);assert(geometry.labels[0].width>200);
+ await comparison.screenshot({path:path.join(out,'comparison-layout.png')});
+ await page.getByRole('region',{name:'订单优惠分摊',exact:true}).screenshot({path:path.join(out,'allocation-layout.png')});await page.getByRole('region',{name:'促销资格与赠品成本',exact:true}).screenshot({path:path.join(out,'promotion-layout.png')});
+ const browserWindow=await app.browserWindow(page);await browserWindow.evaluate(w=>w.setSize(800,850));
+ await expect.poll(()=>comparison.evaluate(el=>getComputedStyle(el.querySelector('.retail-form-columns')).gridTemplateColumns.split(' ').length)).toBe(1);
+ await comparison.screenshot({path:path.join(out,'comparison-narrow.png')});
+ await close('layout-reservations-before-restart.zip');await launch(workspace.id);v=(await request({op:'warehouse_view',query})).data;assert.equal(v.totals.sellableRecorded,7);assert.equal(v.totals.reserved,1);assert.equal(v.totals.available,6);assert.equal(v.reservations[0].pending,1);await close('layout-reservations-after-restart.zip');
+ checks.push('shared scope blocks, comparison columns, action spacing and collapsed method notes captured in real Electron; narrow window stacks comparison fields; actual UI imports reserve/release/reserved shipment, blocks transfer of held units, and actual same-workspace restart retains 7 physical, 1 reserved, 6 allocatable');
+ fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,checks,geometry,syntheticOnly:true,realPlatformCalls:0,profile},null,2));console.log(JSON.stringify({ok:true,out,checks}));
 }
 
 async function warehouseWorkflow(){

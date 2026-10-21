@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "checks": [
+    "actual UI imports seven count/state/expiry/departure/loss/physical-return events; audit exposes reasons and original/corrected expiry, stale count is blocked, and exact same-workspace view survives actual process restart; all evidence is operator-declared synthetic data"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

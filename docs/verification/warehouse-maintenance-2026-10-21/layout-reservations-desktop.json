@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "checks": [
+    "shared scope blocks, comparison columns, action spacing and collapsed method notes captured in real Electron; narrow window stacks comparison fields; actual UI imports reserve/release/reserved shipment, blocks transfer of held units, and actual same-workspace restart retains 7 physical, 1 reserved, 6 allocatable"
+  ],
+  "geometry": {
+    "labels": [
+      {
+        "x": 240.6666717529297,
+        "y": 225.36459350585938,
+        "width": 443
+      },
+      {
+        "x": 699.6666870117188,
+        "y": 225.36459350585938,
+        "width": 443
+      }
+    ],
+    "gap": 16
+  },
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

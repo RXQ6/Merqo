@@ -12,7 +12,7 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 ## Current source status — 2026-10-21
 
-The development source includes the operational workflows below. **The published beta.5 installer predates these additions**; build from source to try them. The latest local acceptance passed **348 domain tests and 3,128 assertions**, domain/Electron type checks, main/renderer builds, and the warehouse desktop workflow with an actual process restart. See the [verification record](docs/verification/warehouse-ledger-2026-10-21/report.md) and [development route](docs/development-progress-2026-10-20.md).
+The development source includes the operational workflows below. **The published beta.5 installer predates these additions**; build from source to try them. The latest local acceptance passed **357 domain tests and 3,204 assertions**, domain/Electron type checks, main/renderer builds, and the warehouse desktop workflow with an actual process restart. See the [verification record](docs/verification/warehouse-maintenance-2026-10-21/report.md) and [development route](docs/development-progress-2026-10-20.md).
 
 | UI entry | Implemented in the current source | Scope and evidence |
 | --- | --- | --- |
@@ -21,7 +21,7 @@ The development source includes the operational workflows below. **The published
 | 交易与退款 | Explicit partial cancellation before settlement, five-category declared net costs, frozen contribution reports and equal-period comparisons, physical-return inspections | [Cancellation](docs/P1-partial-cancellation-2026-10-20.md), [costs and inspections](docs/P1-cost-and-inspection-2026-10-20.md), [comparisons](docs/P1-contribution-comparison-2026-10-20.md); missing or stale costs remain unknown |
 | 交易与退款 → 促销资格与赠品成本 | Local preview/export of declared promotion eligibility, stacking, thresholds and integer discount/gift-cost allocation | [Promotion contract](docs/P1-promotion-eligibility-2026-10-21.md); no automatic application or ledger writes |
 | 库存与广告 → 采购到货与批次效期 | Immutable procurement plans, ETA changes, cancellations, quality-split arrivals and declared batch expiry | [Procurement contract](docs/P1-procurement-2026-10-21.md); arrival history does not automatically become stock |
-| 库存与广告 → 仓库收发存与调拨 | Local warehouse opening balances, evidence-linked purchase/return receipts, shipments, partial transfers and in-transit quantities | [Warehouse contract](docs/P1-warehouse-ledger-2026-10-21.md); independent declared ledger, quantity caps and expiry checks, no real WMS writeback |
+| 库存与广告 → 仓库收发存与调拨 | Local warehouse opening balances, evidence-linked receipts, reservations/releases, shipments, count/expiry corrections, state changes and transfer exceptions | [Warehouse contract](docs/P1-warehouse-ledger-2026-10-21.md), [reservations and maintenance](docs/P1-warehouse-maintenance-2026-10-21.md); declared ledger with quantity caps, no real WMS writeback |
 | 平台接入 → 经营数据完整备份与恢复 | Password-encrypted business-database backup, validated preview and restore into a new isolated workspace | [Backup and recovery](docs/P1-backup-recovery-2026-10-21.md); excludes model keys/chats/attachments; restored execution remains locked |
 
 **No real Douyin Shop is connected.** The local integration workflow is ready for further adapter work; shop authorization, official payment/aftersale field mapping, token renewal and platform completeness still require real-platform acceptance. These additions do not establish full profit, authenticated inventory, production approvals or completion of the PRD.
@@ -73,7 +73,7 @@ The beta.5 installer passed 27 checks on Windows 11: isolated installation, thre
 
 ## Build from source
 
-The latest source domain run passed 348 tests and 3,128 assertions. The fixed synthetic business set passed 48/48. The latest archived real-model batch passed margin 5/5, inventory 4/5 and advertising 5/5, with zero observed forbidden-action events; the inventory needs-evidence result and earlier batches remain recorded. These are bounded gates, not production accuracy. The current operational additions have local contract and desktop acceptance; they have not received a new live-model quality batch or a new installer release.
+The latest source domain run passed 357 tests and 3,204 assertions. The fixed synthetic business set passed 48/48. The latest archived real-model batch passed margin 5/5, inventory 4/5 and advertising 5/5, with zero observed forbidden-action events; the inventory needs-evidence result and earlier batches remain recorded. These are bounded gates, not production accuracy. The current operational additions have local contract and desktop acceptance; they have not received a new live-model quality batch or a new installer release.
 
 ### Prerequisites
 
@@ -280,7 +280,7 @@ bun test apps/electron/src/transport/__tests__/channel-map-parity.test.ts
 node scripts/retailpilot-m1-e2e.cjs
 ```
 
-The latest source verification on **2026-10-21** passed **348 domain tests, 0 failures and 3,128 assertions across 48 files** (159.29 seconds), domain and Electron TypeScript checks, and main/renderer builds. The isolated warehouse desktop acceptance exercised transfers, evidence-linked purchase/return receipts, rejection of excess quantities and persistence after an actual process restart. See the [logs and desktop results](docs/verification/warehouse-ledger-2026-10-21/report.md). Earlier modules retain their own acceptance records linked above. Desktop tests use isolated profiles and write raw local reports under ignored `artifacts/`; curated verification records are tracked under `docs/verification/`. This was source acceptance on the current Windows 11 host, not a new package, clean-machine or real-platform acceptance.
+The latest source verification on **2026-10-21** passed **357 domain tests, 0 failures and 3,204 assertions across 50 files** (111.76 seconds), domain and Electron TypeScript checks, and main/renderer builds. Isolated desktop acceptance exercised the revised layout at wide/narrow window sizes, partial reservation release and linked shipment, blocked use of held stock, count/expiry corrections, state changes, transfer loss/physical return and persistence after actual process restarts. See the [logs and desktop results](docs/verification/warehouse-maintenance-2026-10-21/report.md). Earlier modules retain their own acceptance records linked above. Desktop tests use isolated profiles and write raw local reports under ignored `artifacts/`; curated verification records are tracked under `docs/verification/`. This was source acceptance on the current Windows 11 host, not a new package, clean-machine or real-platform acceptance.
 
 ### Fixed business evaluation
 
@@ -306,7 +306,7 @@ Inference transport tests use a **local HTTP contract fixture**. They verify the
 - **Windows preview:** the public unsigned beta.5 NSIS installer bundles the retail runtime and passed 27 local Windows 11 lifecycle checks. It predates the current sync, cost, backup, promotion, procurement and warehouse additions. Clean-VM, other Windows-version and cross-version NSIS acceptance remain open. See [beta.5 acceptance](docs/release-beta5-2026-10-20.md).
 - **M5 live evaluation (2026-10-18):** the latest archived batch passed margin 5/5, inventory 4/5 and advertising 5/5 with zero observed forbidden-action events. The inventory needs-evidence result and earlier batches remain recorded. See [all batches](docs/M5-live-evaluation.md). This narrow synthetic gate is not complete production or safety validation, and was not rerun for the latest operational additions.
 - **Local acceptance completed:** margin claim/Reviewer calibration, 100,000-row margin pagination and 30-query p95, persistent pause/resume with epoch fencing and retained call budgets, isolated AgentBackend reuse, actual Windows upgrade/reinstall/uninstall and local beta.2 packaging. See [evidence and scope limits](docs/M5-local-acceptance.md).
-- **Remaining development chain:** warehouse reservations/releases, count and expiry corrections, state conversion and transfer loss/cancellation → exchange price-difference settlement → refund-adjusted advertising attribution and overlapping campaigns → independent multi-shop connections and unified entity mapping → additional cost/accounting scope and Agent integration of the new ledgers → authenticated platform adapters, real writes/readback and production multi-user approval → outcome observation and release acceptance. See the [current route](docs/development-progress-2026-10-20.md).
+- **Remaining development chain:** warehouse picking and automatic allocation → exchange price-difference settlement → refund-adjusted advertising attribution and overlapping campaigns → independent multi-shop connections and unified entity mapping → additional cost/accounting scope and Agent integration of the new ledgers → authenticated platform adapters, real writes/readback and production multi-user approval → outcome observation and release acceptance. See the [current route](docs/development-progress-2026-10-20.md).
 - **Additional scope:** promotion usage limits, gift quantity/stock rules and persisted rule management; supplier payments; full-app/in-place/cloud recovery and a reviewed way to unlock execution in restored workspaces remain open.
 - **Release and performance gaps:** publish a new installer after package acceptance, obtain clean/other-version Windows environments, expand adversarial and business-quality evaluation, and validate cold-cache, concurrent and full-UI performance. Existing bounded 100,000-row query checks do not validate combined workloads or the new ledgers at scale. Full PRD release gates remain unmet.
 
@@ -315,7 +315,7 @@ No real ERP/WMS or advertising platform integration, real business writes or pro
 ## Documentation
 
 - [Current development route and remaining scope](docs/development-progress-2026-10-20.md)
-- [Latest source acceptance: warehouse ledger](docs/verification/warehouse-ledger-2026-10-21/report.md)
+- [Latest source acceptance: warehouse ledger](docs/verification/warehouse-maintenance-2026-10-21/report.md)
 - [Continuous operational development and acceptance](docs/P1-continuous-development-2026-10-20.md)
 - [Platform sync setup and resumable jobs](docs/P1-sync-workflow-2026-10-20.md)
 - [Reviewed event ingestion and reconciliation](docs/P1-ingestion-workflow-2026-10-20.md)
@@ -323,6 +323,7 @@ No real ERP/WMS or advertising platform integration, real business writes or pro
 - [Promotion eligibility and gift allocation](docs/P1-promotion-eligibility-2026-10-21.md)
 - [Procurement arrivals and batch expiry](docs/P1-procurement-2026-10-21.md)
 - [Warehouse ledger and transfers](docs/P1-warehouse-ledger-2026-10-21.md)
+- [Warehouse reservations, corrections and transfer exceptions](docs/P1-warehouse-maintenance-2026-10-21.md)
 - [Windows preview installation and packaging](docs/windows-preview.md)
 - [M5 business evaluation and acceptance](docs/M5-business-evaluation.md)
 - [M5 real-model evaluation, failures and next actions](docs/M5-live-evaluation.md)

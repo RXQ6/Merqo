@@ -1,0 +1,25 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\warehouse-maintenance.test.ts:
+(pass) declared count/state/expiry/transfer exceptions replay with conserved quantities, scoped audit and encrypted backup recovery [203.13ms]
+(pass) count correction requires current expected stock and cannot hide a shortage below outstanding reservations [27.44ms]
+(pass) state movement preserves total and forbids using held stock, reviving scrap, same-state or expired sellable conversion [30.19ms]
+(pass) batch-wide expiry corrections bind the old value, preserve historical dates, and allow corrected in-transit arrival without inventing expiry [27.50ms]
+(pass) arrival, loss and physical return share a single remaining transit cap and reject wrong warehouse or stale confirmation [27.91ms]
+
+packages\retail-domain\src\warehouse-reservation.test.ts:
+(pass) partial release and reserved shipment conserve physical stock; historical scope and reopened store retain remaining reservation [48.03ms]
+(pass) unreserved shipment and transfers cannot consume held stock; excess release, wrong bucket and reservation reuse are rejected atomically [30.79ms]
+(pass) new holds need valid sellable expiry and free stock; expired holds remain auditable and can be explicitly released [28.26ms]
+(pass) concurrent preview is invalidated by another hold and a backdated hold cannot make an existing shipment overdraw free stock [26.42ms]
+
+packages\retail-domain\src\warehouse-store.test.ts:
+(pass) separate transfer departure/arrival conserves physical stock and in-transit units, scopes warehouses and survives restart [54.05ms]
+(pass) purchase receipts cannot exceed explicitly qualified quantity or invent batch expiry; stale evidence invalidates preview [51.47ms]
+(pass) negative prefixes, over-arrival, duplicate departures and unknown or expired sellable batches are blocked atomically [24.06ms]
+(pass) explicit returned inspection dispositions cap restocking; a refund or mismatched warehouse cannot authorize stock [219.72ms]
+
+ 13 pass
+ 0 fail
+ 104 expect() calls
+Ran 13 tests across 3 files. [1461.00ms]

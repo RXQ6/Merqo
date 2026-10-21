@@ -61,6 +61,8 @@ Retail workspaces enforce read-only tools in general Agent conversations, includ
 
 ## Download the desktop app
 
+The source now fixes the inherited 0.11.4 display and checks **RXQ6/Merqo GitHub Releases**, including beta releases. It labels source runs as development builds, reports failed checks explicitly, and links to manual installer downloads. This correction is not included retroactively in the published beta.5 installer. See the [version/update fix and desktop acceptance](docs/update-check-fix-2026-10-21.md).
+
 The beta.5 preview includes extended transactions, discount allocation, nested bundles, source coverage and dynamic DeepSeek model lists. See the [release and installation acceptance](docs/release-beta5-2026-10-20.md). Full PRD scope remains incomplete.
 
 **[Download Merqo for Windows x64 — 0.1.0-beta.5](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.5/Merqo-Setup-0.1.0-beta.5-x64.exe)**

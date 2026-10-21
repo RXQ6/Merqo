@@ -316,6 +316,7 @@ export default function AppSettingsPage() {
                       <span className="text-muted-foreground">
                         {updateChecker.updateInfo?.currentVersion ?? t("common.loading")}
                       </span>
+                      {updateChecker.updateInfo?.buildType === 'development' && <span className="text-xs text-muted-foreground">源码开发版</span>}
                       {isElectron && updateChecker.isDownloading && updateChecker.updateInfo?.latestVersion && (
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">
                           <Spinner className="w-3 h-3" />
@@ -353,6 +354,14 @@ export default function AppSettingsPage() {
                       </Button>
                     </SettingsRow>
                   )}
+                  {isElectron && updateChecker.updateInfo?.updateMethod === 'github-release' && <>
+                    <SettingsRow label="发布来源" description="Merqo GitHub Releases；预览通道包含 beta 版本，下载后手动安装。">
+                      <Button variant="outline" size="sm" onClick={() => void window.electronAPI.openUrl(updateChecker.updateInfo?.releaseUrl ?? 'https://github.com/RXQ6/Merqo/releases')}>查看 GitHub 发布</Button>
+                    </SettingsRow>
+                    {updateChecker.updateInfo.checkedAt && <SettingsRow label="检查结果" description={updateChecker.updateInfo.error ?? (updateChecker.updateInfo.buildType === 'development' ? '源码开发版可能包含未发布改动，不代表已发布安装包。' : updateChecker.updateInfo.checkStatus === 'ahead' ? '本机版本高于当前发布。' : updateChecker.updateInfo.available ? '发现更新，请前往 GitHub 下载对应安装包。' : '本机安装版本与当前发布一致。')}>
+                      <span className="text-sm text-muted-foreground" role="status">{updateChecker.updateInfo.error ? '检查失败，请重试' : `GitHub：${updateChecker.updateInfo.latestVersion}`}</span>
+                    </SettingsRow>}
+                  </>}
                 </SettingsCard>
               </SettingsSection>
             </div>

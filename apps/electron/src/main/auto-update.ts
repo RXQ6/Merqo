@@ -1,9 +1,9 @@
 /**
- * Auto-update module using electron-updater
+ * Merqo release checks use RXQ6/Merqo GitHub Releases, including beta releases.
+ * Existing releases have no updater YAML/blockmaps; installation remains manual.
+ * The inherited electron-updater lifecycle is retained but is not used as a feed.
  *
- * Handles checking for updates, downloading, and installing via the standard
- * electron-updater library. Updates are served from https://agents.craft.do/electron/latest
- * using the generic provider (YAML manifests + binaries on R2/S3).
+ * Never contact or install the upstream Craft Agents product.
  *
  * Platform behavior:
  * - macOS: Downloads zip, extracts and swaps app bundle atomically
@@ -28,6 +28,7 @@ import {
 import { readJsonFileSync } from '@craft-agent/shared/utils/files'
 import { RPC_CHANNELS, type UpdateInfo } from '../shared/types'
 import type { EventSink } from '@craft-agent/server-core/transport'
+import { compareReleaseVersions, fetchMerqoRelease, MERQO_RELEASES_URL } from './merqo-releases'
 
 // Platform detection
 const PLATFORM = platform()
@@ -56,10 +57,13 @@ function getUpdateCacheDir(): string {
 // Module state — keeps track of update info for IPC queries
 let updateInfo: UpdateInfo = {
   available: false,
-  currentVersion: getAppVersion(),
+  currentVersion: app.isPackaged ? app.getVersion() : getAppVersion(),
   latestVersion: null,
   downloadState: 'idle',
   downloadProgress: 0,
+  buildType: app.isPackaged ? 'packaged' : 'development',
+  updateMethod: 'github-release',
+  releaseUrl: MERQO_RELEASES_URL,
 }
 
 let eventSink: EventSink | null = null
@@ -293,7 +297,7 @@ function checkElectronUpdaterState(): { ready: boolean; version?: string } {
  * Options for checkForUpdates
  */
 interface CheckOptions {
-  /** If true, automatically start download when update is found (default: true) */
+  /** Compatibility option; GitHub release checks never auto-download installers. */
   autoDownload?: boolean
 }
 
@@ -354,11 +358,33 @@ function checkForExistingDownload(): { exists: boolean; version?: string } {
  * Check for available updates.
  * Returns the current UpdateInfo state after check completes.
  *
- * @param options.autoDownload - If false, only checks without downloading (for manual "Check Now")
+ * GitHub publication checks are read-only; installers are downloaded manually.
  */
-export async function checkForUpdates(options: CheckOptions = {}): Promise<UpdateInfo> {
-  // No RetailPilot feed exists. Never contact or install the upstream product.
-  return { ...getUpdateInfo(), available: false, downloadState: 'idle', error: 'RetailPilot 更新服务尚未配置' }
+let releaseCheck: Promise<UpdateInfo> | null = null
+export async function checkForUpdates(_options: CheckOptions = {}): Promise<UpdateInfo> {
+  if (releaseCheck) return releaseCheck
+  releaseCheck = (async () => {
+    try {
+      if (PLATFORM !== 'win32' || process.arch !== 'x64') throw new Error('当前只提供 Merqo Windows x64 发布包')
+      const latest = await fetchMerqoRelease(updateInfo.currentVersion)
+      const comparison = compareReleaseVersions(latest.version, updateInfo.currentVersion)
+      updateInfo = {
+        ...updateInfo, available: comparison > 0, latestVersion: latest.version,
+        releaseUrl: latest.releaseUrl, checkedAt: new Date().toISOString(),
+        checkStatus: updateInfo.buildType === 'development' ? 'development' : comparison > 0 ? 'available' : comparison < 0 ? 'ahead' : 'up-to-date',
+        downloadState: 'idle', downloadProgress: 0, error: undefined,
+      }
+    } catch (cause) {
+      updateInfo = {
+        ...updateInfo, available: false, latestVersion: null, releaseUrl: MERQO_RELEASES_URL,
+        checkedAt: new Date().toISOString(), checkStatus: 'error', downloadState: 'error', downloadProgress: 0,
+        error: cause instanceof Error ? cause.message : 'GitHub 更新检查失败',
+      }
+    }
+    broadcastUpdateInfo()
+    return getUpdateInfo()
+  })()
+  try { return await releaseCheck } finally { releaseCheck = null }
 }
 
 /**

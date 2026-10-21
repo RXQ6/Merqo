@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "version": "0.1.0-beta.5",
+  "checks": [
+    "current version uses Merqo recipe; matching GitHub beta is displayed as development build, not latest installer",
+    "HTTP 403 propagates through real main IPC into persistent failure UI, with no latest-version success",
+    "synthetic future beta appears as available, clears old error, and stays manual download without install-ready state"
+  ],
+  "githubHttpMocked": true,
+  "realDownloads": 0,
+  "realInstalls": 0
+}

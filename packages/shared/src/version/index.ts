@@ -1,8 +1,8 @@
-// Version is read from package.json — the single source of truth.
-// All build scripts, CI workflows, and runtime code use this value.
-import pkg from '../../package.json';
+// Merqo's release recipe also supplies the Windows installer's version.
+// Do not expose the inherited Craft Agents package version to Merqo users.
+import release from '../../../../packaging/windows-release.json';
 
-export const APP_VERSION: string = pkg.version;
+export const APP_VERSION: string = release.version;
 
 export function getAppVersion(): string {
   return APP_VERSION;

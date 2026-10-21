@@ -126,7 +126,17 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
       const info = await window.electronAPI.checkForUpdates()
       setUpdateInfo(info)
 
-      if (!info.available) {
+      if (info.error || info.checkStatus === 'error') throw new Error(info.error || 'GitHub 更新检查失败')
+      if (info.updateMethod === 'github-release' && info.available) {
+        toast.info(`GitHub 已发布 ${info.latestVersion}`, {
+          description: '前往 RXQ6/Merqo 下载对应安装包。当前版本采用手动更新。',
+          action: { label: '查看发布', onClick: () => { if (info.releaseUrl) void window.electronAPI.openUrl(info.releaseUrl) } },
+        })
+      } else if (info.checkStatus === 'development') {
+        toast.info('当前为源码开发版', { description: `GitHub 最新发布 ${info.latestVersion}；源码可能包含尚未发布的改动。` })
+      } else if (info.checkStatus === 'ahead') {
+        toast.info('本机版本高于当前发布', { description: `GitHub 当前发布 ${info.latestVersion}。` })
+      } else if (!info.available) {
         toast.success(t('toast.upToDate'), {
           description: t('toast.versionIsLatest', { version: info.currentVersion }),
           duration: 3000,

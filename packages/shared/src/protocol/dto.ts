@@ -727,6 +727,11 @@ export interface UpdateInfo {
   downloadState: 'idle' | 'downloading' | 'ready' | 'installing' | 'error'
   downloadProgress: number
   error?: string
+  buildType?: 'development' | 'packaged'
+  updateMethod?: 'github-release'
+  releaseUrl?: string
+  checkedAt?: string
+  checkStatus?: 'available' | 'up-to-date' | 'ahead' | 'development' | 'error'
 }
 
 // ---------------------------------------------------------------------------

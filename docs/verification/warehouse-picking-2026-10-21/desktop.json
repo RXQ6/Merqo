@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "checks": [
+    "actual UI plans known-expiry batches net of holds, exposes excluded unknown/expired/quarantine stock, blocks stale confirmation after competing reservation, then atomically reserves EARLY 1 and LATE 3, exports real receipt, preserves physical 14 and reserved 6, and repeated confirmation plus actual same-workspace restart does not reserve twice"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-qyCKPe"
+}

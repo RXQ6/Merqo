@@ -1,0 +1,12 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\warehouse-picking.test.ts:
+(pass) FEFO uses only exact-scope eligible stock net of reservations and atomically reserves all selected batches without changing physical counts [240.91ms]
+(pass) competing plans, stock changes, time expiry and business-day rollover invalidate confirmation without partial writes [40.59ms]
+(pass) shortfall, unknown expiry and future commitments do not produce partial or prematurely usable reservations [44.07ms]
+(pass) planning reads past the view page, uses stable same-expiry batch order and caps one confirmation at 100 batches [53.56ms]
+
+ 4 pass
+ 0 fail
+ 44 expect() calls
+Ran 4 tests across 1 file. [1.68s]

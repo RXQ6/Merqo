@@ -1,0 +1,32 @@
+import {test,expect} from 'bun:test';import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
+import {WarehouseStore} from './warehouse-store';import type {WarehouseEvent,WarehousePickInput} from './warehouse-contract';
+import {backupInventory,captureBackup,writeBackup,readBackup,restoreBackup} from './backup';
+const input:WarehousePickInput={sourceId:'pick-test',shop:'SHOP',warehouse:'WH',sku:'SKU',spec:'one',quantity:4,orderRef:'DECLARED-ORDER'};
+const base={source_id:'pick-test',shop_id:'SHOP',warehouse_id:'WH',sku:'SKU',spec:'one',state:'sellable' as const,event_at:'2026-10-14T10:00:00+08:00'};
+const opening=(id:string,quantity:number,expires_on:string|null):WarehouseEvent=>({...base,kind:'opening',event_id:'O-'+id,batch_id:id,quantity,expires_on,note:'隔离合成拣货测试的人工盘点期初数量'});
+function write(s:WarehouseStore,events:WarehouseEvent[]){const json=JSON.stringify(events),p=s.preview(json);expect(p.errors).toEqual([]);s.import(json,p.hash);}
+function fixture(run:(s:WarehouseStore,root:string,clock:{now:number})=>void){const root=mkdtempSync(join(tmpdir(),'merqo-pick-')),clock={now:Date.parse('2026-10-21T10:00:00+08:00')},s=new WarehouseStore(join(root,'operations.sqlite.transactions.sqlite'),()=>clock.now);try{run(s,root,clock);}finally{s.close();rmSync(root,{recursive:true,force:true});}}
+const query={asOf:'2026-10-21',sourceId:'pick-test',shop:'SHOP',warehouse:'WH'};
+test('FEFO uses only exact-scope eligible stock net of reservations and atomically reserves all selected batches without changing physical counts',()=>fixture((s,root,clock)=>{
+ write(s,[opening('LATE',5,'2026-12-31'),opening('EARLY',3,'2026-10-22'),opening('UNKNOWN',4,null),opening('EXPIRED',2,'2026-10-20'),{...opening('QUARANTINE',3,'2026-12-31'),state:'quarantine'},{...opening('OTHER',100,'2026-10-22'),warehouse_id:'OTHER'}]);
+ write(s,[{...base,kind:'reserve',event_id:'HELD',batch_id:'EARLY',expires_on:'2026-10-22',quantity:1,reservation_id:'EXISTING',order_ref:'OTHER-ORDER',event_at:'2026-10-15T10:00:00+08:00'}]);
+ const before=s.view(query),plan=s.pickPreview(input);expect(s.view(query)).toEqual(before);expect(plan.status).toBe('ready');expect(plan.knownAvailable).toBe(7);expect(plan.excluded).toEqual({unknownExpiry:4,expired:2,quarantined:3,reserved:1});expect(plan.selections).toEqual([{batchId:'EARLY',expiresOn:'2026-10-22',quantity:2},{batchId:'LATE',expiresOn:'2026-12-31',quantity:2}]);
+ expect(()=>s.pickConfirm(plan.id,'a'.repeat(64))).toThrow('允许确认');const receipt=s.pickConfirm(plan.id,plan.hash);expect(receipt.accepted).toBe(2);expect(receipt.reservationIds.length).toBe(2);expect(s.view(query).totals.sellableRecorded).toBe(before.totals.sellableRecorded);expect(s.view(query).totals.reserved).toBe(5);expect(s.view(query).totals.available).toBeNull();
+ clock.now+=1200000;s.pickPreview({...input,quantity:1});expect(s.pickConfirm(plan.id,plan.hash).replayed).toBe(true);expect(s.view(query).totals.reserved).toBe(5);
+ const reopened=new WarehouseStore(join(root,'operations.sqlite.transactions.sqlite'),()=>clock.now);try{expect(reopened.pickConfirm(plan.id,plan.hash).replayed).toBe(true);}finally{reopened.close();}
+ const inventory=backupInventory(root),payload=captureBackup(root,'WS-PICK','Picking',[],inventory.connectionHash),archive=join(root,'pick.merqo-backup');writeBackup(payload,'picking-fixture-password',archive);restoreBackup(readBackup(archive,'picking-fixture-password').payload,join(root,'restored'));const restored=new WarehouseStore(join(root,'restored','retail','operations.sqlite.transactions.sqlite'),()=>clock.now);try{expect(restored.view(query).totals.reserved).toBe(5);expect(restored.pickConfirm(plan.id,plan.hash).replayed).toBe(true);}finally{restored.close();}
+}));
+test('competing plans, stock changes, time expiry and business-day rollover invalidate confirmation without partial writes',()=>fixture((s,_root,clock)=>{
+ write(s,[opening('ONE',10,'2026-12-31')]);const first=s.pickPreview(input),second=s.pickPreview({...input,quantity:1});s.pickConfirm(second.id,second.hash);expect(()=>s.pickConfirm(first.id,first.hash)).toThrow('已变化');expect(s.view(query).totals.reserved).toBe(1);
+ const expired=s.pickPreview(input);clock.now+=600001;expect(()=>s.pickConfirm(expired.id,expired.hash)).toThrow('已过期');expect(s.view(query).totals.reserved).toBe(1);
+ clock.now=Date.parse('2026-10-21T23:59:00+08:00');const midnight=s.pickPreview(input);clock.now+=120000;expect(()=>s.pickConfirm(midnight.id,midnight.hash)).toThrow('跨业务日');expect(s.view({...query,asOf:'2026-10-22'}).totals.reserved).toBe(1);
+}));
+test('shortfall, unknown expiry and future commitments do not produce partial or prematurely usable reservations',()=>fixture((s,_root,clock)=>{
+ write(s,[opening('KNOWN',2,'2026-12-31'),opening('UNKNOWN',5,null)]);let plan=s.pickPreview(input);expect(plan.status).toBe('needs_evidence');expect(plan.shortfall).toBe(2);expect(()=>s.pickConfirm(plan.id,plan.hash)).toThrow('不允许确认');expect(s.view(query).totals.reserved).toBe(0);
+ expect(s.pickPreview({...input,warehouse:'missing'}).status).toBe('insufficient');
+ const futureSource='future';write(s,[{...opening('FUTURE',10,'2026-12-31'),source_id:futureSource},{...base,source_id:futureSource,event_id:'FUTURE-SHIP',kind:'shipment',batch_id:'FUTURE',expires_on:'2026-12-31',shipment_ref:'FUTURE-SHIP',quantity:9,event_at:new Date(clock.now+60000).toISOString()}]);plan=s.pickPreview({...input,sourceId:futureSource,quantity:2});expect(plan.status).toBe('blocked');expect(()=>s.pickConfirm(plan.id,plan.hash)).toThrow('不允许确认');
+ const incomingSource='future-opening';write(s,[{...opening('NOT-YET',10,'2026-12-31'),source_id:incomingSource,event_at:new Date(clock.now+60000).toISOString()}]);expect(s.pickPreview({...input,sourceId:incomingSource}).knownAvailable).toBe(0);
+}));
+test('planning reads past the view page, uses stable same-expiry batch order and caps one confirmation at 100 batches',()=>fixture(s=>{
+ const rows=Array.from({length:101},(_,i)=>opening('B'+String(i).padStart(3,'0'),1,i===100?'2026-10-22':'2026-12-31'));write(s,rows);expect(s.view(query).lines.length).toBe(100);const plan=s.pickPreview({...input,quantity:2});expect(plan.selections.map(r=>r.batchId)).toEqual(['B100','B000']);expect(plan.status).toBe('ready');const many=s.pickPreview({...input,quantity:101});expect(many.status).toBe('blocked');expect(many.selections).toEqual([]);expect(()=>s.pickConfirm(many.id,many.hash)).toThrow('不允许确认');expect(s.view(query).totals.reserved).toBe(0);
+}));

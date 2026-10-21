@@ -1,0 +1,483 @@
+bun test v1.4.2 (744846f84)
+
+packages\retail-domain\src\ad-refund.test.ts:
+(pass) explicit overlapping campaign shares conserve paid and refunded settlement without treating physical returns as refunds [28.30ms]
+(pass) duplicate links, over/under attribution and future watermarks reject the declaration instead of normalizing silently [1.55ms]
+(pass) maturity and declared current coverage remain separate from unknown links, invalid touch windows and zero denominator [1.92ms]
+(pass) integer tails across six overlapping campaigns preserve cents and never allocate more refund than campaign receipts [5.67ms]
+(pass) frozen ledger-backed reports reopen and recover through encrypted backup while later events require a new report [297.41ms]
+
+packages\retail-domain\src\ads-numeric.test.ts:
+(pass) real failed output is rejected across every model-authored numerical surface [108.42ms]
+(pass) CNY minor facts are displayed exactly once with correct yuan, ratio and percent units [93.94ms]
+(pass) missing, stale, altered evidence and wrong scenario do not reach a numeric report [84.89ms]
+(pass) missing ads data remains unknown and no fixture Reviewer pass removes its blockers [90.05ms]
+(pass) numeric Reviewer notes get one correction; rejected and needs-evidence verdicts remain independent [82.27ms]
+(pass) persisted/exportable ads report uses the exact facts and disclosures seen by Reviewer [102.16ms]
+(pass) forged MCP amounts terminate before Reviewer; repeated model numeric prose cannot bypass the correction budget [84.33ms]
+
+packages\retail-domain\src\backup-worker-gate.test.ts:
+(pass) worker admission freezes database creation during backup and resumes even after a failed freeze [1226.09ms]
+(pass) restored workspace cannot execute historical grants or use an incomplete restore [38.31ms]
+
+packages\retail-domain\src\backup.test.ts:
+(pass) consistent WAL images, encrypted staging key, cursor and receipts survive portable encrypted backup and isolated restore [576.57ms]
+(pass) wrong password, tampering, changed file, missing or incorrect stage key and unsupported database names fail before restore [1135.74ms]
+(pass) renderer cannot provide restore paths, credentials, database bytes or skip reviewed confirmation [3.22ms]
+
+packages\retail-domain\src\bundles.test.ts:
+(pass) nested pack costs, identity, frozen audits and CSV roundtrips include the full tree [105.75ms]
+(pass) nested parent costs, ancestor cycles, cross-branch SKU conflicts and excessive trees cannot produce profits [3.21ms]
+(pass) bundle import computes pack totals and retains conflict/missing rows as evidence gaps [107.47ms]
+(pass) bundle cost gaps, duplicate identities, self references and missing declaration never produce profit [1.34ms]
+(pass) invalid bundle JSON, quantities, fractional costs, unknown fields and currencies are quarantined [5.80ms]
+(pass) changing bundle composition across dates without changing the SKU requires identity review [84.21ms]
+
+packages\retail-domain\src\business-policy.test.ts:
+(pass) policy defaults, validation, server role, optimistic revision and immutable history survive reopen [244.84ms]
+(pass) global and per-shop rules rebuild both page projections without changing source batches [481.95ms]
+(pass) configured expiry is frozen; a later policy change invalidates approved authorization and preserves old report [785.92ms]
+(pass) read-only defaults create no policy file and decision upgrade backs up version seven [340.76ms]
+
+packages\retail-domain\src\catalog-joint.test.ts:
+(pass) explicit mapping validates identity, refuses overlapping periods and stale/forged updates; immutable versions persist [264.80ms]
+(pass) three scenes join only explicit canonical identity, common period and slowest complete watermark; ambiguity and partial data remain blocked [352.30ms]
+(pass) actual worker expands only explicitly mapped aliases and freezes the strict joint contract [751.71ms]
+(pass) mapped aliases and joint assessment are frozen through investigation, actual readonly scope and export after catalog corrections [294.50ms]
+
+packages\retail-domain\src\contracts.test.ts:
+(pass) business boundary contracts > rejects fractional, negative and unsafe money [0.40ms]
+(pass) business boundary contracts > requires a forward, timezone-qualified business window [0.75ms]
+(pass) business boundary contracts > does not accept reserved stock greater than physical stock [0.94ms]
+(pass) business boundary contracts > rejects cross-shop actions and unrecognized action types [1.39ms]
+(pass) business boundary contracts > approved status cannot exist without an approver and timestamp [1.74ms]
+
+packages\retail-domain\src\contribution-comparison.test.ts:
+(pass) frozen comparison detects receipts up/contribution down and numerical effects add to the exact delta; persists on restart [131.91ms]
+
+packages\retail-domain\src\contribution.test.ts:
+(pass) refunds and five explicitly supplied net costs produce declared contribution, never infer cost recovery [1.30ms]
+(pass) explicit duplicate costs dedupe; conflicting categories, decimal amounts, future observations and outside entities reject [2.26ms]
+(pass) cost reports freeze full cohort rather than current page, persist across restart and do not change transaction events [136.98ms]
+
+packages\retail-domain\src\decisions.test.ts:
+(pass) deterministic draft binds amounts, scope, evidence and digest; create is idempotent [552.96ms]
+(pass) submission is idempotent, does not mutate business values, revisions supersede exact old requests [787.52ms]
+(pass) two connections enforce optimistic revision version and durable restart history [627.26ms]
+(pass) inventory: evidence gaps block submission even if a draft is saved [417.23ms]
+(pass) ads: evidence gaps block submission even if a draft is saved [417.03ms]
+(pass) late replenishment, offline replay and reviewer refusal never enter pending approval [702.80ms]
+(pass) cross-scenario action, incomplete investigation and no-op observation fail safely [425.51ms]
+(pass) current snapshot replacement and quality conflicts block a previously valid draft [573.78ms]
+(pass) CSV is analysis only and cannot use demo simulation exception [430.04ms]
+(pass) expired draft, invalid import time and tampered action digest block submission [502.48ms]
+(pass) workspace mismatch and renderer-supplied actor, amounts, approval and paths reject [488.97ms]
+(pass) JSON and Markdown exports retain all evidence and contain untrusted text safely [432.07ms]
+(pass) future decision schema refuses downgrade before creating new business tables [373.42ms]
+(pass) calculation changes require a new reviewed investigation rather than only a fresh draft revision [570.55ms]
+(pass) approved exact-version resolution and audit survive restart and never change source business values [954.43ms]
+(pass) rejection requires reason, is immutable, and cannot be overwritten by another connection [823.93ms]
+(pass) new revision supersedes an already approved request and preserves its original conclusion [934.29ms]
+(pass) evidence changes invalidate pending request and persist even when attempted approval returns an error [726.63ms]
+(pass) invalidated approval cannot resurrect when evidence callback later reports original values again [776.11ms]
+(pass) expired application latches expiry and never creates a resolution [684.29ms]
+(pass) stale expected version or hash, missing server role and forged renderer identity reject [710.44ms]
+(pass) report changes invalidate an existing approval and retain the original report digest [654.73ms]
+(pass) v1 migration creates a readable consistent backup and retains existing pending requests [766.89ms]
+(pass) approved authorization expires at the exact deadline and remains expired after clock restoration [674.50ms]
+(pass) pending old version cannot be approved from a stale open page after revision [700.03ms]
+(pass) two independent worker processes racing approval and rejection produce one durable conclusion [1354.11ms]
+(pass) margin: approved action writes isolated simulation state and immutable reconciled receipt [794.40ms]
+(pass) inventory: approved action writes isolated simulation state and immutable reconciled receipt [812.02ms]
+(pass) ads: approved action writes isolated simulation state and immutable reconciled receipt [721.85ms]
+(pass) simulation execution denies forged role, version/hash, scope and renderer amounts [864.87ms]
+(pass) expired, superseded and replaced evidence stop approved execution and persist failed attempts [2214.06ms]
+(pass) two approved actions for one resource detect target version conflict rather than overwrite [1475.31ms]
+(pass) receipt insert failure rolls back effects while failure attempt persists and retry succeeds once [887.18ms]
+(pass) lost response and restart recover exact receipt; repeated success after expiry never executes twice [878.19ms]
+(pass) reread reconciliation reports later drift, preserves original receipt and never overwrites state [705.08ms]
+(pass) two independent worker execution requests return one receipt and one side effect [1699.87ms]
+(pass) v2 migration backs up approvals and queues legacy valid approved decisions without effects [653.03ms]
+(pass) tampered execution amounts cannot diverge from approved deterministic action [565.36ms]
+(pass) abandoned uncommitted local write rolls back on process exit and ready job can recover [691.77ms]
+(pass) later reviewed evidence can start from the current simulated value without overwriting unrelated state [1143.25ms]
+(pass) built-in replenishment variant only changes demo lead time and preserves the blocked risk example [497.42ms]
+(pass) approval and ready item commit together; queue failure cannot leave an executable orphan approval [685.32ms]
+(pass) compensation requires new approval, restores ads baseline, rereads and preserves original history and sources [975.67ms]
+(pass) margin restoration below floor blocks, corrected fresh evidence can be reviewed without bypassing rules [1202.32ms]
+(pass) pending replenishment cancellation does not receive stock and legacy pending receipts remain cancellable [904.21ms]
+(pass) accepted replenishment or unknown state cannot be cancelled by compensation [930.87ms]
+(pass) compensation denies roles, stale version/hash, forged payload and cross-workspace access [840.68ms]
+(pass) compensation rejection and revisions retain immutable conclusions and invalidate the approved old version [1051.56ms]
+(pass) compensation approval and execution expire independently, invalidation persists after clock restoration [941.40ms]
+(pass) compensation is a new grant and can restore historical success after original approval expiry [748.88ms]
+(pass) source changes invalidate compensation approval even when failed resolve returns an error [868.97ms]
+(pass) later target modification including ABA cannot be overwritten or bypassed with a compensation revision [895.65ms]
+(pass) compensation receipt failure rolls back effect and audit; retry preserves failed attempt and succeeds once [878.13ms]
+(pass) compensation pending approval and lost-response success survive restart, repeated success never applies twice [1018.93ms]
+(pass) compensation reread detects drift while retaining original execution and compensation receipts [816.40ms]
+(pass) independent workers racing compensation execution produce one restoration and one receipt [1336.20ms]
+(pass) v3 migration backs up original execution ledger and supports legacy pending inventory compensation [920.76ms]
+(pass) compensation initial reread mismatch cannot be recorded as successful restoration [914.96ms]
+(pass) batch freezes individually approved actions; successful run remains idempotent and source isolated [1163.70ms]
+(pass) batch partial success retains first receipt; only confirmed failed item may be retried [1424.32ms]
+(pass) unknown after abandoned claim blocks retries; local proof fences old token and permits explicit continue [1138.66ms]
+(pass) committed action with lost checkpoint recovers from exact receipt without applying it again [1276.26ms]
+(pass) partial batch still revalidates evidence and current approval on each action [1110.98ms]
+(pass) batch rejects unapproved, cross-workspace, repeated resource, malformed and forged-role requests [1470.07ms]
+(pass) batch lease and failed work survive restart; recovery never trusts an unbound receipt [1004.65ms]
+(pass) actual worker process exit after claiming leaves durable unknown intent and no business effect [1606.06ms]
+(pass) independent batch runners never duplicate success even when one sees a busy claim [2414.93ms]
+(pass) v4 migration preserves compensation receipts and adds batch tables with a consistent backup [1984.07ms]
+(pass) forward simulation reread mismatch rolls back the effect and success receipt [677.03ms]
+(pass) margin: outcome replay freezes source, compares actual input values and persists reviewed Case [951.64ms]
+(pass) inventory: outcome replay freezes source, compares actual input values and persists reviewed Case [895.35ms]
+(pass) ads: outcome replay freezes source, compares actual input values and persists reviewed Case [964.80ms]
+(pass) future window and missing observation cannot be finalized; waiting state survives clock changes [657.22ms]
+(pass) observation preview checks exact scope, window, baseline values, attribution and checksum [552.80ms]
+(pass) missing costs remain unknown, require inconclusive result and preserve earlier versions [557.91ms]
+(pass) review role, version, observation hash and unexecuted job are enforced server-side [856.38ms]
+(pass) reviewed cases are scoped by source, business date, review time, dimensions and frozen at investigation creation [614.75ms]
+(pass) concurrent reviewers preserve a single immutable Case and cannot overwrite each other [1346.07ms]
+(pass) v5 migration backs up a real execution batch and receipt before adding reviews [1728.42ms]
+(pass) inventory: historical Case filters exact warehouse or Campaign and workspace [629.81ms]
+(pass) ads: historical Case filters exact warehouse or Campaign and workspace [720.22ms]
+(pass) explicit follow-up loads only reviewed built-in synthetic observation and freezes Case without execution [1851.33ms]
+(pass) margin: old synthetic import remains eligible while new draft and approval gates still apply [607.72ms]
+(pass) inventory: old synthetic import remains eligible while new draft and approval gates still apply [560.07ms]
+(pass) ads: old synthetic import remains eligible while new draft and approval gates still apply [1169.95ms]
+(pass) explicit sample restore creates a new evidence revision and never revives prior approval after a round trip [637.65ms]
+(pass) draft blockers distinguish offline, needs-evidence and rejection without granting approval [541.40ms]
+(pass) bundle evidence gaps cannot enter approval even with a protocol Reviewer pass [550.44ms]
+(pass) bundle simulation, observation identity and Case matching preserve the component contract [727.32ms]
+(pass) gift uncertainty and CSV origin cannot enter approval despite a protocol Reviewer pass [891.38ms]
+(pass) gift-inclusive coupon target executes once and keeps observation/Case/follow-up association [1228.10ms]
+(pass) membership unknown/expired/conflicting policy and CSV origin cannot enter approval [1307.55ms]
+(pass) membership coupon simulation preserves cohort, effective price and frozen Case through a real worker [1536.22ms]
+(pass) changed membership evidence invalidates an approval before any simulation side effect [645.63ms]
+(pass) unknown or unavailable reference offers block approval and CSV cannot gain execution privileges [833.33ms]
+(pass) offer reference never becomes sale price, survives synthetic observation and freezes scoped Case through worker [1061.56ms]
+(pass) changed reference availability invalidates exact approval before any simulation side effect [596.65ms]
+
+packages\retail-domain\src\evidence-policy.test.ts:
+(pass) synthetic age is exempt while real-source freshness and invalid clocks remain guarded [0.25ms]
+(pass) reimporting an old business date cannot refresh source freshness [0.13ms]
+(pass) Shanghai day boundary uses latest possible day end, not UTC midnight or import time [0.08ms]
+(pass) date precision, adjacent windows and unknown observation time remain explicit and deterministic [0.13ms]
+
+packages\retail-domain\src\evidence-time-integration.test.ts:
+(pass) real import, frozen tools, persistence and both exports retain business time independently of reimport [124.23ms]
+
+packages\retail-domain\src\exchange-settlement.test.ts:
+(pass) whole-line difference matching preserves the incomplete replacement payment state and separates physical return from refund [4.08ms]
+(pass) refund-and-repurchase requires each flow even when the net difference matches [0.30ms]
+(pass) negative difference explicitly requires a refund; no payment or physical receipt is invented [0.17ms]
+(pass) unknown link, wrong scope, partial returns, reused old line, excess entitlement, stale declaration and later new-order refunds block certainty [0.27ms]
+(pass) frozen reports survive later imports, real database reopening and encrypted backup recovery without changing transaction totals [306.33ms]
+
+packages\retail-domain\src\gifts.test.ts:
+(pass) gift imports distinguish zero, paid cost and unknown, persist and preserve frozen evidence on correction [86.77ms]
+(pass) gift rules require explicit association and non-overlapping cost basis before calculating margin [2.95ms]
+(pass) invalid gift shape and hidden mapped columns are rejected instead of losing cost [2.39ms]
+(pass) gift quantities enter actual cost and coupon target, including a bundle with additional gifts [52.21ms]
+
+packages\retail-domain\src\injection-boundary.test.ts:
+(pass) CSV and historical Case injection cannot turn frozen readonly tools into execution or supply parameters, roles or scope [109.62ms]
+
+packages\retail-domain\src\inventory-numeric.test.ts:
+(pass) all model-authored surfaces reject fabricated inventory amounts, units and dates [72.38ms]
+(pass) verified facts keep on-hand, reserved and inbound separate, with exact fraction context [77.90ms]
+(pass) wrong identity, missing/altered tools, stale metrics and tampered scenario cannot produce facts [101.30ms]
+(pass) zero or missing sales remains unknown, never a zero-day coverage or purchase commitment [94.04ms]
+(pass) target stock rounds the rational upward once, avoiding floating-point one-unit over-order [90.51ms]
+(pass) production report exposes the same generated facts to Reviewer, export and durable storage [120.13ms]
+(pass) a fabricated narrative is corrected within budget and invalid Reviewer quantities are never accepted [116.88ms]
+
+packages\retail-domain\src\investigation-resume.test.ts:
+(pass) pause is durable, exact-epoch resume fences all late writes and preserves frozen evidence [176.25ms]
+(pass) resume never resets call budget or duplicates an active investigation [97.01ms]
+(pass) interrupted lease can explicitly continue with a new deadline, while completed reports cannot resume [102.20ms]
+
+packages\retail-domain\src\investigations.test.ts:
+(pass) bounded retail investigation > offline replay is labeled and scenarios independently recover 20% margin [74.41ms]
+(pass) bounded retail investigation > model chooses four scoped tools then produces cited report and sequential review [76.25ms]
+(pass) bounded retail investigation > rejects nonexistent citations and refuses unsupported tools [85.16ms]
+(pass) bounded retail investigation > requires all evidence tools and two distinct plans [76.61ms]
+(pass) bounded retail investigation > tool loops and expired investigations terminate explicitly [69.72ms]
+(pass) bounded retail investigation > missing costs remain unknown, all calculated options fail closed [71.80ms]
+(pass) bounded retail investigation > coupon limits cannot manufacture a feasible plan [76.44ms]
+(pass) bounded retail investigation > no model is never silently converted to replay [78.59ms]
+(pass) bounded retail investigation > duplicates reuse one run; retries create history and immutable evidence survives restart [98.87ms]
+(pass) bounded retail investigation > expired lease recovers as failed and late completion cannot overwrite it [102.08ms]
+(pass) bounded retail investigation > renderer cannot forge worker updates or workspace paths [82.37ms]
+(pass) bounded retail investigation > workspace concurrency limit is enforced across independent store connections [102.41ms]
+(pass) exact investigation lookup remains available beyond recent-list limits [144.27ms]
+(pass) Reviewer receives analysis-only scope and may still request evidence or reject [74.51ms]
+(pass) margin tools state per-sales-unit versus snapshot totals without altering arithmetic [69.10ms]
+(pass) contradictory MCP amounts terminate before Reviewer and preserve tool trace [78.39ms]
+(pass) numeric audit survives report storage and legacy reports are not backfilled [91.63ms]
+(pass) model numeric prose is corrected within the existing budget, not silently accepted [68.47ms]
+
+packages\retail-domain\src\live-evaluation.test.ts:
+(pass) margin: scoring checks frozen evidence, reviewed disclosure and exact calculations [137.82ms]
+(pass) inventory: scoring checks frozen evidence, reviewed disclosure and exact calculations [129.24ms]
+(pass) ads: scoring checks frozen evidence, reviewed disclosure and exact calculations [129.58ms]
+(pass) 15-run gate requires five per scenario, at least four passes each and no forbidden attempt [0.60ms]
+(pass) safety monitor checks nested and malformed tool requests without flagging narrative warnings [0.44ms]
+
+packages\retail-domain\src\margin-evidence.test.ts:
+(pass) historical disclosure distinguishes empty and present Case context without manufacturing causal support [64.71ms]
+(pass) complete snapshot supports arithmetic without manufacturing causal or execution evidence [66.22ms]
+(pass) missing calculation fields remain missing while infeasible plans remain distinguishable [72.60ms]
+(pass) evaluation cases hide expected answers and keep citations inside frozen scope [67.11ms]
+(pass) review context does not override rejected or needs-evidence verdicts [66.93ms]
+(pass) new replay reports persist assessment without upgrading old historical reports [90.83ms]
+(pass) Reviewer sees the same final unknown disclosures that are persisted [69.76ms]
+
+packages\retail-domain\src\margin-numeric.test.ts:
+(pass) numeric audit separates unit, total and coupon delta with exact frozen citations [52.04ms]
+(pass) contradictory money, unit, quantity, threshold and computed action are refused [51.56ms]
+(pass) missing, duplicate and cross-record citations never receive numeric audit [63.78ms]
+(pass) business-time metadata cannot be replaced with a claimed source timestamp [74.00ms]
+(pass) unknown values remain null, zero totals remain zero and negative margin is retained [69.67ms]
+(pass) model prose cannot smuggle digits or business numerals outside code facts [60.64ms]
+
+packages\retail-domain\src\membership.test.ts:
+(pass) membership imports select eligible price, persist and retain frozen identity on correction [87.46ms]
+(pass) unknown identity, invalid windows, missing price and discount conflicts never fall back to ordinary price [1.71ms]
+(pass) malformed membership evidence and hidden columns are quarantined; same-key cohorts do not aggregate [1.46ms]
+(pass) member price replaces rather than discounts ordinary price; gift and pack costs are still counted once [48.30ms]
+
+packages\retail-domain\src\offers.test.ts:
+(pass) public offer selection excludes unavailable low prices and ties deterministically without mutating inputs [0.21ms]
+(pass) only exact scope/date public offers compare; unknown matched availability or audience blocks certainty [0.55ms]
+(pass) invalid offer fields and hidden mappings quarantine rather than guess scope or prices [3.34ms]
+(pass) production import, frozen tools, numeric audit and restart preserve selection without changing sales price [72.57ms]
+
+packages\retail-domain\src\operations.test.ts:
+(pass) deterministic retail calculations > stacked merchant discounts produce 70 yuan revenue, 10 yuan profit and 14.29% margin [0.04ms]
+(pass) deterministic retail calculations > confirmed additional platform settlement is added once [0.07ms]
+(pass) deterministic retail calculations > missing cost, ambiguous subsidy and SKU conflict cannot produce definite margin [0.08ms]
+(pass) deterministic retail calculations > zero revenue refuses ratio and negative profit stays negative [0.03ms]
+(pass) deterministic retail calculations > calendar validity, money precision and physical stock constraints are enforced [0.44ms]
+(pass) CSV validation > reads BOM, CRLF, quoted comma, escaped quotes and multiline cells [0.05ms]
+(pass) CSV validation > rejects unclosed quotes, duplicate headers and excess cells [0.31ms]
+(pass) CSV validation > quarantines invalid and duplicate rows without turning blanks into zero [0.58ms]
+(pass) CSV validation > supports explicit renamed-column mapping and rejects reused columns [0.73ms]
+(pass) SQLite retail lifecycle > demo produces exactly 2 warnings, 2 evidence gaps, 2 normal rows and reproducible totals [44.11ms]
+(pass) SQLite retail lifecycle > repeated imports are idempotent and survive worker/database restart [69.21ms]
+(pass) SQLite retail lifecycle > two concurrent workers importing the same CSV commit one batch [726.22ms]
+(pass) SQLite retail lifecycle > corrections replace current row while previous batch is retained [55.90ms]
+(pass) SQLite retail lifecycle > explicit built-in reload restores corrected demo rows with new identity but retains CSV and history [73.79ms]
+(pass) SQLite retail lifecycle > all-invalid imports do not create batches, and demo stays separate from user CSV [56.96ms]
+(pass) SQLite retail lifecycle > partial rejection reports are persisted and exported values resist spreadsheet formulas [50.03ms]
+(pass) SQLite retail lifecycle > store paths isolate workspaces and SKU specification conflicts block calculations [97.99ms]
+
+packages\retail-domain\src\order-allocation.test.ts:
+(pass) integer largest remainders conserve each pool, use stable line IDs, exclude gifts and ignore input ordering [6.08ms]
+(pass) BigInt multiplication handles large orders without losing fen and separate orders never share discounts [5.01ms]
+(pass) duplicate lines, conflicting pools, invalid currency assumptions or impossible allocation reject the whole input [0.57ms]
+
+packages\retail-domain\src\partial-cancellation.test.ts:
+(pass) explicit uneven-price partial cancellation survives split imports, idempotency and restart; does not invent refund or stock [70.03ms]
+(pass) cancellation rejects absent guessed basis, excess, incompatible deposit, non-cancellation fields and invalid final quantities [1.16ms]
+(pass) explicit optional cancellation amount passes mapped money units and independent line reconciliation without truncation [5.97ms]
+
+packages\retail-domain\src\price-action.test.ts:
+(pass) integer price target changes no discounts and rejects unsupported, excessive or no-op prices [242.95ms]
+(pass) reviewed price binds independent values, approval, idempotent execution/readback and unsafe compensation refusal [463.17ms]
+(pass) coupon and direct price share the resource version; later approved action cannot overwrite the first [559.80ms]
+(pass) safe price reduction supports separately approved compensation and original coupon remains unchanged [653.40ms]
+(pass) price investigation cannot reuse a coupon report, tamper tools or use CSV/offline approval [1043.05ms]
+
+packages\retail-domain\src\procurement-store.test.ts:
+(pass) split arrivals, explicit warehouse scope, cancellation, ETA and batch expiry persist and back up without creating sellable stock [286.36ms]
+(pass) over-receipt, same event conflict, inconsistent batch expiry and stale preview reject atomically [40.95ms]
+
+packages\retail-domain\src\promotion-eligibility.test.ts:
+(pass) explicit sequential thresholds and bilateral stacking allocate exact integer discounts and gift costs [3.43ms]
+(pass) unknown eligibility never becomes zero or silently skips a selected rule; ineligible combinations have no financial result [0.77ms]
+(pass) gift cost inclusions do not duplicate goods costs; unknown gifts and zero-weight owners remain unknown [0.72ms]
+(pass) invalid references, duplicate identities, floating money, over-discount and guessed member rules reject [0.77ms]
+
+packages\retail-domain\src\related-evidence.test.ts:
+(pass) cross-scenario boundary, unknown spec, period mismatch, ambiguity and truncation remain explicit [108.94ms]
+(pass) worker-created bundle survives source correction, restart, MCP scope and exports; all three audits consume frozen context [1557.25ms]
+
+packages\retail-domain\src\retail-query.test.ts:
+(pass) page counts and exact global sums are independent of limit, search, status and offset [54.93ms]
+(pass) scope evidence covers the whole selected scope and never substitutes import time for business dates [65.12ms]
+(pass) projection invalidates on replaced evidence, survives restart and clamps stale page offsets [84.98ms]
+(pass) bounded typed query rejects untrusted SQL, huge pages and out-of-range offsets [51.73ms]
+(pass) clean legacy projection migrates batch indexing and rebuilds without touching source evidence [90.73ms]
+(pass) batch metadata invalidates evidence and history, including an already-stale legacy projection [99.09ms]
+
+packages\retail-domain\src\return-inspection.test.ts:
+(pass) inspection preserves refund/physical return separation and warehouse disposition without changing transaction ledger [104.03ms]
+(pass) refund target, over-inspection, wrong clock, duplicate conflicts and changed review are rejected [73.43ms]
+
+packages\retail-domain\src\scheduled-checks.test.ts:
+(pass) default is disabled, manual and scheduled share a unique slot without touching business state [126.97ms]
+(pass) offline gap is visible, bounded manual catch-up reads current data and keeps slot/observation distinct [145.23ms]
+(pass) missed slots are not automatically replayed at restart; same-slot dedup survives restart [139.48ms]
+(pass) optimistic config versions, source separation and empty-data gaps are explicit [140.34ms]
+(pass) failure is durable, explicit retries preserve history and obey three-attempt budget [140.45ms]
+(pass) lost worker lease becomes interrupted, late old result cannot override a new attempt [154.96ms]
+(pass) new snapshots create new findings while stable repeated snapshots do not [132.87ms]
+(pass) concurrent workers claim one slot only [374.32ms]
+(pass) clock rollback and renderer attempts to control internal ticks, scopes or timestamps fail [142.23ms]
+(pass) CSV freshness remains historical and finding previews are bounded without hiding counts [201.06ms]
+(pass) actual data worker records a corrupt source failure and can read the ledger afterwards [766.10ms]
+(pass) unsupported future ledger versions are rejected without overwriting results [179.97ms]
+(pass) one-shot source failure discards staged findings and retry commits exactly once [168.70ms]
+(pass) staging a lazy source does not block lease recovery or publish the expired attempt [163.19ms]
+
+packages\retail-domain\src\signal-investigations.test.ts:
+(pass) inventory: replay trace is explicit and frozen report survives restart [83.75ms]
+(pass) inventory: model requires scoped evidence and correct options before serial review [76.76ms]
+(pass) inventory: incomplete evidence blocks conditional quantities despite reviewer pass [78.70ms]
+(pass) ads: replay trace is explicit and frozen report survives restart [95.49ms]
+(pass) ads: model requires scoped evidence and correct options before serial review [80.58ms]
+(pass) ads: incomplete evidence blocks conditional quantities despite reviewer pass [69.76ms]
+(pass) inventory: late inbound and lead cannot erase pre-arrival gap [69.22ms]
+(pass) ads: reduced spend scales attributed revenue without improving ROAS [73.29ms]
+(pass) bounded loop, deadline, absent model and cross-scenario tools reject [75.02ms]
+(pass) readonly connector freezes launch evidence across later imports and denies writes [114.01ms]
+(pass) contract corrections are bounded, counted, and never execute malformed scope requests [76.78ms]
+(pass) Reviewer format failure gets one scoped correction without rerunning investigation or accepting invalid verdict [78.76ms]
+(pass) repeated malformed review remains failed and explains the field instead of accepting a report [75.35ms]
+(pass) missing evidence never upgrades a rejected Reviewer verdict [75.11ms]
+
+packages\retail-domain\src\signal-query.test.ts:
+(pass) both scenarios page without truncating scope counts or losing records [52.68ms]
+(pass) scenario sources and business dates cover the selected scope independent of search, status and page [52.82ms]
+(pass) legacy clean signal projection migrates batch indexing and reconstructs authoritative data [80.59ms]
+(pass) kind, source, shop, channel, date, literal search and empty pages stay scoped [56.30ms]
+(pass) another connection import, batch time and restart invalidate cached evidence [100.08ms]
+(pass) replacement recalculates counts and removes stale evidence after cache creation [92.25ms]
+(pass) cross-date specification conflicts remain visible even with one-row filtering [48.88ms]
+(pass) query contract bounds pages, denies SQL and readonly connections do not mutate [74.42ms]
+(pass) source cursor preserves evidence and releases its read transaction when stopped early [75.70ms]
+
+packages\retail-domain\src\signals.test.ts:
+(pass) inventory and advertising deterministic rules > coverage excludes inbound and combines decline with lead time risk [28.88ms]
+(pass) inventory and advertising deterministic rules > missing quantity, zero sales and unknown ETA never become zero certainty [30.64ms]
+(pass) inventory and advertising deterministic rules > non-adjacent or unequal windows block sales and ROAS comparisons [310.71ms]
+(pass) inventory and advertising deterministic rules > very large stock coverage does not overflow date conversion [32.91ms]
+(pass) inventory and advertising deterministic rules > ROAS 3 to 1.8 is a 40% relative drop, not a profit measure [31.63ms]
+(pass) inventory and advertising deterministic rules > mismatched attribution, missing revenue and zero denominator block conclusions [32.71ms]
+(pass) inventory and advertising deterministic rules > exact 20% boundary uses integer arithmetic even for large monetary values [28.91ms]
+(pass) inventory and advertising deterministic rules > currency and impossible counts are quarantined; missing numeric cells remain null [33.05ms]
+(pass) inventory and advertising deterministic rules > custom headers support manual mapping; duplicates are isolated [32.48ms]
+(pass) inventory and advertising deterministic rules > no renderer-specified database path or unsupported execution request [33.65ms]
+(pass) signal persistence and evidence > fresh concurrent worker initialization and duplicate scenario imports stay atomic [1571.77ms]
+(pass) signal persistence and evidence > demo has one warning, one normal and one evidence gap per scenario [48.63ms]
+(pass) signal persistence and evidence > reimport is idempotent, source-separated and survives restart [69.91ms]
+(pass) signal persistence and evidence > correction replaces current snapshot and retains immutable history [66.95ms]
+(pass) signal persistence and evidence > partial rejection remains inspectable and invalid-only import creates no batch [41.13ms]
+(pass) signal persistence and evidence > SKU spec conflicts and different workspace databases stay isolated [72.57ms]
+(pass) explicit scenario reload restores archived variants without altering CSV or timestamping unchanged data [96.59ms]
+
+packages\retail-domain\src\source-metadata.test.ts:
+(pass) source metadata validates bounded identity, ordered watermarks and observation clock without accepting authenticity claims [1.06ms]
+(pass) CSV provenance binds content, deduplicates full declarations, persists frozen tool/report metadata and never backfills old imports [127.10ms]
+(pass) all scene imports persist declarations while builtin clocks are explicitly synthetic and stable across reload [132.20ms]
+(pass) observed age, partial watermarks, current and baseline coverage stay independent of import time [0.48ms]
+
+packages\retail-domain\src\supplement.test.ts:
+(pass) supplement creates a new reviewed lineage, rejects stale preview and preserves parent and deduplicates repeated confirmation; only two rounds [123.40ms]
+(pass) supplement refuses scope/spec/source swaps and running-parent replacement; renderer cannot submit arbitrary evidence [88.62ms]
+(pass) persisted thirty-tool cap is independent of model budget and resume never resets consumed tools [132.71ms]
+
+packages\retail-domain\src\transactions.test.ts:
+(pass) actual data-worker imports and queries both date bases through strict IPC schemas [1267.12ms]
+(pass) explicit replacement consumes returned units once, loads old lines and siblings across batches and persists after reopening [81.12ms]
+(pass) replacement links reject missing scopes, self cycles, incomplete declarations and financial shortcuts [44.99ms]
+(pass) installments import incrementally, count paid units only on settlement and retain both date bases after restart [70.15ms]
+(pass) unsettled full cancellation records cash refunds explicitly and cannot reopen fulfillment [38.49ms]
+(pass) paid partial cancellation and physical returns remain separate from financial refunds and stock [45.43ms]
+(pass) payment, cancellation and return prefixes reject impossible cash or fulfillment atomically [48.57ms]
+(pass) cross-period refund has independent event and original-order views, exact midnight boundaries and negative event-period totals [47.97ms]
+(pass) partial imports resolve original chains; identical events are idempotent and conflicting, orphan or excessive refunds roll back atomically [53.38ms]
+(pass) event contracts reject guessed allocation, time inversion, overshipment, duplicate settlement, malformed rows and cross-spec identity [52.64ms]
+(pass) immutable ledger, provenance, workspace isolation and bounded indexed pagination survive reopening [146.06ms]
+
+packages\retail-domain\src\warehouse-maintenance.test.ts:
+(pass) declared count/state/expiry/transfer exceptions replay with conserved quantities, scoped audit and encrypted backup recovery [279.15ms]
+(pass) count correction requires current expected stock and cannot hide a shortage below outstanding reservations [35.91ms]
+(pass) state movement preserves total and forbids using held stock, reviving scrap, same-state or expired sellable conversion [43.23ms]
+(pass) batch-wide expiry corrections bind the old value, preserve historical dates, and allow corrected in-transit arrival without inventing expiry [36.93ms]
+(pass) arrival, loss and physical return share a single remaining transit cap and reject wrong warehouse or stale confirmation [41.49ms]
+
+packages\retail-domain\src\warehouse-picking.test.ts:
+(pass) FEFO uses only exact-scope eligible stock net of reservations and atomically reserves all selected batches without changing physical counts [328.28ms]
+(pass) competing plans, stock changes, time expiry and business-day rollover invalidate confirmation without partial writes [47.33ms]
+(pass) shortfall, unknown expiry and future commitments do not produce partial or prematurely usable reservations [50.03ms]
+(pass) planning reads past the view page, uses stable same-expiry batch order and caps one confirmation at 100 batches [59.41ms]
+
+packages\retail-domain\src\warehouse-reservation.test.ts:
+(pass) partial release and reserved shipment conserve physical stock; historical scope and reopened store retain remaining reservation [79.14ms]
+(pass) unreserved shipment and transfers cannot consume held stock; excess release, wrong bucket and reservation reuse are rejected atomically [51.70ms]
+(pass) new holds need valid sellable expiry and free stock; expired holds remain auditable and can be explicitly released [39.34ms]
+(pass) concurrent preview is invalidated by another hold and a backdated hold cannot make an existing shipment overdraw free stock [41.72ms]
+
+packages\retail-domain\src\warehouse-store.test.ts:
+(pass) separate transfer departure/arrival conserves physical stock and in-transit units, scopes warehouses and survives restart [86.06ms]
+(pass) purchase receipts cannot exceed explicitly qualified quantity or invent batch expiry; stale evidence invalidates preview [100.46ms]
+(pass) negative prefixes, over-arrival, duplicate departures and unknown or expired sellable batches are blocked atomically [51.15ms]
+(pass) explicit returned inspection dispositions cap restocking; a refund or mismatched warehouse cannot authorize stock [330.98ms]
+
+packages\retail-domain\src\adapters\doudian-client.test.ts:
+(pass) explicit readonly page transport validates official endpoint and signed body without inferring business events [2.98ms]
+(pass) HTTP errors, platform failures and malformed pages never advance a page or leak response details [4.36ms]
+(pass) transport failures and caller cancellation remain explicit; no automatic retries [1.00ms]
+(pass) request deadline aborts the read instead of reporting an empty successful page [6.21ms]
+
+packages\retail-domain\src\adapters\doudian-request.test.ts:
+(pass) offline order plan fixes the read method, official host, page origin, sorted JSON and signature transport [1.21ms]
+(pass) preparation accepts only the bounded read contract, rejects missing authorization material and never starts network I/O [1.20ms]
+
+packages\retail-domain\src\adapters\ingestion-issues.test.ts:
+(pass) quarantine queue retains append-only reviews, rejects stale changes and links only later clean same-source receipts [177.30ms]
+
+packages\retail-domain\src\adapters\ingestion.test.ts:
+(pass) job-specific history and preview lookup retain receipts beyond the recent thirty-job window [295.97ms]
+(pass) duplicate source records are counted consistently in preview and receipt without duplicating events [83.44ms]
+(pass) receipt failure rolls back both imported events and transaction batch; the same review can safely retry [124.91ms]
+(pass) reviewed import is atomic and idempotent, restart preserves receipts and independent fixture totals reconcile [127.88ms]
+(pass) quality failures quarantine complete records; partial confirmation is explicit and later corrected batch imports only missing events [88.26ms]
+(pass) mapping, staging or ledger changes invalidate an unconfirmed preview; conflicts never overwrite immutable events [121.00ms]
+(pass) live-shaped mapping remains operator-declared, needs a separate reference and cannot claim authenticated platform reconciliation [103.39ms]
+(pass) mapping does not infer events, units or unsafe IDs; field discovery never returns raw personal values [5.32ms]
+
+packages\retail-domain\src\adapters\line-reference.test.ts:
+(pass) line reconciliation detects equal-total swapped amounts, missing and extra IDs independently [7.63ms]
+(pass) file validation rejects unsupported columns, wrong shop, ambiguous duplicates and invalid units; exact duplicates are counted [5.31ms]
+(pass) file references persist separately from aggregate references and never import reference-only events [85.74ms]
+
+packages\retail-domain\src\adapters\sync-cleanup.test.ts:
+(pass) cleanup only clears reviewed old staging, retaining business events, page receipts and an idempotent cleanup receipt [169.37ms]
+(pass) recent, quarantined and unconfirmed jobs are excluded; a new review after preview invalidates cleanup [209.04ms]
+
+packages\retail-domain\src\adapters\sync-schedule.test.ts:
+(pass) incremental cursor advances only with page commit, overlap repeats and closed-app backlog is never skipped [39.57ms]
+(pass) restart pauses pending job; disabled plan may finish that job but never queues another [69.15ms]
+(pass) configuration changes disable old plans; wrong revisions, future start and internal renderer ticks are rejected [38.60ms]
+(pass) failure never advances cursor or creates a replacement task; explicit retry keeps the same window [41.12ms]
+
+packages\retail-domain\src\adapters\sync-store.test.ts:
+(pass) an archived task remains addressable after the recent fifty-task window [311.92ms]
+(pass) page staging and checkpoint commit together; pause fences late results, restart preserves pages and requires resume [81.71ms]
+(pass) transient failure uses bounded retries on the same page; permanent failure requires an explicit retry [50.62ms]
+(pass) invalid or changing page totals do not stage a page or advance checkpoints; config changes invalidate old tasks [45.89ms]
+(pass) authorization, time windows and renderer boundary prevent forged transport updates [38.95ms]
+
+packages\retail-domain\src\evaluation\evaluation.test.ts:
+(pass) PRD catalog includes every mode and every variant with an inspectable contract [0.56ms]
+(pass) unsupported and failed results never inflate passed count [0.09ms]
+(pass) fixed cases replay production rules and fault ledger, preserving release gaps [19729.83ms]
+
+ 371 pass
+ 0 fail
+ 3362 expect() calls
+Ran 371 tests across 53 files. [142.82s]

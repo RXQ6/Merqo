@@ -1,6 +1,7 @@
 import {Database} from 'bun:sqlite';import {mkdirSync} from 'node:fs';import {dirname} from 'node:path';import {createHash} from 'node:crypto';import {z} from 'zod';
 import {WarehouseEventSchema,WarehouseQuerySchema,type WarehouseEvent,type WarehouseQuery,type WarehousePreview,type WarehouseReceipt,type WarehouseLine,type WarehouseView,type WarehouseReservation} from './warehouse-contract';
 import type {ProcurementEvent} from './procurement-contract';import type {InspectionRow} from './return-inspection-contract';import type {TransactionEvent} from './transactions';
+import {WarehousePickInputSchema,type WarehousePickInput,type WarehousePickPlan,type WarehousePickReceipt} from './warehouse-contract';
 const hash=(v:string)=>createHash('sha256').update(v).digest('hex'),day=(t:number)=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(t));
 const eventKey=(e:WarehouseEvent)=>JSON.stringify([e.source_id,e.shop_id,e.event_id]);
 const bucket=(e:WarehouseEvent)=>JSON.stringify([e.source_id,e.shop_id,e.warehouse_id,e.sku,e.spec,e.batch_id,e.state]);
@@ -60,6 +61,40 @@ export class WarehouseStore {
  private db:Database;
  constructor(file:string,private now=Date.now){mkdirSync(dirname(file),{recursive:true});this.db=new Database(file,{create:true,strict:true});try{this.db.exec('PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;CREATE TABLE IF NOT EXISTS warehouse_events(key TEXT PRIMARY KEY,json TEXT NOT NULL);CREATE TABLE IF NOT EXISTS warehouse_receipts(id TEXT PRIMARY KEY,json TEXT NOT NULL)');for(const t of['warehouse_events','warehouse_receipts'])for(const op of['UPDATE','DELETE'])this.db.exec(`CREATE TRIGGER IF NOT EXISTS ${t}_no_${op} BEFORE ${op} ON ${t} BEGIN SELECT RAISE(ABORT,'immutable warehouse');END;`);}catch(e){this.db.close();throw e;}}
  close(){this.db.close();}
+ private pickState(input:WarehousePickInput){
+  const at=this.now(),today=day(at),stored=this.rows('warehouse_events'),refs=this.references(),events=stored.map(s=>JSON.parse(s) as WarehouseEvent),active=events.filter(e=>Date.parse(e.event_at)<=at);
+  const lines=replay(active,refs).stocks.filter(l=>l.sourceId===input.sourceId&&l.shop===input.shop&&l.warehouse===input.warehouse&&l.sku===input.sku&&l.spec===input.spec);
+  const usable=lines.filter(l=>l.state==='sellable'&&l.expiresOn!==null&&l.expiresOn>=today&&l.quantity>l.reserved).sort((a,b)=>a.expiresOn!<b.expiresOn!?-1:a.expiresOn!>b.expiresOn!?1:a.batchId<b.batchId?-1:a.batchId>b.batchId?1:0);
+  const selections:WarehousePickPlan['selections']=[];let left=input.quantity;
+  for(const l of usable){if(!left)break;const quantity=Math.min(left,l.quantity-l.reserved);selections.push({batchId:l.batchId,expiresOn:l.expiresOn!,quantity});left-=quantity;}
+  const excluded={unknownExpiry:lines.filter(l=>l.state==='sellable'&&l.expiresOn===null).reduce((n,l)=>n+l.quantity-l.reserved,0),expired:lines.filter(l=>l.state==='sellable'&&l.expiresOn!==null&&l.expiresOn<today).reduce((n,l)=>n+l.quantity-l.reserved,0),quarantined:lines.filter(l=>l.state!=='sellable').reduce((n,l)=>n+l.quantity,0),reserved:lines.reduce((n,l)=>n+l.reserved,0)};
+  return{at,today,stored,refs,events,selections,excluded,shortfall:left,knownAvailable:usable.reduce((n,l)=>n+l.quantity-l.reserved,0),hash:hash(JSON.stringify({input,today,stored,active,refs}))};
+ }
+ private pickEvents(plan:WarehousePickPlan,at:number):WarehouseEvent[]{return plan.selections.map((s,i)=>({source_id:plan.input.sourceId,event_id:`pick-${plan.id}-${i}`,shop_id:plan.input.shop,warehouse_id:plan.input.warehouse,sku:plan.input.sku,spec:plan.input.spec,batch_id:s.batchId,expires_on:s.expiresOn,event_at:new Date(at).toISOString(),state:'sellable',kind:'reserve',quantity:s.quantity,reservation_id:`pick-${plan.id}-${i}`,order_ref:plan.input.orderRef}));}
+ pickPreview(input:WarehousePickInput):WarehousePickPlan {
+  const value=WarehousePickInputSchema.parse(input);
+  return this.db.transaction(()=>{
+   this.db.exec('CREATE TABLE IF NOT EXISTS warehouse_pick_plans(id TEXT PRIMARY KEY,created_at INTEGER NOT NULL,json TEXT NOT NULL)');this.db.query('DELETE FROM warehouse_pick_plans WHERE created_at<?').run(this.now()-600000);
+   const v=this.pickState(value),plan:WarehousePickPlan={id:crypto.randomUUID(),at:v.at,validUntil:v.at+600000,hash:v.hash,businessDay:v.today,input:value,status:v.shortfall?v.excluded.unknownExpiry?'needs_evidence':'insufficient':'ready',reasons:[],knownAvailable:v.knownAvailable,shortfall:v.shortfall,excluded:v.excluded,selections:v.selections};
+   if(plan.shortfall)plan.reasons.push(`已知效期且未预占的库存不足，缺 ${plan.shortfall} 件；不自动部分预占`);
+   if(v.excluded.unknownExpiry)plan.reasons.push(`效期未知 ${v.excluded.unknownExpiry} 件不参与分配；仅在效期明确的批次中按先到期顺序选择`);
+   if(plan.selections.length>100){plan.status='blocked';plan.reasons.push('本次需要超过100个批次，请缩小本次数量或另行核对');plan.selections=[];}
+   if(v.stored.length+plan.selections.length>50000){plan.status='blocked';plan.reasons.push('库存账本事件容量不足，不能新增本次预占');}
+   if(plan.status==='ready')try{replay([...v.events,...this.pickEvents(plan,v.at)],v.refs);}catch(e){plan.status='blocked';plan.reasons.push(e instanceof Error?e.message:'现有事件链不允许新增预占');}
+   if(this.db.query<{n:number},[]>('SELECT COUNT(*) n FROM warehouse_pick_plans').get()!.n>=1000)throw Error('短期拣货预览过多，请稍后重试');
+   this.db.query('INSERT INTO warehouse_pick_plans VALUES(?,?,?)').run(plan.id,plan.at,JSON.stringify(plan));return plan;
+  }).immediate();
+ }
+ pickConfirm(id:string,reviewHash:string):WarehousePickReceipt {
+  return this.db.transaction(()=>{
+   const receiptId='warehouse-pick-'+id,old=this.db.query<{json:string},[string]>('SELECT json FROM warehouse_receipts WHERE id=?').get(receiptId);if(old){const r=JSON.parse(old.json) as WarehousePickReceipt;if(r.plan.hash!==reviewHash)throw Error('拣货预览摘要不匹配');return{...r,replayed:true};}
+   const exists=this.db.query("SELECT 1 FROM sqlite_master WHERE type='table' AND name='warehouse_pick_plans'").get(),row=exists?this.db.query<{json:string},[string]>('SELECT json FROM warehouse_pick_plans WHERE id=?').get(id):null;if(!row)throw Error('拣货预览不存在或已过期，请重新生成');
+   const plan=JSON.parse(row.json) as WarehousePickPlan;if(plan.hash!==reviewHash||plan.status!=='ready')throw Error('拣货预览不允许确认');if(this.now()>plan.validUntil||day(this.now())!==plan.businessDay)throw Error('拣货预览已过期或跨业务日，请重新生成');
+   const current=this.pickState(plan.input);if(current.hash!==plan.hash)throw Error('库存或来源证据已变化，请重新生成拣货建议');
+   const events=this.pickEvents(plan,this.now()),json=JSON.stringify(events),analysis=this.analyze(json);if(!analysis.canImport)throw Error(analysis.errors.join('；'));for(const e of analysis.fresh)this.db.query('INSERT INTO warehouse_events VALUES(?,?)').run(eventKey(e),JSON.stringify(e));
+   const receipt:WarehousePickReceipt={id:receiptId,at:this.now(),accepted:analysis.newEvents,duplicates:analysis.duplicates,authority:'operator_declared',plan,reservationIds:events.map(e=>e.kind==='reserve'?e.reservation_id:'')};this.db.query('INSERT INTO warehouse_receipts VALUES(?,?)').run(receipt.id,JSON.stringify(receipt));return receipt;
+  }).immediate();
+ }
  private rows(table:string){return this.db.query<{json:string},[]>(`SELECT json FROM ${table} ORDER BY rowid`).all().map(r=>r.json);}
  private references():References{const tables=new Set(this.db.query<{name:string},[]>("SELECT name FROM sqlite_master WHERE type='table'").all().map(r=>r.name)),read=(table:string)=>tables.has(table)?this.rows(table).map(s=>JSON.parse(s)):[];return{purchases:read('procurement_events'),inspections:read('return_inspections'),transactions:tables.has('transaction_events')?this.db.query<{json:string},[]>("SELECT json FROM transaction_events WHERE source='csv' AND kind='returned'").all().map(r=>JSON.parse(r.json)):[]};}
  private analyze(json:string){const input=z.array(WarehouseEventSchema).min(1).max(2000).parse(JSON.parse(json)).map(e=>({...e,event_at:new Date(e.event_at).toISOString()})),stored=this.rows('warehouse_events'),refs=this.references(),map=new Map(stored.map(s=>[eventKey(JSON.parse(s)),s])),fresh:WarehouseEvent[]=[],errors:string[]=[];let duplicates=0;

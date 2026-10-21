@@ -80,7 +80,7 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: {
     if (input.op !== 'snapshot' && input.op !== 'signals' && input.op !== 'signals_page') setNotice('');
     try {
       const reply = await window.electronAPI.retailRequest(input);
-      if (!reply.ok) throw new Error(reply.error);
+        if (!reply.ok) { setError(reply.error); return reply; }
       if (reply.kind === 'signals') { setSignals(reply.data); if (reply.notice) setNotice(reply.notice); if (input.op === 'signals_import' || input.op === 'signals_demo') { setSource(input.op === 'signals_import' ? 'csv' : 'demo'); setShop(''); setChannel(''); setDate(''); } }
       if (reply.kind === 'snapshot' && (input.op !== 'snapshot' || generation === queryGeneration.current)) { setSnapshot(reply.data); if (reply.signals) setSignals(reply.signals); if (reply.notice) setNotice(reply.notice); }
       if (input.op === 'signals_import' || input.op === 'signals_demo' || input.op === 'signals_replenishment_demo' || input.op === 'demo' || input.op === 'import') setSignalRefreshKey(value => value + 1);

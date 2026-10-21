@@ -226,4 +226,6 @@ fieldset.retail-ingest-form{border:0;padding:0;min-width:0}
 .retail-module-nav>span{font-size:11px;color:var(--muted);margin-right:8px}
 .retail-module-nav button{font-size:12px;border:0;background:var(--paper);padding:7px 10px}
 .retail-main section[aria-label]{scroll-margin-top:66px}
+.retail-picking{padding-block:18px;margin-block:4px 12px;border-block:1px solid var(--line);display:grid;gap:14px}
+.retail-picking>h3{margin:0}.retail-picking>div[aria-label]>p{margin:10px 0;line-height:1.8;max-width:76ch}
 @media(max-width:850px){.retail-form-columns{grid-template-columns:1fr}.retail-main .retail-panel>h2{padding:18px 18px 0}.retail-operational-panel .retail-sync-form{padding:14px 18px 20px}.retail-app .retail-scope-evidence{padding:16px 18px}.retail-section-title{flex-wrap:wrap}.retail-main .retail-panel>p{margin-inline:18px}}

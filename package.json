@@ -1,6 +1,6 @@
 {
   "name": "retailpilot-agent",
-  "version": "0.1.0-beta.7",
+  "version": "0.1.0-beta.8",
   "license": "Apache-2.0",
   "description": "RetailPilot commerce and retail decision agent",
   "type": "module",

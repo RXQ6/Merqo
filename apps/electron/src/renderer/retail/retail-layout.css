@@ -105,6 +105,15 @@
 .retail-context-assistant summary, .retail-task-tools summary { cursor: pointer; line-height: 1.8; }
 .retail-task-tools { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
 .retail-workbench-row { padding-block: 20px; border-bottom: 1px solid var(--line); }
+.retail-app [data-testid=retail-followups] > .retail-guidance { max-width: 56rem; color: var(--muted); line-height: 1.8; margin-bottom: 24px; }
+.retail-app [data-testid=retail-followups] .retail-panel { padding: var(--retail-space); }
+.retail-app [data-testid=retail-followups] .retail-panel > h2 { padding: 0; margin: 0 0 16px; }
+.retail-app [data-testid=retail-followups] .retail-panel > p { margin: 0 0 18px; padding: 0; }
+.retail-app [data-testid=retail-followups] .retail-panel > label { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin: 16px 0; max-width: 28rem; }
+.retail-app [data-testid=retail-followups] .retail-panel > label > input { width: 100%; }
+.retail-app [data-testid=retail-followups] .retail-panel > details { margin-inline: 0; }
+.retail-app [data-testid=retail-followups] .retail-workbench-row > h3 { margin: 0 0 8px; }
+.retail-app [data-testid=retail-followups] .retail-workbench-row > p { margin: 8px 0; }
 .retail-app .retail-checkbox { display: flex; align-items: center; gap: 8px; }
 .retail-app .retail-checkbox input[type=checkbox] { width: auto; flex: 0 0 auto; }
 @media(max-width:850px) { .retail-evidence-card dl { grid-template-columns: minmax(0,1fr); } }

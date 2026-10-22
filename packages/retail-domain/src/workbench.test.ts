@@ -97,3 +97,16 @@ test('schema 9 migration backs up before schema10; backup/restore retains conver
  decisions.close();const db=new Database(file+'.investigations.sqlite');db.exec('DELETE FROM decision_schema;INSERT INTO decision_schema VALUES(9);PRAGMA user_version=9');db.close();decisions=new DecisionStore(file,'workbench-space',current);expect(readdirSync(join(dir,'retail')).some(n=>n.includes('.backup-v9-'))).toBe(true);
  const inventory=backupInventory(join(dir,'retail')),payload=captureBackup(join(dir,'retail'),'workbench-space','测试',[],inventory.connectionHash),target=join(dir,'restored');restoreBackup(payload,target);const restored=new DecisionStore(join(target,'retail/operations.sqlite'),'workbench-space',current);try{expect(as(restored.workbench({op:'wb_case',id:c.id}),'case').item).toEqual(c);expect(as(restored.workbench({op:'wb_conversations',entityId}),'conversations').items).toHaveLength(1);expect(as(restored.workbench({op:'wb_library'}),'library').items).toHaveLength(1);expect(as(restored.workbench({op:'wb_followups'}),'followups').plans).toHaveLength(1);}finally{restored.close();}
 });
+
+test('actual schema9 layout without any workbench tables upgrades while preserving the existing task and backup',async()=>{
+ const original=await task();decisions.close();const old=new Database(file+'.investigations.sqlite');
+ for(const row of old.query<{name:string},[]>("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'wb_%'").all()){
+   if(!/^wb_[a-z_]+$/.test(row.name))throw Error('Unexpected fixture table');old.exec(`DROP TABLE ${row.name}`);
+ }
+ old.exec('DELETE FROM decision_schema;INSERT INTO decision_schema VALUES(9);PRAGMA user_version=9');old.close();
+ decisions=new DecisionStore(file,'workbench-space',current);expect(decisions.task(original.id).task).toEqual(original);
+ expect(as(wb({op:'wb_followups'}),'followups').config.version).toBe(1);
+ expect(as(wb({op:'wb_entity',entityId:original.entityKey,period}),'entity').detail.tasks[0]!.id).toBe(original.id);
+ const backupName=readdirSync(join(dir,'retail')).find(n=>n.includes('.backup-v9-'))!;expect(backupName).toBeDefined();
+ const backup=new Database(join(dir,'retail',backupName),{readonly:true});try{expect(backup.query('PRAGMA user_version').get()).toEqual({user_version:9});expect(backup.query("SELECT count(*) n FROM sqlite_master WHERE type='table' AND name LIKE 'wb_%'").get()).toEqual({n:0});expect(backup.query('SELECT count(*) n FROM business_tasks').get()).toEqual({n:1});}finally{backup.close();}
+});

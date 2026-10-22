@@ -40,6 +40,13 @@ async function main() {
   }
   const update=JSON.parse(fs.readFileSync(path.join(out,'update-smoke.log'),'utf8').trim());assert.equal(update.ok,true);checks.push(...update.checks);
   fs.copyFileSync(path.join(update.out,'result.json'),path.join(out,'update-installed.json'));
+  const previousTestExe=process.env.MERQO_TEST_EXE;
+  process.env.MERQO_TEST_EXE=exe;
+  try { await run(process.execPath,[path.join(__dirname,'merqo-three-batches-check.cjs')],'three-batches-installed.log'); }
+  finally { if(previousTestExe===undefined)delete process.env.MERQO_TEST_EXE;else process.env.MERQO_TEST_EXE=previousTestExe; }
+  const business=JSON.parse(fs.readFileSync(path.join(out,'three-batches-installed.log'),'utf8').trim().split(/\r?\n/).at(-1));assert.equal(business.ok,true);
+  const businessResult=JSON.parse(fs.readFileSync(path.join(business.out,'result.json'),'utf8'));assert.equal(businessResult.packaged,true);checks.push(...businessResult.checks);
+  fs.copyFileSync(path.join(business.out,'result.json'),path.join(out,'three-batches-installed.json'));
   await run(installer, ['/S', `/D=${install}`], 'reinstall.log');
   await run(process.execPath, [path.join(__dirname, 'merqo-packaged-smoke.cjs'), exe, '--restore-profile', smoke.profile], 'restored-smoke.log');
   const restored = JSON.parse(fs.readFileSync(path.join(out, 'packaged-restored.json'), 'utf8'));

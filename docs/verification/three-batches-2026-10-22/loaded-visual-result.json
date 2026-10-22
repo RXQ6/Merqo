@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "packaged": true,
+  "readOnly": true,
+  "checks": [
+    {
+      "route": "业务实体",
+      "width": 1440,
+      "loaded": true,
+      "client": 1184,
+      "scroll": 1184
+    },
+    {
+      "route": "复查与提醒",
+      "width": 1440,
+      "loaded": true,
+      "client": 1184,
+      "scroll": 1184
+    },
+    {
+      "route": "经营知识库",
+      "width": 1440,
+      "loaded": true,
+      "client": 1184,
+      "scroll": 1184
+    },
+    {
+      "route": "业务实体",
+      "width": 800,
+      "loaded": true,
+      "client": 584,
+      "scroll": 584
+    },
+    {
+      "route": "复查与提醒",
+      "width": 800,
+      "loaded": true,
+      "client": 584,
+      "scroll": 584
+    },
+    {
+      "route": "经营知识库",
+      "width": 800,
+      "loaded": true,
+      "client": 584,
+      "scroll": 584
+    }
+  ]
+}

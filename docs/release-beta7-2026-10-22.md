@@ -13,4 +13,6 @@
 
 真实店铺接入、可信多人审批、真实平台执行、真实经营效果、干净或其他Windows环境、代码签名仍待外部条件。本版是未签名的Windows x64预览。
 
-发布前正在进行源码、桌面和安装验收；完成记录与安装包摘要将在验收通过后补充。
+已完成391项领域回归、3526断言与独立schema9迁移检查，34条实际安装验收通过。构建源于干净提交`a95e556017c290f9f02d093b4f22abcfbba7d65f`；见[完整验收](verification/three-batches-2026-10-22/report.md)。
+
+安装包204354999字节；SHA-256为`3da06a6049766704e19ecbb6db9b78fa8d6dbc88ace5adc16bb50bf56cf2ee96`。已公开发布：[GitHub beta.7](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.7)。GitHub返回的资产大小及SHA-256与本地一致。

@@ -32,4 +32,18 @@
 
 ## 安装与外部边界
 
-beta.7安装验收结果将在完成后补充。真实平台授权、多用户可信身份、真实执行/因果收益、干净及跨版本Windows、签名信誉不在本机测试中伪装为完成。完整交付范围见[三批总表](../../three-batch-delivery-2026-10-22.md)。
+beta.7安装验收已通过，见后续记录。真实平台授权、多用户可信身份、真实执行/因果收益、干净及跨版本Windows、签名信誉不在本机测试中伪装为完成。完整交付范围见[三批总表](../../three-batch-delivery-2026-10-22.md)。
+
+## beta.7实际安装验收
+
+34条安装检查全部通过：隔离NSIS安装、包内Bun与MCP、三场景调查协议、审批和模拟回执、交易扩展、动态模型列表、版本与GitHub失败/重试、三批完整业务链路、宽窄窗口和实际重启、同版本重装保留数据、卸载保留配置。截图已更新为实际安装版。
+
+[安装记录](installer-result.json)、[安装版业务链路](installed-business-result.json)、[构建与摘要](build-provenance.json)。源自干净提交`a95e556017c290f9f02d093b4f22abcfbba7d65f`，sourceDirty=false。
+
+391项完整领域回归、3526断言通过；另补真正没有wb_*新表的schema9升级用例，1项、9断言通过，验证原任务保留且升级前备份仍为schema9。该用例没有替代干净系统或跨版本NSIS验收。
+
+安装包204354999字节；SHA-256：`3da06a6049766704e19ecbb6db9b78fa8d6dbc88ace5adc16bb50bf56cf2ee96`。已公开发布：[GitHub beta.7](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.7)；服务端资产大小和SHA-256与本地一致。
+
+## 加载完成后的可视检查
+
+截图复核发现提醒页原先截到了加载状态，因此补跑独立只读可视验收：实际打包程序与已验收配置，等待实体上下文、提醒内容和案例详情加载完成后，1440/800宽度的六项检查全部通过。新截图已替换；见[加载后尺寸结果](loaded-visual-result.json)，脚本scripts/merqo-workbench-visual-check.cjs。只修正测试等待与验收证据，未改动发布包业务代码。

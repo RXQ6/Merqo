@@ -1,0 +1,20 @@
+// Read-only loaded-state visual acceptance against the already-tested packaged build/profile.
+const {_electron:electron}=require(process.env.MERQO_PLAYWRIGHT_MODULE||'playwright');
+const {expect}=require((process.env.MERQO_PLAYWRIGHT_MODULE||'playwright')+'/test');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..'),profile=path.resolve(process.env.MERQO_PREVIEW_PROFILE||''),exe=process.env.MERQO_TEST_EXE;
+assert(profile.startsWith(path.join(root,'.runtime','ingestion-ui-'))&&exe);
+const config=JSON.parse(fs.readFileSync(path.join(profile,'config/config.json'),'utf8')),id=config.workspaces[0].id;
+const out=path.join(root,'artifacts/three-batches-visual',new Date().toISOString().replace(/[:.]/g,'-'));fs.mkdirSync(out,{recursive:true});let app,page;const checks=[];
+async function main(){const env={...process.env,CRAFT_CONFIG_DIR:path.join(profile,'config'),RETAILPILOT_USER_DATA_DIR:path.join(profile,'chromium'),RETAILPILOT_SMOKE:'1'};delete env.ELECTRON_RUN_AS_NODE;
+ app=await electron.launch({executablePath:exe,cwd:profile,env,timeout:60000});await app.firstWindow();await expect.poll(()=>app.windows().some(p=>{try{return new URL(p.url()).searchParams.get('workspaceId')===id;}catch{return false;}}),{timeout:30000}).toBe(true);page=app.windows().find(p=>{try{return new URL(p.url()).searchParams.get('workspaceId')===id;}catch{return false;}});page.setDefaultTimeout(30000);await page.context().tracing.start({screenshots:true,snapshots:true});
+ const button=name=>page.getByRole('button',{name,exact:true});await expect.poll(async()=>await page.getByTestId('retail-workspace').isVisible()||await button('经营分析').isVisible(),{timeout:30000}).toBe(true);if(!await page.getByTestId('retail-workspace').isVisible())await button('经营分析').click();
+ const runtime=await app.evaluate(({app})=>app.isPackaged);assert(runtime);
+ for(const width of [1440,800]){const window=await app.browserWindow(page);await window.evaluate((w,width)=>w.setSize(width,1000),width);for(const [route,testId,label]of[['业务实体','retail-entities','entities'],['复查与提醒','retail-followups','followups'],['经营知识库','retail-knowledge','knowledge']]){
+   await button(route).click();const panel=page.getByTestId(testId);
+   if(route==='业务实体'){await page.getByLabel('搜索业务实体',{exact:true}).fill('TEA-500');await page.getByLabel('业务实体列表').getByRole('button').filter({hasText:'500ml × 6瓶'}).first().click();await expect(page.getByLabel('实体上下文助手')).toBeVisible();}
+   if(route==='复查与提醒'){await expect(panel.getByRole('heading',{name:'巡检与任务联动',exact:true})).toBeVisible();await expect(page.getByLabel('本机到期提醒',{exact:true})).toContainText('三批链路核验');}
+   if(route==='经营知识库'){await button('经营案例').click();await page.getByLabel('搜索经营案例',{exact:true}).fill('毛利证据核验合成案例');await page.getByLabel('经营案例列表').getByRole('button').filter({hasText:'毛利证据核验合成案例'}).click();await expect(panel.getByRole('heading',{name:'毛利证据核验合成案例',exact:true})).toBeVisible();}
+   await expect(panel.getByText(/正在读取/)).toHaveCount(0);await panel.getByRole('heading',{name:route,exact:true}).scrollIntoViewIfNeeded();const dimensions=await panel.evaluate(e=>({client:e.clientWidth,scroll:e.scrollWidth}));assert(dimensions.scroll<=dimensions.client+1);await page.screenshot({path:path.join(out,`${label}-${width}.png`)});checks.push({route,width,loaded:true,...dimensions});
+ }}await page.context().tracing.stop({path:path.join(out,'visual.zip')});await app.close();app=null;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:true,packaged:true,readOnly:true,checks},null,2));console.log(JSON.stringify({ok:true,out,checks}));}
+main().catch(async e=>{fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({ok:false,error:e.stack,checks},null,2));if(app){await page?.context().tracing.stop({path:path.join(out,'failure.zip')}).catch(()=>{});await app.close().catch(()=>{});}console.error(e);process.exitCode=1;});

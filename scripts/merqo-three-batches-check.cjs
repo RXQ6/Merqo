@@ -1,3 +1,4 @@
+const {retailButton}=require('./lib/retail-navigation.cjs');
 // Full business route in real Electron with synthetic data and a loopback model protocol fixture.
 const {_electron:electron}=require(process.env.MERQO_PLAYWRIGHT_MODULE||'playwright');
 const {expect}=require((process.env.MERQO_PLAYWRIGHT_MODULE||'playwright')+'/test');
@@ -7,13 +8,13 @@ const workspace=path.join(profile,'config/workspaces/acceptance'),out=path.join(
 fs.mkdirSync(workspace,{recursive:true});fs.mkdirSync(out,{recursive:true});
 let app,page,task,question,caseId,methodId,modelCalls=0;const checks=[];
 const server=http.createServer(async(req,res)=>{try{let raw='';for await(const chunk of req)raw+=chunk;const body=JSON.parse(raw);assert(!body.tools&&!body.functions);const context=JSON.parse(body.messages[1].content);assert(context.context?.entity&&context.question);modelCalls++;res.setHeader('Content-Type','application/json');res.end(JSON.stringify({choices:[{message:{content:JSON.stringify({answer:'请先核对成本来源与观察窗口，现有证据不能证明经营变化的原因。',citations:[context.context.evidence[0].id]})}}]}));}catch(e){res.statusCode=500;res.end(JSON.stringify({error:String(e)}));}});
-const button=name=>page.getByRole('button',{name,exact:true});
+const button=name=>retailButton(page,name);
 async function request(input){const r=await page.evaluate(input=>window.electronAPI.retailRequest(input),input);assert(r.ok,r.error);return r.data;}
 const localInput=iso=>new Date(Date.parse(iso)+8*3600000).toISOString().slice(0,16);
 async function launch(){
  const env={...process.env,CRAFT_CONFIG_DIR:path.join(profile,'config'),RETAILPILOT_USER_DATA_DIR:path.join(profile,'chromium'),RETAILPILOT_SMOKE:'1'};delete env.ELECTRON_RUN_AS_NODE;
  const packaged=process.env.MERQO_TEST_EXE;app=await electron.launch({executablePath:packaged||path.join(root,'node_modules/electron/dist/electron.exe'),args:packaged?[]:[path.join(root,'apps/electron')],cwd:packaged?profile:root,env,timeout:60000});
- await app.firstWindow();await expect.poll(()=>app.windows().some(p=>{try{return new URL(p.url()).searchParams.get('workspaceId')===workspaceId;}catch{return false;}}),{timeout:30000}).toBe(true);page=app.windows().find(p=>{try{return new URL(p.url()).searchParams.get('workspaceId')===workspaceId;}catch{return false;}});page.setDefaultTimeout(30000);await page.context().tracing.start({screenshots:true,snapshots:true});
+ await app.firstWindow();await expect.poll(()=>app.windows().some(p=>{try{return new URL(p.url()).searchParams.get('workspaceId')===workspaceId;}catch{return false;}}),{timeout:30000}).toBe(true);page=app.windows().find(p=>{try{return new URL(p.url()).searchParams.get('workspaceId')===workspaceId;}catch{return false;}});page.setDefaultTimeout(30000);const verifyWindow=await app.browserWindow(page);await verifyWindow.evaluate(w=>w.showInactive());await page.context().tracing.start({screenshots:true,snapshots:true});
  await expect.poll(async()=>await page.getByRole('button',{name:/^(Get Started|开始使用|Setup later|稍后设置|仅使用经营分析)$/}).count()||await page.locator('[data-focus-zone="sidebar"]').count(),{timeout:30000}).toBeGreaterThan(0);
  for(const name of [/^仅使用经营分析$/,/^(Get Started|开始使用)$/,/^(Setup later|稍后设置)$/]){const b=page.getByRole('button',{name});if(await b.count())await b.click();}
  await expect.poll(async()=>await page.getByTestId('retail-workspace').isVisible()||await button('经营分析').isVisible(),{timeout:30000}).toBe(true);if(!await page.getByTestId('retail-workspace').isVisible())await button('经营分析').click();

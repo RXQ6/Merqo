@@ -2103,7 +2103,7 @@ export default function App() {
             )}
             <div className="flex-1 min-h-0">
               {retailVisited && <div hidden={!retailSurface} className="h-full" {...(!retailSurface ? { inert: '' } : {})}>
-                <RetailWorkspace active={retailSurface} key={windowWorkspaceId} workspaceName={workspaces.find(w=>w.id===windowWorkspaceId)?.name} onOpenAgent={()=>{void window.electronAPI.retailWindow('agent').then(r=>{if(!r.ok)toast.error(r.error??'返回会话失败')}).catch(()=>toast.error('返回会话失败'))}}/>
+                <RetailWorkspace workspaceId={windowWorkspaceId??undefined} active={retailSurface} key={windowWorkspaceId} workspaceName={workspaces.find(w=>w.id===windowWorkspaceId)?.name} onOpenAgent={()=>{void window.electronAPI.retailWindow('agent').then(r=>{if(!r.ok)toast.error(r.error??'返回会话失败')}).catch(()=>toast.error('返回会话失败'))}}/>
               </div>}
               <div hidden={retailSurface} className="h-full" {...(retailSurface ? { inert: '' } : {})}>
               {sessionLoadError ? (

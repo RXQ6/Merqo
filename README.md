@@ -1,5 +1,7 @@
 # Merqo
 
+> **本机 beta.10：分组导航** — 左侧5个业务分组、顶部二级功能、Ctrl+K 功能搜索、按工作区保存常用入口及窄窗收起/更多菜单。见 [导航调整](docs/navigation-layout-2026-10-22.md)。沿用 beta.9 的 Wiki 和 schema 11，本机包未发布到 GitHub。
+
 > **本机 beta.9：经营知识中心 W1–W3** — Markdown 编辑与检索、版本/回收站、调查引用、方法任务和案例草稿，以及通用 Markdown 清单和飞书 Wiki 只读同步。见 [开发与边界](docs/wiki-W1-W3-2026-10-22.md)。本机候选版尚未发布到 GitHub；下方 beta.8 仍为公开安装包。schema 11 工作区不能用 beta.8 打开。
 
 **An AI-powered desktop workspace for retail analytics, risk detection, and evidence-backed operational investigations.**

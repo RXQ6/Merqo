@@ -237,7 +237,7 @@ export class WindowManager {
     const window = new BrowserWindow({
       width: windowWidth,
       height: windowHeight,
-      minWidth: retail ? 1000 : 800,
+      minWidth: 800, // Compact retail navigation also supports an 800px window.
       minHeight: 600,
       show: false, // Don't show until ready-to-show event (faster perceived startup)
       title: '',

@@ -1,3 +1,4 @@
+const {retailButton}=require('./lib/retail-navigation.cjs');
 // W1-W3 acceptance in real Electron, isolated workspace, HTTPS protocol fixtures only.
 const {_electron:electron}=require(process.env.MERQO_PLAYWRIGHT_MODULE||'playwright');
 const {expect}=require((process.env.MERQO_PLAYWRIGHT_MODULE||'playwright')+'/test');
@@ -6,10 +7,10 @@ const root=path.resolve(__dirname,'..'),profile=fs.mkdtempSync(path.join(root,'.
 const out=path.join(root,'artifacts/wiki-acceptance',new Date().toISOString().replace(/[:.]/g,'-'));fs.mkdirSync(workspace,{recursive:true});fs.mkdirSync(out,{recursive:true});
 fs.writeFileSync(path.join(profile,'config/config.json'),JSON.stringify({workspaces:[{id,rootPath:workspace,name:'Wiki 三阶段验收',slug:'acceptance',createdAt:Date.now()}],activeWorkspaceId:id,setupDeferred:true}));
 fs.writeFileSync(path.join(workspace,'config.json'),JSON.stringify({id,name:'Wiki 三阶段验收',slug:'acceptance',createdAt:Date.now(),updatedAt:Date.now()}));
-let app,page;const checks=[];const button=name=>page.getByRole('button',{name,exact:true});
+let app,page;const checks=[];const button=name=>retailButton(page,name);
 async function request(input){const r=await page.evaluate(input=>window.electronAPI.retailRequest(input),input);assert(r.ok,r.error);return r.data;}
 async function main(){const env={...process.env,CRAFT_CONFIG_DIR:path.join(profile,'config'),RETAILPILOT_USER_DATA_DIR:path.join(profile,'chromium'),RETAILPILOT_SMOKE:'1'};delete env.ELECTRON_RUN_AS_NODE;
- const executable=process.env.MERQO_TEST_EXE;app=await electron.launch({executablePath:executable||path.join(root,'node_modules/electron/dist/electron.exe'),args:executable?[]:[path.join(root,'apps/electron')],cwd:executable?profile:root,env,timeout:60000});await app.firstWindow();await expect.poll(()=>app.windows().some(p=>p.url().includes(`workspaceId=${id}`)),{timeout:30000}).toBe(true);page=app.windows().find(p=>p.url().includes(`workspaceId=${id}`));page.setDefaultTimeout(30000);await page.context().tracing.start({screenshots:true,snapshots:true});
+ const executable=process.env.MERQO_TEST_EXE;app=await electron.launch({executablePath:executable||path.join(root,'node_modules/electron/dist/electron.exe'),args:executable?[]:[path.join(root,'apps/electron')],cwd:executable?profile:root,env,timeout:60000});await app.firstWindow();await expect.poll(()=>app.windows().some(p=>p.url().includes(`workspaceId=${id}`)),{timeout:30000}).toBe(true);page=app.windows().find(p=>p.url().includes(`workspaceId=${id}`));page.setDefaultTimeout(30000);const verifyWindow=await app.browserWindow(page);await verifyWindow.evaluate(w=>w.showInactive());await page.context().tracing.start({screenshots:true,snapshots:true});
  await expect.poll(async()=>await page.getByRole('button',{name:/^(Get Started|开始使用|Setup later|稍后设置|仅使用经营分析)$/}).count()||await page.getByTestId('retail-workspace').count()||await button('经营分析').count(),{timeout:30000}).toBeGreaterThan(0);
  for(const name of [/^仅使用经营分析$/,/^(Get Started|开始使用)$/,/^(Setup later|稍后设置)$/]){const b=page.getByRole('button',{name});if(await b.count())await b.click();}
  if(!await page.getByTestId('retail-workspace').isVisible())await button('经营分析').click();

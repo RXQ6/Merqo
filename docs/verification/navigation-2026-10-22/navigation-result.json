@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "checks": [
+    "Packaged runtime matches beta10 recipe",
+    "All 21 grouped pages, including nested batch execution, are discoverable and select exactly one primary group and one secondary function",
+    "Standalone assistant is always accessible and does not highlight an unrelated group",
+    "Ctrl+K, search empty state, Escape, adding a favorite and direct favorite navigation work",
+    "Returning to a primary group restores its last visited function",
+    "Real task-to-investigation deep-link changes both navigation levels without losing the original record",
+    "800px automatically collapses the sidebar; overflow menu, active-tab promotion, Escape focus return and manual expansion work without horizontal overflow",
+    "Workspace-scoped favorite survives a real process restart and can be removed"
+  ]
+}

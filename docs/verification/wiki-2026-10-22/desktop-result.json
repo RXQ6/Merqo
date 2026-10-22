@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "checks": [
+    "Packaged runtime version matches release recipe",
+    "W1 create/edit/Markdown preview/search/version history/restore through actual UI",
+    "W2 investigation freezes Wiki citation; method creates linked business task via UI",
+    "W2 completed task produces draft and exported report retains frozen Wiki reference",
+    "W3 Markdown main-process failure saves index=1; UI retry completes same durable job without duplicate versions",
+    "W3 Feishu source UI stores credential privately and traverses/read-syncs docx via main HTTPS protocol fixture",
+    "Loaded Wiki at 1440px without horizontal overflow",
+    "Loaded Wiki at 800px without horizontal overflow"
+  ]
+}

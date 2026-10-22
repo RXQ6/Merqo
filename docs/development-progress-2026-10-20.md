@@ -1,3 +1,5 @@
+> 2026-10-22 后续本机交付：Wiki W1—W3 已实现为 beta.9 候选版，见 [Wiki 开发与边界](wiki-W1-W3-2026-10-22.md)。公开 GitHub 安装包仍为 beta.8；下文原三批记录保留历史范围。
+
 # 开发主线与当前位置
 
 最新发布：[beta.8](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.8)，三批本地功能及最终复查卡片内边距修订均已交付。391项领域回归、beta.7的34条完整安装验收及beta.8的11条针对性检查已通过；安装路径首次异常和外部验收缺口见[三批总表](three-batch-delivery-2026-10-22.md)。

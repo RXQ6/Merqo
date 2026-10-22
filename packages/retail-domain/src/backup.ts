@@ -11,9 +11,9 @@ const MAX_DATABASE_BYTES=64*1024*1024,MAX_ARCHIVE_BYTES=100*1024*1024;
 const hash=(v:string|Buffer)=>createHash('sha256').update(v).digest('hex');
 const secretSchema=z.strictObject({sourceId:z.union([z.literal('merqo-doudian-staging-key'),z.string().uuid()]),value:z.string().min(1).max(100000)});
 export type BackupSecret=z.infer<typeof secretSchema>;
-const payloadSchema=z.strictObject({version:z.literal(1),id:z.string().uuid(),createdAt:z.number().int().positive(),workspaceId:z.string().min(1).max(128),workspaceName:z.string().min(1).max(200),files:z.array(z.strictObject({name:z.enum(BACKUP_FILES),data:z.string(),sha256:z.string().regex(/^[a-f0-9]{64}$/)})).min(1).max(BACKUP_FILES.length),secrets:z.array(secretSchema).max(2)});
+const payloadSchema=z.strictObject({version:z.literal(1),id:z.string().uuid(),createdAt:z.number().int().positive(),workspaceId:z.string().min(1).max(128),workspaceName:z.string().min(1).max(200),files:z.array(z.strictObject({name:z.enum(BACKUP_FILES),data:z.string(),sha256:z.string().regex(/^[a-f0-9]{64}$/)})).min(1).max(BACKUP_FILES.length),secrets:z.array(secretSchema).max(22)});
 type Payload=z.infer<typeof payloadSchema>;
-const supportedVersions:Record<typeof BACKUP_FILES[number],number>={'operations.sqlite':2,'operations.sqlite.signals.sqlite':0,'operations.sqlite.investigations.sqlite':10,'operations.sqlite.checks.sqlite':1,'operations.sqlite.sync.sqlite':0,'operations.sqlite.transactions.sqlite':0,'operations.sqlite.policy.sqlite':0,'operations.sqlite.catalog.sqlite':0};
+const supportedVersions:Record<typeof BACKUP_FILES[number],number>={'operations.sqlite':2,'operations.sqlite.signals.sqlite':0,'operations.sqlite.investigations.sqlite':11,'operations.sqlite.checks.sqlite':1,'operations.sqlite.sync.sqlite':0,'operations.sqlite.transactions.sqlite':0,'operations.sqlite.policy.sqlite':0,'operations.sqlite.catalog.sqlite':0};
 function checkVersion(db:Database,name:typeof BACKUP_FILES[number]){if(db.query<{user_version:number},[]>('PRAGMA user_version').get()!.user_version>supportedVersions[name])throw Error('备份数据库版本高于当前程序，请更新应用');}
 export function backupSummary(p:Payload):BackupSummary {const files=p.files.map(f=>({name:f.name,bytes:Buffer.byteLength(f.data,'base64'),sha256:f.sha256}));return{id:p.id,createdAt:p.createdAt,workspaceName:p.workspaceName,files,credentialCount:p.secrets.length,bytes:files.reduce((n,f)=>n+f.bytes,0)};}
 function openImage(data:Buffer){
@@ -29,11 +29,14 @@ function syncInventory(db:Database){
  const encrypted=tables.has('sync_pages')?db.query<{encrypted:string},[]>("SELECT encrypted FROM sync_pages WHERE length(encrypted)>0").all().map(r=>r.encrypted):[];
  return{connectionHash:hash(JSON.stringify(rows)),refs:ref?[z.string().uuid().parse(ref)]:[],encrypted};
 }
-export function backupInventory(retail:string){const file=join(retail,'operations.sqlite.sync.sqlite');if(!existsSync(file))return{connectionHash:hash('[]'),refs:[] as string[],needsStagingKey:false};const db=new Database(file,{readonly:true});try{const v=syncInventory(db);return{connectionHash:v.connectionHash,refs:v.refs,needsStagingKey:!!v.encrypted.length};}finally{db.close();}}
+function wikiInventory(db:Database){const exists=db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='wiki_sources'").get();const rows=exists?db.query<{json:string},[]>('SELECT json FROM wiki_sources ORDER BY id').all():[];return{rows,refs:rows.map(r=>JSON.parse(r.json).credentialRef).filter((r):r is string=>!!r).map(r=>z.string().uuid().parse(r))};}
+export function backupInventory(retail:string){let connectionHash=hash('[]'),refs:string[]=[],needsStagingKey=false;const file=join(retail,'operations.sqlite.sync.sqlite');if(existsSync(file)){const db=new Database(file,{readonly:true});try{const v=syncInventory(db);connectionHash=v.connectionHash;refs=v.refs;needsStagingKey=!!v.encrypted.length;}finally{db.close();}}const wikiFile=join(retail,'operations.sqlite.investigations.sqlite');if(existsSync(wikiFile)){const db=new Database(wikiFile,{readonly:true});try{const w=wikiInventory(db);if(w.rows.length)connectionHash=hash(JSON.stringify([connectionHash,w.rows]));refs.push(...w.refs);}finally{db.close();}}return{connectionHash,refs:[...new Set(refs)],needsStagingKey};}
 function validateSecrets(p:Payload){
  if(new Set(p.secrets.map(s=>s.sourceId)).size!==p.secrets.length)throw Error('备份凭据重复');
- const image=p.files.find(f=>f.name==='operations.sqlite.sync.sqlite');if(!image){if(p.secrets.length)throw Error('备份凭据范围无效');return;}
- const db=openImage(Buffer.from(image.data,'base64'));try{const v=syncInventory(db),required=new Set([...v.refs,...(v.encrypted.length?['merqo-doudian-staging-key']:[])]);
+ const wiki=p.files.find(f=>f.name==='operations.sqlite.investigations.sqlite');let wikiRefs:string[]=[];if(wiki){const d=openImage(Buffer.from(wiki.data,'base64'));try{wikiRefs=wikiInventory(d).refs;}finally{d.close();}}
+ for(const id of wikiRefs){const secret=p.secrets.find(s=>s.sourceId===id);if(!secret)throw Error('备份缺少 Wiki 授权凭据');z.string().min(1).max(4000).parse(secret.value);}
+ const image=p.files.find(f=>f.name==='operations.sqlite.sync.sqlite');if(!image){if(p.secrets.some(s=>!wikiRefs.includes(s.sourceId)))throw Error('备份凭据范围无效');return;}
+ const db=openImage(Buffer.from(image.data,'base64'));try{const v=syncInventory(db),required=new Set([...wikiRefs,...v.refs,...(v.encrypted.length?['merqo-doudian-staging-key']:[])]);
  for(const id of required)if(!p.secrets.some(s=>s.sourceId===id))throw Error('备份缺少接入凭据或暂存密钥');
  for(const id of v.refs)SyncCredentialsSchema.parse(JSON.parse(p.secrets.find(s=>s.sourceId===id)!.value));
  if(p.secrets.some(s=>!required.has(s.sourceId)))throw Error('备份包含范围外凭据');
@@ -52,6 +55,7 @@ export function captureBackup(retail:string,workspaceId:string,workspaceName:str
   files.forEach((name,i)=>{const bytes=db.serialize('d'+i);size+=bytes.length;if(size>MAX_DATABASE_BYTES)throw Error('当前备份最多支持64MB经营数据库');const checked=openImage(bytes);try{checkVersion(checked,name);}finally{checked.close();}list.push({name,data:bytes.toString('base64'),sha256:hash(bytes)});bytes.fill(0);});
   const p=payloadSchema.parse({version:1,id:crypto.randomUUID(),createdAt:Date.now(),workspaceId,workspaceName,files:list,secrets});
   const sync=list.find(f=>f.name==='operations.sqlite.sync.sqlite');let currentHash=hash('[]');if(sync){const d=openImage(Buffer.from(sync.data,'base64'));try{currentHash=syncInventory(d).connectionHash;}finally{d.close();}}
+  const wiki=list.find(f=>f.name==='operations.sqlite.investigations.sqlite');if(wiki){const d=openImage(Buffer.from(wiki.data,'base64'));try{const w=wikiInventory(d);if(w.rows.length)currentHash=hash(JSON.stringify([currentHash,w.rows]));}finally{d.close();}}
   if(currentHash!==expectedConnectionHash||BACKUP_FILES.some(n=>existsSync(join(retail,n))!==files.includes(n)))throw Error('经营数据或接入配置已变化，请重新备份');validateSecrets(p);return p;
  }).immediate();}finally{db.close();}
 }

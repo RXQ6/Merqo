@@ -1,5 +1,7 @@
 # Merqo
 
+> **本机 beta.9：经营知识中心 W1–W3** — Markdown 编辑与检索、版本/回收站、调查引用、方法任务和案例草稿，以及通用 Markdown 清单和飞书 Wiki 只读同步。见 [开发与边界](docs/wiki-W1-W3-2026-10-22.md)。本机候选版尚未发布到 GitHub；下方 beta.8 仍为公开安装包。schema 11 工作区不能用 beta.8 打开。
+
 **An AI-powered desktop workspace for retail analytics, risk detection, and evidence-backed operational investigations.**
 
 Merqo brings promotion margins, stockout risks, and advertising ROAS into one desktop workspace. Business metrics and anomaly rules are calculated by deterministic code; a bounded, read-only investigation workflow adds evidence-linked explanations and scenario comparisons for all three scenarios. Reports can be exported with their evidence, and selected plans become versioned local decision drafts.

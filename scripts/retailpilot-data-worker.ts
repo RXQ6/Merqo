@@ -89,6 +89,8 @@ try {
     if (internal.success) {
     const { id, event, report, error, model, expectedEpoch } = internal.data;
     console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [investigations.update(id, { expectedEpoch, ...(event ? { event } : {}), ...(report ? { report } : {}), ...(error ? { error } : {}), ...(model ? { model } : {}) })] }));
+    } else if(typeof input==='object'&&input!==null&&'op'in input&&input.op==='wiki_internal'){
+      const r=z.strictObject({op:z.literal('wiki_internal'),payload:z.unknown()}).parse(input);signals=openStore(()=>new SignalStore(file+'.signals.sqlite'));decisions=openStore(()=>new DecisionStore(file,workspaceId,()=>[...store!.snapshot().records,...signals!.snapshot().records]));console.log(JSON.stringify({ok:true,kind:'workbench',data:decisions.wikiInternal(r.payload)}));
     } else if(typeof input==='object'&&input!==null&&'op'in input&&input.op==='context_completion_internal'){
       const r=z.strictObject({op:z.literal('context_completion_internal'),id:z.string().uuid(),contextHash:z.string().regex(/^[a-f0-9]{64}$/),answer:z.string().max(4000).nullable(),citations:z.array(z.string().max(128)).max(30),error:z.string().max(100).nullable()}).parse(input);
       signals=openStore(()=>new SignalStore(file+'.signals.sqlite'));decisions=openStore(()=>new DecisionStore(file,workspaceId,()=>[...store!.snapshot().records,...signals!.snapshot().records]));
@@ -194,7 +196,7 @@ try {
         const drafts=decisions.forInvestigation(run.id).flatMap(d=>decisions!.history(d.id));
         const ids=new Set(drafts.map(d=>d.id));
         const executionViews=decisions.executions().filter(e=>ids.has(e.job.decisionId));const executionIds=new Set(executionViews.map(e=>e.job.id));
-        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, drafts, executionViews, decisions.compensations().filter(c=>executionIds.has(c.request.sourceJobId)), decisions.executionBatches().filter(b=>b.batch.items.some(i=>executionIds.has(i.jobId))),decisions.reviews().filter(r=>executionIds.has(r.review.job.id))) }));
+        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, drafts, executionViews, decisions.compensations().filter(c=>executionIds.has(c.request.sourceJobId)), decisions.executionBatches().filter(b=>b.batch.items.some(i=>executionIds.has(i.jobId))),decisions.reviews().filter(r=>executionIds.has(r.review.job.id)),(()=>{const v=decisions.workbench({op:'wb_wiki_references',investigationId:run.id});return v.view==='wiki_references'?v.references:[];})()) }));
       } else {
         let selectedId: string | undefined; let history;
         if (request.op === 'decision_create') selectedId = decisions.create(request.investigationId, request.kind, request.note).id;

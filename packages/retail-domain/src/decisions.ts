@@ -1,3 +1,4 @@
+import { WikiLedger, installWikiSchema } from './wiki';
 import {WorkbenchLedger,installWorkbenchSchema} from './workbench';
 import {WorkbenchRequestSchema,type WorkbenchRequest,type WorkbenchData,type FollowupConfig} from './workbench-contract';
 import {TaskLedger, installTaskSchema} from './business-tasks';
@@ -49,8 +50,8 @@ export class DecisionStore {
       this.db.query('ATTACH DATABASE ? AS signals_scope').run(file + '.signals.sqlite');
       this.db.exec('CREATE TABLE IF NOT EXISTS decision_schema(version INTEGER PRIMARY KEY) STRICT');
       const schemaVersion = this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0;
-      if (schemaVersion > 10) throw new Error('决策数据库版本高于当前程序');
-      if (schemaVersion >= 1 && schemaVersion <= 9) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
+      if (schemaVersion > 11) throw new Error('决策数据库版本高于当前程序');
+      if (schemaVersion >= 1 && schemaVersion <= 10) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
       const policies=new PolicyStore(file);policies.close();this.db.query('ATTACH DATABASE ? AS policy_scope').run(file+'.policy.sqlite');
       this.db.transaction(() => { this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS decision_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
@@ -61,8 +62,8 @@ export class DecisionStore {
       this.db.exec(`CREATE TABLE IF NOT EXISTS approval_resolutions(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS approval_invalidations(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE INDEX IF NOT EXISTS approval_requests_recent ON decision_requests(json_extract(json,'$.requestedAt'));`);
-      installSimulationSchema(this.db);installCompensationSchema(this.db);installBatchSchema(this.db);installReviewSchema(this.db);installTaskSchema(this.db);installWorkbenchSchema(this.db);
-      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(10); PRAGMA user_version=10'); }).immediate();
+      installSimulationSchema(this.db);installCompensationSchema(this.db);installBatchSchema(this.db);installReviewSchema(this.db);installTaskSchema(this.db);installWorkbenchSchema(this.db);installWikiSchema(this.db);
+      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(11); PRAGMA user_version=11'); }).immediate();
     } catch (error) { this.db.close(); throw error; }
   }
   private taskLedger(): TaskLedger { return new TaskLedger(this.db, this.workspaceId, id=>this.run(id), id=>this.view(this.raw(id)), (id,version)=>{const row=this.db.query<{id:string},[string,number,string]>("SELECT id FROM simulation_jobs WHERE json_extract(json,'$.decisionId')=? AND json_extract(json,'$.decisionVersion')=? AND json_extract(json,'$.workspaceId')=?").get(id,version,this.workspaceId);return row?new SimulationLedger(this.db,this.workspaceId).view(row.id):null;}); }
@@ -71,13 +72,14 @@ export class DecisionStore {
   createTask(request: TaskCreate): {detail:TaskDetail;created:boolean} {return this.db.transaction(()=>this.taskLedger().create(request)).immediate();}
   mutateTask(request: TaskMutation): TaskDetail {return this.db.transaction(()=>this.taskLedger().mutate(request)).immediate();}
   private workbenchLedger(){return new WorkbenchLedger(this.db,this.workspaceId,this.current,id=>this.taskLedger().detail(id));}
-  workbench(request:WorkbenchRequest):WorkbenchData{return this.db.transaction(()=>this.workbenchLedger().handle(WorkbenchRequestSchema.parse(request))).immediate();}
+  workbench(request:WorkbenchRequest):WorkbenchData{return this.db.transaction(()=>{const r=WorkbenchRequestSchema.parse(request);if(r.op==='wb_wiki_task_create'){const ledger=new WikiLedger(this.db,this.workspaceId,id=>this.taskLedger().detail(id));ledger.handle({op:'wb_wiki_reference',investigationId:r.investigationId,itemId:r.itemId,expectedVersion:r.expectedVersion});const doc=ledger.handle({op:'wb_wiki_get',id:r.itemId});if(doc.view!=='wiki_detail')throw Error('知识版本无效');const created=this.taskLedger().create({op:'task_create',origin:{kind:'investigation',id:r.investigationId},purpose:'analysis_followup',title:r.title,owner:r.owner,dueAt:r.dueAt,priority:'normal',description:('参考方法：'+doc.item.title+' · v'+doc.item.version+'\n'+doc.item.body).slice(0,2000)});this.workbenchLedger().handle({op:'wb_bind',taskId:created.detail.task.id,expectedTaskVersion:created.detail.task.version,itemId:r.itemId});return{view:'wiki_task' as const,task:created.detail.task};}return this.workbenchLedger().handle(r);}).immediate();}
   completeContext(id:string,hash:string,answer:string|null,citations:string[],error:string|null):WorkbenchData{return this.db.transaction(()=>this.workbenchLedger().completeQuestion(id,hash,answer,citations,error)).immediate();}
   findingConfig():FollowupConfig{return this.db.transaction(()=>this.workbenchLedger().findingConfig()).immediate();}
   claimFinding(key:string):string|null{return this.db.transaction(()=>this.workbenchLedger().claimFinding(key)).immediate();}
   finishFinding(key:string,token:string,taskId:string){return this.db.transaction(()=>this.workbenchLedger().finishFinding(key,token,taskId)).immediate();}
   doneFindingKeys(){return this.workbenchLedger().doneFindingKeys();}
   createFindingTask(key:string,token:string,request:TaskCreate,configVersion:number){return this.db.transaction(()=>{const ledger=this.workbenchLedger(),config=ledger.findingConfig();if(!config.autoFindingTasks||config.version!==configVersion)throw Error('巡检任务联动配置已变化');const result=this.taskLedger().create(request);ledger.finishFinding(key,token,result.detail.task.id);return result;}).immediate();}
+  wikiInternal(input:unknown):unknown{return this.db.transaction(()=>new WikiLedger(this.db,this.workspaceId,id=>this.taskLedger().detail(id)).internal(input)).immediate();}
   close(): void { this.db.close(); }
   private run(id: string): AnyInvestigation { const row = this.db.query<JsonRow, [string]>('SELECT json FROM investigations WHERE id=?').get(id); if (!row) throw new Error('调查不存在'); return JSON.parse(row.json) as AnyInvestigation; }
   private raw(id: string): DecisionDraft { const row = this.db.query<JsonRow, [string]>('SELECT json FROM decisions WHERE id=?').get(id); if (!row) throw new Error('决策草稿不存在'); const d = JSON.parse(row.json) as DecisionDraft; if (d.workspaceId !== this.workspaceId) throw new Error('决策不属于当前工作空间'); return d; }

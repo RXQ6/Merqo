@@ -15,7 +15,7 @@ const groups = [
     { id: 'assistant', label: '经营助手', icon: MessagesSquare },
     { id: 'tasks', label: '业务任务', icon: ListChecks },
     { id: 'followups', label: '复查与提醒', icon: ClipboardCheck },
-    { id: 'knowledge', label: '经营知识库', icon: FileSearch },
+    { id: 'knowledge', label: '经营知识中心', icon: FileSearch },
     { id: 'investigations', label: '调查记录', icon: FileSearch },
     { id: 'checks', label: '经营巡检', icon: ListChecks },
     { id: 'reviews', label: '经营复盘', icon: ClipboardCheck },

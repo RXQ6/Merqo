@@ -1,3 +1,5 @@
+import {handleRetailWiki} from './retail-wiki';
+import {WikiRequestSchema} from '../../../../packages/retail-domain/src/wiki-contract';
 import { answerRetailContext } from './retail-context-assistant';
 import { requestRetailWorker } from './retail-worker';
 import {handleRetailBackup} from './retail-backup';
@@ -41,7 +43,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null;
       if (!workspace || workspace.remoteServer) throw new Error('请选择本机 Workspace；远程经营数据暂不支持');
       const request = RetailRequestSchema.parse(input);
-      const readOnly = ['wb_library_links','wb_task_tools','wb_entities','wb_entity','wb_conversations','wb_library','wb_bindings','wb_followups','wb_cases','wb_case','tasks','task_get','ad_refund_reports','exchange_reports','warehouse_view','warehouse_preview','procurement_view','procurement_preview','contribution_comparisons','sync_cleanup_view','inspections_view','inspections_preview','contribution_reports','ingest_issues','ingest_inspect','ingest_view','sync_job','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
+      const readOnly = ['wb_wiki_list','wb_wiki_get','wb_wiki_references','wb_wiki_sources','wb_library_links','wb_task_tools','wb_entities','wb_entity','wb_conversations','wb_library','wb_bindings','wb_followups','wb_cases','wb_case','tasks','task_get','ad_refund_reports','exchange_reports','warehouse_view','warehouse_preview','procurement_view','procurement_preview','contribution_comparisons','sync_cleanup_view','inspections_view','inspections_preview','contribution_reports','ingest_issues','ingest_inspect','ingest_view','sync_job','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
       if (!readOnly && active.has(event.sender.id)) throw new Error('上一个经营数据请求尚未完成，请稍后重试');
       if (readOnly) await acquireRead(event.sender.id);
       else active.add(event.sender.id);
@@ -49,6 +51,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       try {
         if(request.op.startsWith('backup_'))return await handleRetailBackup(workspace,workspaceId!,event.sender,request,id=>{getWindowManager()?.createWindow({workspaceId:id,retail:true});});
         if(request.op.startsWith('sync_')||request.op.startsWith('ingest_'))return await handleRetailSync(workspace,workspaceId!,request);
+        if(['wb_wiki_source_save','wb_wiki_check','wb_wiki_sync'].includes(request.op))return await handleRetailWiki(workspace,workspaceId!,WikiRequestSchema.parse(request));
         const reply = await workerRequest(request);
         if(request.op==='wb_ask'&&reply.ok&&reply.kind==='workbench'&&reply.data.view==='conversations'&&reply.data.created&&reply.data.selected?.status==='pending'){
           const question=reply.data.selected;

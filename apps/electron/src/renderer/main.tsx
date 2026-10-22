@@ -14,6 +14,12 @@ import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import './index.css'
 
+// Native Windows caption buttons render above DOM overlays. Keep fullscreen
+// reading/preview controls below the 48px titleBarOverlay from window-manager.
+document.documentElement.style.setProperty(
+  '--fullscreen-overlay-top', isWindows && !isWebUI ? '48px' : '0px',
+)
+
 // Initialize i18n before any React rendering
 setupI18n([LanguageDetector, initReactI18next])
 

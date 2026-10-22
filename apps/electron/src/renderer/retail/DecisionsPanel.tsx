@@ -1,11 +1,12 @@
+import {TaskComposer} from './TaskComposer';
 import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnyInvestigation, Scenario } from '../../../../../packages/retail-domain/src/investigations';
 import type { DecisionDraft } from '../../../../../packages/retail-domain/src/decisions';
 import type { RetailRequest } from '../../../../../packages/retail-domain/src/operations';
 import { DecisionValues, draftStateLabels as states } from './DecisionValues';
-export function DecisionsPanel({ target, onBack, onApproval, onInvestigation }: { target: AnyInvestigation | null; onBack: () => void; onApproval: (id:string) => void; onInvestigation: (id:string) => void }) {
-  const [items,setItems]=useState<DecisionDraft[]>([]); const [focus,setFocus]=useState(target?'new':'');
+export function DecisionsPanel({ target, onBack, onApproval, onInvestigation, onTask, initialId }: { onTask:(id:string)=>void;initialId?:string|null;target: AnyInvestigation | null; onBack: () => void; onApproval: (id:string) => void; onInvestigation: (id:string) => void }) {
+  const [items,setItems]=useState<DecisionDraft[]>([]); const [focus,setFocus]=useState(target?'new':initialId??'');
   const [history,setHistory]=useState<DecisionDraft[]>([]); const [kind,setKind]=useState<Scenario['kind']>('observe'); const [note,setNote]=useState('');
   const [busy,setBusy]=useState(false); const [error,setError]=useState(''); const [notice,setNotice]=useState('');
   const pending=useRef(false); const alive=useRef(true);
@@ -41,6 +42,7 @@ export function DecisionsPanel({ target, onBack, onApproval, onInvestigation }: 
         <label className="retail-draft-field">决策备注<textarea aria-label="决策备注" maxLength={2000} rows={3} value={note} disabled={busy} onChange={e=>setNote(e.target.value)} placeholder="记录选择理由、需要补充的证据或风险"/></label>
         <div className="retail-inline-actions"><button className="retail-primary" disabled={busy||!options.length} onClick={save}>{selected?'保存新版本':'保存草稿'}</button>{selected&&<><button disabled={busy||dirty||selected.state!=='draft'||!!selected.submissionBlockers.length} onClick={()=>void call({op:'decision_submit',id:selected.id,expectedVersion:selected.version})}>提交模拟审批</button><button disabled={busy} onClick={()=>void call({op:'decision_history',id:selected.id})}>查看版本记录</button><button disabled={busy} onClick={()=>onInvestigation(selected.investigationId)}>查看原调查与补证</button></>}</div>
       </>}
+      {selected&&<TaskComposer key={selected.id+':'+selected.version} origin={{kind:'decision',id:selected.id,version:selected.version}} title={selected.scope.sku+' '+selected.selected.title} simulationAllowed={selected.environment==='simulation'&&selected.selectedKind!=='observe'} onCreated={onTask}/>}
       {dirty&&<p role="status" className="retail-muted">有未保存修改，请先保存新版本再提交。</p>}
       {selected&&<><h3>已保存版本的前后值</h3><p className="retail-muted">表单修改须先保存新版本。广告花费条件值参考历史花费，不是平台当前预算。</p><DecisionValues before={selected.before} after={selected.after}/>
         <h3>影响范围与有效期</h3><p>仅 {selected.scope.shop} / {selected.scope.channel} / {selected.scope.sku}{selected.scope.campaign?` / ${selected.scope.campaign}`:''}{selected.scope.warehouse?` / ${selected.scope.warehouse}`:''}。{selected.environment==='simulation'?'只允许本地模拟审批。':'仅保存分析草稿，尚不能进入真实业务审批。'}</p><p>当前版本有效至 {new Date(selected.expiresAt).toLocaleString('zh-CN')}；提交时由服务重新检查。</p>

@@ -14,7 +14,7 @@ export function AssistantPanel({ onNavigate, onOpenAgent }: { onNavigate: (page:
       </section>)}
     </div>
     <section className="retail-panel"><div className="retail-section-title"><div><h2>接着处理已有分析</h2><p>调查保留证据与复核记录；决策进入本地模拟审批，复盘记录后续观察。</p></div></div>
-      <div className="retail-inline-actions"><button onClick={() => onNavigate('investigations')}>查看调查记录</button><button onClick={() => onNavigate('decisions')}>查看决策草稿</button><button onClick={() => onNavigate('reviews')}>查看经营复盘</button></div>
+      <div className="retail-inline-actions"><button onClick={() => onNavigate('tasks')}>查看业务任务</button><button onClick={() => onNavigate('investigations')}>查看调查记录</button><button onClick={() => onNavigate('decisions')}>查看决策草稿</button><button onClick={() => onNavigate('reviews')}>查看经营复盘</button></div>
     </section>
     <section className="retail-panel"><div className="retail-section-title"><div><h2>通用会话与高级能力</h2><p>通用会话用于自选资料分析。API、MCP、本地文件夹、技能、项目与通用自动化在高级工作台管理。</p></div></div>
       <p>通用会话的状态和标签用于整理会话；“待审查”不等于业务审批。此入口不会自动附带当前商品证据，进行经营调查请从上方场景中的异常记录进入。</p>

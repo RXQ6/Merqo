@@ -1,6 +1,6 @@
 import { Boxes, ChartNoAxesCombined, CircleAlert, ClipboardCheck, FileSearch, FileSpreadsheet, LayoutDashboard, ListChecks, MessagesSquare, RotateCcw, Settings2, ShieldCheck, ShoppingBag, Truck } from 'lucide-react';
 
-export type RetailPage = 'overview' | 'anomalies' | 'inventory' | 'ads' | 'transactions' | 'assistant' | 'investigations' | 'checks' | 'decisions' | 'approvals' | 'executions' | 'compensations' | 'batches' | 'reviews' | 'connections' | 'catalog' | 'data' | 'policy';
+export type RetailPage = 'overview' | 'anomalies' | 'inventory' | 'ads' | 'transactions' | 'assistant' | 'tasks' | 'investigations' | 'checks' | 'decisions' | 'approvals' | 'executions' | 'compensations' | 'batches' | 'reviews' | 'connections' | 'catalog' | 'data' | 'policy';
 
 const groups = [
   { title: '经营现场', items: [
@@ -12,6 +12,7 @@ const groups = [
   ] },
   { title: '分析与跟进', items: [
     { id: 'assistant', label: '经营助手', icon: MessagesSquare },
+    { id: 'tasks', label: '业务任务', icon: ListChecks },
     { id: 'investigations', label: '调查记录', icon: FileSearch },
     { id: 'checks', label: '经营巡检', icon: ListChecks },
     { id: 'reviews', label: '经营复盘', icon: ClipboardCheck },

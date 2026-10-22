@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "checks": [
+    "UI creates a frozen investigation task; Beijing deadline, owner edit, start/block/note/complete/reopen, immutable seven-version history and overdue search all verified through real IPC",
+    "Original investigation deep link and duplicate creation reopen the same task without overwriting metadata or adding events",
+    "Saved decision task creation freezes its exact decision ID/version; original decision deep link opens the selected saved draft",
+    "800px task layout has no horizontal overflow; actual Electron restart preserves owner, deadline, status, evidence and all seven history versions"
+  ],
+  "syntheticOnly": true,
+  "realPlatformCalls": 0,
+  "taskId": "19c39886-a0ea-467b-91f8-3a8a04c5bb9f",
+  "artifacts": "artifacts\\business-tasks\\2026-10-22T02-09-27-353Z"
+}

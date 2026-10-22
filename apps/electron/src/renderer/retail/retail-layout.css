@@ -83,6 +83,17 @@
 .retail-assistant-scenarios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .retail-assistant-scenarios .retail-panel { display: flex; flex-direction: column; }
 .retail-assistant-scenarios .retail-inline-actions { margin-top: auto; }
+.retail-task-compose { margin-block: 16px 24px; }
+.retail-task-compose > .retail-sync-form { margin-top: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.retail-task-counts { display: flex; flex-wrap: wrap; gap: 18px; margin: 0 0 20px; padding: 16px 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.retail-task-counts > span { color: var(--muted); font-size: 12px; }
+.retail-task-counts strong { margin-left: 10px; font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.retail-task-form { margin-top: 16px; }
+[data-testid=retail-tasks] .retail-investigation-body section > p { margin-block: 10px; line-height: 1.8; max-width: 56rem; overflow-wrap: anywhere; }
+[data-testid=retail-tasks] .retail-investigation-body section + section { border-top: 1px solid var(--line); margin-top: 24px; }
+[data-testid=retail-tasks] .retail-investigation-body h3 { margin-top: 20px; }
+[data-testid=retail-tasks] .retail-scope > .retail-checkbox { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+[data-testid=retail-tasks] .retail-checkbox input { width: auto; }
 @media (max-width: 1100px) {
   .retail-main { padding: 24px; }
   .retail-window-layout { grid-template-columns: 172px minmax(0, 1fr); }

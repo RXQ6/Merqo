@@ -1,3 +1,5 @@
+import {TaskLedger, installTaskSchema} from './business-tasks';
+import type {TaskCreate,TaskQuery,TaskMutation,TaskDetail,TaskPage} from './business-task-contract';
 import {PolicyStore,readBusinessPolicy} from './policy-store';
 import {freezePolicy} from './business-policy';
 import { evidenceTimeIssue, evidenceTimeContext } from './evidence-policy';
@@ -45,8 +47,8 @@ export class DecisionStore {
       this.db.query('ATTACH DATABASE ? AS signals_scope').run(file + '.signals.sqlite');
       this.db.exec('CREATE TABLE IF NOT EXISTS decision_schema(version INTEGER PRIMARY KEY) STRICT');
       const schemaVersion = this.db.query<{version:number}, []>('SELECT max(version) AS version FROM decision_schema').get()?.version ?? 0;
-      if (schemaVersion > 8) throw new Error('决策数据库版本高于当前程序');
-      if (schemaVersion >= 1 && schemaVersion <= 7) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
+      if (schemaVersion > 9) throw new Error('决策数据库版本高于当前程序');
+      if (schemaVersion >= 1 && schemaVersion <= 8) this.db.query('VACUUM main INTO ?').run(file + '.investigations.backup-v' + schemaVersion + '-' + randomUUID() + '.sqlite');
       const policies=new PolicyStore(file);policies.close();this.db.query('ATTACH DATABASE ? AS policy_scope').run(file+'.policy.sqlite');
       this.db.transaction(() => { this.db.exec(`CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS decision_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
@@ -57,10 +59,15 @@ export class DecisionStore {
       this.db.exec(`CREATE TABLE IF NOT EXISTS approval_resolutions(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE TABLE IF NOT EXISTS approval_invalidations(request_id TEXT PRIMARY KEY,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
         CREATE INDEX IF NOT EXISTS approval_requests_recent ON decision_requests(json_extract(json,'$.requestedAt'));`);
-      installSimulationSchema(this.db);installCompensationSchema(this.db);installBatchSchema(this.db);installReviewSchema(this.db);
-      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(8)'); }).immediate();
+      installSimulationSchema(this.db);installCompensationSchema(this.db);installBatchSchema(this.db);installReviewSchema(this.db);installTaskSchema(this.db);
+      this.db.exec('INSERT OR IGNORE INTO decision_schema VALUES(9); PRAGMA user_version=9'); }).immediate();
     } catch (error) { this.db.close(); throw error; }
   }
+  private taskLedger(): TaskLedger { return new TaskLedger(this.db, this.workspaceId, id=>this.run(id), id=>this.view(this.raw(id)), (id,version)=>{const row=this.db.query<{id:string},[string,number,string]>("SELECT id FROM simulation_jobs WHERE json_extract(json,'$.decisionId')=? AND json_extract(json,'$.decisionVersion')=? AND json_extract(json,'$.workspaceId')=?").get(id,version,this.workspaceId);return row?new SimulationLedger(this.db,this.workspaceId).view(row.id):null;}); }
+  tasks(query: TaskQuery): TaskPage {return this.db.transaction(()=>this.taskLedger().page(query)).immediate();}
+  task(id: string): TaskDetail {return this.db.transaction(()=>this.taskLedger().detail(id)).immediate();}
+  createTask(request: TaskCreate): {detail:TaskDetail;created:boolean} {return this.db.transaction(()=>this.taskLedger().create(request)).immediate();}
+  mutateTask(request: TaskMutation): TaskDetail {return this.db.transaction(()=>this.taskLedger().mutate(request)).immediate();}
   close(): void { this.db.close(); }
   private run(id: string): AnyInvestigation { const row = this.db.query<JsonRow, [string]>('SELECT json FROM investigations WHERE id=?').get(id); if (!row) throw new Error('调查不存在'); return JSON.parse(row.json) as AnyInvestigation; }
   private raw(id: string): DecisionDraft { const row = this.db.query<JsonRow, [string]>('SELECT json FROM decisions WHERE id=?').get(id); if (!row) throw new Error('决策草稿不存在'); const d = JSON.parse(row.json) as DecisionDraft; if (d.workspaceId !== this.workspaceId) throw new Error('决策不属于当前工作空间'); return d; }

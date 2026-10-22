@@ -109,12 +109,16 @@ try {
         console.log(JSON.stringify({ ok: true, kind: 'signals', data: signals.page({source:request.op==='signals_demo'?'demo':undefined}),...(request.op==='signals_demo'?{notice:'已重新载入内置库存与广告样例；合成演示不受24小时限制，历史与CSV数据保留。'}:{}) }));
       }
     }
-    else if (request.op === 'reviews' || request.op.startsWith('review_') || request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile' || request.op === 'compensations' || request.op === 'execution_batches' || request.op.startsWith('batch_') || request.op.startsWith('compensation_') || request.op.startsWith('decision_')) {
+    else if (request.op === 'tasks' || request.op.startsWith('task_') || request.op === 'reviews' || request.op.startsWith('review_') || request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile' || request.op === 'compensations' || request.op === 'execution_batches' || request.op.startsWith('batch_') || request.op.startsWith('compensation_') || request.op.startsWith('decision_')) {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
       // Batches release locks between items: every action must re-read current source evidence.
       const current = () => [...store!.snapshot().records, ...signals!.snapshot().records];
       decisions = openStore(() => new DecisionStore(file, workspaceId, current));
-      if(request.op==='review_followup'){
+      if(request.op==='tasks') console.log(JSON.stringify({ok:true,kind:'tasks',data:decisions.tasks(request)}));
+      else if(request.op==='task_get') console.log(JSON.stringify({ok:true,kind:'task',data:decisions.task(request.id)}));
+      else if(request.op==='task_create'){const result=decisions.createTask(request);console.log(JSON.stringify({ok:true,kind:'task',data:result.detail,created:result.created}));}
+      else if(request.op==='task_edit'||request.op==='task_transition'||request.op==='task_note') console.log(JSON.stringify({ok:true,kind:'task',data:decisions.mutateTask(request)}));
+      else if(request.op==='review_followup'){
         const view=decisions.review(request.id);const r=view.review;
         if(!view.case||view.case.id!==request.expectedCaseId||!r.final||r.observation?.origin!=='builtin_synthetic')throw new Error('仅已复核的内置合成观察可明确载入后续演示调查；请刷新核对Case');
         const row=r.observation.row;const csv=snapshotCsv(row);

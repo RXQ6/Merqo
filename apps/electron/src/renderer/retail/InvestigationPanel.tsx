@@ -1,3 +1,4 @@
+import {TaskComposer} from './TaskComposer';
 import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {SupplementPanel} from './SupplementPanel';
@@ -14,7 +15,7 @@ const detail = (e: Evidence) => 'spec' in e.row ? e.row.spec : 'campaign_id' in 
 const names = {margin:'促销毛利调查',inventory:'缺货风险调查',ads:'广告回报调查'};
 const states = { running: '调查中', paused: '已暂停', completed: '分析完成', needs_evidence: '待补证 / 待复核', failed: '调查失败' };
 const amount = (n: number | null) => n === null ? '待补证' : `¥${(n / 100).toFixed(2)}`;
-export function InvestigationPanel({ target, initialId, onBack, onDraft, onData }: { target: Evidence | null; initialId?: string | null; onData: () => void; onBack: () => void; onDraft: (run: AnyInvestigation) => void }) {
+export function InvestigationPanel({ target, initialId, onBack, onDraft, onData, onTask }: { onTask:(id:string)=>void; target: Evidence | null; initialId?: string | null; onData: () => void; onBack: () => void; onDraft: (run: AnyInvestigation) => void }) {
   const [runs, setRuns] = useState<AnyInvestigation[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [exporting,setExporting]=useState(false); const [exportError,setExportError]=useState('');
@@ -55,6 +56,7 @@ export function InvestigationPanel({ target, initialId, onBack, onDraft, onData 
   const citation = (id: string) => <a key={id} href={`#investigation-evidence-${selected?.trace.findIndex(t => t.evidenceId === id)}`} title={id}>[{id.split(':').at(-1)}]</a>;
   return <section data-testid="retail-investigation" className="retail-investigation">
     <PageHeader title={names[scenario]} actions={<><button onClick={onBack}>返回经营总览</button></>}>只读调查 → 证据归纳 → 条件测算 → 复核。复核通过后可生成草稿并进入本地模拟审批；不改写真实平台。</PageHeader>
+    {selected?.report && <TaskComposer key={selected.id} origin={{kind:'investigation',id:selected.id}} title={selected.evidence.row.sku_id+' 调查跟进'} onCreated={onTask}/>}
     {exportError && <div className="retail-alert error" role="alert">{exportError}</div>}
     {error && <div className="retail-alert error" role="alert">{error}<button disabled={busy} onClick={() => void call({ op: 'investigations' })}>重新读取调查</button></div>}
     <div className="retail-investigation-layout">

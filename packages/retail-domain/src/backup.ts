@@ -6,14 +6,14 @@ import {join,dirname} from 'node:path';
 import {z} from 'zod';
 import {BackupPassword,type BackupSummary} from './backup-contract';
 import {SyncCredentialsSchema} from './adapters/sync-contract';
-export const BACKUP_FILES=['operations.sqlite','operations.sqlite.signals.sqlite','operations.sqlite.investigations.sqlite','operations.sqlite.checks.sqlite','operations.sqlite.sync.sqlite','operations.sqlite.transactions.sqlite'] as const;
+export const BACKUP_FILES=['operations.sqlite','operations.sqlite.signals.sqlite','operations.sqlite.investigations.sqlite','operations.sqlite.checks.sqlite','operations.sqlite.sync.sqlite','operations.sqlite.transactions.sqlite','operations.sqlite.policy.sqlite','operations.sqlite.catalog.sqlite'] as const;
 const MAX_DATABASE_BYTES=64*1024*1024,MAX_ARCHIVE_BYTES=100*1024*1024;
 const hash=(v:string|Buffer)=>createHash('sha256').update(v).digest('hex');
 const secretSchema=z.strictObject({sourceId:z.union([z.literal('merqo-doudian-staging-key'),z.string().uuid()]),value:z.string().min(1).max(100000)});
 export type BackupSecret=z.infer<typeof secretSchema>;
-const payloadSchema=z.strictObject({version:z.literal(1),id:z.string().uuid(),createdAt:z.number().int().positive(),workspaceId:z.string().min(1).max(128),workspaceName:z.string().min(1).max(200),files:z.array(z.strictObject({name:z.enum(BACKUP_FILES),data:z.string(),sha256:z.string().regex(/^[a-f0-9]{64}$/)})).min(1).max(6),secrets:z.array(secretSchema).max(2)});
+const payloadSchema=z.strictObject({version:z.literal(1),id:z.string().uuid(),createdAt:z.number().int().positive(),workspaceId:z.string().min(1).max(128),workspaceName:z.string().min(1).max(200),files:z.array(z.strictObject({name:z.enum(BACKUP_FILES),data:z.string(),sha256:z.string().regex(/^[a-f0-9]{64}$/)})).min(1).max(BACKUP_FILES.length),secrets:z.array(secretSchema).max(2)});
 type Payload=z.infer<typeof payloadSchema>;
-const supportedVersions:Record<typeof BACKUP_FILES[number],number>={'operations.sqlite':2,'operations.sqlite.signals.sqlite':0,'operations.sqlite.investigations.sqlite':8,'operations.sqlite.checks.sqlite':1,'operations.sqlite.sync.sqlite':0,'operations.sqlite.transactions.sqlite':0};
+const supportedVersions:Record<typeof BACKUP_FILES[number],number>={'operations.sqlite':2,'operations.sqlite.signals.sqlite':0,'operations.sqlite.investigations.sqlite':9,'operations.sqlite.checks.sqlite':1,'operations.sqlite.sync.sqlite':0,'operations.sqlite.transactions.sqlite':0,'operations.sqlite.policy.sqlite':0,'operations.sqlite.catalog.sqlite':0};
 function checkVersion(db:Database,name:typeof BACKUP_FILES[number]){if(db.query<{user_version:number},[]>('PRAGMA user_version').get()!.user_version>supportedVersions[name])throw Error('备份数据库版本高于当前程序，请更新应用');}
 export function backupSummary(p:Payload):BackupSummary {const files=p.files.map(f=>({name:f.name,bytes:Buffer.byteLength(f.data,'base64'),sha256:f.sha256}));return{id:p.id,createdAt:p.createdAt,workspaceName:p.workspaceName,files,credentialCount:p.secrets.length,bytes:files.reduce((n,f)=>n+f.bytes,0)};}
 function openImage(data:Buffer){

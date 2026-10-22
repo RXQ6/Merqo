@@ -89,6 +89,25 @@
 .retail-task-counts > span { color: var(--muted); font-size: 12px; }
 .retail-task-counts strong { margin-left: 10px; font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .retail-task-form { margin-top: 16px; }
+.retail-context-links { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 16px 24px; }
+.retail-context-links button { white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.retail-evidence-card { margin-block: 18px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); min-width: 0; }
+.retail-evidence-card > header { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.retail-evidence-card dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 24px; margin-block: 16px; }
+.retail-evidence-card dl > div { min-width: 0; padding-block: 8px; border-bottom: 1px solid var(--line); }
+.retail-evidence-card dt { color: var(--muted); font-size: 12px; }
+.retail-evidence-card dd { margin: 6px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.retail-app .retail-evidence-card p, .retail-context-assistant p, .retail-task-tools p, .retail-workbench-row p { overflow-wrap: anywhere; line-height: 1.8; }
+.retail-app .retail-evidence-card pre, [data-testid=retail-knowledge] pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 440px; overflow: auto; padding: 16px; background: #f6f8fa; font-size: 11px; }
+.retail-context-assistant { margin-block: 24px; padding-block: 20px; border-block: 1px solid var(--line); }
+.retail-context-assistant > label { display: flex; flex-direction: column; gap: 8px; margin-block: 16px; }
+.retail-context-assistant details, .retail-task-tools > details { margin-block: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.retail-context-assistant summary, .retail-task-tools summary { cursor: pointer; line-height: 1.8; }
+.retail-task-tools { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
+.retail-workbench-row { padding-block: 20px; border-bottom: 1px solid var(--line); }
+.retail-app .retail-checkbox { display: flex; align-items: center; gap: 8px; }
+.retail-app .retail-checkbox input[type=checkbox] { width: auto; flex: 0 0 auto; }
+@media(max-width:850px) { .retail-evidence-card dl { grid-template-columns: minmax(0,1fr); } }
 [data-testid=retail-tasks] .retail-investigation-body section > p { margin-block: 10px; line-height: 1.8; max-width: 56rem; overflow-wrap: anywhere; }
 [data-testid=retail-tasks] .retail-investigation-body section + section { border-top: 1px solid var(--line); margin-top: 24px; }
 [data-testid=retail-tasks] .retail-investigation-body h3 { margin-top: 20px; }

@@ -1,4 +1,8 @@
 import {WarehouseStore} from '../packages/retail-domain/src/warehouse-store';
+import {existsSync} from 'node:fs';
+import {runInvestigation,isSignalInvestigation} from '../packages/retail-domain/src/investigations';
+import {runSignalInvestigation} from '../packages/retail-domain/src/signal-investigations';
+import {evidenceHash} from '../packages/retail-domain/src/business-identity';
 import {ProcurementStore} from '../packages/retail-domain/src/procurement-store';
 import {freshSupplementEvidence} from '../packages/retail-domain/src/supplement';
 import {ReturnInspectionStore} from '../packages/retail-domain/src/return-inspection-store';
@@ -85,8 +89,12 @@ try {
     if (internal.success) {
     const { id, event, report, error, model, expectedEpoch } = internal.data;
     console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [investigations.update(id, { expectedEpoch, ...(event ? { event } : {}), ...(report ? { report } : {}), ...(error ? { error } : {}), ...(model ? { model } : {}) })] }));
-  } else {
-    const request = RetailRequestSchema.parse(input);
+    } else if(typeof input==='object'&&input!==null&&'op'in input&&input.op==='context_completion_internal'){
+      const r=z.strictObject({op:z.literal('context_completion_internal'),id:z.string().uuid(),contextHash:z.string().regex(/^[a-f0-9]{64}$/),answer:z.string().max(4000).nullable(),citations:z.array(z.string().max(128)).max(30),error:z.string().max(100).nullable()}).parse(input);
+      signals=openStore(()=>new SignalStore(file+'.signals.sqlite'));decisions=openStore(()=>new DecisionStore(file,workspaceId,()=>[...store!.snapshot().records,...signals!.snapshot().records]));
+      console.log(JSON.stringify({ok:true,kind:'workbench',data:decisions.completeContext(r.id,r.contextHash,r.answer,r.citations,r.error)}));
+    } else {
+      const request = RetailRequestSchema.parse(input);
     if(request.op==='policy'||request.op==='policy_update'){const policies=new PolicyStore(file);try{const data=request.op==='policy_update'?policies.update(request,process.argv[5]||''):policies.view();console.log(JSON.stringify({ok:true,kind:'policy',data}));}finally{policies.close();}}
     else if (request.op === 'investigation_pause' || request.op === 'investigation_resume') {
       console.log(JSON.stringify({ ok: true, kind: 'investigations', data: [investigations.control(request.id, request.expectedEpoch, request.op === 'investigation_pause' ? 'pause' : 'resume')], created: request.op === 'investigation_resume' }));
@@ -109,12 +117,32 @@ try {
         console.log(JSON.stringify({ ok: true, kind: 'signals', data: signals.page({source:request.op==='signals_demo'?'demo':undefined}),...(request.op==='signals_demo'?{notice:'已重新载入内置库存与广告样例；合成演示不受24小时限制，历史与CSV数据保留。'}:{}) }));
       }
     }
-    else if (request.op === 'tasks' || request.op.startsWith('task_') || request.op === 'reviews' || request.op.startsWith('review_') || request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile' || request.op === 'compensations' || request.op === 'execution_batches' || request.op.startsWith('batch_') || request.op.startsWith('compensation_') || request.op.startsWith('decision_')) {
+    else if (request.op.startsWith('wb_') || request.op === 'tasks' || request.op.startsWith('task_') || request.op === 'reviews' || request.op.startsWith('review_') || request.op === 'investigation_export' || request.op === 'decisions' || request.op === 'approvals' || request.op === 'approval_resolve' || request.op === 'executions' || request.op === 'simulation_execute' || request.op === 'execution_reconcile' || request.op === 'compensations' || request.op === 'execution_batches' || request.op.startsWith('batch_') || request.op.startsWith('compensation_') || request.op.startsWith('decision_')) {
       signals = openStore(() => new SignalStore(file + '.signals.sqlite'));
       // Batches release locks between items: every action must re-read current source evidence.
       const current = () => [...store!.snapshot().records, ...signals!.snapshot().records];
       decisions = openStore(() => new DecisionStore(file, workspaceId, current));
-      if(request.op==='tasks') console.log(JSON.stringify({ok:true,kind:'tasks',data:decisions.tasks(request)}));
+      if(request.op==='wb_tick'){
+        decisions.workbench(request);
+        const config=decisions.findingConfig(),done=decisions.doneFindingKeys();
+        if(config.autoFindingTasks&&existsSync(file+'.checks.sqlite')){
+          const scan=openStore(()=>new ScheduledChecks(file+'.checks.sqlite',workspaceId,()=>[]));
+          try{let claimed=0;for(const {finding,runId}of scan.findingsSince(config.configuredAt)){
+            if(done.has(finding.key))continue;if(claimed>=5)break;
+            const token=decisions.claimFinding(finding.key);if(!token)continue;claimed++;
+            try{
+              const created='kind'in finding.record?investigations.createSignal(finding.record,'replay',true):investigations.create(finding.record,'replay',true),run=created.run;
+              if(!created.created&&!run.report)throw Error('已有离线调查运行中，请等待原调查完成');
+              if(evidenceHash(run.evidence)!==evidenceHash(finding.record)||run.evidence.ruleVersion!==finding.record.ruleVersion)throw Error('已有不同证据的调查正在运行');
+              if(!run.report){const save=async(event:Trace)=>{investigations!.update(run.id,{event});};const report=isSignalInvestigation(run)?await runSignalInvestigation(run,null,save):await runInvestigation(run,null,save);investigations.update(run.id,{report});}
+              decisions.createFindingTask(finding.key,token,{op:'task_create',origin:{kind:'investigation',id:run.id},purpose:'analysis_followup',title:finding.record.row.sku_id+' 巡检跟进',owner:config.owner,dueAt:new Date(Date.now()+config.dueHours*3600000).toISOString(),priority:'normal',description:'巡检 '+runId+' 发现 '+finding.key+'；由离线规则创建跟进任务，未调用模型，不代表已执行业务。'},config.version);
+            }catch{/* A failed/interrupted lease is retried after two minutes; it never approves or executes. */}
+          }}finally{scan.close();}
+        }
+        console.log(JSON.stringify({ok:true,kind:'workbench',data:decisions.workbench({op:'wb_followups'})}));
+      }
+      else if(request.op.startsWith('wb_')) console.log(JSON.stringify({ok:true,kind:'workbench',data:decisions.workbench(request as import('../packages/retail-domain/src/workbench-contract').WorkbenchRequest)}));
+      else if(request.op==='tasks') console.log(JSON.stringify({ok:true,kind:'tasks',data:decisions.tasks(request)}));
       else if(request.op==='task_get') console.log(JSON.stringify({ok:true,kind:'task',data:decisions.task(request.id)}));
       else if(request.op==='task_create'){const result=decisions.createTask(request);console.log(JSON.stringify({ok:true,kind:'task',data:result.detail,created:result.created}));}
       else if(request.op==='task_edit'||request.op==='task_transition'||request.op==='task_note') console.log(JSON.stringify({ok:true,kind:'task',data:decisions.mutateTask(request)}));

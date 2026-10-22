@@ -37,6 +37,10 @@ export class ScheduledChecks {
     } catch (error) { this.db.close(); throw error; }
   }
   close() { this.db.close(); }
+  *findingsSince(since: string) {
+    const rows=this.db.query<{json:string;first_run:string},[string]>("SELECT f.json,f.first_run FROM check_findings f JOIN check_runs r ON r.id=f.first_run WHERE r.status='succeeded' AND r.started_at>=? ORDER BY r.started_at,f.key").iterate(since);
+    for(const row of rows)yield {finding:JSON.parse(row.json) as CheckFinding,runId:row.first_run};
+  }
   config(): CheckConfig { return JSON.parse(this.db.query<{ json: string }, []>('SELECT json FROM check_config WHERE id=1').get()!.json) as CheckConfig; }
   configure(expectedRevision: number, input: CheckConfigInput): ChecksView {
     const parsed = CheckConfigSchema.parse(input);

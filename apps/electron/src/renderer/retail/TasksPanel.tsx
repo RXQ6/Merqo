@@ -4,10 +4,11 @@ import type { RetailRequest } from '../../../../../packages/retail-domain/src/op
 import { PageHeader } from './PageHeader';
 import { taskDueInput, taskDueISO } from './TaskComposer';
 import { draftStateLabels } from './DecisionValues';
+import { TaskWorkbenchTools } from './TaskWorkbenchTools';
 const states = { open: '待跟进', doing: '处理中', blocked: '受阻', done: '跟进完成', cancelled: '已取消' };
 const reviews: Record<string, string> = { passed: '复核通过', needs_evidence: '待补证', failed: '复核未通过', rejected: '复核未通过' };
 const date = (iso: string) => new Date(iso).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
-export function TasksPanel({ initialId, onInvestigation, onDecision, onApproval, onExecution }: { initialId: string | null; onInvestigation: (id: string) => void; onDecision: (id: string) => void; onApproval: (id: string) => void; onExecution: (id: string) => void }) {
+export function TasksPanel({ initialId, onInvestigation, onDecision, onApproval, onExecution, onCase }: { initialId: string | null; onInvestigation: (id: string) => void; onDecision: (id: string) => void; onApproval: (id: string) => void; onExecution: (id: string) => void; onCase:(id:string)=>void }) {
   const [page, setPage] = useState<TaskPage | null>(null), [selectedId, setSelectedId] = useState(initialId), [detail, setDetail] = useState<TaskDetail | null>(null);
   const [status, setStatus] = useState<'all' | BusinessTask['status']>('all'), [overdue, setOverdue] = useState(false), [search, setSearch] = useState(''), [offset, setOffset] = useState(0), [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState(''), [loading, setLoading] = useState(true);
@@ -23,7 +24,7 @@ export function TasksPanel({ initialId, onInvestigation, onDecision, onApproval,
   }, [status, overdue, search, offset, revision]);
   useEffect(() => {
     if (!selectedId) { setDetail(null); return; }
-    let alive = true; setDetail(null);
+    let alive = true; setDetail(previous => previous?.task.id === selectedId ? previous : null);
     void window.electronAPI.retailRequest({ op: 'task_get', id: selectedId }).then(reply => {
       if (!alive) return;
       if (!reply.ok || reply.kind !== 'task') throw Error(!reply.ok ? reply.error : '任务详情返回类型不符');
@@ -37,6 +38,7 @@ export function TasksPanel({ initialId, onInvestigation, onDecision, onApproval,
     try {
       const reply = await window.electronAPI.retailRequest(input);
       if (!reply.ok || reply.kind !== 'task') throw Error(!reply.ok ? reply.error : '任务修改返回类型不符');
+      setDetail(reply.data);
       setNotice('跟进记录已保存；原始证据与审批记录保留。'); setRevision(value => value + 1);
     } catch (cause) { setError(cause instanceof Error ? cause.message : '任务保存失败'); }
     finally { setBusy(false); }
@@ -72,6 +74,7 @@ export function TasksPanel({ initialId, onInvestigation, onDecision, onApproval,
           <p>{t.purpose === 'simulation_action' ? '完成前必须取得当前绑定版本的成功模拟执行回执。审批和执行请打开原记录处理。' : '跟进完成只表示人工分析跟进结束，不代表经营动作已执行、问题已解决或效果已达成。'}</p>
         </div></section>
         <section aria-label="任务历史记录"><h3>跟进记录与版本</h3><p className="retail-muted">共 {detail.eventCount} 条，展示最近 {detail.events.length} 条；旧记录保留。</p>{detail.events.map(event => <details key={event.version}><summary>v{event.version} · {date(event.at)} · {states[event.to]}</summary><p>{event.note}</p><p>负责人：{event.snapshot.owner}；截止：{date(event.snapshot.dueAt)}；本机操作记录。</p></details>)}</section>
+        <div ref={element=>{element?.toggleAttribute('inert',busy);}}><TaskWorkbenchTools key={t.id+':'+t.version} task={t} onCase={onCase}/></div>
         <details><summary>冻结证据索引</summary><p>调查 {t.origin.investigationId}；方案版本 {t.origin.decisionVersion ?? '未关联'}；规则 {t.evidence.ruleVersion}</p><p>证据摘要 {t.evidence.evidenceHash}</p><p>报告摘要 {t.evidence.reportHash}</p><p>实体范围摘要 {t.entityKey}</p></details>
       </>}
     </article></div>

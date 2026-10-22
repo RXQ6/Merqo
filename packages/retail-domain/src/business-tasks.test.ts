@@ -114,9 +114,9 @@ test('restart retains task evidence, history and entity identity; backup restore
   const restored = new DecisionStore(join(target, 'retail/operations.sqlite'), 'task-space', current);
   try { expect(restored.task(before.task.id)).toEqual(before); } finally { restored.close(); }
 });
-test('schema 8 upgrades with a backup before installing task tables and declaring schema 9', () => {
+test('schema 8 upgrades with a backup before installing task and workbench tables and declaring schema 10', () => {
   decisions.close(); const db = new Database(file + '.investigations.sqlite'); db.exec('DELETE FROM decision_schema; INSERT INTO decision_schema VALUES(8); PRAGMA user_version=8; DROP TABLE business_task_events; DROP TABLE business_tasks;'); db.close();
   decisions = new DecisionStore(file, 'task-space', current); expect(page().total).toBe(0);
   expect(readdirSync(join(dir, 'retail')).some(name => name.includes('.investigations.backup-v8-'))).toBe(true);
-  const check = new Database(file + '.investigations.sqlite', { readonly: true }); try { expect(check.query('PRAGMA user_version').get()).toEqual({ user_version: 9 }); } finally { check.close(); }
+  const check = new Database(file + '.investigations.sqlite', { readonly: true }); try { expect(check.query('PRAGMA user_version').get()).toEqual({ user_version: 10 }); } finally { check.close(); }
 });

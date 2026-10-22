@@ -4,6 +4,7 @@ import type { RetailPage } from './RetailNavigation';
 export function AssistantPanel({ onNavigate, onOpenAgent }: { onNavigate: (page: RetailPage) => void; onOpenAgent: () => void }) {
   return <section data-testid="retail-assistant">
     <PageHeader title="经营助手">从具体异常进入调查，让分析对应到商品、店铺和经营日期。</PageHeader>
+    <section className="retail-panel"><h2>从明确业务范围开始提问</h2><p>选择来源、店铺、商品和日期窗口，查看已有证据、调查、方案和任务，再进入保留冻结上下文的只读问答。</p><div className="retail-inline-actions"><button onClick={()=>onNavigate('entities')}>选择实体并带上下文提问</button><button onClick={()=>onNavigate('followups')}>处理复查与到期提醒</button><button onClick={()=>onNavigate('knowledge')}>查看经营方法与案例</button></div></section>
     <div className="retail-assistant-scenarios">
       {([
         ['anomalies', '商品卖得多，毛利却偏低', '核对成交价、优惠和成本，选中异常后开始调查。', '查看经营异常'],

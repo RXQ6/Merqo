@@ -16,6 +16,10 @@ export function createRetailCheckScheduler() {
       for (const workspace of getWorkspaces()) {
         if(workspace.remoteServer||existsSync(join(workspace.rootPath,'retail','restored-history.json')))continue;
         if(existsSync(join(workspace.rootPath,'retail','operations.sqlite.sync.sqlite'))){try{await tickRetailSync(workspace,workspace.id);}catch{mainLog.warn('增量同步调度未完成，请查看平台接入任务',{workspaceId:workspace.id});}}
+        if (existsSync(join(workspace.rootPath,'retail','operations.sqlite.investigations.sqlite'))) {
+          try { const followup=await requestRetailWorker(workspace,workspace.id,{op:'wb_tick'},'wb_tick');if(!followup.ok)mainLog.warn('经营复查调度失败',{workspaceId:workspace.id,error:followup.error}); }
+          catch { mainLog.warn('经营复查进程未完成，请查看复查与提醒',{workspaceId:workspace.id}); }
+        }
         if (!existsSync(join(workspace.rootPath, 'retail', 'operations.sqlite.checks.sqlite'))) continue;
         try {
           const reply = await requestRetailWorker(workspace, workspace.id, { op: 'check_tick' }, 'check_tick');

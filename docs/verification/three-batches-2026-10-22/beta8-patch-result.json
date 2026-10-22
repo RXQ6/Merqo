@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "version": "0.1.0-beta.8",
+  "checks": [
+    "actual NSIS patch installation succeeds in isolated directory",
+    "业务实体 1440px: loaded, no overflow; follow-up card headings and bodies aligned",
+    "复查与提醒 1440px: loaded, no overflow; follow-up card headings and bodies aligned",
+    "经营知识库 1440px: loaded, no overflow; follow-up card headings and bodies aligned",
+    "业务实体 800px: loaded, no overflow; follow-up card headings and bodies aligned",
+    "复查与提醒 800px: loaded, no overflow; follow-up card headings and bodies aligned",
+    "经营知识库 800px: loaded, no overflow; follow-up card headings and bodies aligned",
+    "actual packaged app version matches Merqo recipe; matching GitHub beta is up-to-date without development label",
+    "HTTP 403 propagates through real main IPC into persistent failure UI, with no latest-version success",
+    "synthetic future beta appears as available, clears old error, and stays manual download without install-ready state",
+    "patch uninstall removes executable and retains the previously tested beta7 business profile"
+  ],
+  "visualOut": "artifacts\\three-batches-visual\\2026-10-22T04-19-45-139Z",
+  "signed": false,
+  "businessBaseline": "beta.7 complete 34-check installed route; domain logic unchanged in this CSS/version patch",
+  "limits": [
+    "same Windows host; no clean/cross-Windows acceptance",
+    "existing beta7 profile read by beta8; not an in-place NSIS cross-version upgrade"
+  ],
+  "initialAttempt": "Expanded test-path installation initially exited with 0xc0000005; standard baseline path retry passed. Root cause unconfirmed; no matching application crash event was available. This is not long-path compatibility acceptance."
+}

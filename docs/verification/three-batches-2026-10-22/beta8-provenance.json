@@ -1,0 +1,18 @@
+{
+  "version": "0.1.0-beta.8",
+  "sourceCommit": "0b994a0a919868af425aa598d2c8562f5265ec82",
+  "sourceDirty": false,
+  "bundleHashes": {
+    "dist/main.cjs": "38a3f746e1b85974c2319dd697e2340e0dfbff7310e68d2d3b1d743a36be38c7",
+    "dist/bootstrap-preload.cjs": "d3d7097191feaf23b015c120441295b350cea5d247e9bcebe2bfbd1f93d2bbff",
+    "scripts/retailpilot-data-worker.ts": "f651aca6e38f8708a1a6fb6f16d415608fe747e492398c9eff660d80f7007ace",
+    "scripts/retailpilot-backup-worker.ts": "d3a98e307c17176716a3b416fb4e6e85954664eed89bb6f05cd26396ee2e4450",
+    "scripts/merqo-retail-mcp.ts": "fab5bd78d8af37f7c9f53cdcf587d2de8a98037a3eb595b240dd9735f74144c1"
+  },
+  "bunVersion": "1.4.2",
+  "electronVersion": "39.2.7",
+  "signed": false,
+  "installer": "Merqo-Setup-0.1.0-beta.8-x64.exe",
+  "bytes": 204355073,
+  "sha256": "80e3b80b174b02a9a466f7fbeb989f780947aad26839a872f466e7145cc6d6c0"
+}

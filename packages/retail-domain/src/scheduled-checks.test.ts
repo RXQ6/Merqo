@@ -3,10 +3,13 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Database } from 'bun:sqlite';
+import { createHash } from 'node:crypto';
 import { ScheduledChecks } from './scheduled-checks';
 import { RetailStore } from './store';
 import { SignalStore } from './signal-store';
 import { DEMO_CSV, RetailRequestSchema } from './operations';
+import { INVENTORY_DEMO, ADS_DEMO } from './signals';
+import type { SourceMetadataInput } from './source-metadata';
 let dir: string, file: string, data: RetailStore, signals: SignalStore, checks: ScheduledChecks, now: number;
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'merqo-checks-')); file = join(dir, 'checks.sqlite'); now = Date.parse('2026-10-17T02:03:00Z');
@@ -77,6 +80,63 @@ test('new snapshots create new findings while stable repeated snapshots do not',
   const next = checks.run('manual').runs[0]!;
   expect(next.result!.newFindings).toBe(1); expect(next.result!.repeatedFindings).toBe(7);
   expect(first.result!.findings[0]!.record).toBeDefined();
+});
+
+test.each(['margin', 'inventory', 'ads'] as const)('%s findings distinguish declared sources and deduplicate reimports after restart', scenario => {
+  const csv = (scenario === 'margin' ? DEMO_CSV : scenario === 'inventory' ? INVENTORY_DEMO : ADS_DEMO).split('\n').slice(0, 2).join('\n');
+  const metadata: SourceMetadataInput = { sourceId: 'export:source-a', sourceName: 'Source A', sourceObservedAt: '2026-10-15T09:00:00+08:00', coverageStartInclusive: '2026-09-01T00:00:00+08:00', completeThroughExclusive: '2026-10-15T00:00:00+08:00', completeness: 'complete', timezone: 'Asia/Shanghai' };
+  const load = (sourceMetadata: SourceMetadataInput) => scenario === 'margin'
+    ? data.import(csv, undefined, 'csv', false, sourceMetadata)
+    : signals.import(scenario, csv, undefined, 'csv', false, sourceMetadata);
+  checks.configure(1, { enabled: true, intervalMinutes: 60, source: 'csv' });
+  load(metadata);
+  const first = checks.run('scheduled').runs[0]!.result!;
+  expect(first).toMatchObject({ checked: 1, anomalies: 1, newFindings: 1, repeatedFindings: 0 });
+
+  const secondSource = { ...metadata, sourceId: 'export:source-b', sourceName: 'Source B' };
+  load(secondSource); now += 3600000;
+  const second = checks.run('scheduled').runs[0]!.result!;
+  expect(second).toMatchObject({ checked: 1, anomalies: 1, newFindings: 1, repeatedFindings: 0 });
+  expect(second.findings[0]!.key).not.toBe(first.findings[0]!.key);
+  expect([...checks.findingsSince('2026-10-17T00:00:00Z')].map(f => f.finding.record.provenance!.sourceId).sort()).toEqual(['export:source-a', 'export:source-b']);
+
+  checks.close();
+  checks = new ScheduledChecks(file, 'a', () => [...data.snapshot().records, ...signals.snapshot().records], () => now);
+  load({ ...secondSource, sourceName: 'Renamed source B', sourceObservedAt: '2026-10-16T09:00:00+08:00' }); now += 3600000;
+  const repeated = checks.run('scheduled').runs[0]!.result!;
+  expect(repeated).toMatchObject({ checked: 1, anomalies: 1, newFindings: 0, repeatedFindings: 1 });
+  expect(repeated.findings[0]!.key).toBe(second.findings[0]!.key);
+});
+
+test.each([true, false])('legacy findings retain their keys and first-run links (declared source: %s)', declared => {
+  const csv = DEMO_CSV.split('\n').slice(0, 2).join('\n');
+  const metadata: SourceMetadataInput = { sourceId: 'export:source-a', sourceName: 'Source A', sourceObservedAt: '2026-10-15T09:00:00+08:00', coverageStartInclusive: '2026-09-01T00:00:00+08:00', completeThroughExclusive: '2026-10-15T00:00:00+08:00', completeness: 'complete', timezone: 'Asia/Shanghai' };
+  data.import(csv, undefined, 'csv', false, declared ? metadata : undefined);
+  checks.configure(1, { enabled: true, intervalMinutes: 60, source: 'csv' });
+  const first = checks.run('scheduled').runs[0]!;
+  const finding = first.result!.findings[0]!, record = finding.record;
+  // Recreate the pre-source-scope persisted format, including its downstream key.
+  const legacyKey = createHash('sha256').update(JSON.stringify(['a', finding.scenario, record.source, record.row, record.ruleVersion, record.status, 'kind' in record ? record.metrics : record.calculation])).digest('hex');
+  first.result!.findings[0] = { ...finding, key: legacyKey };
+  checks.close();
+  const db = new Database(file);
+  try {
+    db.query('UPDATE check_findings SET key=?,json=? WHERE key=?').run(legacyKey, JSON.stringify(first.result!.findings[0]), finding.key);
+    db.query('UPDATE check_runs SET json=? WHERE id=?').run(JSON.stringify(first), first.id);
+  } finally { db.close(); }
+  checks = new ScheduledChecks(file, 'a', () => data.snapshot().records, () => now);
+  now += 3600000;
+  const repeated = checks.run('scheduled').runs[0]!.result!;
+  expect(repeated.newFindings).toBe(0);
+  expect(repeated.findings[0]!.key).toBe(legacyKey);
+  const saved = [...checks.findingsSince('2026-10-17T00:00:00Z')];
+  expect(saved).toHaveLength(1);
+  expect(saved[0]!.runId).toBe(first.id);
+
+  data.import(csv, undefined, 'csv', false, { ...metadata, sourceId: 'export:source-b' }); now += 3600000;
+  const changed = checks.run('scheduled').runs[0]!.result!;
+  expect(changed.newFindings).toBe(1);
+  expect(changed.findings[0]!.key).not.toBe(legacyKey);
 });
 test('concurrent workers claim one slot only', async () => {
   const module = join(import.meta.dir, 'scheduled-checks.ts');

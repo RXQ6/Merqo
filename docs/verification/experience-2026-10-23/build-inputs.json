@@ -1,0 +1,21 @@
+{
+  "version": "0.1.0-beta.11",
+  "bunVersion": "1.4.2",
+  "electronVersion": "39.2.7",
+  "appId": "local.retailpilot.agent",
+  "productName": "Merqo",
+  "repository": "RXQ6/Merqo",
+  "sourceCommit": "a152596e20c0a77bb67df8707f6864edb85feaca",
+  "sourceDirty": false,
+  "sourceStatus": "",
+  "bundleHashes": {
+    "dist/main.cjs": "932da899c93147a00c8f49df68705cb0d4a63c092aaad6ac7ff8fa32439bc801",
+    "dist/bootstrap-preload.cjs": "d3d7097191feaf23b015c120441295b350cea5d247e9bcebe2bfbd1f93d2bbff",
+    "scripts/retailpilot-data-worker.ts": "2b36af5518b76a1e50af35dad4382579b4b8e7d2631f97946b7e5ea3d4a12f60",
+    "scripts/retailpilot-backup-worker.ts": "2e60f721ecdcfee0e4e1466fb4590c84a7e15cca33ab1c09b3f2f6141854243e",
+    "scripts/merqo-retail-mcp.ts": "55dfdd55ef4a0f76213d1843c0a673515e2e982ca92eec59089acfed5296f56e"
+  },
+  "bunSha256": "15277c59ccd6c6c20f8dc9716c2b59c1776320d606b6a8658f70be8799519ca4",
+  "stage": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\artifacts\\windows\\stage-0.1.0-beta.11-1792728422908",
+  "signed": false
+}

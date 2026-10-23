@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "checks": [
+    "Actual packaged runtime matches release recipe",
+    "Concurrent derived morning refreshes serialize through SQLite without rejecting the UI request",
+    "Morning shows real scoped evidence dates and due tasks; snooze reason is saved without completing the task",
+    "Morning task deep-link, task completion, refreshed state and immutable prior snapshot work through the UI",
+    "Morning opens exact product identity, timeline separates business/import time, notes persist, and cases show matching reasons plus differences",
+    "Investigation freezes case references into exported JSON, records explanatory feedback and creates a new task with frozen case context",
+    "New and existing pages retain card borders, colored hierarchy and responsive navigation at 1440px and 800px",
+    "Actual Electron restart retains product notes, case references and morning history"
+  ]
+}

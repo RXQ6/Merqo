@@ -16,7 +16,7 @@ async function launch(){const env={...process.env,CRAFT_CONFIG_DIR:path.join(pro
 async function screenshot(name){const w=await app.browserWindow(page);await w.evaluate(w=>w.showInactive());await page.screenshot({path:path.join(out,name+'.png'),animations:'disabled',timeout:60000});}
 
 async function main(){
- await launch();const win=await app.browserWindow(page);await win.evaluate(w=>{w.setSize(1440,1000);w.showInactive();});
+ await launch();if(process.env.MERQO_TEST_EXE){const runtime=await app.evaluate(({app})=>({packaged:app.isPackaged,version:app.getVersion()}));assert(runtime.packaged);assert.equal(runtime.version,'0.1.0-beta.11');checks.push('Actual packaged beta.11 runtime verified');}const win=await app.browserWindow(page);await win.evaluate(w=>{w.setSize(1440,1000);w.showInactive();});
  await expect(page.getByLabel('历史晨会快照')).toBeVisible();
  await search('数据与导入');
  await request({op:'demo'});await request({op:'signals_demo'});
@@ -27,13 +27,14 @@ async function main(){
  await request({op:'task_transition',id:seed.task.id,expectedVersion:1,status:'done',note:'已核对原始成本，未证明经营效果'});
  const c=await request({op:'wb_archive',taskId:seed.task.id,expectedTaskVersion:2,title:'成本来源核对案例',lesson:'先核成本来源，再比较同范围快照。',outcome:'人工声明完成分析；没有真实经营效果结论。'});
  const r2=await investigate();const t=await request({op:'task_create',origin:{kind:'investigation',id:r2.id},purpose:'analysis_followup',title:'晨会到期验收任务',owner:'合成跟进人',dueAt:new Date(Date.now()-3600000).toISOString(),priority:'high',description:'晨会到任务再到商品的链路验收'});
+ const parallel=await page.evaluate(async request=>Promise.all([window.electronAPI.retailRequest(request),window.electronAPI.retailRequest(request)]),{op:'wb_exp_morning',day:new Date(Date.now()+8*3600000).toISOString().slice(0,10),source:'all',shop:'',refresh:true});assert(parallel.every(r=>r.ok),JSON.stringify(parallel));checks.push('Concurrent derived morning refreshes serialize through SQLite without rejecting the UI request');
  await search('经营晨会');await button('刷新晨会').click();const morning=page.getByTestId('retail-morning');await expect(morning).toContainText('晨会到期验收任务');await expect(morning).toContainText('最新业务日期');await screenshot('morning-wide');
  
  // The title is unique in the isolated workspace; locate its containing record.
  const row=morning.locator('article').filter({hasText:'晨会到期验收任务'});await expect(row).toHaveCount(1);
  await row.getByRole('button',{name:'调整提醒时间',exact:true}).click();await page.getByLabel('晨会暂缓原因').fill('等待补充新快照');await button('暂缓一天').click();await expect(row).toContainText('已暂缓');
  console.log('checkpoint '+checks.length);checks.push('Morning shows real scoped evidence dates and due tasks; snooze reason is saved without completing the task');
- await row.getByRole('button',{name:'跟进关联任务',exact:true}).click();await expect(page.getByTestId('retail-tasks')).toContainText('晨会到期验收任务');await page.getByLabel('任务跟进记录',{exact:true}).fill('已核对当前证据并结束本次分析');await button('标记跟进完成').click();
+ await row.getByRole('button',{name:'跟进关联任务',exact:true}).click();await expect(page.getByTestId('retail-tasks')).toContainText('晨会到期验收任务');await page.getByLabel('任务跟进记录',{exact:true}).fill('已核对当前证据并结束本次分析');await button('标记跟进完成').click();await expect(button('重新打开任务')).toBeVisible();
  await search('经营晨会');await button('刷新晨会').click();await expect(morning.locator('article').filter({hasText:'晨会到期验收任务'})).toContainText('已结束');
  const latest=await request({op:'wb_exp_morning',day:new Date(Date.now()+8*3600000).toISOString().slice(0,10),source:'all',shop:'',refresh:false});assert(latest.history.length>=2);
  await page.getByLabel('历史晨会快照').selectOption(latest.history.at(-1).id);await expect(morning).toContainText('历史冻结快照');await expect(button('刷新晨会')).toBeDisabled();await page.getByLabel('历史晨会快照').selectOption('');

@@ -1,4 +1,6 @@
 import { WikiLedger } from './wiki';
+import {ExperienceLedger,installExperienceSchema} from './experience';
+import type {ExperienceRequest} from './experience-contract';
 import { WikiRequestSchema } from './wiki-contract';
 import { randomUUID } from 'node:crypto';
 import type { Database } from 'bun:sqlite';
@@ -13,6 +15,7 @@ type Row = { json: string };
 const parse = <T>(r: Row) => JSON.parse(r.json) as T;
 const limitation = '证据按来源、店铺、渠道、商品规格及仓库/活动分开；不跨快照求和，不证明实时完整性、因果、真实执行或完整利润。';
 export function installWorkbenchSchema(db: Database) {
+  installExperienceSchema(db);
   db.exec(`CREATE TABLE IF NOT EXISTS wb_library(id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
   CREATE TABLE IF NOT EXISTS wb_library_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
   CREATE INDEX IF NOT EXISTS wb_library_scope ON wb_library(workspace_id);
@@ -140,7 +143,9 @@ export class WorkbenchLedger {
     this.db.query('INSERT INTO wb_finding_links VALUES(?,?,?,?,?) ON CONFLICT(key) DO UPDATE SET state=excluded.state,lease_at=excluded.lease_at,json=excluded.json').run(scoped,this.workspaceId,'processing',this.now(),json);return token;
   }
   finishFinding(key:string,token:string,taskId:string){const scoped=businessDigest([this.workspaceId,key]),row=this.db.query<Row,[string,string]>('SELECT json FROM wb_finding_links WHERE key=? AND workspace_id=?').get(scoped,this.workspaceId);if(!row||JSON.parse(row.json).token!==token)throw Error('巡检联动租约失效');this.task(taskId);this.db.query('UPDATE wb_finding_links SET state=?,json=? WHERE key=?').run('done',JSON.stringify({...JSON.parse(row.json),state:'done',taskId}),scoped);}
+  experience(){return new ExperienceLedger(this.db,this.workspaceId,this.current,()=>[...this.index().entities.values()],(id,p)=>this.entity(id,p),this.task);}
   handle(r:WorkbenchRequest):WorkbenchData {
+    if(r.op.startsWith('wb_exp_'))return this.experience().handle(r as ExperienceRequest);
     if(r.op.startsWith('wb_wiki_'))return new WikiLedger(this.db,this.workspaceId,this.task).handle(WikiRequestSchema.parse(r));
     switch(r.op){
       case 'wb_entities':{const items=[...this.index().entities.values()].filter(e=>(r.source==='all'||e.scope.source===r.source)&&`${e.name} ${e.scope.shop} ${e.scope.channel} ${e.scope.sku}`.toLowerCase().includes(r.search.toLowerCase())).sort((a,b)=>b.dates.last.localeCompare(a.dates.last)||a.id.localeCompare(b.id));return{view:'entities',items:items.slice(r.offset,r.offset+r.limit),total:items.length,offset:r.offset};}
@@ -176,7 +181,7 @@ export class WorkbenchLedger {
       case 'wb_tick':return this.tick();
       case 'wb_cases':{const where="workspace_id=? AND (?='' OR instr(lower(json_extract(json,'$.title')||' '||json_extract(json,'$.lesson')||' '||json_extract(json,'$.task.task.scope.sku')),lower(?))>0)";const rows=this.db.query<Row,[string,string,string,number]>(`SELECT json FROM wb_cases WHERE ${where} ORDER BY json_extract(json,'$.createdAt') DESC,id DESC LIMIT 30 OFFSET ?`).all(this.workspaceId,r.search,r.search,r.offset).map(parse<BusinessCase>);return{view:'cases',items:rows.map(c=>({id:c.id,title:c.title,category:c.category,createdAt:c.createdAt,taskId:c.taskId})),total:this.db.query<{n:number},[string,string,string]>(`SELECT count(*) n FROM wb_cases WHERE ${where}`).get(this.workspaceId,r.search,r.search)!.n,offset:r.offset};}
       case 'wb_case':{const row=this.db.query<Row,[string,string]>('SELECT json FROM wb_cases WHERE id=? AND workspace_id=?').get(r.id,this.workspaceId);if(!row)throw Error('案例不存在');return{view:'case',item:parse<BusinessCase>(row)};}
-      case 'wb_archive':{const detail=this.task(r.taskId),t=detail.task;if(t.version!==r.expectedTaskVersion)throw Error('任务版本已变化');if(t.status!=='done')throw Error('请完成任务并核对证据后归档');const old=this.db.query<Row,[string,string,number]>('SELECT json FROM wb_cases WHERE workspace_id=? AND task_id=? AND task_version=?').get(this.workspaceId,t.id,t.version);if(old)return{view:'case',item:parse<BusinessCase>(old)};const item:BusinessCase={id:randomUUID(),taskId:t.id,taskVersion:t.version,title:r.title,lesson:r.lesson,declaredOutcome:r.outcome,createdAt:this.now(),category:t.purpose==='simulation_action'?'simulation':'analysis',wikiReferences:new WikiLedger(this.db,this.workspaceId,this.task).references(t.origin.investigationId),task:detail,bindings:this.bindings(t.id),observations:this.observations(t.id),limitation:'人工跟进/本地模拟案例；结果为操作者声明，不代表已验证真实经营效果。保留原证据、截断提示和不确定性，不作为审批授权。'};this.db.query('INSERT INTO wb_cases VALUES(?,?,?,?,?)').run(item.id,this.workspaceId,t.id,t.version,JSON.stringify(item));return{view:'case',item};}
+      case 'wb_archive':{const detail=this.task(r.taskId),t=detail.task;if(t.version!==r.expectedTaskVersion)throw Error('任务版本已变化');if(t.status!=='done')throw Error('请完成任务并核对证据后归档');const old=this.db.query<Row,[string,string,number]>('SELECT json FROM wb_cases WHERE workspace_id=? AND task_id=? AND task_version=?').get(this.workspaceId,t.id,t.version);if(old)return{view:'case',item:parse<BusinessCase>(old)};const item:BusinessCase={id:randomUUID(),taskId:t.id,taskVersion:t.version,title:r.title,lesson:r.lesson,declaredOutcome:r.outcome,createdAt:this.now(),category:t.purpose==='simulation_action'?'simulation':'analysis',caseReferences:this.experience().references(t.origin.investigationId),wikiReferences:new WikiLedger(this.db,this.workspaceId,this.task).references(t.origin.investigationId),task:detail,bindings:this.bindings(t.id),observations:this.observations(t.id),limitation:'人工跟进/本地模拟案例；结果为操作者声明，不代表已验证真实经营效果。保留原证据、截断提示和不确定性，不作为审批授权。'};this.db.query('INSERT INTO wb_cases VALUES(?,?,?,?,?)').run(item.id,this.workspaceId,t.id,t.version,JSON.stringify(item));return{view:'case',item};}
     }
     throw Error('未知工作台操作');
   }

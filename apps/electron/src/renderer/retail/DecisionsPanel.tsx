@@ -1,3 +1,4 @@
+import {InvestigationCases} from './InvestigationCases';
 import {TaskComposer} from './TaskComposer';
 import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -42,6 +43,7 @@ export function DecisionsPanel({ target, onBack, onApproval, onInvestigation, on
         <label className="retail-draft-field">决策备注<textarea aria-label="决策备注" maxLength={2000} rows={3} value={note} disabled={busy} onChange={e=>setNote(e.target.value)} placeholder="记录选择理由、需要补充的证据或风险"/></label>
         <div className="retail-inline-actions"><button className="retail-primary" disabled={busy||!options.length} onClick={save}>{selected?'保存新版本':'保存草稿'}</button>{selected&&<><button disabled={busy||dirty||selected.state!=='draft'||!!selected.submissionBlockers.length} onClick={()=>void call({op:'decision_submit',id:selected.id,expectedVersion:selected.version})}>提交模拟审批</button><button disabled={busy} onClick={()=>void call({op:'decision_history',id:selected.id})}>查看版本记录</button><button disabled={busy} onClick={()=>onInvestigation(selected.investigationId)}>查看原调查与补证</button></>}</div>
       </>}
+      {origin&&<InvestigationCases run={origin} onTask={onTask}/>}
       {selected&&<TaskComposer key={selected.id+':'+selected.version} origin={{kind:'decision',id:selected.id,version:selected.version}} title={selected.scope.sku+' '+selected.selected.title} simulationAllowed={selected.environment==='simulation'&&selected.selectedKind!=='observe'} onCreated={onTask}/>}
       {dirty&&<p role="status" className="retail-muted">有未保存修改，请先保存新版本再提交。</p>}
       {selected&&<><h3>已保存版本的前后值</h3><p className="retail-muted">表单修改须先保存新版本。广告花费条件值参考历史花费，不是平台当前预算。</p><DecisionValues before={selected.before} after={selected.after}/>

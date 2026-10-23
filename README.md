@@ -1,3 +1,5 @@
+> 2026-10-23 本机 beta.11：彩色卡片与记录边界、经营晨会、商品档案及相似案例复用已实现，交付范围与限制见 [S0—S4 开发记录](docs/experience-S0-S4-2026-10-23.md)。公开安装包另以 GitHub Releases 为准。
+
 # Merqo
 
 > **本机 beta.10：分组导航** — 左侧5个业务分组、顶部二级功能、Ctrl+K 功能搜索、按工作区保存常用入口及窄窗收起/更多菜单。见 [导航调整](docs/navigation-layout-2026-10-22.md)。沿用 beta.9 的 Wiki 和 schema 11，本机包未发布到 GitHub。

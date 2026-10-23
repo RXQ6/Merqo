@@ -118,5 +118,5 @@ test('schema 8 upgrades with a backup before installing task and workbench table
   decisions.close(); const db = new Database(file + '.investigations.sqlite'); db.exec('DELETE FROM decision_schema; INSERT INTO decision_schema VALUES(8); PRAGMA user_version=8; DROP TABLE business_task_events; DROP TABLE business_tasks;'); db.close();
   decisions = new DecisionStore(file, 'task-space', current); expect(page().total).toBe(0);
   expect(readdirSync(join(dir, 'retail')).some(name => name.includes('.investigations.backup-v8-'))).toBe(true);
-  const check = new Database(file + '.investigations.sqlite', { readonly: true }); try { expect(check.query('PRAGMA user_version').get()).toEqual({ user_version: 11 }); } finally { check.close(); }
+  const check = new Database(file + '.investigations.sqlite', { readonly: true }); try { expect(check.query('PRAGMA user_version').get()).toEqual({ user_version: 12 }); } finally { check.close(); }
 });

@@ -1,4 +1,5 @@
 import {WikiReferences} from './WikiReferences';
+import {InvestigationCases} from './InvestigationCases';
 import {TaskComposer} from './TaskComposer';
 import {PageHeader} from './PageHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -57,6 +58,7 @@ export function InvestigationPanel({ target, initialId, onBack, onDraft, onData,
   const citation = (id: string) => <a key={id} href={`#investigation-evidence-${selected?.trace.findIndex(t => t.evidenceId === id)}`} title={id}>[{id.split(':').at(-1)}]</a>;
   return <section data-testid="retail-investigation" className="retail-investigation">
     <PageHeader title={names[scenario]} actions={<><button onClick={onBack}>返回经营总览</button></>}>只读调查 → 证据归纳 → 条件测算 → 复核。复核通过后可生成草稿并进入本地模拟审批；不改写真实平台。</PageHeader>
+    {selected && <InvestigationCases run={selected} onTask={onTask}/>}
     {selected && <WikiReferences key={'wiki:'+selected.id} investigationId={selected.id}/>}
     {selected?.report && <TaskComposer key={selected.id} origin={{kind:'investigation',id:selected.id}} title={selected.evidence.row.sku_id+' 调查跟进'} onCreated={onTask}/>}
     {exportError && <div className="retail-alert error" role="alert">{exportError}</div>}

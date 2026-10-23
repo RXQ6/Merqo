@@ -196,7 +196,7 @@ try {
         const drafts=decisions.forInvestigation(run.id).flatMap(d=>decisions!.history(d.id));
         const ids=new Set(drafts.map(d=>d.id));
         const executionViews=decisions.executions().filter(e=>ids.has(e.job.decisionId));const executionIds=new Set(executionViews.map(e=>e.job.id));
-        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, drafts, executionViews, decisions.compensations().filter(c=>executionIds.has(c.request.sourceJobId)), decisions.executionBatches().filter(b=>b.batch.items.some(i=>executionIds.has(i.jobId))),decisions.reviews().filter(r=>executionIds.has(r.review.job.id)),(()=>{const v=decisions.workbench({op:'wb_wiki_references',investigationId:run.id});return v.view==='wiki_references'?v.references:[];})()) }));
+        console.log(JSON.stringify({ ok: true, kind: 'export', ...exportInvestigation(run, request.format, drafts, executionViews, decisions.compensations().filter(c=>executionIds.has(c.request.sourceJobId)), decisions.executionBatches().filter(b=>b.batch.items.some(i=>executionIds.has(i.jobId))),decisions.reviews().filter(r=>executionIds.has(r.review.job.id)),(()=>{const v=decisions.workbench({op:'wb_wiki_references',investigationId:run.id});return v.view==='wiki_references'?v.references:[];})(),decisions.caseReferences(run.id)) }));
       } else {
         let selectedId: string | undefined; let history;
         if (request.op === 'decision_create') selectedId = decisions.create(request.investigationId, request.kind, request.note).id;

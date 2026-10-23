@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import {ExperienceSchemas,type ExperienceData,type CaseReference} from './experience-contract';
 import type { EvidenceRecord } from './operations';
 import type { SignalRecord } from './signals';
 import type { AnyInvestigation } from './investigations';
@@ -13,7 +14,7 @@ export const PeriodSchema = z.strictObject({ startDate: day, endDate: day }).ref
 export const EntityQuery = z.strictObject({ op: z.literal('wb_entities'), search: z.string().trim().max(120).default(''), source: z.enum(['all', 'demo', 'csv']).default('all'), offset: z.number().int().min(0).max(1000000).default(0), limit: z.number().int().min(1).max(50).default(30) });
 export const LibraryInput = z.strictObject({ id: id.optional(), expectedVersion: z.number().int().min(0), kind: z.enum(['tag', 'method', 'topic']), title: z.string().trim().min(1).max(100), scenario: z.enum(['all', 'margin', 'inventory', 'ads']), body: text, archived: z.boolean() });
 export const ConfigInput = z.strictObject({ expectedVersion: z.number().int().positive(), remindersEnabled: z.boolean(), autoFindingTasks: z.boolean(), owner: z.string().trim().min(1).max(80), dueHours: z.number().int().min(1).max(720) });
-export const WorkbenchSchemas = [...WikiSchemas, EntityQuery,
+export const WorkbenchSchemas = [...ExperienceSchemas,...WikiSchemas, EntityQuery,
   z.strictObject({ op: z.literal('wb_entity'), entityId: hash, period: PeriodSchema }),
   z.strictObject({ op: z.literal('wb_conversations'), entityId: hash }),
   z.strictObject({ op: z.literal('wb_ask'), entityId: hash, period: PeriodSchema, questionId: id, question: text, mode: z.enum(['model', 'replay']) }),
@@ -43,8 +44,8 @@ export interface FollowupConfig { version: number; remindersEnabled: boolean; au
 export interface FollowupPlan { id: string; taskId: string; version: number; dueAt: string; repeatDays: number; enabled: boolean; updatedAt: string }
 export interface Reminder { id: string; taskId: string; title: string; dueAt: string; createdAt: string; acknowledgedAt: string | null; note: string | null }
 export interface FollowupObservation { id: string; planId: string; taskId: string; dueAt: string; observedAt: string; status: 'observed' | 'needs_evidence'; baseline: BusinessEvidence; evidence: BusinessEvidence[]; warnings: string[]; skippedSlots: number }
-export interface BusinessCase { id: string; taskId: string; taskVersion: number; title: string; lesson: string; declaredOutcome: string; createdAt: string; category: 'simulation' | 'analysis'; task: TaskDetail; bindings: TaskBinding[]; observations: FollowupObservation[]; wikiReferences?: WikiReference[]; limitation: string }
-export type WorkbenchData = WikiData |
+export interface BusinessCase { id: string; taskId: string; taskVersion: number; title: string; lesson: string; declaredOutcome: string; createdAt: string; category: 'simulation' | 'analysis'; task: TaskDetail; bindings: TaskBinding[]; observations: FollowupObservation[]; wikiReferences?: WikiReference[]; caseReferences?:CaseReference[]; limitation: string }
+export type WorkbenchData = ExperienceData | WikiData |
   { view: 'entities'; items: EntitySummary[]; total: number; offset: number } |
   { view: 'entity'; detail: EntityDetail } |
   { view: 'conversations'; items: ContextQuestion[]; selected?: ContextQuestion; created?: boolean } |

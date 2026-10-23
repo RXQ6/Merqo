@@ -3,10 +3,12 @@ import {Boxes, ChartNoAxesCombined, ChevronDown, CircleAlert, ClipboardCheck, Fi
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '../components/ui/dialog';
 import './retail-navigation.css';
 
-export type RetailPage = 'overview' | 'anomalies' | 'inventory' | 'ads' | 'transactions' | 'assistant' | 'tasks' | 'investigations' | 'checks' | 'decisions' | 'approvals' | 'executions' | 'compensations' | 'batches' | 'reviews' | 'connections' | 'catalog' | 'data' | 'policy' | 'entities' | 'followups' | 'knowledge';
+export type RetailPage = 'morning' | 'products' | 'overview' | 'anomalies' | 'inventory' | 'ads' | 'transactions' | 'assistant' | 'tasks' | 'investigations' | 'checks' | 'decisions' | 'approvals' | 'executions' | 'compensations' | 'batches' | 'reviews' | 'connections' | 'catalog' | 'data' | 'policy' | 'entities' | 'followups' | 'knowledge';
 type Entry={id:RetailPage;label:string;icon:typeof Boxes;keywords:string};
 export const retailGroups=[
   {id:'business',label:'经营总览',icon:LayoutDashboard,items:[
+    {id:'morning',label:'经营晨会',icon:LayoutDashboard,keywords:'今天 每日 早报 到期 待补证'},
+    {id:'products',label:'商品经营档案',icon:Boxes,keywords:'商品 时间线 备注 历史 档案'},
     {id:'overview',label:'总览',icon:LayoutDashboard,keywords:'经营总览 商品毛利 收入 成本'},
     {id:'inventory',label:'库存与补货',icon:Boxes,keywords:'缺货 采购 仓库 调拨 盘点'},
     {id:'ads',label:'广告经营',icon:ChartNoAxesCombined,keywords:'投放 ROAS 归因'},

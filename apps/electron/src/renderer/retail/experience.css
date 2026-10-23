@@ -20,3 +20,6 @@
 @media(max-width:1000px){.experience-body{padding:16px}.experience-summary{gap:8px}.experience-summary>button{padding:12px!important}.experience-record{padding:14px}}
 
 .experience-morning-banner{padding:14px 20px;margin-bottom:16px}.experience-source{padding:12px 18px;line-height:1.7}.experience-source details{margin-top:4px}.experience-source summary{cursor:pointer}.experience-record h3{margin-top:0}
+
+.experience-profile{border:1px solid #b8cde3;background:#f4f8fd;border-radius:8px;padding:14px;margin-block:16px}.experience-profile summary{cursor:pointer;color:#285a9b;font-weight:600}.experience-profile input:not([type=checkbox]),.experience-profile textarea{width:100%}.experience-profile label{display:flex;flex-direction:column;gap:6px;margin-block:10px}.experience-profile .retail-checkbox{flex-direction:row}.experience-profile fieldset{grid-column:1/-1;border:1px solid #cbd7e5;padding:12px}.experience-profile fieldset label{display:inline-flex;margin-right:20px}.experience-profile p{line-height:1.8}
+.experience-body label.retail-checkbox{flex-direction:row;align-items:center;gap:8px}.experience-body label.retail-checkbox input{margin:0;flex:none;width:16px;height:16px}.experience-profile fieldset label.retail-checkbox{display:inline-flex;flex-direction:row}

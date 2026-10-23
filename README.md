@@ -12,11 +12,11 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 ## Current source status — 2026-10-23
 
-**beta.11** connects daily briefing, product histories and reusable operating cases with the versioned knowledge center. The sidebar has five business groups, function search, favorites and responsive secondary navigation. Cards and records have distinct borders and semantic colors.
+**beta.12** adds editable, source-linked AI morning summaries, product/case categories and tags, applicability profiles, explainable case ranking and optional version-scoped feedback adjustments. It also connects daily briefing, product histories and reusable operating cases with the versioned knowledge center. The sidebar has five business groups, function search, favorites and responsive secondary navigation. Cards and records have distinct borders and semantic colors.
 
 Start at **经营总览 → 经营晨会 / 商品经营档案**. Investigations and decision drafts show similar cases, matching reasons and differences; citations freeze the original case version and can be reused in a follow-up task. **知识与复盘 → 经营知识中心** provides Markdown editing, history, citations and read-only Markdown/Feishu source synchronization.
 
-The prior three local workflow batches remain included: evidence and entity investigations, tasks, local approvals/simulations, reminders, snapshot reviews and immutable cases. Schema12 upgrades create a pre-migration backup. See the [implementation scope](docs/experience-S0-S4-2026-10-23.md), [packaged acceptance](docs/verification/experience-2026-10-23/report.md), and [beta.11 release record](docs/release-beta11-2026-10-23.md).
+The prior three local workflow batches remain included: evidence and entity investigations, tasks, local approvals/simulations, reminders, snapshot reviews and immutable cases. Schema13 upgrades create a pre-migration backup. See the [beta.12 enhancement route](docs/experience-enhancement-2026-10-23.md), [implementation scope](docs/experience-S0-S4-2026-10-23.md), [packaged acceptance](docs/verification/experience-2026-10-23/report.md), and [beta.11 release record](docs/release-beta11-2026-10-23.md).
 
 | UI entry | Implemented in the current source | Scope and evidence |
 | --- | --- | --- |
@@ -73,7 +73,7 @@ Updates use RXQ6/Merqo Releases, including betas, with manual installer download
 
 ## Build from source
 
-The beta.11 source domain run passed 409 tests / 3,702 assertions. Model transport checks use isolated synthetic fixtures; they do not establish live-model business accuracy. Historical real-model evaluation remains documented separately.
+The beta.12 source domain run passed 414 tests / 3,759 assertions. Five additional native Electron workflow groups cover AI summaries, classification and ranking using a loopback protocol fixture. Model transport checks use isolated synthetic fixtures; they do not establish live-model business accuracy. Historical real-model evaluation remains documented separately.
 
 ### Prerequisites
 

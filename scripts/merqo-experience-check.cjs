@@ -16,7 +16,7 @@ async function launch(){const env={...process.env,CRAFT_CONFIG_DIR:path.join(pro
 async function screenshot(name){const w=await app.browserWindow(page);await w.evaluate(w=>w.showInactive());await page.screenshot({path:path.join(out,name+'.png'),animations:'disabled',timeout:60000});}
 
 async function main(){
- await launch();if(process.env.MERQO_TEST_EXE){const runtime=await app.evaluate(({app})=>({packaged:app.isPackaged,version:app.getVersion()}));assert(runtime.packaged);assert.equal(runtime.version,'0.1.0-beta.11');checks.push('Actual packaged beta.11 runtime verified');}const win=await app.browserWindow(page);await win.evaluate(w=>{w.setSize(1440,1000);w.showInactive();});
+ await launch();if(process.env.MERQO_TEST_EXE){const runtime=await app.evaluate(({app})=>({packaged:app.isPackaged,version:app.getVersion()}));assert(runtime.packaged);assert.equal(runtime.version,require('../packaging/windows-release.json').version);checks.push('Actual packaged runtime matches release recipe');}const win=await app.browserWindow(page);await win.evaluate(w=>{w.setSize(1440,1000);w.showInactive();});
  await expect(page.getByLabel('历史晨会快照')).toBeVisible();
  await search('数据与导入');
  await request({op:'demo'});await request({op:'signals_demo'});

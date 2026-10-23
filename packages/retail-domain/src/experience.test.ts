@@ -57,6 +57,6 @@ test('no matching cases stay empty; changed shops/specs remain independent',()=>
  expect(RetailRequestSchema.safeParse({...morning,workspaceId:'forged'}).success).toBe(false);
 });
 test('schema11 upgrades with backup; business backup includes new records',()=>{
- decisions.close();const db=new Database(file+'.investigations.sqlite');db.exec('DELETE FROM decision_schema WHERE version=12; INSERT OR IGNORE INTO decision_schema VALUES(11); PRAGMA user_version=11');db.close();decisions=new DecisionStore(file,'experience-space',current);expect(readdirSync(join(dir,'retail')).some(n=>n.includes('backup-v11'))).toBe(true);
+ decisions.close();const db=new Database(file+'.investigations.sqlite');db.exec('DELETE FROM decision_schema WHERE version=13; INSERT OR IGNORE INTO decision_schema VALUES(11); PRAGMA user_version=11');db.close();decisions=new DecisionStore(file,'experience-space',current);expect(readdirSync(join(dir,'retail')).some(n=>n.includes('backup-v11'))).toBe(true);
  as(wb(morning),'morning');const inventory=backupInventory(join(dir,'retail'));const p=captureBackup(join(dir,'retail'),'experience-space','测试',[],inventory.connectionHash);const target=join(dir,'restored');restoreBackup(p,target);const restoredFile=new Database(join(target,'retail/operations.sqlite.investigations.sqlite'),{readonly:true});try{expect(restoredFile.query('SELECT count(*) n FROM wb_experience').get()).toEqual({n:1});}finally{restoredFile.close();}
 });

@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "checks": [
+    "Entity UI groups exact source/shop/product scope and links the saved task; actual configured isolated AgentBackend performs one loopback model request with no tools and saves valid frozen evidence citations",
+    "UI creates versioned method/tag/topic, freezes a method binding, saves weekly review, persists missing-evidence observation and acknowledgement; opt-in check findings create only offline analysis tasks and repeated ticks do not duplicate them or alter business snapshots",
+    "Completing a task enables immutable case archive, freezes method v1 and observations; native download exports identical case JSON; updating method to v2 does not rewrite the archived case",
+    "Six wide/narrow page checks pass with no horizontal overflow; actual process restart retains frozen question, completed task, method revision, reminder acknowledgement, recurring plan, automatic task deduplication and case"
+  ],
+  "profile": "D:\\helson-skills\\craft-agents-oss-main\\retailpilot-agent\\.runtime\\ingestion-ui-three-batches-ZAToiN",
+  "taskId": "fff70955-36ec-45bd-aea5-e31b856eb293",
+  "caseId": "17cc1f77-4735-4509-8456-a2fd43ac6686",
+  "modelCalls": 1,
+  "modelProtocolFixture": true,
+  "realPlatformCalls": 0,
+  "packaged": true
+}

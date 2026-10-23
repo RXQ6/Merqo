@@ -8,15 +8,15 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 > Windows desktop preview. Some launch scripts, runtime settings and historical screenshots retain the **RetailPilot** name. Sample results are synthetic and do not represent real business performance. The installer is an unsigned prerelease; full PRD release gates remain unmet.
 
-![Merqo daily briefing](docs/verification/experience-2026-10-23/morning-wide.png)
+![Merqo editable morning briefing](docs/verification/enhancement-2026-10-23/brief-wide.png)
 
 ## Current source status — 2026-10-23
 
-**beta.11** connects daily briefing, product histories and reusable operating cases with the versioned knowledge center. The sidebar has five business groups, function search, favorites and responsive secondary navigation. Cards and records have distinct borders and semantic colors.
+**beta.12** adds editable, source-linked AI morning summaries, product/case categories and tags, applicability profiles, explainable case ranking and optional version-scoped feedback adjustments. It also connects daily briefing, product histories and reusable operating cases with the versioned knowledge center. The sidebar has five business groups, function search, favorites and responsive secondary navigation. Cards and records have distinct borders and semantic colors.
 
 Start at **经营总览 → 经营晨会 / 商品经营档案**. Investigations and decision drafts show similar cases, matching reasons and differences; citations freeze the original case version and can be reused in a follow-up task. **知识与复盘 → 经营知识中心** provides Markdown editing, history, citations and read-only Markdown/Feishu source synchronization.
 
-The prior three local workflow batches remain included: evidence and entity investigations, tasks, local approvals/simulations, reminders, snapshot reviews and immutable cases. Schema12 upgrades create a pre-migration backup. See the [implementation scope](docs/experience-S0-S4-2026-10-23.md), [packaged acceptance](docs/verification/experience-2026-10-23/report.md), and [beta.11 release record](docs/release-beta11-2026-10-23.md).
+The prior three local workflow batches remain included: evidence and entity investigations, tasks, local approvals/simulations, reminders, snapshot reviews and immutable cases. Schema13 upgrades create a pre-migration backup. See the [beta.12 enhancement route](docs/experience-enhancement-2026-10-23.md), [implementation scope](docs/experience-S0-S4-2026-10-23.md), [beta.12 packaged acceptance](docs/verification/enhancement-2026-10-23/report.md), and [beta.12 release record](docs/release-beta12-2026-10-23.md).
 
 | UI entry | Implemented in the current source | Scope and evidence |
 | --- | --- | --- |
@@ -63,17 +63,17 @@ Retail workspaces enforce read-only tools in general Agent conversations, includ
 
 ## Download the desktop app
 
-The current preview is **0.1.0-beta.11**. Validation passed **409 domain tests**, **20 packaged workflow groups**, and an actual beta.8→beta.11 NSIS upgrade, same-version reinstall and uninstall on the current Windows 11 host. Existing evidence, investigations, tasks and cases were retained. See the [release record](docs/release-beta11-2026-10-23.md).
+The current preview is **0.1.0-beta.12**. Validation passed **414 domain tests**, **25 packaged workflow groups**, and the actual beta.11→beta.12 NSIS upgrade/reinstall/uninstall on the current Windows 11 host. Existing business records and the new product classification were retained. See the [release record](docs/release-beta12-2026-10-23.md).
 
-**[Download Merqo for Windows x64 — 0.1.0-beta.11](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.11/Merqo-Setup-0.1.0-beta.11-x64.exe)**
+**[Download Merqo for Windows x64 — 0.1.0-beta.12](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.12/Merqo-Setup-0.1.0-beta.12-x64.exe)**
 
-[GitHub release](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.11) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.11/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
+[GitHub release](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.12) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.12/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
 
-Updates use RXQ6/Merqo Releases, including betas, with manual installer downloads. Do not open a schema12 workspace in beta.10 or earlier. The preview remains unsigned. Clean/cross-Windows acceptance and live platform integration remain external gaps; the old installer's intermittent failure and successful short-path retry are documented.
+Updates use RXQ6/Merqo Releases, including betas, with manual installer downloads. Do not open a schema13 workspace in beta.11 or earlier. The preview remains unsigned. Clean/cross-Windows acceptance and live platform integration remain external gaps; the old installer's intermittent failure and successful short-path retry are documented.
 
 ## Build from source
 
-The beta.11 source domain run passed 409 tests / 3,702 assertions. Model transport checks use isolated synthetic fixtures; they do not establish live-model business accuracy. Historical real-model evaluation remains documented separately.
+The beta.12 source domain run passed 414 tests / 3,759 assertions. Five additional native Electron workflow groups cover AI summaries, classification and ranking using a loopback protocol fixture. Model transport checks use isolated synthetic fixtures; they do not establish live-model business accuracy. Historical real-model evaluation remains documented separately.
 
 ### Prerequisites
 

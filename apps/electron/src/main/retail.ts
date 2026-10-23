@@ -1,3 +1,4 @@
+import {answerMorningBrief} from './retail-morning-brief';
 import {handleRetailWiki} from './retail-wiki';
 import {WikiRequestSchema} from '../../../../packages/retail-domain/src/wiki-contract';
 import { answerRetailContext } from './retail-context-assistant';
@@ -45,7 +46,7 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
       const request = RetailRequestSchema.parse(input);
       // Derived morning snapshots, like Wiki recent-read metadata, use the read quota.
       // SQLite IMMEDIATE transactions still serialize their snapshot writes with task changes.
-      const readOnly = ['wb_exp_morning','wb_exp_resolve','wb_exp_product','wb_exp_cases','wb_wiki_list','wb_wiki_get','wb_wiki_references','wb_wiki_sources','wb_library_links','wb_task_tools','wb_entities','wb_entity','wb_conversations','wb_library','wb_bindings','wb_followups','wb_cases','wb_case','tasks','task_get','ad_refund_reports','exchange_reports','warehouse_view','warehouse_preview','procurement_view','procurement_preview','contribution_comparisons','sync_cleanup_view','inspections_view','inspections_preview','contribution_reports','ingest_issues','ingest_inspect','ingest_view','sync_job','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
+      const readOnly = ['wb_exp_briefs','wb_exp_case_history','wb_exp_morning','wb_exp_resolve','wb_exp_product','wb_exp_cases','wb_wiki_list','wb_wiki_get','wb_wiki_references','wb_wiki_sources','wb_library_links','wb_task_tools','wb_entities','wb_entity','wb_conversations','wb_library','wb_bindings','wb_followups','wb_cases','wb_case','tasks','task_get','ad_refund_reports','exchange_reports','warehouse_view','warehouse_preview','procurement_view','procurement_preview','contribution_comparisons','sync_cleanup_view','inspections_view','inspections_preview','contribution_reports','ingest_issues','ingest_inspect','ingest_view','sync_job','sync_view','investigation_supplement_preview','catalog','transactions_page','transactions_preview','policy','checks', 'snapshot', 'signals', 'signals_page', 'investigations', 'preview', 'signals_preview', 'investigation_export', 'decisions', 'decision_history', 'approvals', 'executions', 'compensations', 'execution_batches', 'reviews', 'review_preview'].includes(request.op);
       if (!readOnly && active.has(event.sender.id)) throw new Error('上一个经营数据请求尚未完成，请稍后重试');
       if (readOnly) await acquireRead(event.sender.id);
       else active.add(event.sender.id);
@@ -55,6 +56,8 @@ export function registerRetailIpc(getWindowManager: () => WindowManager | null):
         if(request.op.startsWith('sync_')||request.op.startsWith('ingest_'))return await handleRetailSync(workspace,workspaceId!,request);
         if(['wb_wiki_source_save','wb_wiki_check','wb_wiki_sync'].includes(request.op))return await handleRetailWiki(workspace,workspaceId!,WikiRequestSchema.parse(request));
         const reply = await workerRequest(request);
+        if(request.op==='wb_exp_brief_start'&&reply.ok&&reply.kind==='workbench'&&reply.data.view==='briefs'&&reply.data.created&&reply.data.context){const brief=reply.data.items.find(b=>b.id===request.requestId);if(brief?.status==='pending'){void answerMorningBrief(brief,reply.data.context,workspace.rootPath,async(output,model,error)=>{const r=await workerRequest({op:'brief_completion_internal',id:brief.id,snapshotHash:brief.snapshotHash,output,model,error});if(!r.ok)throw Error('摘要保存失败');}).catch(()=>{});}}
+
         if(request.op==='wb_ask'&&reply.ok&&reply.kind==='workbench'&&reply.data.view==='conversations'&&reply.data.created&&reply.data.selected?.status==='pending'){
           const question=reply.data.selected;
           void answerRetailContext(question,workspace.rootPath,async patch=>{const saved=await workerRequest({op:'context_completion_internal',id:question.id,contextHash:question.context.hash,...patch});if(!saved.ok)throw Error(saved.error);}).catch(()=>{/* Pending state expires durably if saving fails. */});

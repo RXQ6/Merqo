@@ -2,7 +2,7 @@ import {EntitiesPanel} from './EntitiesPanel';
 import {FollowupsPanel} from './FollowupsPanel';
 import {KnowledgePanel} from './KnowledgePanel';
 import {TasksPanel} from './TasksPanel';
-import {RetailNavigation, type RetailPage} from './RetailNavigation';
+import {RetailNavigation, RetailSecondaryNavigation, useRetailNavigationPreferences, type RetailPage} from './RetailNavigation';
 import {AssistantPanel} from './AssistantPanel';
 import {ConnectionsPanel} from './ConnectionsPanel';
 import {SourceMetadataEditor,SourceMetadataSummary,emptySourceDraft,parseSourceDraft} from './SourceMetadata';
@@ -31,6 +31,10 @@ import type { AnyInvestigation } from '../../../../../packages/retail-domain/src
 import { InvestigationPanel } from './InvestigationPanel';
 import './retail.css';
 import './retail-layout.css';
+import './retail-colors.css';
+import './experience.css';
+import {MorningPanel} from './MorningPanel';
+import {ProductPanel} from './ProductPanel';
 
 const money = (value: number | bigint | null): string => {
   if (value === null) return '待补证';
@@ -45,8 +49,10 @@ function download(name: string, content: string, mime = 'text/csv;charset=utf-8'
   const anchor = document.createElement('a'); anchor.href = url; anchor.download = name; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: { onOpenAgent: () => void; workspaceName?: string; active?: boolean }) {
+export function RetailWorkspace({ onOpenAgent, workspaceName, workspaceId = 'local', active = true }: { workspaceId?:string; onOpenAgent: () => void; workspaceName?: string; active?: boolean }) {
   const followupReview=useCallback((run:AnyInvestigation)=>{setInvestigationTarget(null);setInvestigationId(run.id);setPage('investigations');},[]);
+  const [productId,setProductId]=useState<string|null>(null);
+  useEffect(()=>{const open=(e:Event)=>{const id=(e as CustomEvent<{id:string}>).detail?.id;if(typeof id==='string'&&/^[a-f0-9]{64}$/.test(id)){setProductId(id);setPage('products');}};window.addEventListener('merqo:product-open',open);return()=>window.removeEventListener('merqo:product-open',open);},[]);
   const [caseId,setCaseId]=useState<string|null>(null);
   const [taskId,setTaskId]=useState<string|null>(null);
   const [decisionFocusId,setDecisionFocusId]=useState<string|null>(null);
@@ -61,7 +67,8 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: {
   const [signals, setSignals] = useState<SignalSnapshot | null>(null);
   const [signalRefreshKey, setSignalRefreshKey] = useState(0);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [page, setPage] = useState<RetailPage>('overview');
+  const [page, setPage] = useState<RetailPage>('morning');
+  const navigationPreferences=useRetailNavigationPreferences(workspaceId);
   const isSignalPage = page === 'inventory' || page === 'ads';
   const mainRef = useRef<HTMLElement>(null);
   useEffect(() => { mainRef.current?.scrollTo({ top: 0 }); }, [page]);
@@ -69,14 +76,17 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: {
     setQuery(''); setStatus('all');
     if (next === 'investigations') { setInvestigationTarget(null); setInvestigationId(null); }
     if (next === 'decisions') {setDecisionTarget(null);setDecisionFocusId(null);}
-    if (next === 'knowledge') setCaseId(null);
+    if (next === 'knowledge') {setCaseId(null);setWikiFocus(null);}
     if (next === 'tasks') setTaskId(null);
+    if (next === 'products') setProductId(null);
     if (next === 'approvals') setApprovalRequestId(null);
     if (next === 'executions') setExecutionRequestId(null);
     if (next === 'compensations') setCompensationTarget(null);
     if (next === 'reviews') setReviewJobId(null);
     setPage(next);
   };
+  const [wikiFocus,setWikiFocus]=useState<string|null>(null);
+  useEffect(()=>{const listener=(event:Event)=>{const id=(event as CustomEvent<{id:string}>).detail?.id;if(typeof id==='string'){setWikiFocus(id);setCaseId(null);setPage('knowledge');}};window.addEventListener('merqo:wiki-open',listener);return()=>window.removeEventListener('merqo:wiki-open',listener);},[]);
   const [source, setSource] = useState<'demo' | 'csv'>('demo');
   const [shop, setShop] = useState(''); const [channel, setChannel] = useState(''); const [date, setDate] = useState('');
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
@@ -178,10 +188,11 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, active = true }: {
   const updateMapping = (key: string, value: string) => { setMapping(current => ({ ...current, [key]: value })); setPreview(current => current ? { ...current, valid: [] } : null); };
   return <div className="retail-app" data-testid="retail-workspace">
     <header className="retail-windowbar"><div className="retail-wordmark"><Boxes size={19}/><strong>Merqo</strong><span>经营分析</span></div><div className="retail-windowbar-actions"><span>{workspaceName??'当前工作空间'}</span><button onClick={onOpenAgent}>高级工作台</button></div></header>
-    <div className="retail-window-layout">
-    <RetailNavigation page={page} warnings={warning + missing + signalCount} onNavigate={navigate}/>
+    <div className="retail-window-layout" data-navigation-collapsed={navigationPreferences.collapsed?'true':'false'}>
+    <RetailNavigation preferences={navigationPreferences} active={active} page={page} warnings={warning + missing + signalCount} onNavigate={navigate}/>
     <main className="retail-main" ref={mainRef} aria-label="经营工作区">
-      {page==='entities'?<EntitiesPanel onCase={id=>{setCaseId(id);setPage('knowledge');}} onTask={openTask} onInvestigation={id=>{setInvestigationId(id);setInvestigationTarget(null);setPage('investigations');}} onDecision={id=>{setDecisionTarget(null);setDecisionFocusId(id);setPage('decisions');}} onInvestigate={e=>{setInvestigationTarget(e);setInvestigationId(null);setPage('investigations');}}/>:page==='followups'?<FollowupsPanel onTask={openTask} onChecks={()=>setPage('checks')}/>:page==='knowledge'?<KnowledgePanel initialCase={caseId} onTask={openTask}/>:page==='tasks'?<TasksPanel onCase={id=>{setCaseId(id);setPage('knowledge');}} initialId={taskId} onInvestigation={id=>{setInvestigationId(id);setInvestigationTarget(null);setPage('investigations');}} onDecision={id=>{setDecisionTarget(null);setDecisionFocusId(id);setPage('decisions');}} onApproval={id=>{setApprovalRequestId(id);setPage('approvals');}} onExecution={id=>{setExecutionRequestId(id);setPage('executions');}}/>:page==='assistant'?<AssistantPanel onNavigate={navigate} onOpenAgent={onOpenAgent}/>:page==='connections'?<ConnectionsPanel/>:page==='catalog'?<CatalogPanel request={request}/>:page==='transactions'?<TransactionsPanel request={request}/>:page==='policy'?<PolicyPanel request={request} onChanged={()=>{setSignalRefreshKey(v=>v+1);void request({op:'snapshot',source,status:'all',search:'',offset:0,limit:30});}}/>:page === 'checks' ? <ChecksPanel onAnomalies={() => { setPage('anomalies'); setStatus('all'); }}/> : page === 'reviews' ? <ReviewsPanel onFollowup={followupReview} jobId={reviewJobId} onBack={()=>setPage('executions')}/> : page === 'batches' ? <ExecutionBatchesPanel onBack={()=>setPage('executions')}/> : page === 'compensations' ? <CompensationsPanel target={compensationTarget} onBack={()=>setPage('executions')}/> : page === 'executions' ? <ExecutionsPanel onReview={jobId=>{setReviewJobId(jobId);setPage('reviews');}} onBatches={()=>setPage('batches')} onCompensation={item=>{setCompensationTarget(item);setPage('compensations');}} initialRequestId={executionRequestId} onBack={() => setPage('approvals')}/> : page === 'approvals' ? <ApprovalsPanel onExecution={id => { setExecutionRequestId(id); setPage('executions'); }} initialRequestId={approvalRequestId} onBack={() => { setDecisionTarget(null); setPage('decisions'); }}/> : page === 'decisions' ? <DecisionsPanel onTask={openTask} initialId={decisionFocusId} onInvestigation={id=>{setInvestigationTarget(null);setInvestigationId(id);setPage('investigations');}} target={decisionTarget} onBack={() => setPage('overview')} onApproval={id => { setApprovalRequestId(id); setPage('approvals'); }}/> : page === 'investigations' ? <InvestigationPanel onTask={openTask} onData={()=>setPage('data')} initialId={investigationId} target={investigationTarget} onBack={() => setPage('overview')} onDraft={run => { setDecisionFocusId(null);setDecisionTarget(run); setPage('decisions'); }}/> : <>
+      <RetailSecondaryNavigation preferences={navigationPreferences} page={page} warnings={warning + missing + signalCount} onNavigate={navigate}/>
+      {page==='morning'?<MorningPanel onProduct={id=>{setProductId(id);setPage('products');}} onTask={openTask} onData={()=>setPage('data')} onInvestigation={id=>{setInvestigationTarget(null);setInvestigationId(id);setPage('investigations');}} onInvestigate={e=>{setInvestigationTarget(e);setInvestigationId(null);setPage('investigations');}}/>:page==='products'?<ProductPanel key={productId??'list'} initialId={productId} onTask={openTask} onInvestigation={id=>{setInvestigationTarget(null);setInvestigationId(id);setPage('investigations');}} onInvestigate={e=>{setInvestigationTarget(e);setInvestigationId(null);setPage('investigations');}} onDecision={id=>{setDecisionTarget(null);setDecisionFocusId(id);setPage('decisions');}} onCase={id=>{setWikiFocus(null);setCaseId(id);setPage('knowledge');}} onApproval={id=>{setApprovalRequestId(id);setPage('approvals');}} onExecution={id=>{setExecutionRequestId(id);setPage('executions');}}/>:page==='entities'?<EntitiesPanel onCase={id=>{setWikiFocus(null);setCaseId(id);setPage('knowledge');}} onTask={openTask} onInvestigation={id=>{setInvestigationId(id);setInvestigationTarget(null);setPage('investigations');}} onDecision={id=>{setDecisionTarget(null);setDecisionFocusId(id);setPage('decisions');}} onInvestigate={e=>{setInvestigationTarget(e);setInvestigationId(null);setPage('investigations');}}/>:page==='followups'?<FollowupsPanel onTask={openTask} onChecks={()=>setPage('checks')}/>:page==='knowledge'?<KnowledgePanel initialWiki={wikiFocus} initialCase={caseId} onTask={openTask}/>:page==='tasks'?<TasksPanel onCase={id=>{setWikiFocus(null);setCaseId(id);setPage('knowledge');}} initialId={taskId} onInvestigation={id=>{setInvestigationId(id);setInvestigationTarget(null);setPage('investigations');}} onDecision={id=>{setDecisionTarget(null);setDecisionFocusId(id);setPage('decisions');}} onApproval={id=>{setApprovalRequestId(id);setPage('approvals');}} onExecution={id=>{setExecutionRequestId(id);setPage('executions');}}/>:page==='assistant'?<AssistantPanel onNavigate={navigate} onOpenAgent={onOpenAgent}/>:page==='connections'?<ConnectionsPanel/>:page==='catalog'?<CatalogPanel request={request}/>:page==='transactions'?<TransactionsPanel request={request}/>:page==='policy'?<PolicyPanel request={request} onChanged={()=>{setSignalRefreshKey(v=>v+1);void request({op:'snapshot',source,status:'all',search:'',offset:0,limit:30});}}/>:page === 'checks' ? <ChecksPanel onAnomalies={() => { setPage('anomalies'); setStatus('all'); }}/> : page === 'reviews' ? <ReviewsPanel onFollowup={followupReview} jobId={reviewJobId} onBack={()=>setPage('executions')}/> : page === 'batches' ? <ExecutionBatchesPanel onBack={()=>setPage('executions')}/> : page === 'compensations' ? <CompensationsPanel target={compensationTarget} onBack={()=>setPage('executions')}/> : page === 'executions' ? <ExecutionsPanel onReview={jobId=>{setReviewJobId(jobId);setPage('reviews');}} onBatches={()=>setPage('batches')} onCompensation={item=>{setCompensationTarget(item);setPage('compensations');}} initialRequestId={executionRequestId} onBack={() => setPage('approvals')}/> : page === 'approvals' ? <ApprovalsPanel onExecution={id => { setExecutionRequestId(id); setPage('executions'); }} initialRequestId={approvalRequestId} onBack={() => { setDecisionTarget(null); setPage('decisions'); }}/> : page === 'decisions' ? <DecisionsPanel onTask={openTask} initialId={decisionFocusId} onInvestigation={id=>{setInvestigationTarget(null);setInvestigationId(id);setPage('investigations');}} target={decisionTarget} onBack={() => setPage('overview')} onApproval={id => { setApprovalRequestId(id); setPage('approvals'); }}/> : page === 'investigations' ? <InvestigationPanel onTask={openTask} onData={()=>setPage('data')} initialId={investigationId} target={investigationTarget} onBack={() => setPage('overview')} onDraft={run => { setDecisionFocusId(null);setDecisionTarget(run); setPage('decisions'); }}/> : <>
       <header className="retail-header"><div><h1>{page === 'overview' ? '商品毛利分析' : page === 'anomalies' ? '经营异常' : isSignalPage ? (page === 'inventory' ? '库存与补货' : '广告经营') : '经营数据'}</h1><p>{page === 'data' ? '导入前预览并检查口径，错误行隔离，历史快照保留。' : isSignalPage ? (page === 'inventory' ? '先看缺货风险，再核对采购到货、仓库现存与预占。' : '先看回报变化，再核对退款后的归因与结算。') : page === 'anomalies' ? '按店铺、渠道与经营日期核对三类异常及证据。' : '按店铺、渠道与经营日期核对商品收入、成本和优惠。'}</p></div>
         <div className="retail-header-actions"><button disabled={busy} onClick={() => { setSignalRefreshKey(value => value + 1); if (!isSignalPage) void request({ op: 'snapshot', source, shop, channel, date, search: query, offset, limit: 30, status: status === 'all' ? page === 'anomalies' ? 'anomalies' : 'all' : status as 'normal' | 'low_margin' | 'needs_evidence' }); }} aria-label="刷新经营数据"><RefreshCw size={17}/></button><button className="retail-primary" disabled={busy} onClick={() => { if (isSignalPage) document.querySelector<HTMLInputElement>('input[aria-label="选择库存或广告 CSV"]')?.click(); else { setPage('data'); fileInput.current?.click(); } }}><FileSpreadsheet size={16}/>{isSignalPage ? '导入场景 CSV' : '导入毛利 CSV'}</button></div>
       </header>

@@ -1,3 +1,7 @@
+import { WikiLedger } from './wiki';
+import {ExperienceLedger,installExperienceSchema} from './experience';
+import type {ExperienceRequest} from './experience-contract';
+import { WikiRequestSchema } from './wiki-contract';
 import { randomUUID } from 'node:crypto';
 import type { Database } from 'bun:sqlite';
 import { z } from 'zod';
@@ -11,6 +15,7 @@ type Row = { json: string };
 const parse = <T>(r: Row) => JSON.parse(r.json) as T;
 const limitation = '证据按来源、店铺、渠道、商品规格及仓库/活动分开；不跨快照求和，不证明实时完整性、因果、真实执行或完整利润。';
 export function installWorkbenchSchema(db: Database) {
+  installExperienceSchema(db);
   db.exec(`CREATE TABLE IF NOT EXISTS wb_library(id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json))) STRICT;
   CREATE TABLE IF NOT EXISTS wb_library_versions(id TEXT NOT NULL,version INTEGER NOT NULL,json TEXT NOT NULL CHECK(json_valid(json)),PRIMARY KEY(id,version)) STRICT;
   CREATE INDEX IF NOT EXISTS wb_library_scope ON wb_library(workspace_id);
@@ -71,7 +76,10 @@ export class WorkbenchLedger {
     if (!records.length) warnings.push('所选窗口无证据。');
     if (records.length > 30 || runs.length > 30 || drafts.length > 30 || tasks.length > 30) warnings.push('详情每类最多展示30项；计数为窗口完整范围，截断内容不进入助手。');
     if (records.some(e => e.source === 'csv' && evidenceTimeContext(e).businessTimeIssueAtImport)) warnings.push('存在导入时业务日期异常的历史证据，须核对时间口径。');
-    const detail = { entity, period, evidence: records.slice(0,30), evidenceTotal: records.length,
+    const wikiLedger=new WikiLedger(this.db,this.workspaceId,this.task);
+    let wikiBytes=0;
+    const wiki=wikiLedger.eligible(entity.scope).filter(i=>!i.wiki?.validFrom||i.wiki.validFrom<=period.startDate).filter(i=>!i.wiki?.validTo||i.wiki.validTo>=period.endDate).filter(i=>{const bytes=Buffer.byteLength(JSON.stringify(i),'utf8');if(wikiBytes+bytes>50000)return false;wikiBytes+=bytes;return true;}).slice(0,10);
+    const detail = { entity, period, wiki, evidence: records.slice(0,30), evidenceTotal: records.length,
       investigations: runs.slice(0,30).map(r => ({ id:r.id, state:r.state, mode:r.mode, createdAt:r.createdAt, summary:r.report?.summary ?? '尚无报告' })), investigationTotal:runs.length,
       decisions: drafts.slice(0,30).map(d => ({ id:d.id, version:d.version, state:d.state, selectedKind:d.selectedKind })), decisionTotal:drafts.length,
       tasks:tasks.slice(0,30), taskTotal:tasks.length, knowledge:knowledge.slice(0,20),cases:cases.map(c=>({id:c.id,title:c.title,lesson:c.lesson,declaredOutcome:c.declaredOutcome,category:c.category,limitation:c.limitation})), warnings:[...warnings,'上下文最多引用20个已绑定知识版本和10个同范围历史案例；过往经验不证明本次有效，不能作为执行授权。'] };
@@ -93,7 +101,7 @@ export class WorkbenchLedger {
     if(q.context.hash!==contextHash)throw Error('问题上下文摘要不符');
     if(Date.now()>=Date.parse(q.deadlineAt)){q.status='failed';q.error='模型回答已超过截止时间，未保存迟到结果。';}
     else if(error){q.status='failed';q.error='模型回答未完成，请核对模型连接后重新提问。';}
-    else {const validated=ContextAnswer.parse({answer,citations});const ids=new Set(q.context.evidence.map(e=>e.id));if(validated.citations.some(c=>!ids.has(c)))throw Error('模型引用不属于冻结窗口');q.status='answered';q.answer=validated.answer;q.citations=validated.citations;}
+    else {const validated=ContextAnswer.parse({answer,citations});const ids=new Set([...q.context.evidence.map(e=>e.id),...(q.context.wiki??[]).map(i=>'wiki:'+i.id+':v'+i.version)]);if(validated.citations.some(c=>!ids.has(c)))throw Error('模型引用不属于冻结窗口');q.status='answered';q.answer=validated.answer;q.citations=validated.citations;}
     this.saveQuestion(q);return{view:'conversations',items:this.questions(q.entityId),selected:q};
   }
   private library(): LibraryItem[] { return this.db.query<Row,[string]>('SELECT json FROM wb_library WHERE workspace_id=? ORDER BY json_extract(json,\'$.updatedAt\') DESC,id DESC LIMIT 500').all(this.workspaceId).map(parse<LibraryItem>); }
@@ -135,7 +143,10 @@ export class WorkbenchLedger {
     this.db.query('INSERT INTO wb_finding_links VALUES(?,?,?,?,?) ON CONFLICT(key) DO UPDATE SET state=excluded.state,lease_at=excluded.lease_at,json=excluded.json').run(scoped,this.workspaceId,'processing',this.now(),json);return token;
   }
   finishFinding(key:string,token:string,taskId:string){const scoped=businessDigest([this.workspaceId,key]),row=this.db.query<Row,[string,string]>('SELECT json FROM wb_finding_links WHERE key=? AND workspace_id=?').get(scoped,this.workspaceId);if(!row||JSON.parse(row.json).token!==token)throw Error('巡检联动租约失效');this.task(taskId);this.db.query('UPDATE wb_finding_links SET state=?,json=? WHERE key=?').run('done',JSON.stringify({...JSON.parse(row.json),state:'done',taskId}),scoped);}
+  experience(){return new ExperienceLedger(this.db,this.workspaceId,this.current,()=>[...this.index().entities.values()],(id,p)=>this.entity(id,p),this.task);}
   handle(r:WorkbenchRequest):WorkbenchData {
+    if(r.op.startsWith('wb_exp_'))return this.experience().handle(r as ExperienceRequest);
+    if(r.op.startsWith('wb_wiki_'))return new WikiLedger(this.db,this.workspaceId,this.task).handle(WikiRequestSchema.parse(r));
     switch(r.op){
       case 'wb_entities':{const items=[...this.index().entities.values()].filter(e=>(r.source==='all'||e.scope.source===r.source)&&`${e.name} ${e.scope.shop} ${e.scope.channel} ${e.scope.sku}`.toLowerCase().includes(r.search.toLowerCase())).sort((a,b)=>b.dates.last.localeCompare(a.dates.last)||a.id.localeCompare(b.id));return{view:'entities',items:items.slice(r.offset,r.offset+r.limit),total:items.length,offset:r.offset};}
       case 'wb_entity':return{view:'entity',detail:this.entity(r.entityId,r.period)};
@@ -156,12 +167,12 @@ export class WorkbenchLedger {
       case 'wb_task_tools':{const bindings=this.bindings(r.taskId),row=this.db.query<Row,[string,string]>('SELECT json FROM wb_plans WHERE task_id=? AND workspace_id=?').get(r.taskId,this.workspaceId);return{view:'task_tools',bindings,plan:row?parse<FollowupPlan>(row):null,observations:this.observations(r.taskId)};}
       case 'wb_library_save':{
         const row=r.id?this.db.query<Row,[string,string]>('SELECT json FROM wb_library WHERE id=? AND workspace_id=?').get(r.id,this.workspaceId):null,old=row?parse<LibraryItem>(row):null;
-        if(r.id&&!old)throw Error('知识条目不存在');if((old?.version??0)!==r.expectedVersion)throw Error('知识条目版本已变化，请刷新');if(old&&old.kind!==r.kind)throw Error('不能修改既有条目类型');
+        if(r.id&&!old)throw Error('知识条目不存在');if((old?.version??0)!==r.expectedVersion)throw Error('知识条目版本已变化，请刷新');if(old&&old.kind!==r.kind)throw Error('不能修改既有条目类型');if(old?.wiki)throw Error('请在知识中心维护此文档');
         if(!old&&this.library().length>=500)throw Error('最多500条知识条目，请维护既有内容');
         const item:LibraryItem={id:old?.id??randomUUID(),version:(old?.version??0)+1,kind:r.kind,title:r.title,scenario:r.scenario,body:r.body,archived:r.archived,updatedAt:this.now()};
         this.db.query('INSERT INTO wb_library VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,json=excluded.json').run(item.id,this.workspaceId,item.version,JSON.stringify(item));this.db.query('INSERT INTO wb_library_versions VALUES(?,?,?)').run(item.id,item.version,JSON.stringify(item));return{view:'library',items:this.library(),total:this.library().length};
       }
-      case 'wb_bind':{const t=this.task(r.taskId).task;if(t.version!==r.expectedTaskVersion)throw Error('任务版本已变化');const row=this.db.query<Row,[string,string]>('SELECT json FROM wb_library WHERE id=? AND workspace_id=?').get(r.itemId,this.workspaceId);if(!row)throw Error('知识条目不存在');const item=parse<LibraryItem>(row);if(item.archived)throw Error('条目已停用，不能新关联');if(item.scenario!=='all'&&item.scenario!==t.scope.scenario)throw Error('条目场景与任务不一致');const binding:TaskBinding={taskId:t.id,taskVersion:t.version,item,at:this.now()};this.db.query('INSERT OR IGNORE INTO wb_bindings VALUES(?,?,?,?,?)').run(t.id,item.id,item.version,this.workspaceId,JSON.stringify(binding));return{view:'bindings',items:this.bindings(t.id)};}
+      case 'wb_bind':{const t=this.task(r.taskId).task;if(t.version!==r.expectedTaskVersion)throw Error('任务版本已变化');const row=this.db.query<Row,[string,string]>('SELECT json FROM wb_library WHERE id=? AND workspace_id=?').get(r.itemId,this.workspaceId);if(!row)throw Error('知识条目不存在');const item=parse<LibraryItem>(row);if(item.archived)throw Error('条目已停用，不能新关联');if(!new WikiLedger(this.db,this.workspaceId,this.task).eligible(t.scope).some(i=>i.id===item.id))throw Error('知识场景或适用范围不符，或来源不可用');if(item.scenario!=='all'&&item.scenario!==t.scope.scenario)throw Error('条目场景与任务不一致');const binding:TaskBinding={taskId:t.id,taskVersion:t.version,item,at:this.now()};this.db.query('INSERT OR IGNORE INTO wb_bindings VALUES(?,?,?,?,?)').run(t.id,item.id,item.version,this.workspaceId,JSON.stringify(binding));return{view:'bindings',items:this.bindings(t.id)};}
       case 'wb_bindings':return{view:'bindings',items:this.bindings(r.taskId)};
       case 'wb_followups':return this.followups();
       case 'wb_configure':{const old=this.config();if(old.version!==r.expectedVersion)throw Error('联动配置版本已变化');const config:FollowupConfig={version:old.version+1,remindersEnabled:r.remindersEnabled,autoFindingTasks:r.autoFindingTasks,owner:r.owner,dueHours:r.dueHours,configuredAt:r.autoFindingTasks&&!old.autoFindingTasks?this.now():old.configuredAt};this.db.query('UPDATE wb_config SET json=? WHERE workspace_id=?').run(JSON.stringify(config),this.workspaceId);return this.followups();}
@@ -170,8 +181,9 @@ export class WorkbenchLedger {
       case 'wb_tick':return this.tick();
       case 'wb_cases':{const where="workspace_id=? AND (?='' OR instr(lower(json_extract(json,'$.title')||' '||json_extract(json,'$.lesson')||' '||json_extract(json,'$.task.task.scope.sku')),lower(?))>0)";const rows=this.db.query<Row,[string,string,string,number]>(`SELECT json FROM wb_cases WHERE ${where} ORDER BY json_extract(json,'$.createdAt') DESC,id DESC LIMIT 30 OFFSET ?`).all(this.workspaceId,r.search,r.search,r.offset).map(parse<BusinessCase>);return{view:'cases',items:rows.map(c=>({id:c.id,title:c.title,category:c.category,createdAt:c.createdAt,taskId:c.taskId})),total:this.db.query<{n:number},[string,string,string]>(`SELECT count(*) n FROM wb_cases WHERE ${where}`).get(this.workspaceId,r.search,r.search)!.n,offset:r.offset};}
       case 'wb_case':{const row=this.db.query<Row,[string,string]>('SELECT json FROM wb_cases WHERE id=? AND workspace_id=?').get(r.id,this.workspaceId);if(!row)throw Error('案例不存在');return{view:'case',item:parse<BusinessCase>(row)};}
-      case 'wb_archive':{const detail=this.task(r.taskId),t=detail.task;if(t.version!==r.expectedTaskVersion)throw Error('任务版本已变化');if(t.status!=='done')throw Error('请完成任务并核对证据后归档');const old=this.db.query<Row,[string,string,number]>('SELECT json FROM wb_cases WHERE workspace_id=? AND task_id=? AND task_version=?').get(this.workspaceId,t.id,t.version);if(old)return{view:'case',item:parse<BusinessCase>(old)};const item:BusinessCase={id:randomUUID(),taskId:t.id,taskVersion:t.version,title:r.title,lesson:r.lesson,declaredOutcome:r.outcome,createdAt:this.now(),category:t.purpose==='simulation_action'?'simulation':'analysis',task:detail,bindings:this.bindings(t.id),observations:this.observations(t.id),limitation:'人工跟进/本地模拟案例；结果为操作者声明，不代表已验证真实经营效果。保留原证据、截断提示和不确定性，不作为审批授权。'};this.db.query('INSERT INTO wb_cases VALUES(?,?,?,?,?)').run(item.id,this.workspaceId,t.id,t.version,JSON.stringify(item));return{view:'case',item};}
+      case 'wb_archive':{const detail=this.task(r.taskId),t=detail.task;if(t.version!==r.expectedTaskVersion)throw Error('任务版本已变化');if(t.status!=='done')throw Error('请完成任务并核对证据后归档');const old=this.db.query<Row,[string,string,number]>('SELECT json FROM wb_cases WHERE workspace_id=? AND task_id=? AND task_version=?').get(this.workspaceId,t.id,t.version);if(old)return{view:'case',item:parse<BusinessCase>(old)};const item:BusinessCase={id:randomUUID(),taskId:t.id,taskVersion:t.version,title:r.title,lesson:r.lesson,declaredOutcome:r.outcome,createdAt:this.now(),category:t.purpose==='simulation_action'?'simulation':'analysis',caseReferences:this.experience().references(t.origin.investigationId),wikiReferences:new WikiLedger(this.db,this.workspaceId,this.task).references(t.origin.investigationId),task:detail,bindings:this.bindings(t.id),observations:this.observations(t.id),limitation:'人工跟进/本地模拟案例；结果为操作者声明，不代表已验证真实经营效果。保留原证据、截断提示和不确定性，不作为审批授权。'};this.db.query('INSERT INTO wb_cases VALUES(?,?,?,?,?)').run(item.id,this.workspaceId,t.id,t.version,JSON.stringify(item));return{view:'case',item};}
     }
+    throw Error('未知工作台操作');
   }
 }
 export const ContextAnswer = z.strictObject({ answer:z.string().trim().min(1).max(4000).refine(s=>!/[0-9０-９]|百分之|[零〇一二三四五六七八九十百千万亿两]+\s*(?:元|件|天|倍|成|瓶|袋|盒|%|％)/.test(s),'助手正文只允许定性说明，数值须查看原证据事实卡'),citations:z.array(z.string().min(1).max(128)).min(1).max(30) });

@@ -28,13 +28,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Reject Windows-illegal filenames
-        run: |
-          BAD=$(git ls-files | grep -E '[<>:"|?*]' || true)
-          if [ -n "$BAD" ]; then
-            echo "::error::Files with characters illegal on Windows:"
-            echo "$BAD"
-            exit 1
-          fi
+        run: bun scripts/check-windows-filenames.cjs
 
       - name: Install dependencies
         run: bun install --frozen-lockfile

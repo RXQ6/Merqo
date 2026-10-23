@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "checks": [
+    "Actual beta.8 install creates persisted evidence, task, investigation and archived case",
+    "Actual NSIS beta.8→beta.11 upgrade preserves identical task/case/evidence and creates schema10 migration backup",
+    "Same-version NSIS reinstall retains original business records",
+    "NSIS uninstall removes isolated executable while retaining the isolated workspace"
+  ],
+  "profile": "C:\\Users\\29486\\AppData\\Local\\Temp\\mqu11-TrrXDp",
+  "install": "C:\\Users\\29486\\AppData\\Local\\Temp\\mqu11-TrrXDp\\app",
+  "cleanVm": false,
+  "windows": "Windows 11 build 26200"
+}

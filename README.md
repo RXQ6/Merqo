@@ -8,15 +8,15 @@ Built on the Craft Agents desktop codebase using **Electron, React, TypeScript, 
 
 > Windows desktop preview. Some launch scripts, runtime settings and historical screenshots retain the **RetailPilot** name. Sample results are synthetic and do not represent real business performance. The installer is an unsigned prerelease; full PRD release gates remain unmet.
 
-![Retail workbench — historical layout](docs/images/retail-window.png)
+![Merqo daily briefing](docs/verification/experience-2026-10-23/morning-wide.png)
 
-## Current source status — 2026-10-22
+## Current source status — 2026-10-23
 
-The retail navigation now follows business scenes: **经营现场 → 分析与跟进 → 决策与模拟执行 → 数据与设置**. Inventory/replenishment and advertising have separate pages; **经营助手** links to the existing anomaly investigation workflows. Shared page headers, consistent guidance/action spacing and two-column forms stack into one column in narrow windows. General conversations, user labels and technical sources remain in the explicitly labeled **高级工作台**. See the [first-batch implementation scope](docs/UI-business-workbench-2026-10-21.md) and [36-page-check acceptance with screenshots](docs/verification/business-workbench-2026-10-21/report.md).
+**beta.11** connects daily briefing, product histories and reusable operating cases with the versioned knowledge center. The sidebar has five business groups, function search, favorites and responsive secondary navigation. Cards and records have distinct borders and semantic colors.
 
-**Three-batch local workflow:** business entities now connect exact source/shop/product scopes to evidence, investigations, decisions and tasks. Entity questions freeze their window/context and use the configured isolated model with validated citations; offline mode is explicitly a guide. Business tasks retain owner/deadline/status history, original approval links and simulation receipt gates. Local reminders, recurring snapshot reviews and opt-in inspection-to-task automation lead into versioned scene tags, methods, topics and immutable cases, with JSON export and same-scope retrieval. See the [delivery route and limits](docs/three-batch-delivery-2026-10-22.md). The **beta.8 Windows installer is published** with these additions. Schema 10 creates a migration backup; older versions must not open an upgraded profile.
+Start at **经营总览 → 经营晨会 / 商品经营档案**. Investigations and decision drafts show similar cases, matching reasons and differences; citations freeze the original case version and can be reused in a follow-up task. **知识与复盘 → 经营知识中心** provides Markdown editing, history, citations and read-only Markdown/Feishu source synchronization.
 
-The current source and the published **0.1.0-beta.6 Windows installer** include the operational workflows below. See the [release and installation acceptance](docs/release-beta6-2026-10-21.md). Whole-line exchange cash-flow reconciliation is also available in **交易与退款 → 换货差价核对**; it preserves declared agreements and frozen evidence, and does not post credits or mark replacement orders settled. See the [contract](docs/P1-exchange-settlement-2026-10-21.md). Refund-adjusted advertising reconciliation is available in **广告经营 → 广告退款后归因核对**, with explicit order links, touch windows, overlapping-campaign shares and provisional coverage labels. It uses declared spend/attribution and ledger settlement, not authenticated platform ROAS or profit; see the [contract](docs/P1-ad-refund-2026-10-21.md). Both operational pages include in-page module navigation. FEFO planning and reviewed batch reservations are available inside **库存与补货 → 仓库收发存与调拨**. Plans exclude unknown/expired/quarantined and already-reserved quantities, bind the reviewed inventory state, and require explicit confirmation; see the [contract](docs/P1-warehouse-picking-2026-10-21.md). The beta.6 release acceptance passed **371 domain tests and 3,362 assertions**, domain/Electron type checks, main/renderer builds, and the warehouse desktop workflow with an actual process restart. See the [verification record](docs/verification/warehouse-picking-2026-10-21/report.md) and [development route](docs/development-progress-2026-10-20.md).
+The prior three local workflow batches remain included: evidence and entity investigations, tasks, local approvals/simulations, reminders, snapshot reviews and immutable cases. Schema12 upgrades create a pre-migration backup. See the [implementation scope](docs/experience-S0-S4-2026-10-23.md), [packaged acceptance](docs/verification/experience-2026-10-23/report.md), and [beta.11 release record](docs/release-beta11-2026-10-23.md).
 
 | UI entry | Implemented in the current source | Scope and evidence |
 | --- | --- | --- |
@@ -63,17 +63,17 @@ Retail workspaces enforce read-only tools in general Agent conversations, includ
 
 ## Download the desktop app
 
-The latest preview is **0.1.0-beta.8**, including all three local batches and the final follow-up-card alignment fix. The business baseline passed **391 domain tests / 3,526 assertions**, an additional old-schema migration check, and **34 beta.7 installation checks**. The CSS/version patch passed **11 beta.8 targeted installation, loaded-layout, version-check and uninstall checks**. See the [latest release notes](docs/release-beta8-2026-10-22.md), [three-batch scope](docs/three-batch-delivery-2026-10-22.md), and [acceptance record](docs/verification/three-batches-2026-10-22/report.md).
+The current preview is **0.1.0-beta.11**. Validation passed **409 domain tests**, **20 packaged workflow groups**, and an actual beta.8→beta.11 NSIS upgrade, same-version reinstall and uninstall on the current Windows 11 host. Existing evidence, investigations, tasks and cases were retained. See the [release record](docs/release-beta11-2026-10-23.md).
 
-**[Download Merqo for Windows x64 — 0.1.0-beta.8](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.8/Merqo-Setup-0.1.0-beta.8-x64.exe)**
+**[Download Merqo for Windows x64 — 0.1.0-beta.11](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.11/Merqo-Setup-0.1.0-beta.11-x64.exe)**
 
-[GitHub release](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.8) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.8/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
+[GitHub release](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.11) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.11/SHA256SUMS.txt) · [Installation and data locations](docs/windows-preview.md)
 
-Updates use **RXQ6/Merqo GitHub Releases**, including betas, with manual installer downloads. Schema 10 creates a migration backup; older versions must not open upgraded profiles. This unsigned preview does not complete real-platform or external-Windows PRD gates. One expanded-path installer attempt exited abnormally before a standard-path retry passed; root cause and long-path compatibility remain unresolved in the acceptance report.
+Updates use RXQ6/Merqo Releases, including betas, with manual installer downloads. Do not open a schema12 workspace in beta.10 or earlier. The preview remains unsigned. Clean/cross-Windows acceptance and live platform integration remain external gaps; the old installer's intermittent failure and successful short-path retry are documented.
 
 ## Build from source
 
-The latest source domain run passed 371 tests and 3,362 assertions. The fixed synthetic business set passed 48/48. The latest archived real-model batch passed margin 5/5, inventory 4/5 and advertising 5/5, with zero observed forbidden-action events; the inventory needs-evidence result and earlier batches remain recorded. These are bounded gates, not production accuracy. The current operational additions have local contract and desktop acceptance; they have not received a new live-model quality batch or a new installer release.
+The beta.11 source domain run passed 409 tests / 3,702 assertions. Model transport checks use isolated synthetic fixtures; they do not establish live-model business accuracy. Historical real-model evaluation remains documented separately.
 
 ### Prerequisites
 

@@ -149,7 +149,7 @@ export function FullscreenOverlayBase({
             'bg-foreground-3 fullscreen-overlay-background',
             className
           )}
-          style={{ zIndex: Z_FULLSCREEN }}
+          style={{ zIndex: Z_FULLSCREEN, top: 'var(--fullscreen-overlay-top, 0px)' }}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onEscapeKeyDown={(event) => {
             const handled = handleFullscreenEscapeWithStack()

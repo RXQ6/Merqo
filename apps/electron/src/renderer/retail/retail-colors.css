@@ -1,0 +1,49 @@
+/* Merqo: blue navigation, teal evidence, amber follow-up, red risk. */
+.retail-app{--ink:#183049;--muted:#596d83;--line:#cbd7e5;--paper:#fff;--teal:#245bc3;--accent:#245bc3;--destructive:#b72e46;--info:#935c0c;background:#f0f4fa;color:var(--ink);font-family:'Microsoft YaHei UI','Microsoft YaHei',system-ui,sans-serif}
+.retail-app .retail-windowbar{background:#17365b;color:#eef5ff;border-bottom:1px solid #35577e}
+.retail-app .retail-windowbar button{background:#244971;color:#fff;border-color:#52749b}
+.retail-app .retail-navigation{background:#e7eef8;border-right:1px solid #bdcde2}
+.retail-app .retail-navigation button[aria-current=page]{background:#d3e3fc;color:#184aa5;border-color:#9dbbe9}
+.retail-app .retail-main{background:#f0f4fa}
+.retail-app .retail-secondary-navigation{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:24px}
+.retail-app .retail-primary{background:#245bc3;color:#fff;border-color:#245bc3}
+.retail-app .retail-primary:hover:not(:disabled){background:#17459b;color:#fff}
+.retail-app button:hover:not(:disabled){border-color:#6c95d5;background:#eaf1fd}
+.retail-app :focus-visible{outline:3px solid #5282d4;outline-offset:3px}
+.retail-app .retail-page-header,.retail-app .retail-header{border-left:4px solid #245bc3;padding-left:16px}
+.retail-app .retail-panel{border:1px solid #c5d3e3;box-shadow:0 2px 5px #18304908;border-radius:10px}
+.retail-app .retail-section-title{background:#edf3fb;border-bottom:1px solid #d5e0ef}
+.retail-app .retail-panel>h2,.retail-app .retail-panel>h3{color:#244d7b}
+.retail-app .retail-scope{background:#eaf0f8;border:1px solid #c8d6e8;border-radius:8px;padding:16px;align-items:center}
+.retail-app .retail-metrics{gap:12px}
+.retail-app .retail-metrics>div{background:#fff;border:1px solid #cbd7e5;border-top:3px solid #3976d1;border-radius:8px;padding:16px}
+.retail-app .retail-metrics>div:nth-child(2){border-top-color:#13847f}
+.retail-app .retail-metrics>div:nth-child(3){border-top-color:#bb7d1e}
+.retail-app .retail-metrics>div:nth-child(4){border-top-color:#bd4055}
+.retail-app .retail-investigation-list>button{border:1px solid #c4d2e4;background:#fff;border-radius:8px;margin-bottom:10px;padding:14px;text-align:left}
+.retail-app .retail-investigation-list>button[aria-current]{border-color:#5f91d9;background:#e6effe;box-shadow:inset 3px 0 #245bc3}
+.retail-app .retail-workbench-row{border:1px solid #ccd9e8;border-left:3px solid #4c8b9e;border-radius:8px;background:#fff;padding:16px;margin-block:12px}
+.retail-app .retail-evidence-card{border-color:#b8d8d6;background:#f3fbfa}
+.retail-app .retail-task-counts{background:#eaf1fc;border-color:#b8cdee}
+.retail-app .retail-context-links button{background:#eef6fc;border-color:#bdd3e9}
+.retail-app .retail-context-assistant{background:#f0f8f8;border:1px solid #bad8d6;border-radius:10px;padding:20px}
+.retail-app .retail-investigation-body>section[aria-label],.retail-app .retail-task-tools>details{border:1px solid #cbd7e5;border-radius:8px;padding:16px;margin-block:16px;background:#fff}
+.retail-app .retail-investigation-body section[aria-label]>article{border:1px solid #cbd7e5;border-radius:7px;padding:14px;margin-top:12px}
+.retail-app thead{background:#eaf0f8;color:#29496b}
+.retail-app tbody tr:nth-child(even){background:#f5f8fc}
+.retail-app tbody tr:hover{background:#eaf2ff}
+.retail-app td{border-bottom:1px solid #dce5ef}
+.retail-app .retail-alert{border:1px solid #d9ba78;background:#fff8e8;color:#775016;border-radius:8px;padding:14px 18px}
+.retail-app .retail-alert.error{border-color:#e0a9b3;background:#fff0f3;color:#9c2941}
+.retail-app .retail-scope-evidence{border-color:#b9d1e6;background:#f1f7fd}
+.retail-app .retail-investigation-body details{border:1px solid #d2deeb;border-radius:7px;padding:12px;margin-block:10px}
+.retail-app textarea{background:#fff;color:var(--ink);border:1px solid #bdcde0;border-radius:6px;padding:10px;max-width:100%}
+@media(prefers-reduced-motion:reduce){.retail-app *{scroll-behavior:auto}}
+
+.retail-app .retail-wiki-list>button,.retail-app .retail-wiki-source-grid>aside>button{border:1px solid #c4d2e4;background:#f8faff;margin-bottom:8px;padding:14px;border-radius:7px}
+.retail-app .retail-wiki-references>article{border:1px solid #c6d8e9;border-left:3px solid #438b96;background:#f5fbfb;border-radius:7px;margin-top:12px;padding:14px}
+.retail-app .retail-navigation-short{background:#e7eef8}
+
+.retail-app .retail-windowbar span{color:#d4e4f9}.retail-app .retail-windowbar .retail-wordmark svg{color:#b8d4fa}
+.retail-app .retail-investigation-list{max-height:72vh;overflow-y:auto;align-self:start;scrollbar-gutter:stable;background:#edf3fb}
+@media(max-width:850px){.retail-app .retail-investigation-list{max-height:260px;width:100%;border-bottom:2px solid #b7cce7}}

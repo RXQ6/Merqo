@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "checks": [
+    "Actual isolated model protocol receives frozen item metadata without raw records or tools; UI generation, citations, manual revisions, original preservation and native TXT export pass",
+    "Invalid numerical model output fails safely while the preceding editable summary and rule-based morning remain available",
+    "Product and case category/tag forms save; matching explains category/tag reasons; helpful feedback adjusts ranking and its switch disables the adjustment",
+    "Changing case applicability invalidates stale feedback; classification history is inspectable; disabled cases disappear from recommendations and remain available in maintenance mode",
+    "Wide/narrow layouts have no workspace overflow; actual process restart retains edited summary, retired profile and stale-feedback exclusion"
+  ],
+  "modelCalls": 2,
+  "modelProtocolFixture": true,
+  "packaged": true
+}

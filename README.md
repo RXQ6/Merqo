@@ -10,13 +10,13 @@ Built with **Electron · React · TypeScript · Bun · SQLite**, based on the Cr
 
 ## Download
 
-**Windows x64 preview: 0.1.0-beta.12** · Release record: October 23, 2026
+**Windows x64 preview: 0.1.0-beta.13** · Release record: October 24, 2026
 
-[**Download the Windows installer**](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.12/Merqo-Setup-0.1.0-beta.12-x64.exe) · [Release notes](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.12) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.12/SHA256SUMS.txt)
+[**Download the Windows installer**](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.13/Merqo-Setup-0.1.0-beta.13-x64.exe) · [Release notes](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.13) · [SHA-256 checksums](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.13/SHA256SUMS.txt)
 
 Install the application and launch **Merqo** from the desktop or Start menu. In-app update checks use this repository's GitHub Releases, including betas, and open a manual installer download.
 
-> This is an unsigned Windows preview, validated on the current Windows 11 host. Database schema13 upgrades create a pre-migration backup. Do not open an upgraded workspace with beta.11 or earlier. See [installation and data locations](docs/windows-preview.md) and the [beta.12 acceptance record](docs/release-beta12-2026-10-23.md).
+> This is an unsigned Windows preview, validated on the current Windows 11 host. Database schema13 upgrades create a pre-migration backup. Do not open an upgraded workspace with beta.11 or earlier. See [installation and data locations](docs/windows-preview.md) and the [beta.13 acceptance record](docs/release-beta13-2026-10-24.md).
 
 ## The operating workflow
 
@@ -34,14 +34,14 @@ The local workflow is implemented. Approvals and execution operate in a local si
 
 Function search (**Ctrl+K**) and favorites provide quick access across these five groups.
 
-## beta.13 in acceptance: local procurement and fulfillment
+## New in beta.13: local procurement and fulfillment
 
 - **库存与补货 → 财务与入库处理**: declare supplier payables, payments and refunds; review arrivals before posting stock; retain financial reviews and receipt evidence.
 - **库存与补货 → 条码与波次**: maintain barcode/location labels, allocate multiple orders by earliest expiry, and verify scans before reserving the complete wave.
 - **库存与补货 → 订单关联发货**: link an explicitly paid order line to reserved batches and atomically record transaction shipment and stock deduction, with local readback reviews.
 - Investigations freeze scoped transaction, procurement, warehouse and finance evidence; tasks and cases retain the same evidence index.
 
-These are local ledger records. Payment does not prove bank settlement; shipment does not prove carrier delivery; location labels do not provide separate bin-level inventory. See the [implementation and acceptance record](docs/local-business-closure-2026-10-24.md). This section describes source progress; downloads still point to the published beta.12.
+These are local ledger records. Payment does not prove bank settlement; shipment does not prove carrier delivery; location labels do not provide separate bin-level inventory. See the [implementation and acceptance record](docs/local-business-closure-2026-10-24.md).
 
 ## What's new in beta.12
 

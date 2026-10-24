@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "checks": [
+    "Actual beta.12 install creates persisted evidence, task, investigation and archived case",
+    "Actual NSIS beta.12→beta.13 upgrade preserves identical task/case/evidence and opens additive local ledgers without changing schema13",
+    "Same-version NSIS reinstall retains original business records",
+    "NSIS uninstall removes isolated executable while retaining the isolated workspace"
+  ],
+  "cleanVm": false,
+  "windows": "Windows 11 build 26200"
+}

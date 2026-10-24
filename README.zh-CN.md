@@ -10,13 +10,13 @@ Merqo 将导入的经营数据串联为：发现异常、发起调查、补充�
 
 ## 下载与安装
 
-**Windows x64 预览版：0.1.0-beta.12** · 发布记录日期：2026-10-23
+**Windows x64 预览版：0.1.0-beta.13** · 发布记录日期：2026-10-24
 
-[**下载 Windows 安装包**](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.12/Merqo-Setup-0.1.0-beta.12-x64.exe) · [发布说明](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.12) · [SHA-256 校验文件](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.12/SHA256SUMS.txt)
+[**下载 Windows 安装包**](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.13/Merqo-Setup-0.1.0-beta.13-x64.exe) · [发布说明](https://github.com/RXQ6/Merqo/releases/tag/v0.1.0-beta.13) · [SHA-256 校验文件](https://github.com/RXQ6/Merqo/releases/download/v0.1.0-beta.13/SHA256SUMS.txt)
 
 安装后，从桌面快捷方式或开始菜单打开 **Merqo**。软件内的更新检查读取本仓库 GitHub Releases，包含 beta 版本，并提供手动下载安装入口。
 
-> 当前为未签名的 Windows 预览版，已在本机 Windows 11 验收。数据库升级到 schema13 前会自动创建备份；请勿用 beta.11 或更旧版本直接打开已升级工作区。详见[安装与数据位置](docs/windows-preview.md)和 [beta.12 验收记录](docs/release-beta12-2026-10-23.md)。
+> 当前为未签名的 Windows 预览版，已在本机 Windows 11 验收。数据库升级到 schema13 前会自动创建备份；请勿用 beta.11 或更旧版本直接打开已升级工作区。详见[安装与数据位置](docs/windows-preview.md)和 [beta.13 验收记录](docs/release-beta12-2026-10-23.md)。
 
 ## 经营使用链路
 
@@ -34,14 +34,14 @@ Merqo 将导入的经营数据串联为：发现异常、发起调查、补充�
 
 可使用功能搜索（**Ctrl+K**）和常用入口，在五组导航之间快速定位功能。
 
-## 正在验收的 beta.13：本地采购到履约闭环
+## beta.13 新增：本地采购到履约闭环
 
 - **库存与补货 → 财务与入库处理**：登记采购应付、付款、供应商退款，预览确认到货入库，保留凭证和财务复查。
 - **库存与补货 → 条码与波次**：维护条码及库位定位标签，按先到期先出生成多订单波次，核对扫码后统一预留库存。
 - **库存与补货 → 订单关联发货**：将明确的已付款订单行与预留批次关联，一次确认同时记录交易发货和库存扣减，支持本地回读复查。
 - 调查冻结同范围交易、采购、库存和财务证据，任务与案例保留相同证据索引。
 
-这些操作记录本地业务台账；付款不代表银行到账，发货不代表物流签收，库位标签不提供独立库位库存核算。详情及验收证据见[本地业务闭环记录](docs/local-business-closure-2026-10-24.md)。本节为源码进度，下载区仍指向已发布的 beta.12。
+这些操作记录本地业务台账；付款不代表银行到账，发货不代表物流签收，库位标签不提供独立库位库存核算。详情及验收证据见[本地业务闭环记录](docs/local-business-closure-2026-10-24.md)。
 
 ## beta.12 新增功能
 

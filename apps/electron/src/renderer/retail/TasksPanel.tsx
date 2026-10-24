@@ -1,3 +1,4 @@
+import {TaskLedgerContext} from './TaskLedgerContext';
 import { useCallback, useEffect, useState } from 'react';
 import type { BusinessTask, TaskDetail, TaskPage } from '../../../../../packages/retail-domain/src/business-task-contract';
 import type { RetailRequest } from '../../../../../packages/retail-domain/src/operations';
@@ -76,7 +77,7 @@ export function TasksPanel({ initialId, onInvestigation, onDecision, onApproval,
         </div></section>
         <section aria-label="任务历史记录"><h3>跟进记录与版本</h3><p className="retail-muted">共 {detail.eventCount} 条，展示最近 {detail.events.length} 条；旧记录保留。</p>{detail.events.map(event => <details key={event.version}><summary>v{event.version} · {date(event.at)} · {states[event.to]}</summary><p>{event.note}</p><p>负责人：{event.snapshot.owner}；截止：{date(event.snapshot.dueAt)}；本机操作记录。</p></details>)}</section>
         <div ref={element=>{element?.toggleAttribute('inert',busy);}}><TaskWorkbenchTools key={t.id+':'+t.version} task={t} onCase={onCase}/></div>
-        <details><summary>冻结证据索引</summary><p>调查 {t.origin.investigationId}；方案版本 {t.origin.decisionVersion ?? '未关联'}；规则 {t.evidence.ruleVersion}</p><p>证据摘要 {t.evidence.evidenceHash}</p><p>报告摘要 {t.evidence.reportHash}</p><p>实体范围摘要 {t.entityKey}</p></details>
+        <TaskLedgerContext task={t}/><details><summary>冻结证据索引</summary><p>调查 {t.origin.investigationId}；方案版本 {t.origin.decisionVersion ?? '未关联'}；规则 {t.evidence.ruleVersion}</p><p>证据摘要 {t.evidence.evidenceHash}</p><p>报告摘要 {t.evidence.reportHash}</p><p>实体范围摘要 {t.entityKey}</p></details>
       </>}
     </article></div>
   </section>;

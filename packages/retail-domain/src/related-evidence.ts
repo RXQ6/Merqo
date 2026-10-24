@@ -10,6 +10,7 @@ export type EvidenceScope = Pick<EvidenceRecord, 'source'> & { row: Pick<Evidenc
 const scenario = (r: RecordEvidence) => 'kind' in r ? r.kind : 'margin';
 const spec = (r: RecordEvidence) => 'spec' in r.row ? r.row.spec : null;
 export interface RelatedEvidence {
+  operational?:import('./operational-evidence').OperationalEvidence;
   version: 'related-evidence-v1'|'related-evidence-v2';
   joint?:import('./joint-evidence').JointAssessment;
   anchorIdentity?:CatalogIdentity;

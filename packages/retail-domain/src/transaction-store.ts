@@ -33,6 +33,7 @@ export class TransactionStore{
  CREATE TRIGGER IF NOT EXISTS transaction_events_immutable_delete BEFORE DELETE ON transaction_events BEGIN SELECT RAISE(ABORT,'immutable transaction events');END;
  CREATE TRIGGER IF NOT EXISTS transaction_batches_immutable_update BEFORE UPDATE ON transaction_batches BEGIN SELECT RAISE(ABORT,'immutable transaction batches');END;
  CREATE TRIGGER IF NOT EXISTS transaction_batches_immutable_delete BEFORE DELETE ON transaction_batches BEGIN SELECT RAISE(ABORT,'immutable transaction batches');END;`);
+ this.db.exec("CREATE INDEX IF NOT EXISTS transaction_operational_scope ON transaction_events(source,shop_id,channel,json_extract(json,'$.source_id'),json_extract(json,'$.sku_id'),json_extract(json,'$.spec'),order_at,event_at);CREATE INDEX IF NOT EXISTS contribution_operational_source ON contribution_reports(json_extract(json,'$.report.source'))");
  if(!this.db.query<{name:string},[]>('PRAGMA table_info(transaction_events)').all().some(c=>c.name==='replaces_entity'))this.db.exec('ALTER TABLE transaction_events ADD COLUMN replaces_entity TEXT');
  this.db.exec('CREATE INDEX IF NOT EXISTS transaction_replacements ON transaction_events(source,replaces_entity)');}
  close(){if(this.ownsConnection)this.db.close();}

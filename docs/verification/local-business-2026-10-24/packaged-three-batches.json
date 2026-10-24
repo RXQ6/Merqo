@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "checks": [
+    "Entity UI groups exact source/shop/product scope and links the saved task; actual configured isolated AgentBackend performs one loopback model request with no tools and saves valid frozen evidence citations",
+    "UI creates versioned method/tag/topic, freezes a method binding, saves weekly review, persists missing-evidence observation and acknowledgement; opt-in check findings create only offline analysis tasks and repeated ticks do not duplicate them or alter business snapshots",
+    "Completing a task enables immutable case archive, freezes method v1 and observations; native download exports identical case JSON; updating method to v2 does not rewrite the archived case",
+    "Six wide/narrow page checks pass with no horizontal overflow; actual process restart retains frozen question, completed task, method revision, reminder acknowledgement, recurring plan, automatic task deduplication and case"
+  ],
+  "taskId": "924dfa76-1f6a-496e-809f-775162fe79bb",
+  "caseId": "feefd792-4346-4cf9-8256-1632dcb2b9f9",
+  "modelCalls": 1,
+  "modelProtocolFixture": true,
+  "realPlatformCalls": 0,
+  "packaged": true
+}

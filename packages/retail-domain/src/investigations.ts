@@ -209,7 +209,7 @@ export async function runInvestigation(run: Investigation, model: ModelPort | nu
   const evidenceAssessment = assessMarginEvidence(numericAudit, (run.caseContext ?? []).length > 0);
   draft.observations = numericObservations(numericAudit);
   // Review the same disclosure that is persisted/exported; never add caveats only after review.
-  draft.unknowns = [...new Set([...draft.unknowns,...(run.relatedEvidence?.joint?.issues??[]), ...(evidenceTimeContext(run.evidence).sourceMetadataIssues??[]), ...run.evidence.calculation.issues,
+  draft.unknowns = [...new Set([...draft.unknowns,...(run.relatedEvidence?.joint?.issues??[]),...(run.relatedEvidence?.operational?.issues??[]), ...(evidenceTimeContext(run.evidence).sourceMetadataIssues??[]), ...run.evidence.calculation.issues,
     ...evidenceAssessment.requirements.filter(r => r.status === 'missing').map(r => `${r.label}：${r.detail} ${r.nextStep}`)])];
   const scenarios = computed.map(s => ({ ...s, rationale: draft.options.find(o => o.kind === s.kind)?.rationale ?? '' }));
   let reviewer: InvestigationReport['reviewer'] = { verdict: 'needs_evidence', notes: ['固定规则复核，未进行模型 Reviewer 调用；缺少实时数据，禁止执行'], mode: 'replay' };

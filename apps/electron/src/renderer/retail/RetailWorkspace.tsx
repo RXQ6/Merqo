@@ -225,7 +225,7 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, workspaceId = 'loc
         </section><div className="retail-footnote"><ShieldCheck size={16}/><p>支持三场景只读调查、版本草稿与本地模拟审批执行。模型调查需配置连接；离线演示单独标注。静态快照不构成真实经营写入授权。</p></div>
       </>}
       {page === 'anomalies' && <SignalsPanel refreshKey={signalRefreshKey} compact onInvestigate={record => { setInvestigationId(null);setInvestigationTarget(record); setPage('investigations'); }} snapshot={signals} request={request} busy={busy} scope={signalScope}/>}
-      <footer className="retail-footer"><span>本机 SQLite 持久化 · 规则 {isSignalPage ? signals?.ruleVersion ?? 'retail-stock-roas-v1' : snapshot?.ruleVersion ?? 'retail-margin-v1'}</span><span>{busy ? '正在处理…' : '数据查询与分析，不执行经营写入'}</span></footer>
+      <footer className="retail-footer"><span>本机 SQLite 持久化 · 规则 {isSignalPage ? signals?.ruleVersion ?? 'retail-stock-roas-v1' : snapshot?.ruleVersion ?? 'retail-margin-v1'}</span><span>{busy ? '正在处理…' : '本地经营台账与模拟处理，不自动写入真实平台'}</span></footer>
       </>}
     </main>
     </div>

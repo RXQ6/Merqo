@@ -1,5 +1,7 @@
 # Merqo
 
+<p align="center"><img src="apps/electron/resources/icon.png" width="144" height="144" alt="Merqo application logo" /></p>
+
 **An AI-assisted desktop workspace for retail operations, evidence-backed investigations, and reusable business knowledge.**
 
 **English** · [简体中文](README.zh-CN.md)
@@ -17,6 +19,12 @@ Built with **Electron · React · TypeScript · Bun · SQLite**, based on the Cr
 Install the application and launch **Merqo** from the desktop or Start menu. In-app update checks use this repository's GitHub Releases, including betas, and open a manual installer download.
 
 > This is an unsigned Windows preview, validated on the current Windows 11 host. Database schema13 upgrades create a pre-migration backup. Do not open an upgraded workspace with beta.11 or earlier. See [installation and data locations](docs/windows-preview.md) and the [beta.13 acceptance record](docs/release-beta13-2026-10-24.md).
+
+## Current source: beta.14 branding update
+
+The source now uses the supplied black-and-white Merqo artwork for the application icon, Windows executable and installer icons, and the in-app header. Windows ICO includes seven sizes from 16 to 256 pixels. Type checking, the desktop build, packaged header rendering and packaged icon consistency checks passed.
+
+The beta.14 installer has been built and checked locally; it has **not been published to GitHub Releases**. The public download above remains beta.13.
 
 ## The operating workflow
 

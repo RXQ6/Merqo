@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "checks": [
+    "Actual UI preview/confirm records payable, partial payment and supplier refund with correct balances",
+    "UI saves frozen receipt review and native export retains balances and review evidence",
+    "Reviewed procurement arrival posts exactly two units into the warehouse instead of automatically counting every receipt as sellable",
+    "Actual UI links reserved batches to the exact paid order, atomically records transaction shipment and stock deduction, then saves local readback review",
+    "UI saves barcode/location profile, creates a multi-order wave, rejects a wrong scan without stock effects and reserves the verified wave atomically",
+    "Actual data worker freezes procurement, reviewed warehouse events and financial records into the investigation; export retains identical hash",
+    "Task creation and immutable case archive retain the same operational evidence references without copying raw ledger rows into every task event",
+    "Wide/narrow pages fit the workspace and real restart retains financial review, warehouse history and frozen investigation"
+  ]
+}

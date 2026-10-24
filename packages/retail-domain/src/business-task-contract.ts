@@ -25,6 +25,7 @@ export type TaskCreate = z.infer<typeof TaskCreateSchema>;
 export type TaskQuery = z.infer<typeof TaskQuerySchema>;
 export type TaskMutation = z.infer<typeof TaskPublicSchemas[3]> | z.infer<typeof TaskPublicSchemas[4]> | z.infer<typeof TaskPublicSchemas[5]>;
 export interface BusinessTask {
+  operationalContext? : Omit<import('./operational-evidence-contract').OperationalEvidence,'items'> & {items:Array<Omit<import('./operational-evidence-contract').OperationalItem,'record'>>};
   caseReferences?:CaseReference[];
   id: string; workspaceId: string; version: number; title: string; description: string; owner: string;
   purpose: z.infer<typeof TaskPurpose>; priority: 'normal' | 'high'; dueAt: string; status: z.infer<typeof TaskStatus>;

@@ -34,6 +34,15 @@ The local workflow is implemented. Approvals and execution operate in a local si
 
 Function search (**Ctrl+K**) and favorites provide quick access across these five groups.
 
+## beta.13 in acceptance: local procurement and fulfillment
+
+- **库存与补货 → 财务与入库处理**: declare supplier payables, payments and refunds; review arrivals before posting stock; retain financial reviews and receipt evidence.
+- **库存与补货 → 条码与波次**: maintain barcode/location labels, allocate multiple orders by earliest expiry, and verify scans before reserving the complete wave.
+- **库存与补货 → 订单关联发货**: link an explicitly paid order line to reserved batches and atomically record transaction shipment and stock deduction, with local readback reviews.
+- Investigations freeze scoped transaction, procurement, warehouse and finance evidence; tasks and cases retain the same evidence index.
+
+These are local ledger records. Payment does not prove bank settlement; shipment does not prove carrier delivery; location labels do not provide separate bin-level inventory. See the [implementation and acceptance record](docs/local-business-closure-2026-10-24.md). This section describes source progress; downloads still point to the published beta.12.
+
 ## What's new in beta.12
 
 ### Editable AI morning briefings

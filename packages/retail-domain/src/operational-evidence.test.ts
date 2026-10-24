@@ -1,0 +1,27 @@
+import {test,expect} from 'bun:test';
+import {mkdtempSync,mkdirSync,rmSync} from 'node:fs';import {join} from 'node:path';import {tmpdir} from 'node:os';
+import {RetailStore} from './store';import {TransactionStore} from './transaction-store';import {ProcurementStore} from './procurement-store';import {WarehouseStore} from './warehouse-store';
+import {PROCUREMENT_DEMO} from './procurement-contract';import type {WarehouseEvent} from './warehouse-contract';
+import {freezeOperationalEvidence} from './operational-evidence';import {matchRelatedEvidence} from './related-evidence';import {InvestigationStore} from './investigation-store';import {loadReadonlyRunScope,callReadonlyTool} from './readonly-tools';import {exportInvestigation} from './investigation-export';
+import {COST_FIELDS} from './contribution';
+
+test('declared ledger matches exact identities and never joins absent sources or synthetic warehouse data',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'merqo-op-')),file=join(dir,'ledger.sqlite'),retail=new RetailStore(join(dir,'snapshot')),p=new ProcurementStore(file),w=new WarehouseStore(file);
+ try{retail.request({op:'demo'});const base=retail.snapshot().records[0]!,first=PROCUREMENT_DEMO[0]!,json=JSON.stringify(PROCUREMENT_DEMO);p.import(json,p.preview(json).hash);
+  const receipt=PROCUREMENT_DEMO[1]!;if(receipt.kind!=='received')throw Error('fixture');const arrival:WarehouseEvent={source_id:receipt.source_id,shop_id:receipt.shop_id,warehouse_id:receipt.warehouse_id,sku:receipt.sku,spec:receipt.spec,batch_id:receipt.batch_id,expires_on:receipt.expires_on,event_at:'2026-10-16T00:00:00+08:00',state:'sellable',kind:'purchase_in',event_id:'LEDGER-IN',receipt_event_id:receipt.event_id,quantity:2},input=JSON.stringify([arrival]);w.import(input,w.preview(input).hash);
+  const anchor={...base,source:'csv' as const,provenance:{...base.provenance!,sourceId:first.source_id},row:{...base.row,date:'2026-10-16',shop_id:first.shop_id,sku_id:first.sku,spec:first.spec}};
+  const a=freezeOperationalEvidence(file,anchor);expect(a.items.map(i=>i.kind).sort()).toEqual(['procurement','procurement','warehouse']);expect(a.items.every(i=>i.status==='context_only')).toBe(true);expect(a.findings[0]!.chain).toBe('purchase_stock');expect(a).toEqual(freezeOperationalEvidence(file,anchor,Date.now()+1000));
+  expect(freezeOperationalEvidence(file,(({provenance,...rest})=>rest)(anchor)).items).toHaveLength(0);expect(freezeOperationalEvidence(file,{...anchor,source:'demo'}).items).toHaveLength(0);expect(freezeOperationalEvidence(file,{...anchor,row:{...anchor.row,spec:'wrong'}}).items).toHaveLength(0);expect(freezeOperationalEvidence(file,{...anchor,provenance:{...anchor.provenance,sourceId:'wrong'}}).items).toHaveLength(0);
+ }finally{w.close();p.close();retail.close();rmSync(dir,{recursive:true,force:true});}
+});
+
+test('transaction and cost scopes freeze into the actual investigation MCP context and exports',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'merqo-op-')),root=join(dir,'retail');mkdirSync(root);const file=join(root,'operations.sqlite'),retail=new RetailStore(file),t=new TransactionStore(file+'.transactions.sqlite');let runs:InvestigationStore|undefined;
+ try{retail.request({op:'demo'});t.demo();const page=t.page({source:'demo',shop:'',channel:'',startDate:'2026-10-14',endDate:'2026-10-16',basis:'order',offset:0,limit:30});const event=page.records[0]!.event;const base=retail.snapshot().records[0]!,anchor={...base,provenance:{...base.provenance!,sourceId:event.source_id},row:{...base.row,date:'2026-10-14',shop_id:event.shop_id,channel:event.channel,sku_id:event.sku_id,spec:event.spec}};
+  const first=freezeOperationalEvidence(file+'.transactions.sqlite',anchor);expect(first.items.some(i=>i.kind==='transactions')).toBe(true);expect(first.items.every(i=>i.record.channel===event.channel)).toBe(true);expect(first.items.every(i=>Date.parse(i.businessAt)<Date.parse(first.scope.end!))).toBe(true);
+  const costs=COST_FIELDS.join(',')+'\n'+['goods','platform_fee','shipping','return_shipping','other'].map(category=>[event.source_id,event.shop_id,event.channel,event.order_id,event.line_id,category,100,'CNY','2026-10-20T00:00:00Z'].join(',')).join('\n');t.contribution({label:'证据测试',query:{source:'demo',shop:event.shop_id,channel:event.channel,startDate:'2026-10-14',endDate:'2026-10-14',basis:'order',offset:0,limit:30},csv:costs});
+  const read=()=>({...matchRelatedEvidence(anchor,[]),operational:freezeOperationalEvidence(file+'.transactions.sqlite',anchor)});runs=new InvestigationStore(file+'.investigations.sqlite',false,'fixture',read);const run=runs.create(anchor,'replay',true).run;expect(run.relatedEvidence!.operational!.items.some(i=>i.kind==='costs')).toBe(true);
+  const frozen=JSON.stringify(run.relatedEvidence!.operational);const payload=callReadonlyTool(loadReadonlyRunScope(dir,run.id),'retail_get_sku_context') as {data:{relatedEvidence:unknown}};expect(payload.data.relatedEvidence).toEqual(run.relatedEvidence);expect(exportInvestigation(run,'md').content).toContain('业务台账证据链');
+  t.contribution({label:'后续报告',query:{source:'demo',shop:event.shop_id,channel:event.channel,startDate:'2026-10-14',endDate:'2026-10-14',basis:'order',offset:0,limit:30},csv:costs});expect(JSON.stringify(runs.get(run.id).relatedEvidence!.operational)).toBe(frozen);expect(read().operational.hash).not.toBe(run.relatedEvidence!.operational!.hash);
+ }finally{runs?.close();t.close();retail.close();rmSync(dir,{recursive:true,force:true});}
+});

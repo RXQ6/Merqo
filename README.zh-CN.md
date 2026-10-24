@@ -16,7 +16,7 @@ Merqo 将导入的经营数据串联为：发现异常、发起调查、补充�
 
 安装后，从桌面快捷方式或开始菜单打开 **Merqo**。软件内的更新检查读取本仓库 GitHub Releases，包含 beta 版本，并提供手动下载安装入口。
 
-> 当前为未签名的 Windows 预览版，已在本机 Windows 11 验收。数据库升级到 schema13 前会自动创建备份；请勿用 beta.11 或更旧版本直接打开已升级工作区。详见[安装与数据位置](docs/windows-preview.md)和 [beta.13 验收记录](docs/release-beta12-2026-10-23.md)。
+> 当前为未签名的 Windows 预览版，已在本机 Windows 11 验收。数据库升级到 schema13 前会自动创建备份；请勿用 beta.11 或更旧版本直接打开已升级工作区。详见[安装与数据位置](docs/windows-preview.md)和 [beta.13 验收记录](docs/release-beta13-2026-10-24.md)。
 
 ## 经营使用链路
 
@@ -118,19 +118,17 @@ bun run retail:dist:win
 
 ## 验收与交付状态
 
-**beta.12** 的验收记录如下：
+**beta.13** 的验收记录如下：
 
 | 检查项目 | 结果 |
 | --- | --- |
-| 领域回归与领域类型检查 | 414 项测试通过，3,759 次断言 |
-| 打包后的 Electron 流程 | 25 组通过，覆盖晨会/商品、新增功能、Wiki 及原有业务链路 |
-| 模型调用、工具边界、翻译及分页回归 | 12 项测试通过，113 次断言 |
-| MCP | 实际 stdio 与冻结证据边界检查通过 |
+| 领域回归与领域类型检查 | 425 项测试通过，3,833 次断言 |
+| 打包后的 Electron 流程 | 33 组通过，覆盖本地财务/履约、晨会/商品、Wiki及原有业务链路 |
 | 桌面构建 | Electron 类型检查及 main/renderer 构建通过 |
-| Windows 安装器 | 实际 beta.11→beta.12 升级、迁移备份、同版重装、卸载通过；原记录及新增分类保留 |
+| Windows 安装器 | 实际 beta.12→beta.13 升级、同版重装、卸载通过；原记录及分类保留 |
 | GitHub CI | 合并前通过 |
 
-[验收报告与截图](docs/verification/enhancement-2026-10-23/report.md) · [发布及安装器证据](docs/release-beta12-2026-10-23.md)
+[验收报告与截图](docs/local-business-closure-2026-10-24.md) · [发布及安装器证据](docs/release-beta13-2026-10-24.md)
 
 开发时可运行：
 
@@ -156,7 +154,7 @@ bun run retail:eval
 
 | 主题 | 文档 |
 | --- | --- |
-| 当前发布 | [beta.12 发布记录](docs/release-beta12-2026-10-23.md) · [打包验收](docs/verification/enhancement-2026-10-23/report.md) |
+| 当前发布 | [beta.13 发布记录](docs/release-beta13-2026-10-24.md) · [打包验收](docs/local-business-closure-2026-10-24.md) |
 | 晨会、商品档案与案例 | [S0–S4](docs/experience-S0-S4-2026-10-23.md) · [beta.12 增强](docs/experience-enhancement-2026-10-23.md) |
 | 本地业务链路 | [三批交付](docs/three-batch-delivery-2026-10-22.md) |
 | Wiki | [W1–W3 设计与交付](docs/wiki-W1-W3-2026-10-22.md) |

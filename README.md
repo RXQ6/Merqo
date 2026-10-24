@@ -118,19 +118,17 @@ The package script stages an explicit runtime allowlist. Personal `.runtime` con
 
 ## Validation and delivery status
 
-The **beta.12** acceptance record reports:
+The **beta.13** acceptance record reports:
 
 | Check | Result |
 | --- | --- |
-| Domain regression and domain type checking | 414 tests passed; 3,759 assertions |
-| Packaged Electron workflows | 25 groups passed across briefing/product flows, new enhancements, Wiki and the existing business workflow |
-| Inference, tool-boundary, translation and pagination regression | 12 tests passed; 113 assertions |
-| MCP | Actual stdio and frozen-evidence boundary checks passed |
+| Domain regression and domain type checking | 425 tests passed; 3,833 assertions |
+| Packaged Electron workflows | 33 groups passed across local finance/fulfillment, briefing/product flows, Wiki and the existing business workflow |
 | Desktop builds | Electron TypeScript checks and main/renderer builds passed |
-| Windows installer | Actual beta.11→beta.12 upgrade, migration backup, same-version reinstall and uninstall passed; records and new classification retained |
+| Windows installer | Actual beta.12→beta.13 upgrade, same-version reinstall and uninstall passed; original records and classification retained |
 | GitHub CI | Passed before merge |
 
-[Acceptance report and screenshots](docs/verification/enhancement-2026-10-23/report.md) · [Release and installer evidence](docs/release-beta12-2026-10-23.md)
+[Acceptance report and screenshots](docs/local-business-closure-2026-10-24.md) · [Release and installer evidence](docs/release-beta13-2026-10-24.md)
 
 Useful development checks:
 
@@ -156,7 +154,7 @@ Douyin Shop and Android are deferred. There is no closed-application background 
 
 | Topic | Read more |
 | --- | --- |
-| Current release | [beta.12 release record](docs/release-beta12-2026-10-23.md) · [packaged acceptance](docs/verification/enhancement-2026-10-23/report.md) |
+| Current release | [beta.13 release record](docs/release-beta13-2026-10-24.md) · [packaged acceptance](docs/local-business-closure-2026-10-24.md) |
 | Morning briefings, product histories and cases | [S0–S4](docs/experience-S0-S4-2026-10-23.md) · [beta.12 enhancements](docs/experience-enhancement-2026-10-23.md) |
 | Local business workflow | [Three-batch delivery](docs/three-batch-delivery-2026-10-22.md) |
 | Wiki | [W1–W3 design and delivery](docs/wiki-W1-W3-2026-10-22.md) |

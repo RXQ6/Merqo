@@ -1,3 +1,4 @@
+import merqoLogo from '../assets/merqo-logo.png';
 import {EntitiesPanel} from './EntitiesPanel';
 import {FollowupsPanel} from './FollowupsPanel';
 import {KnowledgePanel} from './KnowledgePanel';
@@ -187,7 +188,7 @@ export function RetailWorkspace({ onOpenAgent, workspaceName, workspaceId = 'loc
   };
   const updateMapping = (key: string, value: string) => { setMapping(current => ({ ...current, [key]: value })); setPreview(current => current ? { ...current, valid: [] } : null); };
   return <div className="retail-app" data-testid="retail-workspace">
-    <header className="retail-windowbar"><div className="retail-wordmark"><Boxes size={19}/><strong>Merqo</strong><span>经营分析</span></div><div className="retail-windowbar-actions"><span>{workspaceName??'当前工作空间'}</span><button onClick={onOpenAgent}>高级工作台</button></div></header>
+    <header className="retail-windowbar"><div className="retail-wordmark"><img src={merqoLogo} alt="" width={32} height={32} style={{borderRadius:6,objectFit:'contain',flexShrink:0}}/><strong>Merqo</strong><span>经营分析</span></div><div className="retail-windowbar-actions"><span>{workspaceName??'当前工作空间'}</span><button onClick={onOpenAgent}>高级工作台</button></div></header>
     <div className="retail-window-layout" data-navigation-collapsed={navigationPreferences.collapsed?'true':'false'}>
     <RetailNavigation preferences={navigationPreferences} active={active} page={page} warnings={warning + missing + signalCount} onNavigate={navigate}/>
     <main className="retail-main" ref={mainRef} aria-label="经营工作区">

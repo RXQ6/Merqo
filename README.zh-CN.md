@@ -1,5 +1,7 @@
 # Merqo
 
+<p align="center"><img src="apps/electron/resources/icon.png" width="144" height="144" alt="Merqo 软件标识" /></p>
+
 **面向零售经营的 AI 桌面工作台，让数据分析、异常调查、任务跟进与经营知识连成一条线。**
 
 [English](README.md) · **简体中文**
@@ -17,6 +19,12 @@ Merqo 将导入的经营数据串联为：发现异常、发起调查、补充�
 安装后，从桌面快捷方式或开始菜单打开 **Merqo**。软件内的更新检查读取本仓库 GitHub Releases，包含 beta 版本，并提供手动下载安装入口。
 
 > 当前为未签名的 Windows 预览版，已在本机 Windows 11 验收。数据库升级到 schema13 前会自动创建备份；请勿用 beta.11 或更旧版本直接打开已升级工作区。详见[安装与数据位置](docs/windows-preview.md)和 [beta.13 验收记录](docs/release-beta13-2026-10-24.md)。
+
+## 当前源码：beta.14 图标更新
+
+已将软件图标、Windows 可执行文件和安装包图标、软件顶部标识统一替换为新的黑白 Merqo 标识。Windows ICO 包含16至256像素共7种尺寸。类型检查、桌面构建、打包后顶部标识显示及图标资源一致性检查已通过。
+
+beta.14 安装包已在本机构建并验证，**尚未发布到 GitHub Releases**。上方公开下载仍为 beta.13。
 
 ## 经营使用链路
 

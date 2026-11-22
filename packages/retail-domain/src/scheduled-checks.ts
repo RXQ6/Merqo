@@ -117,6 +117,7 @@ export class ScheduledChecks {
       // Stage in SQLite rather than retain every source record and finding in JS arrays.
       // No findings enter the durable ledger until the original lease is revalidated.
       const stage = this.db.query('INSERT INTO check_candidates VALUES(?,?)');
+      const legacyFinding = this.db.query<{ source_id: string | null }, [string]>("SELECT json_extract(json,'$.record.provenance.sourceId') AS source_id FROM check_findings WHERE key=?");
       this.db.transaction(() => { for (const record of records) {
         if (record.source !== config.source) continue;
         checked++;
@@ -124,7 +125,12 @@ export class ScheduledChecks {
         const scenario = 'kind' in record ? record.kind : 'margin'; byScenario[scenario]++;
         if (record.status === 'normal') continue;
         // Batch/import IDs can change when an unrelated row is corrected; unchanged business content must not re-alert.
-        const key = createHash('sha256').update(JSON.stringify([this.workspaceId, scenario, record.source, record.row, record.ruleVersion, record.status, 'kind' in record ? record.metrics : record.calculation])).digest('hex');
+        const identity = [this.workspaceId, scenario, record.source, record.row, record.ruleVersion, record.status, 'kind' in record ? record.metrics : record.calculation];
+        const sourceId = record.provenance?.sourceId ?? null;
+        let key = createHash('sha256').update(JSON.stringify(identity)).digest('hex');
+        // Keep existing task links and deduplication on upgrade, but only for the same source.
+        const legacy = legacyFinding.get(key);
+        if (!legacy || legacy.source_id !== sourceId) key = createHash('sha256').update(JSON.stringify([...identity, sourceId])).digest('hex');
         stage.run(key, JSON.stringify({ key, scenario, record } satisfies CheckFinding)); anomalies++;
       } }).deferred();
       const warnings = Object.entries(byScenario).filter(([, count]) => !count).map(([name]) => `${name === 'margin' ? '毛利' : name === 'inventory' ? '库存' : '广告'}没有该来源的可检查快照`);
